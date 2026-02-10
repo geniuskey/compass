@@ -1,0 +1,23 @@
+# @package _global_
+source:
+  type: "cone_illumination"
+  wavelength:
+    mode: "sweep"
+    sweep:
+      start: 0.38
+      stop: 0.78
+      step: 0.02
+
+  cone:
+    cra_deg: 15.0
+    f_number: 2.0
+    pupil_shape: "circular"
+    sampling:
+      type: "fibonacci"
+      n_points: 37
+    weighting: "cosine"
+
+  ray_file:
+    enabled: false
+    path: ""
+    format: "zemax_json"

@@ -1,0 +1,13 @@
+# Material: Tungsten (W)
+# Source: Approximate tabulated data for visible range
+# Metallic interconnect / light shield material
+# wavelength(um), n, k
+0.380, 3.390, 2.660
+0.400, 3.460, 2.720
+0.450, 3.550, 2.860
+0.500, 3.610, 2.980
+0.550, 3.650, 3.080
+0.600, 3.680, 3.170
+0.650, 3.700, 3.250
+0.700, 3.720, 3.330
+0.780, 3.740, 3.440

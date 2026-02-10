@@ -1,0 +1,19 @@
+# @package _global_
+defaults:
+  - /pixel: default_bsi_1um
+  - /source: cone_illumination
+
+experiment:
+  name: "roi_sweep"
+  description: "ROI sweep across sensor image plane"
+
+  roi:
+    image_heights: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+    sensor_diagonal_mm: 6.0
+    cra_table:
+      - image_height: 0.0
+        cra_deg: 0.0
+      - image_height: 0.5
+        cra_deg: 15.0
+      - image_height: 1.0
+        cra_deg: 30.0

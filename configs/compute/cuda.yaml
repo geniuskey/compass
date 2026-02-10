@@ -1,0 +1,5 @@
+# @package _global_
+compute:
+  backend: "auto"
+  gpu_id: 0
+  num_workers: 4

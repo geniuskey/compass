@@ -1,0 +1,10 @@
+# @package _global_
+source:
+  type: "planewave"
+  wavelength:
+    mode: "single"
+    value: 0.55
+  angle:
+    theta_deg: 0.0
+    phi_deg: 0.0
+  polarization: "unpolarized"

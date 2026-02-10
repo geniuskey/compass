@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - /pixel: default_bsi_1um
+  - /source: wavelength_sweep
+
+experiment:
+  name: "qe_benchmark"
+  description: "QE benchmark for BSI 2x2 unit cell"

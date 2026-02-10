@@ -1,0 +1,10 @@
+defaults:
+  - pixel: default_bsi_1um
+  - solver: torcwa
+  - source: planewave
+  - compute: cuda
+  - _self_
+
+experiment_name: "default"
+output_dir: "./outputs/${experiment_name}/${now:%Y-%m-%d_%H-%M-%S}"
+seed: 42

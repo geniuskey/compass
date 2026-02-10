@@ -1,0 +1,16 @@
+# @package _global_
+solver:
+  name: "fdtd_flaport"
+  type: "fdtd"
+
+  params:
+    grid_spacing: 0.02
+    runtime: 200
+    pml_layers: 15
+    courant_number: null
+    dtype: "float64"
+
+  convergence:
+    auto_converge: false
+    spacing_range: [0.01, 0.05]
+    qe_tolerance: 0.01

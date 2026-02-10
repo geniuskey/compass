@@ -1,0 +1,24 @@
+# @package _global_
+#
+# Meep solver configuration (EXPERIMENTAL / PLANNED)
+#
+# Meep is a free, open-source FDTD simulation package (MIT).
+# This configuration is a stub for Phase 2 integration.
+# Status: Not yet implemented.
+
+solver:
+  name: "meep"
+  type: "fdtd"
+
+  params:
+    resolution: 50              # pixels per um
+    runtime: 200                # femtoseconds
+    pml_thickness: 1.0          # um
+    courant_number: null
+    dtype: "float64"
+    symmetries: []              # e.g. ["X", "Y"] for 4x speedup
+
+  convergence:
+    auto_converge: false
+    resolution_range: [20, 100]
+    qe_tolerance: 0.01

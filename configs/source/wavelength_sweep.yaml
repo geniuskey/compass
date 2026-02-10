@@ -1,0 +1,13 @@
+# @package _global_
+source:
+  type: "planewave"
+  wavelength:
+    mode: "sweep"
+    sweep:
+      start: 0.38
+      stop: 0.78
+      step: 0.01
+  angle:
+    theta_deg: 0.0
+    phi_deg: 0.0
+  polarization: "unpolarized"

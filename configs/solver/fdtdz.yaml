@@ -1,0 +1,24 @@
+# @package _global_
+#
+# fdtdz solver configuration (EXPERIMENTAL / PLANNED)
+#
+# fdtdz is a JAX-based 3D FDTD solver optimized for TPU/GPU.
+# This configuration is a stub for Phase 2 integration.
+# Status: Not yet implemented.
+
+solver:
+  name: "fdtdz"
+  type: "fdtd"
+
+  params:
+    grid_spacing: 0.02          # um per cell
+    runtime: 200                # femtoseconds
+    pml_layers: 15
+    courant_number: null        # auto-select based on grid
+    dtype: "float32"
+    jax_platform: "gpu"         # "cpu", "gpu", or "tpu"
+
+  convergence:
+    auto_converge: false
+    spacing_range: [0.01, 0.05]
+    qe_tolerance: 0.01

@@ -1,0 +1,4 @@
+# @package _global_
+compute:
+  backend: "mps"
+  num_workers: 4

@@ -1,0 +1,13 @@
+# @package _global_
+solver:
+  name: "grcwa"
+  type: "rcwa"
+
+  params:
+    fourier_order: [9, 9]
+    dtype: "complex128"
+
+  convergence:
+    auto_converge: false
+    order_range: [5, 25]
+    qe_tolerance: 0.01

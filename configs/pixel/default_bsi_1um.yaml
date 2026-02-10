@@ -1,0 +1,68 @@
+# @package _global_
+pixel:
+  pitch: 1.0
+  unit_cell: [2, 2]
+
+  layers:
+    air:
+      thickness: 1.0
+      material: "air"
+
+    microlens:
+      enabled: true
+      height: 0.6
+      radius_x: 0.48
+      radius_y: 0.48
+      material: "polymer_n1p56"
+      profile:
+        type: "superellipse"
+        n: 2.5
+        alpha: 1.0
+      shift:
+        mode: "auto_cra"
+        cra_deg: 0.0
+      gap: 0.0
+
+    planarization:
+      thickness: 0.3
+      material: "sio2"
+
+    color_filter:
+      thickness: 0.6
+      pattern: "bayer_rggb"
+      materials:
+        R: "cf_red"
+        G: "cf_green"
+        B: "cf_blue"
+      grid:
+        enabled: true
+        width: 0.05
+        height: 0.6
+        material: "tungsten"
+
+    barl:
+      layers:
+        - thickness: 0.010
+          material: "sio2"
+        - thickness: 0.025
+          material: "hfo2"
+        - thickness: 0.015
+          material: "sio2"
+        - thickness: 0.030
+          material: "si3n4"
+
+    silicon:
+      thickness: 3.0
+      material: "silicon"
+      photodiode:
+        position: [0.0, 0.0, 0.5]
+        size: [0.7, 0.7, 2.0]
+      dti:
+        enabled: true
+        width: 0.1
+        depth: 3.0
+        material: "sio2"
+
+  bayer_map:
+    - ["R", "G"]
+    - ["G", "B"]

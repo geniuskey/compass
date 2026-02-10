@@ -1,0 +1,25 @@
+# @package _global_
+solver:
+  name: "torcwa"
+  type: "rcwa"
+
+  params:
+    fourier_order: [9, 9]
+    dtype: "complex64"
+
+  convergence:
+    auto_converge: false
+    order_range: [5, 25]
+    qe_tolerance: 0.01
+
+  stability:
+    precision_strategy: "mixed"
+    allow_tf32: false
+    eigendecomp_device: "cpu"
+    fourier_factorization: "li_inverse"
+    energy_check:
+      enabled: true
+      tolerance: 0.02
+      auto_retry_float64: true
+    eigenvalue_broadening: 1.0e-10
+    condition_number_warning: 1.0e+12

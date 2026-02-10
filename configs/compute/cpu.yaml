@@ -1,0 +1,4 @@
+# @package _global_
+compute:
+  backend: "cpu"
+  num_workers: 4

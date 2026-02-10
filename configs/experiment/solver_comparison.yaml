@@ -1,0 +1,22 @@
+# @package _global_
+defaults:
+  - /pixel: default_bsi_1um
+  - /source: wavelength_sweep
+
+experiment:
+  name: "solver_comparison_2x2"
+  description: "Compare RCWA and FDTD solvers on 2x2 Bayer unit cell"
+
+  solvers:
+    - solver: "torcwa"
+      params:
+        fourier_order: [11, 11]
+    - solver: "meent"
+      params:
+        fourier_order: [11, 11]
+        backend: "torch"
+
+  comparison:
+    reference_solver: "torcwa"
+    metrics: ["qe_diff", "qe_relative_error", "energy_balance", "runtime"]
+    generate_report: true
