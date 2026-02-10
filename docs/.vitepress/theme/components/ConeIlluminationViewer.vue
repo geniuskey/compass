@@ -1,20 +1,20 @@
 <template>
   <div class="cone-illum-container">
-    <h4>Interactive Cone Illumination Viewer</h4>
+    <h4>{{ t('Interactive Cone Illumination Viewer', '인터랙티브 콘 조명 뷰어') }}</h4>
     <p class="component-description">
-      Visualize how Chief Ray Angle (CRA) and cone half-angle affect pixel illumination. The microlens shifts to compensate for oblique incidence.
+      {{ t('Visualize how Chief Ray Angle (CRA) and cone half-angle affect pixel illumination. The microlens shifts to compensate for oblique incidence.', 'CRA(주광선 각도)와 콘 반각이 픽셀 조명에 미치는 영향을 시각화합니다. 마이크로렌즈가 경사 입사를 보상하기 위해 이동합니다.') }}
     </p>
 
     <div class="controls-row">
       <div class="slider-group">
         <label>
-          CRA: <strong>{{ cra.toFixed(1) }}&deg;</strong>
+          {{ t('CRA Angle', 'CRA 각도') }}: <strong>{{ cra.toFixed(1) }}&deg;</strong>
         </label>
         <input type="range" min="0" max="30" step="0.5" v-model.number="cra" class="ctrl-range" />
       </div>
       <div class="slider-group">
         <label>
-          Cone half-angle: <strong>{{ halfAngle.toFixed(1) }}&deg;</strong>
+          {{ t('Cone half-angle', '콘 반각') }}: <strong>{{ halfAngle.toFixed(1) }}&deg;</strong>
         </label>
         <input type="range" min="5" max="30" step="0.5" v-model.number="halfAngle" class="ctrl-range" />
       </div>
@@ -26,7 +26,7 @@
         <span class="info-value">{{ cra.toFixed(1) }}&deg;</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Microlens shift:</span>
+        <span class="info-label">{{ t('Microlens shift', '마이크로렌즈 시프트') }}:</span>
         <span class="info-value">{{ mlShift.toFixed(3) }} um</span>
       </div>
       <div class="info-card">
@@ -34,7 +34,7 @@
         <span class="info-value">{{ fNumber.toFixed(1) }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Solid angle:</span>
+        <span class="info-label">{{ t('Solid angle', '입체각') }}:</span>
         <span class="info-value">{{ solidAngle.toFixed(3) }} sr</span>
       </div>
     </div>
@@ -58,7 +58,7 @@
           stroke="#9b59b6"
           stroke-width="1.5"
         />
-        <text :x="mlCenterX" :y="mlY - 8" text-anchor="middle" class="region-label">Microlens</text>
+        <text :x="mlCenterX" :y="mlY - 8" text-anchor="middle" class="region-label">{{ t('Microlens', '마이크로렌즈') }}</text>
 
         <!-- Microlens shift arrow -->
         <template v-if="cra > 1">
@@ -71,19 +71,19 @@
             stroke-width="1.5"
             marker-end="url(#coneArrowPurple)"
           />
-          <text :x="(pixelCenterX + mlCenterX) / 2" :y="mlY + 24" text-anchor="middle" class="shift-label">shift</text>
+          <text :x="(pixelCenterX + mlCenterX) / 2" :y="mlY + 24" text-anchor="middle" class="shift-label">{{ t('shift', '시프트') }}</text>
         </template>
 
         <!-- Stack layers (simplified) -->
         <rect :x="pixelLeft" :y="mlY + mlH" :width="pixelW" :height="planH" fill="#add8e6" opacity="0.4" stroke="var(--vp-c-divider)" stroke-width="0.5" />
-        <text :x="pixelCenterX" :y="mlY + mlH + planH / 2 + 3" text-anchor="middle" class="small-label">Planarization</text>
+        <text :x="pixelCenterX" :y="mlY + mlH + planH / 2 + 3" text-anchor="middle" class="small-label">{{ t('Planarization', '평탄화층') }}</text>
 
         <rect :x="pixelLeft" :y="cfY" :width="pixelW" :height="cfH" fill="#90ee90" opacity="0.4" stroke="var(--vp-c-divider)" stroke-width="0.5" />
-        <text :x="pixelCenterX" :y="cfY + cfH / 2 + 3" text-anchor="middle" class="small-label">Color Filter</text>
+        <text :x="pixelCenterX" :y="cfY + cfH / 2 + 3" text-anchor="middle" class="small-label">{{ t('Color Filter', '컬러 필터') }}</text>
 
         <!-- Photodiode region -->
         <rect :x="pdLeft" :y="pdY" :width="pdW" :height="pdH" fill="#f5deb3" opacity="0.5" stroke="#d2691e" stroke-width="1.2" rx="2" />
-        <text :x="pixelCenterX" :y="pdY + pdH / 2 + 4" text-anchor="middle" class="region-label">Photodiode</text>
+        <text :x="pixelCenterX" :y="pdY + pdH / 2 + 4" text-anchor="middle" class="region-label">{{ t('Photodiode', '포토다이오드') }}</text>
 
         <!-- Light rays (cone) -->
         <template v-for="(ray, idx) in rays" :key="idx">
@@ -118,7 +118,7 @@
           fill="#f39c12"
           opacity="0.6"
         />
-        <text :x="focusX" :y="pdY - 4" text-anchor="middle" class="focus-label">Focus spot</text>
+        <text :x="focusX" :y="pdY - 4" text-anchor="middle" class="focus-label">{{ t('Focus spot', '초점 위치') }}</text>
 
         <!-- Arrow markers -->
         <defs>
@@ -128,8 +128,8 @@
         </defs>
 
         <!-- Labels -->
-        <text x="10" y="16" class="region-label">Air</text>
-        <text :x="svgW - 10" :y="svgH - 8" text-anchor="end" class="region-label">Silicon</text>
+        <text x="10" y="16" class="region-label">{{ t('Air', '공기') }}</text>
+        <text :x="svgW - 10" :y="svgH - 8" text-anchor="end" class="region-label">{{ t('Silicon', '실리콘') }}</text>
       </svg>
     </div>
   </div>
@@ -137,6 +137,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+const { t } = useLocale()
 
 const cra = ref(10)
 const halfAngle = ref(14.5)

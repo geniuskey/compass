@@ -1,48 +1,48 @@
 <template>
   <div class="pixel-stack-container">
-    <h4>Interactive Pixel Stack Builder</h4>
+    <h4>{{ t('Interactive Pixel Stack Builder', '인터랙티브 픽셀 스택 빌더') }}</h4>
     <p class="component-description">
-      Adjust the thickness of each layer in a BSI pixel cross-section. The visualization shows the vertical stack with refractive indices and a scale bar.
+      {{ t('Adjust the thickness of each layer in a BSI pixel cross-section. The visualization shows the vertical stack with refractive indices and a scale bar.', 'BSI 픽셀 단면의 각 층 두께를 조정하세요. 시각화는 굴절률과 스케일 바가 포함된 수직 스택을 보여줍니다.') }}
     </p>
 
     <div class="layout-row">
       <div class="controls-panel">
         <div class="slider-group">
-          <label>Microlens height: <strong>{{ microlens.toFixed(2) }} um</strong></label>
+          <label>{{ t('Microlens height', '마이크로렌즈 높이') }}: <strong>{{ microlens.toFixed(2) }} um</strong></label>
           <input type="range" min="0.2" max="1.0" step="0.01" v-model.number="microlens" class="ctrl-range" />
         </div>
         <div class="slider-group">
-          <label>Planarization: <strong>{{ planarization.toFixed(2) }} um</strong></label>
+          <label>{{ t('Planarization', '평탄화층') }}: <strong>{{ planarization.toFixed(2) }} um</strong></label>
           <input type="range" min="0.1" max="0.5" step="0.01" v-model.number="planarization" class="ctrl-range" />
         </div>
         <div class="slider-group">
-          <label>Color filter: <strong>{{ colorFilter.toFixed(2) }} um</strong></label>
+          <label>{{ t('Color filter', '컬러 필터') }}: <strong>{{ colorFilter.toFixed(2) }} um</strong></label>
           <input type="range" min="0.3" max="1.0" step="0.01" v-model.number="colorFilter" class="ctrl-range" />
         </div>
         <div class="slider-group">
-          <label>BARL total: <strong>{{ barl.toFixed(3) }} um</strong></label>
+          <label>{{ t('BARL total', 'BARL 전체') }}: <strong>{{ barl.toFixed(3) }} um</strong></label>
           <input type="range" min="0.02" max="0.2" step="0.005" v-model.number="barl" class="ctrl-range" />
         </div>
         <div class="slider-group">
-          <label>Silicon: <strong>{{ silicon.toFixed(1) }} um</strong></label>
+          <label>{{ t('Silicon', '실리콘') }}: <strong>{{ silicon.toFixed(1) }} um</strong></label>
           <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="silicon" class="ctrl-range" />
         </div>
 
         <div class="toggle-group">
           <label class="toggle-label">
             <input type="checkbox" v-model="showDTI" />
-            Show DTI trenches
+            {{ t('Show DTI trenches', 'DTI 트렌치 표시') }}
           </label>
         </div>
         <div class="toggle-group">
           <label class="toggle-label">
             <input type="checkbox" v-model="showGrid" />
-            Show metal grid
+            {{ t('Show metal grid', '메탈 그리드 표시') }}
           </label>
         </div>
 
         <div class="info-card total-card">
-          <span class="info-label">Total stack height:</span>
+          <span class="info-label">{{ t('Total stack height', '전체 스택 높이') }}:</span>
           <span class="info-value">{{ totalHeight.toFixed(2) }} um</span>
         </div>
       </div>
@@ -155,6 +155,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+const { t } = useLocale()
 
 const microlens = ref(0.6)
 const planarization = ref(0.3)
@@ -182,11 +184,11 @@ function umToPx(um) {
 }
 
 const layerDefs = computed(() => [
-  { name: 'Microlens', thickness: microlens.value, color: '#dda0dd', n: '1.56' },
-  { name: 'Planarization', thickness: planarization.value, color: '#add8e6', n: '1.46' },
-  { name: 'Color Filter', thickness: colorFilter.value, color: '#90ee90', n: '1.55' },
+  { name: t('Microlens', '마이크로렌즈'), thickness: microlens.value, color: '#dda0dd', n: '1.56' },
+  { name: t('Planarization', '평탄화층'), thickness: planarization.value, color: '#add8e6', n: '1.46' },
+  { name: t('Color Filter', '컬러 필터'), thickness: colorFilter.value, color: '#90ee90', n: '1.55' },
   { name: 'BARL', thickness: barl.value, color: '#fffacd', n: '1.8' },
-  { name: 'Silicon', thickness: silicon.value, color: '#c0c0c0', n: '3.5' },
+  { name: t('Silicon', '실리콘'), thickness: silicon.value, color: '#c0c0c0', n: '3.5' },
 ])
 
 const layers = computed(() => {

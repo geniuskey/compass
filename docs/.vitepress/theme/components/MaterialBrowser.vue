@@ -1,13 +1,13 @@
 <template>
   <div class="material-browser-container">
-    <h4>Interactive Material Optical Properties</h4>
+    <h4>{{ t('Interactive Material Optical Properties', '대화형 재료 광학 특성') }}</h4>
     <p class="component-description">
-      Select a material to view its refractive index (n) and extinction coefficient (k) across the visible spectrum.
+      {{ t('Select a material to view its refractive index (n) and extinction coefficient (k) across the visible spectrum.', '재료를 선택하여 가시광선 영역에서의 굴절률(n)과 소광 계수(k)를 확인하세요.') }}
     </p>
 
     <div class="controls-row">
       <div class="select-group">
-        <label for="material-select">Material:</label>
+        <label for="material-select">{{ t('Material', '재료') }}:</label>
         <select id="material-select" v-model="selectedMaterial" class="material-select">
           <option v-for="m in materialList" :key="m.key" :value="m.key">{{ m.label }}</option>
         </select>
@@ -123,6 +123,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const W = 520
 const H = 340

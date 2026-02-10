@@ -64,6 +64,7 @@ const cookbookSidebar = [
     { text: 'CRA Shift Analysis', link: '/cookbook/cra-shift-analysis' },
     { text: 'BARL Design', link: '/cookbook/barl-design' },
     { text: 'DTI Crosstalk', link: '/cookbook/dti-crosstalk' },
+    { text: 'Signal Chain Color Accuracy', link: '/cookbook/signal-chain-color-accuracy' },
   ]}
 ]
 
@@ -142,6 +143,7 @@ const cookbookSidebarKo = [
     { text: 'CRA 시프트 분석', link: '/ko/cookbook/cra-shift-analysis' },
     { text: 'BARL 설계', link: '/ko/cookbook/barl-design' },
     { text: 'DTI 크로스토크', link: '/ko/cookbook/dti-crosstalk' },
+    { text: '신호 체인 색 정확도', link: '/ko/cookbook/signal-chain-color-accuracy' },
   ]}
 ]
 
@@ -162,6 +164,15 @@ export default defineConfig({
 
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/compass/favicon.svg' }],
+    ['meta', { property: 'og:title', content: 'COMPASS' }],
+    ['meta', { property: 'og:description', content: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:image', content: '/compass/logo.svg' }],
+    ['meta', { name: 'twitter:card', content: 'summary' }],
+    ['meta', { name: 'twitter:title', content: 'COMPASS' }],
+    ['meta', { name: 'twitter:description', content: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation' }],
+    ['meta', { name: 'theme-color', content: '#3451b2' }],
+    ['meta', { name: 'keywords', content: 'RCWA, FDTD, image sensor, pixel simulation, quantum efficiency, optical simulation, CMOS' }],
   ],
 
   locales: {

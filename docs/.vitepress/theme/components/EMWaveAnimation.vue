@@ -1,20 +1,20 @@
 <template>
   <div class="emwave-container">
-    <h4>Electromagnetic Wave Propagation</h4>
+    <h4>{{ t('Electromagnetic Wave Propagation', '전자기파 전파') }}</h4>
     <p class="component-description">
-      Animated EM wave showing perpendicular E and H fields. Adjust absorption to see exponential decay in an absorbing medium.
+      {{ t('Animated EM wave showing perpendicular E and H fields. Adjust absorption to see exponential decay in an absorbing medium.', '수직인 E장과 H장을 보여주는 전자기파 애니메이션입니다. 흡수를 조절하여 흡수 매질에서의 지수적 감쇠를 확인하세요.') }}
     </p>
 
     <div class="controls-row">
       <button class="play-btn" @click="togglePlay">
-        {{ isPlaying ? 'Pause' : 'Play' }}
+        {{ isPlaying ? t('Pause', '일시정지') : t('Play', '재생') }}
       </button>
       <div class="slider-group">
-        <label>Wavelength: <strong>{{ wavelength }} nm</strong></label>
+        <label>{{ t('Wavelength', '파장') }}: <strong>{{ wavelength }} nm</strong></label>
         <input type="range" min="400" max="700" step="10" v-model.number="wavelength" class="ctrl-range" />
       </div>
       <div class="slider-group">
-        <label>Absorption k: <strong>{{ kValue.toFixed(2) }}</strong></label>
+        <label>{{ t('Absorption', '흡수') }} k: <strong>{{ kValue.toFixed(2) }}</strong></label>
         <input type="range" min="0" max="1.0" step="0.01" v-model.number="kValue" class="ctrl-range" />
       </div>
     </div>
@@ -44,7 +44,7 @@
           :y="H - 4"
           text-anchor="middle"
           class="interface-label"
-        >Interface</text>
+        >{{ t('Interface', '계면') }}</text>
 
         <!-- Propagation axis -->
         <line :x1="padL" :y1="midY" :x2="padL + plotW" :y2="midY" stroke="var(--vp-c-text-3)" stroke-width="0.5" stroke-dasharray="3,3" />
@@ -85,6 +85,9 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const W = 560
 const H = 240

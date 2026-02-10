@@ -5,6 +5,9 @@ hero:
   name: "COMPASS"
   text: "고급 센서 시뮬레이션을 위한 크로스 솔버 광학 모델링 플랫폼"
   tagline: RCWA 및 FDTD 솔버를 사용하여 BSI CMOS 이미지 센서 픽셀의 양자 효율을 시뮬레이션합니다
+  image:
+    src: /logo.svg
+    alt: COMPASS
   actions:
     - theme: brand
       text: 시작하기

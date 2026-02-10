@@ -5,6 +5,9 @@ hero:
   name: "COMPASS"
   text: "Cross-solver Optical Modeling Platform for Advanced Sensor Simulation"
   tagline: Simulate quantum efficiency of BSI CMOS image sensor pixels with RCWA and FDTD solvers
+  image:
+    src: /logo.svg
+    alt: COMPASS
   actions:
     - theme: brand
       text: Get Started

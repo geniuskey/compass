@@ -1,8 +1,11 @@
 <template>
   <div class="stack-container">
-    <h4>Interactive BSI Pixel Stack Cross-Section</h4>
+    <h4>{{ t('Interactive BSI Pixel Stack Cross-Section', '인터랙티브 BSI 픽셀 스택 단면') }}</h4>
     <p class="component-description">
-      Click on any layer to view its material properties and role in the pixel stack.
+      {{ t(
+        'Click on any layer to view its material properties and role in the pixel stack.',
+        '스택 다이어그램에서 레이어를 클릭하면 해당 재료 특성과 픽셀 스택에서의 역할을 확인할 수 있습니다.'
+      ) }}
     </p>
 
     <div class="stack-layout">
@@ -21,7 +24,7 @@
           </defs>
 
           <line x1="180" y1="5" x2="180" y2="35" stroke="#f39c12" stroke-width="2" marker-end="url(#lightArrow)" />
-          <text x="200" y="15" class="light-label">Incident light</text>
+          <text x="200" y="15" class="light-label">{{ t('Incident light', '입사광') }}</text>
 
           <!-- Layers -->
           <template v-for="(layer, idx) in layers" :key="layer.id">
@@ -141,30 +144,33 @@
           <h5>{{ selectedLayer.name }}</h5>
           <table class="props-table">
             <tr>
-              <td class="prop-key">Material</td>
+              <td class="prop-key">{{ t('Material', '재료') }}</td>
               <td class="prop-val">{{ selectedLayer.material }}</td>
             </tr>
             <tr>
-              <td class="prop-key">Typical thickness</td>
+              <td class="prop-key">{{ t('Typical thickness', '일반적인 두께') }}</td>
               <td class="prop-val">{{ selectedLayer.thickness }}</td>
             </tr>
             <tr>
-              <td class="prop-key">Refractive index (n)</td>
+              <td class="prop-key">{{ t('Refractive index', '굴절률') }} (n)</td>
               <td class="prop-val">{{ selectedLayer.n }}</td>
             </tr>
             <tr v-if="selectedLayer.k">
-              <td class="prop-key">Extinction coeff. (k)</td>
+              <td class="prop-key">{{ t('Extinction coeff.', '소광 계수') }} (k)</td>
               <td class="prop-val">{{ selectedLayer.k }}</td>
             </tr>
             <tr>
-              <td class="prop-key">Function</td>
-              <td class="prop-val">{{ selectedLayer.role }}</td>
+              <td class="prop-key">{{ t('Function', '기능') }}</td>
+              <td class="prop-val">{{ t(selectedLayer.role, selectedLayer.roleKo) }}</td>
             </tr>
           </table>
-          <p class="detail-desc">{{ selectedLayer.description }}</p>
+          <p class="detail-desc">{{ t(selectedLayer.description, selectedLayer.descriptionKo) }}</p>
         </div>
         <div v-else class="detail-placeholder">
-          Click a layer in the stack diagram to see its properties.
+          {{ t(
+            'Click a layer in the stack diagram to see its properties.',
+            '스택 다이어그램에서 레이어를 클릭하면 속성을 확인할 수 있습니다.'
+          ) }}
         </div>
       </div>
     </div>
@@ -173,6 +179,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const svgW = 340
 const svgH = 420
@@ -190,7 +199,9 @@ const layers = [
     n: '1.000',
     k: null,
     role: 'Incident medium',
+    roleKo: '입사 매질',
     description: 'The medium above the pixel. For on-chip applications this is air (n=1). In some configurations an encapsulant (n~1.5) may be present. Defines the reference for incidence angle and Fresnel reflection at the top surface.',
+    descriptionKo: '픽셀 위의 매질입니다. 온칩 응용에서는 공기(n=1)입니다. 일부 구성에서는 봉지재(n~1.5)가 존재할 수 있습니다. 입사각과 상부 표면에서의 프레넬 반사에 대한 기준을 정의합니다.',
     heightFrac: 0.06,
     lightText: false,
   },
@@ -204,7 +215,9 @@ const layers = [
     n: '1.50 - 1.58',
     k: null,
     role: 'Light focusing',
+    roleKo: '집광',
     description: 'Curved polymer structure that focuses incoming light toward the center of the pixel photodiode. Modeled in COMPASS as a superellipse profile. The lens center can be shifted to compensate for Chief Ray Angle (CRA) at the sensor edge.',
+    descriptionKo: '입사광을 픽셀 포토다이오드 중심으로 집중시키는 곡면 폴리머 구조입니다. COMPASS에서 초타원 프로파일로 모델링됩니다. 센서 가장자리에서 주광선 각도(CRA)를 보정하기 위해 렌즈 중심을 이동할 수 있습니다.',
     heightFrac: 0.10,
     lightText: false,
   },
@@ -217,7 +230,9 @@ const layers = [
     n: '1.46',
     k: null,
     role: 'Gap fill / planarization',
+    roleKo: '갭 충전 / 평탄화',
     description: 'A uniform dielectric layer (usually SiO2) that fills the space between the microlens and color filter array. Provides a flat surface for the color filter deposition and acts as a spacer that controls the microlens focal distance.',
+    descriptionKo: '마이크로렌즈와 컬러 필터 배열 사이 공간을 채우는 균일한 유전체층(보통 SiO2)입니다. 컬러 필터 증착을 위한 평탄한 표면을 제공하며, 마이크로렌즈 초점 거리를 제어하는 스페이서 역할을 합니다.',
     heightFrac: 0.10,
     lightText: false,
   },
@@ -230,7 +245,9 @@ const layers = [
     n: '1.55 - 1.70',
     k: '0.0 - 0.5 (passband/stopband)',
     role: 'Wavelength selection',
+    roleKo: '파장 선택',
     description: 'Organic dye-based filter arranged in a Bayer RGGB pattern. Each sub-pixel absorbs unwanted wavelengths while transmitting its target color. The metal grid (typically tungsten, 40-80 nm wide) between color filter elements provides optical isolation to reduce crosstalk.',
+    descriptionKo: '베이어 RGGB 패턴으로 배열된 유기 염료 기반 필터입니다. 각 서브 픽셀은 불필요한 파장을 흡수하고 목표 색상만 투과시킵니다. 컬러 필터 요소 사이의 금속 격자(일반적으로 텅스텐, 40-80 nm 폭)가 크로스토크를 줄이기 위한 광학 차단 역할을 합니다.',
     heightFrac: 0.12,
     lightText: false,
   },
@@ -243,7 +260,9 @@ const layers = [
     n: '1.46 - 2.05 (varies by sub-layer)',
     k: '~0 (dielectric)',
     role: 'Anti-reflection',
+    roleKo: '반사 방지',
     description: 'Bottom Anti-Reflection Layer: a multi-layer dielectric stack (typically 2-5 sub-layers of SiO2, HfO2, Si3N4) designed to minimize reflection at the color-filter-to-silicon interface. Without BARL, the large index mismatch (n~1.55 to n~4.0) causes ~20-30% reflection loss.',
+    descriptionKo: '하부 반사 방지층: 컬러 필터-실리콘 계면에서의 반사를 최소화하기 위해 설계된 다층 유전체 스택(일반적으로 SiO2, HfO2, Si3N4의 2-5개 하위층)입니다. BARL이 없으면 큰 굴절률 불일치(n~1.55에서 n~4.0)로 인해 약 20-30%의 반사 손실이 발생합니다.',
     heightFrac: 0.05,
     lightText: true,
   },
@@ -256,7 +275,9 @@ const layers = [
     n: '3.5 - 4.3 (wavelength dependent)',
     k: '0.003 - 2.2 (wavelength dependent)',
     role: 'Photon absorption & charge generation',
+    roleKo: '광자 흡수 및 전하 생성',
     description: 'The active absorbing layer where photons generate electron-hole pairs. Deep Trench Isolation (DTI) trenches filled with SiO2 (n~1.46) optically isolate adjacent pixels via total internal reflection. The photodiode occupies a defined region within the silicon volume. COMPASS integrates absorbed power within the photodiode bounding box to compute QE.',
+    descriptionKo: '광자가 전자-정공 쌍을 생성하는 활성 흡수층입니다. SiO2(n~1.46)로 채워진 Deep Trench Isolation(DTI) 트렌치가 전반사를 통해 인접 픽셀을 광학적으로 차단합니다. 포토다이오드는 실리콘 내 정의된 영역을 차지합니다. COMPASS는 포토다이오드 경계 상자 내에서 흡수된 전력을 적분하여 QE를 계산합니다.',
     heightFrac: 0.38,
     lightText: true,
   },
@@ -269,7 +290,9 @@ const layers = [
     n: 'N/A (absorbing boundary)',
     k: null,
     role: 'Mechanical support & interconnect',
+    roleKo: '기계적 지지 및 배선',
     description: 'In a BSI sensor, the metal wiring and transistors are on this side (opposite to light entry). Acts as a reflecting/absorbing boundary in the simulation. Any photons reaching this layer are either absorbed by metal or reflected back into the silicon. COMPASS typically models this as a perfectly matched layer (PML) or fixed boundary condition.',
+    descriptionKo: 'BSI 센서에서 금속 배선과 트랜지스터는 이 쪽(빛 입사 반대편)에 위치합니다. 시뮬레이션에서 반사/흡수 경계 역할을 합니다. 이 층에 도달하는 광자는 금속에 흡수되거나 실리콘으로 다시 반사됩니다. COMPASS는 일반적으로 이를 완전 정합층(PML) 또는 고정 경계 조건으로 모델링합니다.',
     heightFrac: 0.10,
     lightText: true,
   },

@@ -1,14 +1,14 @@
 <template>
   <div class="precision-container">
-    <h4>Numerical Precision Comparison: Float32 vs Float64</h4>
+    <h4>{{ t('Numerical Precision Comparison: Float32 vs Float64', '수치 정밀도 비교: Float32 vs Float64') }}</h4>
     <p class="component-description">
-      See how floating-point precision affects phase computation accuracy in wave optics. As phase accumulates over many cycles, float32 errors grow while float64 stays accurate.
+      {{ t('See how floating-point precision affects phase computation accuracy in wave optics. As phase accumulates over many cycles, float32 errors grow while float64 stays accurate.', '부동소수점 정밀도가 파동광학의 위상 계산 정확도에 미치는 영향을 확인하세요. 위상이 여러 주기에 걸쳐 누적되면 float32 오차는 증가하고 float64는 정확하게 유지됩니다.') }}
     </p>
 
     <div class="slider-section">
       <label>
-        Phase accumulation: <strong>{{ phaseMultiplier.toFixed(0) }} &times; 2&pi;</strong>
-        (total phase = {{ totalPhase.toFixed(1) }} rad)
+        {{ t('Phase accumulation', '위상 누적') }}: <strong>{{ phaseMultiplier.toFixed(0) }} &times; 2&pi;</strong>
+        ({{ t('total phase', '전체 위상') }} = {{ totalPhase.toFixed(1) }} rad)
       </label>
       <input type="range" min="0" max="100" step="1" v-model.number="phaseMultiplier" class="ctrl-range" />
     </div>
@@ -29,12 +29,12 @@
             <span class="val-mono">{{ f32Sin }}</span>
           </div>
           <div class="val-row">
-            <span class="val-label">Error magnitude:</span>
+            <span class="val-label">{{ t('Error magnitude', '오차 크기') }}:</span>
             <span class="val-mono" :style="{ color: f32ErrorColor }">{{ f32ErrorStr }}</span>
           </div>
           <div class="precision-note">
-            ~7 significant digits<br />
-            Machine epsilon: 1.2e-7
+            {{ t('~7 significant digits', '~7 유효 숫자') }}<br />
+            {{ t('Machine epsilon', '기계 엡실론') }}: 1.2e-7
           </div>
         </div>
       </div>
@@ -54,12 +54,12 @@
             <span class="val-mono">{{ f64Sin }}</span>
           </div>
           <div class="val-row">
-            <span class="val-label">Error magnitude:</span>
+            <span class="val-label">{{ t('Error magnitude', '오차 크기') }}:</span>
             <span class="val-mono" style="color: #27ae60;">{{ f64ErrorStr }}</span>
           </div>
           <div class="precision-note">
-            ~16 significant digits<br />
-            Machine epsilon: 2.2e-16
+            {{ t('~16 significant digits', '~16 유효 숫자') }}<br />
+            {{ t('Machine epsilon', '기계 엡실론') }}: 2.2e-16
           </div>
         </div>
       </div>
@@ -100,7 +100,7 @@
           stroke-width="1"
           stroke-dasharray="6,3"
         />
-        <text :x="pad.left + plotW + 4" :y="yLogScale(qeTolerance) + 3" class="threshold-label">0.5% QE tolerance</text>
+        <text :x="pad.left + plotW + 4" :y="yLogScale(qeTolerance) + 3" class="threshold-label">{{ t('0.5% QE tolerance', '0.5% QE 허용 오차') }}</text>
 
         <!-- Float32 error bars -->
         <template v-for="(pt, idx) in errorData" :key="'f32-' + idx">
@@ -144,6 +144,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+const { t } = useLocale()
 
 const phaseMultiplier = ref(20)
 const qeTolerance = 0.005

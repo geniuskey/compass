@@ -1,14 +1,17 @@
 <template>
   <div class="rcwa-conv-container">
-    <h4>RCWA Convergence Demo</h4>
+    <h4>{{ t('RCWA Convergence Demo', 'RCWA 수렴 데모') }}</h4>
     <p class="component-description">
-      See how increasing the Fourier order N improves the accuracy of permittivity reconstruction and RCWA reflectance/transmittance convergence for a binary grating.
+      {{ t(
+        'See how increasing the Fourier order N improves the accuracy of permittivity reconstruction and RCWA reflectance/transmittance convergence for a binary grating.',
+        '푸리에 차수 N을 높이면 유전율 재구성의 정확도와 이진 격자에 대한 RCWA 반사율/투과율 수렴이 어떻게 개선되는지 확인하세요.'
+      ) }}
     </p>
 
     <div class="controls-row">
       <div class="slider-group">
         <label>
-          Fourier Order N: <strong>{{ order }}</strong>
+          {{ t('Fourier Order', '푸리에 차수') }} N: <strong>{{ order }}</strong>
         </label>
         <input type="range" min="1" max="20" step="1" v-model.number="order" class="ctrl-range" />
       </div>
@@ -16,19 +19,19 @@
 
     <div class="info-row">
       <div class="info-card">
-        <span class="info-label">Total harmonics:</span>
+        <span class="info-label">{{ t('Total Harmonics', '전체 고조파 수') }}:</span>
         <span class="info-value">{{ 2 * order + 1 }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Matrix size:</span>
+        <span class="info-label">{{ t('Matrix Size', '행렬 크기') }}:</span>
         <span class="info-value">{{ (2 * order + 1) }}&times;{{ (2 * order + 1) }} = {{ (2 * order + 1) ** 2 }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Cost (O(M&sup3;)):</span>
+        <span class="info-label">{{ t('Computational Cost', '연산 비용') }} (O(M&sup3;)):</span>
         <span class="info-value">~{{ costDisplay }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Gibbs overshoot:</span>
+        <span class="info-label">{{ t('Gibbs Overshoot', '깁스 오버슈트') }}:</span>
         <span class="info-value">{{ (gibbsOvershoot * 100).toFixed(1) }}%</span>
       </div>
     </div>
@@ -36,7 +39,7 @@
     <div class="plots-layout">
       <!-- Plot 1: Permittivity reconstruction -->
       <div class="plot-section">
-        <div class="plot-title">Permittivity Profile Reconstruction</div>
+        <div class="plot-title">{{ t('Permittivity Profile Reconstruction', '유전율 프로파일 재구성') }}</div>
         <svg :viewBox="`0 0 ${pW} ${pH}`" class="plot-svg">
           <!-- Grid -->
           <line :x1="pL" :y1="pT" :x2="pL" :y2="pB" stroke="var(--vp-c-text-3)" stroke-width="1" />
@@ -56,7 +59,7 @@
           </template>
 
           <text :x="pL - 5" :y="pT - 5" text-anchor="start" class="axis-label-small">&epsilon;</text>
-          <text :x="pL + ppW / 2" :y="pB + 26" text-anchor="middle" class="axis-label-small">Position in unit cell</text>
+          <text :x="pL + ppW / 2" :y="pB + 26" text-anchor="middle" class="axis-label-small">{{ t('Position in unit cell', '단위 셀 내 위치') }}</text>
 
           <!-- Original step function (dashed) -->
           <path :d="originalEpsPath" fill="none" stroke="var(--vp-c-text-3)" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.7" />
@@ -66,15 +69,15 @@
 
           <!-- Legend -->
           <line :x1="pL + ppW - 120" :y1="pT + 10" :x2="pL + ppW - 100" :y2="pT + 10" stroke="var(--vp-c-text-3)" stroke-width="1.5" stroke-dasharray="6,4" />
-          <text :x="pL + ppW - 95" :y="pT + 14" class="legend-label">Original</text>
+          <text :x="pL + ppW - 95" :y="pT + 14" class="legend-label">{{ t('Original', '원본') }}</text>
           <line :x1="pL + ppW - 120" :y1="pT + 25" :x2="pL + ppW - 100" :y2="pT + 25" stroke="var(--vp-c-brand-1)" stroke-width="2.5" />
-          <text :x="pL + ppW - 95" :y="pT + 29" class="legend-label">Fourier (N={{ order }})</text>
+          <text :x="pL + ppW - 95" :y="pT + 29" class="legend-label">{{ t('Fourier', '푸리에') }} (N={{ order }})</text>
         </svg>
       </div>
 
       <!-- Plot 2: Convergence curve -->
       <div class="plot-section">
-        <div class="plot-title">R, T Convergence vs Fourier Order</div>
+        <div class="plot-title">{{ t('R, T Convergence vs Fourier Order', 'R, T 수렴 vs 푸리에 차수') }}</div>
         <svg :viewBox="`0 0 ${pW} ${pH}`" class="plot-svg">
           <!-- Grid -->
           <line :x1="pL" :y1="pT" :x2="pL" :y2="pB" stroke="var(--vp-c-text-3)" stroke-width="1" />
@@ -93,7 +96,7 @@
             <text :x="orderToX(n)" :y="pB + 14" text-anchor="middle" class="tick-label">{{ n }}</text>
           </template>
 
-          <text :x="pL + ppW / 2" :y="pB + 26" text-anchor="middle" class="axis-label-small">Fourier Order N</text>
+          <text :x="pL + ppW / 2" :y="pB + 26" text-anchor="middle" class="axis-label-small">{{ t('Fourier Order', '푸리에 차수') }} N</text>
 
           <!-- R curve -->
           <path :d="rCurvePath" fill="none" stroke="#e74c3c" stroke-width="2" />
@@ -110,9 +113,9 @@
 
           <!-- Legend -->
           <line :x1="pL + ppW - 100" :y1="pT + 10" :x2="pL + ppW - 80" :y2="pT + 10" stroke="#e74c3c" stroke-width="2" />
-          <text :x="pL + ppW - 75" :y="pT + 14" class="legend-label">R (reflectance)</text>
+          <text :x="pL + ppW - 75" :y="pT + 14" class="legend-label">R ({{ t('reflectance', '반사율') }})</text>
           <line :x1="pL + ppW - 100" :y1="pT + 25" :x2="pL + ppW - 80" :y2="pT + 25" stroke="#3498db" stroke-width="2" />
-          <text :x="pL + ppW - 75" :y="pT + 29" class="legend-label">T (transmittance)</text>
+          <text :x="pL + ppW - 75" :y="pT + 29" class="legend-label">T ({{ t('transmittance', '투과율') }})</text>
         </svg>
       </div>
     </div>
@@ -121,6 +124,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const order = ref(5)
 

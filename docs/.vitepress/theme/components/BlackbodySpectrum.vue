@@ -1,14 +1,14 @@
 <template>
   <div class="blackbody-container">
-    <h4>Interactive Blackbody Spectrum Viewer</h4>
+    <h4>{{ t('Interactive Blackbody Spectrum Viewer', '인터랙티브 흑체 스펙트럼 뷰어') }}</h4>
     <p class="component-description">
-      Adjust the color temperature to see how the blackbody spectrum changes. Enable standard illuminant overlays for comparison.
+      {{ t('Adjust the color temperature to see how the blackbody spectrum changes. Enable standard illuminant overlays for comparison.', '색온도를 조정하여 흑체 스펙트럼의 변화를 확인하세요. 비교를 위해 표준 광원 오버레이를 활성화할 수 있습니다.') }}
     </p>
 
     <div class="controls-row">
       <div class="slider-group" style="flex: 2;">
         <label>
-          Color Temperature: <strong>{{ temperature }} K</strong>
+          {{ t('Color Temperature', '색온도') }}: <strong>{{ temperature }} K</strong>
         </label>
         <input type="range" min="2000" max="10000" step="100" v-model.number="temperature" class="ctrl-range" />
       </div>
@@ -39,12 +39,12 @@
         <span class="info-value">{{ lambdaMax }} nm</span>
       </div>
       <div class="info-card" style="border-left: 3px solid #27ae60;">
-        <span class="info-label">Visible Power:</span>
+        <span class="info-label">{{ t('Visible Power', '상대 가시광 출력') }}:</span>
         <span class="info-value">{{ visiblePower }}%</span>
       </div>
       <div class="info-card color-swatch-card">
         <div class="color-swatch" :style="{ backgroundColor: bbColor }"></div>
-        <span class="info-label">Approx. Color</span>
+        <span class="info-label">{{ t('Approx. Color', '근사 색상') }}</span>
       </div>
     </div>
 
@@ -220,6 +220,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+const { t } = useLocale()
 
 const temperature = ref(5500)
 const showD65 = ref(false)

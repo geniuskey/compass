@@ -1,26 +1,29 @@
 <template>
   <div class="qe-spectrum-container">
-    <h4>Interactive QE Spectrum Chart</h4>
+    <h4>{{ t('Interactive QE Spectrum Chart', '대화형 QE 스펙트럼 차트') }}</h4>
     <p class="component-description">
-      Explore how silicon thickness, BARL quality, and metal grid width affect the quantum efficiency spectrum of Red, Green, and Blue channels.
+      {{ t(
+        'Explore how silicon thickness, BARL quality, and metal grid width affect the quantum efficiency spectrum of Red, Green, and Blue channels.',
+        '실리콘 두께, BARL 품질, 메탈 그리드 폭이 Red, Green, Blue 채널의 양자 효율 스펙트럼에 미치는 영향을 살펴봅니다.'
+      ) }}
     </p>
 
     <div class="controls-row">
       <div class="slider-group">
         <label>
-          Silicon thickness: <strong>{{ siliconThickness.toFixed(1) }} um</strong>
+          {{ t('Silicon thickness:', '실리콘 두께:') }} <strong>{{ siliconThickness.toFixed(1) }} um</strong>
         </label>
         <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siliconThickness" class="ctrl-range" />
       </div>
       <div class="slider-group">
         <label>
-          BARL quality: <strong>{{ barlQuality }}%</strong>
+          {{ t('BARL quality:', 'BARL 품질:') }} <strong>{{ barlQuality }}%</strong>
         </label>
         <input type="range" min="0" max="100" step="1" v-model.number="barlQuality" class="ctrl-range" />
       </div>
       <div class="slider-group">
         <label>
-          Metal grid width: <strong>{{ gridWidth }} nm</strong>
+          {{ t('Metal grid width:', '메탈 그리드 폭:') }} <strong>{{ gridWidth }} nm</strong>
         </label>
         <input type="range" min="0" max="100" step="1" v-model.number="gridWidth" class="ctrl-range" />
       </div>
@@ -28,19 +31,19 @@
 
     <div class="info-row">
       <div class="info-card" style="border-left: 3px solid #3498db;">
-        <span class="info-label">Blue peak QE:</span>
+        <span class="info-label">{{ t('Blue peak QE:', 'Blue 최대 QE:') }}</span>
         <span class="info-value">{{ peakBlue.toFixed(1) }}%</span>
       </div>
       <div class="info-card" style="border-left: 3px solid #27ae60;">
-        <span class="info-label">Green peak QE:</span>
+        <span class="info-label">{{ t('Green peak QE:', 'Green 최대 QE:') }}</span>
         <span class="info-value">{{ peakGreen.toFixed(1) }}%</span>
       </div>
       <div class="info-card" style="border-left: 3px solid #e74c3c;">
-        <span class="info-label">Red peak QE:</span>
+        <span class="info-label">{{ t('Red peak QE:', 'Red 최대 QE:') }}</span>
         <span class="info-value">{{ peakRed.toFixed(1) }}%</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Average QE:</span>
+        <span class="info-label">{{ t('Average QE:', '평균 QE:') }}</span>
         <span class="info-value">{{ avgQE.toFixed(1) }}%</span>
       </div>
     </div>
@@ -159,6 +162,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const siliconThickness = ref(3.0)
 const barlQuality = ref(70)

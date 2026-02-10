@@ -1,26 +1,26 @@
 <template>
   <div class="signal-chain-container">
-    <h4>Interactive Signal Chain Diagram</h4>
+    <h4>{{ t('Interactive Signal Chain Diagram', '인터랙티브 신호 체인 다이어그램') }}</h4>
     <p class="component-description">
-      Trace the spectrum through each stage of the signal chain. Select illuminant and scene to see how the spectrum transforms at each stage.
+      {{ t('Trace the spectrum through each stage of the signal chain. Select illuminant and scene to see how the spectrum transforms at each stage.', '신호 체인의 각 단계를 통해 스펙트럼을 추적합니다. 광원과 장면을 선택하여 각 단계에서 스펙트럼이 어떻게 변환되는지 확인하세요.') }}
     </p>
 
     <div class="controls-row">
       <div class="select-group">
-        <label>Illuminant:</label>
+        <label>{{ t('Select Illuminant', '광원 선택') }}:</label>
         <select v-model="selectedIlluminant" class="ctrl-select">
-          <option value="d65">CIE D65 (Daylight)</option>
-          <option value="a">CIE A (Incandescent)</option>
+          <option value="d65">CIE D65 ({{ t('Daylight', '주광') }})</option>
+          <option value="a">CIE A ({{ t('Incandescent', '백열등') }})</option>
           <option value="led">LED White (5000K)</option>
         </select>
       </div>
       <div class="select-group">
-        <label>Scene:</label>
+        <label>{{ t('Select Scene', '장면 선택') }}:</label>
         <select v-model="selectedScene" class="ctrl-select">
-          <option value="grey18">18% Grey</option>
-          <option value="red">Red Patch</option>
-          <option value="green">Green Patch</option>
-          <option value="blue">Blue Patch</option>
+          <option value="grey18">{{ t('18% Grey', '18% 그레이') }}</option>
+          <option value="red">{{ t('Red Patch', '빨간색 패치') }}</option>
+          <option value="green">{{ t('Green Patch', '초록색 패치') }}</option>
+          <option value="blue">{{ t('Blue Patch', '파란색 패치') }}</option>
         </select>
       </div>
     </div>
@@ -50,23 +50,23 @@
     <!-- Info cards -->
     <div class="info-row">
       <div class="info-card" style="border-left: 3px solid #e74c3c;">
-        <span class="info-label">Red signal:</span>
+        <span class="info-label">{{ t('Red signal', '빨간색 신호') }}:</span>
         <span class="info-value">{{ signalR.toFixed(2) }}</span>
       </div>
       <div class="info-card" style="border-left: 3px solid #27ae60;">
-        <span class="info-label">Green signal:</span>
+        <span class="info-label">{{ t('Green signal', '초록색 신호') }}:</span>
         <span class="info-value">{{ signalG.toFixed(2) }}</span>
       </div>
       <div class="info-card" style="border-left: 3px solid #3498db;">
-        <span class="info-label">Blue signal:</span>
+        <span class="info-label">{{ t('Blue signal', '파란색 신호') }}:</span>
         <span class="info-value">{{ signalB.toFixed(2) }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">R/G:</span>
+        <span class="info-label">{{ t('R/G Ratio', 'R/G 비율') }}:</span>
         <span class="info-value">{{ rgRatio }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">B/G:</span>
+        <span class="info-label">{{ t('B/G Ratio', 'B/G 비율') }}:</span>
         <span class="info-value">{{ bgRatio }}</span>
       </div>
     </div>
@@ -186,7 +186,7 @@
 
     <!-- RGB Bar chart -->
     <div class="bar-section">
-      <h5>Per-Channel Signal (integrated with QE)</h5>
+      <h5>{{ t('Per-Channel Signal (integrated with QE)', '채널별 신호 (QE 적분)') }}</h5>
       <div class="bar-chart">
         <div class="bar-group">
           <div class="bar-wrapper">
@@ -216,6 +216,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+const { t } = useLocale()
 
 const selectedIlluminant = ref('d65')
 const selectedScene = ref('grey18')
@@ -242,26 +244,26 @@ function yScale(val) {
 }
 
 // Flow stages
-const stages = [
-  { id: 'source', icon: '\u2600', label: 'Light Source', sub: 'L(\u03BB)' },
-  { id: 'scene', icon: '\uD83C\uDFA8', label: 'Scene', sub: 'R(\u03BB)' },
-  { id: 'lens', icon: '\uD83D\uDD0D', label: 'Lens', sub: 'T_lens(\u03BB)' },
-  { id: 'ir', icon: '\uD83D\uDEE1', label: 'IR Filter', sub: 'T_IR(\u03BB)' },
-  { id: 'sensor', icon: '\u25A3', label: 'Sensor', sub: 'QE(\u03BB)' },
-  { id: 'signal', icon: '\u26A1', label: 'Signal', sub: 'N_e' },
-]
+const stages = computed(() => [
+  { id: 'source', icon: '\u2600', label: t('Light Source', '광원'), sub: 'L(\u03BB)' },
+  { id: 'scene', icon: '\uD83C\uDFA8', label: t('Scene', '장면'), sub: 'R(\u03BB)' },
+  { id: 'lens', icon: '\uD83D\uDD0D', label: t('Lens', '렌즈'), sub: 'T_lens(\u03BB)' },
+  { id: 'ir', icon: '\uD83D\uDEE1', label: t('IR Filter', 'IR 필터'), sub: 'T_IR(\u03BB)' },
+  { id: 'sensor', icon: '\u25A3', label: t('Sensor', '센서'), sub: 'QE(\u03BB)' },
+  { id: 'signal', icon: '\u26A1', label: t('Signal', '신호'), sub: 'N_e' },
+])
 
-const stageDetails = {
-  source: { title: 'Light Source', description: 'Spectral power distribution of the illuminant. Different sources emit different spectral shapes.' },
-  scene: { title: 'Scene Reflectance', description: 'The fraction of light reflected at each wavelength. Colored objects selectively reflect certain wavelengths.' },
-  lens: { title: 'Camera Lens', description: 'Multi-element lens transmittance. Typically 85-95% across the visible spectrum for a well-designed module.' },
-  ir: { title: 'IR Cut Filter', description: 'Blocks near-infrared light (>650nm) to prevent color distortion. Sharp cutoff with ~30nm transition.' },
-  sensor: { title: 'Image Sensor', description: 'Pixel quantum efficiency determines how many photons are converted to electrons per color channel.' },
-  signal: { title: 'Electrical Signal', description: 'Final photoelectron count per channel, ready for analog-to-digital conversion.' },
-}
+const stageDetails = computed(() => ({
+  source: { title: t('Light Source', '광원'), description: t('Spectral power distribution of the illuminant. Different sources emit different spectral shapes.', '광원의 분광 출력 분포입니다. 광원에 따라 서로 다른 스펙트럼 형태를 방출합니다.') },
+  scene: { title: t('Scene Reflectance', '장면 반사율'), description: t('The fraction of light reflected at each wavelength. Colored objects selectively reflect certain wavelengths.', '각 파장에서 반사되는 빛의 비율입니다. 색상이 있는 물체는 특정 파장을 선택적으로 반사합니다.') },
+  lens: { title: t('Camera Lens', '카메라 렌즈'), description: t('Multi-element lens transmittance. Typically 85-95% across the visible spectrum for a well-designed module.', '다중 소자 렌즈 투과율입니다. 잘 설계된 모듈의 경우 가시광 스펙트럼 전역에서 일반적으로 85-95%입니다.') },
+  ir: { title: t('IR Cut Filter', 'IR 차단 필터'), description: t('Blocks near-infrared light (>650nm) to prevent color distortion. Sharp cutoff with ~30nm transition.', '색 왜곡을 방지하기 위해 근적외선 빛(>650nm)을 차단합니다. ~30nm 전이 영역에서 급격히 차단합니다.') },
+  sensor: { title: t('Image Sensor', '이미지 센서'), description: t('Pixel quantum efficiency determines how many photons are converted to electrons per color channel.', '픽셀 양자 효율은 각 색상 채널에서 얼마나 많은 광자가 전자로 변환되는지를 결정합니다.') },
+  signal: { title: t('Electrical Signal', '전기 신호'), description: t('Final photoelectron count per channel, ready for analog-to-digital conversion.', '채널별 최종 광전자 수로, 아날로그-디지털 변환 준비가 완료된 상태입니다.') },
+}))
 
 const stageDetail = computed(() => {
-  return stageDetails[hoveredStage.value] || { title: '', description: '' }
+  return stageDetails.value[hoveredStage.value] || { title: '', description: '' }
 })
 
 // Planck blackbody (relative)

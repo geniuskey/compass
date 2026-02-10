@@ -1,20 +1,20 @@
 <template>
   <div class="bayer-container">
-    <h4>Interactive Bayer Pattern Viewer</h4>
+    <h4>{{ t('Interactive Bayer Pattern Viewer', '대화형 베이어 패턴 뷰어') }}</h4>
     <p class="component-description">
-      Explore different color filter array (CFA) patterns. Click a pixel to see its details.
+      {{ t('Explore different color filter array (CFA) patterns. Click a pixel to see its details.', '다양한 컬러 필터 배열(CFA) 패턴을 탐색해 보세요. 픽셀을 클릭하면 세부 정보를 볼 수 있습니다.') }}
     </p>
 
     <div class="controls-row">
       <div class="select-group">
-        <label for="bayer-pattern-select">Pattern:</label>
+        <label for="bayer-pattern-select">{{ t('Pattern', '패턴') }}:</label>
         <select id="bayer-pattern-select" v-model="selectedPattern" class="pattern-select">
           <option v-for="p in patternOptions" :key="p.value" :value="p.value">{{ p.label }}</option>
         </select>
       </div>
       <div v-if="selectedPixel" class="pixel-info-badge">
         <span class="pixel-color-dot" :style="{ backgroundColor: selectedPixel.displayColor }"></span>
-        <span><strong>{{ selectedPixel.color }}</strong> pixel at ({{ selectedPixel.row }}, {{ selectedPixel.col }})</span>
+        <span><strong>{{ selectedPixel.color }}</strong> {{ t('pixel at', '픽셀 위치') }} ({{ selectedPixel.row }}, {{ selectedPixel.col }})</span>
       </div>
     </div>
 
@@ -66,25 +66,25 @@
             :x="padding + unitCellPixelSize + 6"
             :y="padding + 14"
             class="unit-cell-label"
-          >Unit cell</text>
+          >{{ t('Unit cell', '단위 셀') }}</text>
         </svg>
       </div>
 
       <div class="pattern-info">
         <div class="info-card">
-          <div class="info-label">Pattern</div>
+          <div class="info-label">{{ t('Pattern', '패턴') }}</div>
           <div class="info-value">{{ currentPatternInfo.name }}</div>
         </div>
         <div class="info-card">
-          <div class="info-label">Unit cell</div>
+          <div class="info-label">{{ t('Unit Cell Size', '단위 셀 크기') }}</div>
           <div class="info-value">{{ currentPatternInfo.unitCell }}</div>
         </div>
         <div class="info-card">
-          <div class="info-label">Green ratio</div>
+          <div class="info-label">{{ t('Green Ratio', '녹색 비율') }}</div>
           <div class="info-value">{{ currentPatternInfo.greenRatio }}</div>
         </div>
         <div class="info-card description-card">
-          <div class="info-label">Description</div>
+          <div class="info-label">{{ t('Description', '설명') }}</div>
           <div class="info-desc">{{ currentPatternInfo.description }}</div>
         </div>
       </div>
@@ -94,6 +94,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const padding = 20
 const svgSize = 320
@@ -116,6 +119,7 @@ const patterns = {
     unitCell: '2x2',
     greenRatio: '50%',
     description: 'Most common Bayer pattern. Two green pixels per unit cell provide higher luminance resolution, mimicking human vision sensitivity.',
+    descriptionKo: '가장 일반적인 베이어 패턴입니다. 단위 셀당 두 개의 녹색 픽셀이 인간 시각의 민감도를 모방하여 더 높은 휘도 해상도를 제공합니다.',
   },
   GRBG: {
     grid: [['G','R'],['B','G']],
@@ -123,6 +127,7 @@ const patterns = {
     unitCell: '2x2',
     greenRatio: '50%',
     description: 'Rotated Bayer pattern with green in top-left. Functionally equivalent to RGGB after demosaicing, but shifts the phase of the color filter by one pixel.',
+    descriptionKo: '좌상단에 녹색이 위치한 회전된 베이어 패턴입니다. 디모자이킹 후 RGGB와 기능적으로 동일하지만, 컬러 필터의 위상이 한 픽셀 이동합니다.',
   },
   BGGR: {
     grid: [['B','G'],['G','R']],
@@ -130,6 +135,7 @@ const patterns = {
     unitCell: '2x2',
     greenRatio: '50%',
     description: 'Blue-first Bayer pattern. Used by some sensor manufacturers. The demosaicing algorithm must account for the different starting position.',
+    descriptionKo: '청색 우선 베이어 패턴입니다. 일부 센서 제조업체에서 사용합니다. 디모자이킹 알고리즘이 다른 시작 위치를 고려해야 합니다.',
   },
   GBRG: {
     grid: [['G','B'],['R','G']],
@@ -137,6 +143,7 @@ const patterns = {
     unitCell: '2x2',
     greenRatio: '50%',
     description: 'Green-Blue first row variant. All four standard Bayer variants are related by row/column shifts and produce equivalent image quality.',
+    descriptionKo: '녹색-청색 첫 행 변형입니다. 네 가지 표준 베이어 변형은 행/열 이동으로 관련되며 동등한 이미지 품질을 생성합니다.',
   },
   QuadBayer: {
     grid: [
@@ -149,6 +156,7 @@ const patterns = {
     unitCell: '4x4',
     greenRatio: '50%',
     description: 'Each 2x2 sub-block shares the same color filter. Enables 2x2 binning for high-sensitivity mode and full-resolution readout for high-detail mode. Used in modern smartphone sensors.',
+    descriptionKo: '각 2x2 하위 블록이 동일한 컬러 필터를 공유합니다. 고감도 모드를 위한 2x2 비닝과 고해상도 모드를 위한 전체 해상도 판독이 가능합니다. 최신 스마트폰 센서에 사용됩니다.',
   },
 }
 
@@ -158,7 +166,13 @@ const colorMap = {
   B: { fill: '#3498db', displayColor: '#3498db', textColor: '#fff', name: 'Blue' },
 }
 
-const currentPatternInfo = computed(() => patterns[selectedPattern.value])
+const currentPatternInfo = computed(() => {
+  const p = patterns[selectedPattern.value]
+  return {
+    ...p,
+    description: t(p.description, p.descriptionKo),
+  }
+})
 
 const gridSize = computed(() => {
   const g = patterns[selectedPattern.value].grid

@@ -1,18 +1,18 @@
 <template>
   <div class="snell-container">
-    <h4>Interactive Snell's Law Visualizer</h4>
+    <h4>{{ t("Interactive Snell's Law Visualizer", '대화형 스넬의 법칙 시각화') }}</h4>
     <p class="component-description">
-      Adjust refractive indices and incidence angle to explore refraction, reflection, and total internal reflection.
+      {{ t('Adjust refractive indices and incidence angle to explore refraction, reflection, and total internal reflection.', '굴절률과 입사각을 조절하여 굴절, 반사 및 전반사를 탐색해 보세요.') }}
     </p>
 
     <div class="inputs-row">
       <div class="input-group">
-        <label for="snell-n1">n<sub>1</sub> (incident)</label>
+        <label for="snell-n1">n<sub>1</sub> ({{ t('incident', '입사') }})</label>
         <input id="snell-n1" type="number" v-model.number="n1" min="1.0" max="5.0" step="0.01" />
         <span class="preset-hint">Air=1.0, Water=1.33, Glass=1.5</span>
       </div>
       <div class="input-group">
-        <label for="snell-n2">n<sub>2</sub> (transmitted)</label>
+        <label for="snell-n2">n<sub>2</sub> ({{ t('transmitted', '투과') }})</label>
         <input id="snell-n2" type="number" v-model.number="n2" min="1.0" max="5.0" step="0.01" />
         <span class="preset-hint">SiO2=1.46, Si3N4=2.0, Si=3.5</span>
       </div>
@@ -20,7 +20,7 @@
 
     <div class="slider-section">
       <label for="snell-angle">
-        Incident angle: <strong>{{ thetaI.toFixed(1) }}&deg;</strong>
+        {{ t('Incident angle', '입사각') }}: <strong>{{ thetaI.toFixed(1) }}&deg;</strong>
       </label>
       <input
         id="snell-angle"
@@ -35,27 +35,27 @@
 
     <div class="results-grid">
       <div class="result-card">
-        <div class="result-label">&theta;<sub>i</sub> (incident)</div>
+        <div class="result-label">&theta;<sub>i</sub> ({{ t('incident', '입사') }})</div>
         <div class="result-value">{{ thetaI.toFixed(1) }}&deg;</div>
       </div>
       <div class="result-card">
-        <div class="result-label">&theta;<sub>r</sub> (refracted)</div>
+        <div class="result-label">&theta;<sub>r</sub> ({{ t('refracted', '굴절') }})</div>
         <div class="result-value" :class="{ tir: isTIR }">
           {{ isTIR ? 'TIR' : thetaR.toFixed(1) + '\u00B0' }}
         </div>
       </div>
       <div class="result-card" v-if="hasCritical">
-        <div class="result-label">&theta;<sub>c</sub> (critical)</div>
+        <div class="result-label">&theta;<sub>c</sub> ({{ t('critical', '임계') }})</div>
         <div class="result-value critical">{{ criticalAngle.toFixed(1) }}&deg;</div>
       </div>
       <div class="result-card">
-        <div class="result-label">Snell's law</div>
+        <div class="result-label">{{ t("Snell's law", '스넬의 법칙') }}</div>
         <div class="result-value formula-val">n<sub>1</sub> sin&theta;<sub>i</sub> = n<sub>2</sub> sin&theta;<sub>r</sub></div>
       </div>
     </div>
 
     <div v-if="isTIR" class="tir-notice">
-      Total Internal Reflection &mdash; all light is reflected at the interface.
+      {{ t('Total Internal Reflection — all light is reflected at the interface.', '전반사 — 모든 빛이 계면에서 반사됩니다.') }}
     </div>
 
     <div class="svg-wrapper">
@@ -70,7 +70,7 @@
 
         <!-- Normal line (vertical dashed) -->
         <line x1="200" y1="15" x2="200" y2="285" stroke="var(--vp-c-text-3)" stroke-width="1" stroke-dasharray="5,4" />
-        <text x="208" y="25" class="normal-label">Normal</text>
+        <text x="208" y="25" class="normal-label">{{ t('Normal', '법선') }}</text>
 
         <!-- Medium labels -->
         <text x="15" y="30" class="medium-label">n<tspan font-size="9" dy="2">1</tspan><tspan dy="-2"> = {{ n1 }}</tspan></text>
@@ -160,7 +160,7 @@
           y="200"
           text-anchor="middle"
           class="tir-label"
-        >Total Internal Reflection</text>
+        >{{ t('Total Internal Reflection', '전반사') }}</text>
 
         <!-- Arrow markers -->
         <defs>
@@ -177,11 +177,11 @@
 
         <!-- Legend -->
         <line x1="290" y1="18" x2="310" y2="18" stroke="#f39c12" stroke-width="2" />
-        <text x="315" y="22" class="legend-label">Incident</text>
+        <text x="315" y="22" class="legend-label">{{ t('Incident', '입사') }}</text>
         <line x1="290" y1="33" x2="310" y2="33" stroke="#e74c3c" stroke-width="2" />
-        <text x="315" y="37" class="legend-label">Reflected</text>
+        <text x="315" y="37" class="legend-label">{{ t('Reflected', '반사') }}</text>
         <line x1="290" y1="48" x2="310" y2="48" stroke="#3498db" stroke-width="2" />
-        <text x="315" y="52" class="legend-label">Refracted</text>
+        <text x="315" y="52" class="legend-label">{{ t('Refracted', '굴절') }}</text>
       </svg>
     </div>
   </div>
@@ -189,6 +189,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const n1 = ref(1.5)
 const n2 = ref(1.0)

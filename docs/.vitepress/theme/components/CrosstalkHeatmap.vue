@@ -1,43 +1,46 @@
 <template>
   <div class="crosstalk-container">
-    <h4>Interactive Pixel Crosstalk Heatmap</h4>
+    <h4>{{ t('Interactive Pixel Crosstalk Heatmap', '인터랙티브 픽셀 크로스토크 히트맵') }}</h4>
     <p class="component-description">
-      Explore how wavelength and pixel pitch affect optical crosstalk between neighboring pixels. The center pixel is illuminated; surrounding pixels show crosstalk intensity.
+      {{ t(
+        'Explore how wavelength and pixel pitch affect optical crosstalk between neighboring pixels. The center pixel is illuminated; surrounding pixels show crosstalk intensity.',
+        '파장과 픽셀 피치가 인접 픽셀 간 광학 크로스토크에 미치는 영향을 살펴보세요. 중앙 픽셀이 조명되며, 주변 픽셀은 크로스토크 강도를 나타냅니다.'
+      ) }}
     </p>
 
     <div class="controls-row">
       <div class="slider-group">
         <label>
-          Wavelength: <strong>{{ wavelength }} nm</strong>
+          {{ t('Wavelength', '파장') }}: <strong>{{ wavelength }} nm</strong>
           <span class="color-dot" :style="{ backgroundColor: wavelengthToCSS(wavelength) }"></span>
         </label>
         <input type="range" min="400" max="700" step="10" v-model.number="wavelength" class="ctrl-range" />
       </div>
       <div class="slider-group">
         <label>
-          Pixel pitch: <strong>{{ pitch.toFixed(2) }} um</strong>
+          {{ t('Pixel pitch', '픽셀 피치') }}: <strong>{{ pitch.toFixed(2) }} um</strong>
         </label>
         <input type="range" min="0.6" max="1.4" step="0.05" v-model.number="pitch" class="ctrl-range" />
       </div>
       <div class="toggle-group">
         <label class="toggle-label">
           <input type="checkbox" v-model="showBayer" />
-          Bayer overlay
+          {{ t('Show Bayer overlay', '베이어 오버레이 표시') }}
         </label>
       </div>
     </div>
 
     <div class="info-row">
       <div class="info-card">
-        <span class="info-label">Absorption depth (Si):</span>
+        <span class="info-label">{{ t('Absorption Depth', '흡수 깊이') }} (Si):</span>
         <span class="info-value">{{ absorptionDepthDisplay }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Nearest-neighbor CT:</span>
+        <span class="info-label">{{ t('Nearest-neighbor Crosstalk', '인접 픽셀 크로스토크') }}:</span>
         <span class="info-value">{{ (nearestCT * 100).toFixed(1) }}%</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Total CT:</span>
+        <span class="info-label">{{ t('Total Crosstalk', '전체 크로스토크') }}:</span>
         <span class="info-value">{{ (totalCT * 100).toFixed(1) }}%</span>
       </div>
     </div>
@@ -74,7 +77,7 @@
               :y="cell.y + cellPx / 2 - 3"
               text-anchor="middle"
               :class="['ct-value', { 'center-label': cell.isCenter }]"
-            >{{ cell.isCenter ? 'Source' : cell.ctPercent + '%' }}</text>
+            >{{ cell.isCenter ? t('Source', '소스') : cell.ctPercent + '%' }}</text>
             <!-- Pixel coords -->
             <text
               :x="cell.x + cellPx / 2"
@@ -104,7 +107,7 @@
           <rect :x="gridOffset" :y="svgSize + 8" :width="gridTotalPx" height="12" fill="url(#ctScaleGrad)" rx="3" stroke="var(--vp-c-divider)" stroke-width="0.5" />
           <text :x="gridOffset" :y="svgSize + 34" text-anchor="start" class="scale-label">0%</text>
           <text :x="gridOffset + gridTotalPx" :y="svgSize + 34" text-anchor="end" class="scale-label">{{ maxScalePercent }}%</text>
-          <text :x="gridOffset + gridTotalPx / 2" :y="svgSize + 34" text-anchor="middle" class="scale-label">Crosstalk</text>
+          <text :x="gridOffset + gridTotalPx / 2" :y="svgSize + 34" text-anchor="middle" class="scale-label">{{ t('Crosstalk', '크로스토크') }}</text>
         </svg>
       </div>
     </div>
@@ -113,6 +116,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const wavelength = ref(550)
 const pitch = ref(1.0)

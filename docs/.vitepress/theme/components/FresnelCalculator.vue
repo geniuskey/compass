@@ -1,18 +1,21 @@
 <template>
   <div class="fresnel-container">
-    <h4>Interactive Fresnel Calculator</h4>
+    <h4>{{ t('Interactive Fresnel Calculator', '인터랙티브 프레넬 계산기') }}</h4>
     <p class="component-description">
-      Explore how reflection and transmission depend on refractive indices and incidence angle.
+      {{ t(
+        'Explore how reflection and transmission depend on refractive indices and incidence angle.',
+        '반사와 투과가 굴절률과 입사각에 따라 어떻게 달라지는지 살펴보세요.'
+      ) }}
     </p>
 
     <div class="inputs-row">
       <div class="input-group">
-        <label for="n1-input">n<sub>1</sub> (incident medium)</label>
+        <label for="n1-input">n<sub>1</sub> ({{ t('incident medium', '입사 매질') }})</label>
         <input id="n1-input" type="number" v-model.number="n1" min="1.0" max="5.0" step="0.01" />
         <span class="preset-hint">Air=1.0, Glass=1.5, Water=1.33</span>
       </div>
       <div class="input-group">
-        <label for="n2-input">n<sub>2</sub> (transmitted medium)</label>
+        <label for="n2-input">n<sub>2</sub> ({{ t('transmitted medium', '투과 매질') }})</label>
         <input id="n2-input" type="number" v-model.number="n2" min="1.0" max="5.0" step="0.01" />
         <span class="preset-hint">SiO<sub>2</sub>=1.46, Si<sub>3</sub>N<sub>4</sub>=2.0, Si=3.5</span>
       </div>
@@ -20,7 +23,7 @@
 
     <div class="slider-section">
       <label for="angle-input">
-        Angle of incidence: <strong>{{ angle.toFixed(1) }}&deg;</strong>
+        {{ t('Angle of incidence', '입사각') }}: <strong>{{ angle.toFixed(1) }}&deg;</strong>
       </label>
       <input
         id="angle-input"
@@ -43,18 +46,18 @@
         <div class="result-value">{{ (Rp * 100).toFixed(2) }}%</div>
       </div>
       <div class="result-card">
-        <div class="result-label">R<sub>avg</sub> (unpolarized)</div>
+        <div class="result-label">R<sub>avg</sub> ({{ t('unpolarized', '비편광') }})</div>
         <div class="result-value highlight">{{ (Ravg * 100).toFixed(2) }}%</div>
       </div>
       <div class="result-card">
-        <div class="result-label">Brewster Angle</div>
+        <div class="result-label">{{ t('Brewster Angle', '브루스터 각') }}</div>
         <div class="result-value brewster">{{ brewsterAngle.toFixed(2) }}&deg;</div>
       </div>
     </div>
 
     <div v-if="hasTIR" class="tir-notice">
-      Critical angle: {{ criticalAngle.toFixed(2) }}&deg;
-      <span v-if="angle >= criticalAngle">&mdash; <strong>Total Internal Reflection!</strong></span>
+      {{ t('Critical angle', '임계각') }}: {{ criticalAngle.toFixed(2) }}&deg;
+      <span v-if="angle >= criticalAngle">&mdash; <strong>{{ t('Total Internal Reflection!', '전반사!') }}</strong></span>
     </div>
 
     <div class="chart-section">
@@ -64,7 +67,7 @@
         <line x1="50" y1="240" x2="440" y2="240" stroke="var(--vp-c-text-3)" stroke-width="1" />
 
         <!-- Y-axis label -->
-        <text x="15" y="130" text-anchor="middle" transform="rotate(-90, 15, 130)" class="axis-label">Reflectance</text>
+        <text x="15" y="130" text-anchor="middle" transform="rotate(-90, 15, 130)" class="axis-label">{{ t('Reflectance', '반사율') }}</text>
 
         <!-- Y-axis ticks -->
         <template v-for="tick in [0, 0.25, 0.5, 0.75, 1.0]" :key="tick">
@@ -74,7 +77,7 @@
         </template>
 
         <!-- X-axis label -->
-        <text x="245" y="272" text-anchor="middle" class="axis-label">Angle of incidence (&deg;)</text>
+        <text x="245" y="272" text-anchor="middle" class="axis-label">{{ t('Angle of incidence', '입사각') }} (&deg;)</text>
 
         <!-- X-axis ticks -->
         <template v-for="a in [0, 15, 30, 45, 60, 75, 90]" :key="a">
@@ -233,6 +236,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const n1 = ref(1.0)
 const n2 = ref(1.5)

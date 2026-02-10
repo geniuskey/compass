@@ -1,30 +1,33 @@
 <template>
   <div class="polarization-container">
-    <h4>Polarization State Viewer</h4>
+    <h4>{{ t('Polarization State Viewer', '편광 상태 뷰어') }}</h4>
     <p class="component-description">
-      Visualize different polarization states of light with animated E-field vector propagation in a 3D perspective view.
+      {{ t(
+        'Visualize different polarization states of light with animated E-field vector propagation in a 3D perspective view.',
+        '3D 투시도에서 애니메이션 전기장 벡터 전파를 통해 다양한 편광 상태를 시각화합니다.'
+      ) }}
     </p>
 
     <div class="controls-row">
       <div class="select-group">
-        <label for="pol-type">Polarization:</label>
+        <label for="pol-type">{{ t('Polarization:', '편광:') }}</label>
         <select id="pol-type" v-model="polType" class="pol-select">
-          <option v-for="p in polOptions" :key="p.key" :value="p.key">{{ p.label }}</option>
+          <option v-for="p in polOptions" :key="p.key" :value="p.key">{{ t(p.label, p.labelKo) }}</option>
         </select>
       </div>
       <button class="play-btn" @click="togglePlay">
-        {{ isPlaying ? 'Pause' : 'Play' }}
+        {{ isPlaying ? t('Pause', '일시정지') : t('Play', '재생') }}
       </button>
       <div class="slider-group">
-        <label>Speed: <strong>{{ speed.toFixed(1) }}x</strong></label>
+        <label>{{ t('Speed:', '속도:') }} <strong>{{ speed.toFixed(1) }}x</strong></label>
         <input type="range" min="0.2" max="3.0" step="0.1" v-model.number="speed" class="ctrl-range" />
       </div>
     </div>
 
     <div class="info-row">
       <div class="info-card">
-        <span class="info-label">Type:</span>
-        <span class="info-value">{{ currentInfo.type }}</span>
+        <span class="info-label">{{ t('Polarization Type:', '편광 유형:') }}</span>
+        <span class="info-value">{{ t(currentInfo.type, currentInfo.typeKo) }}</span>
       </div>
       <div class="info-card">
         <span class="info-label">Ex:</span>
@@ -35,7 +38,7 @@
         <span class="info-value">{{ currentInfo.ey }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Jones vector:</span>
+        <span class="info-label">{{ t('Jones vector:', 'Jones 벡터:') }}</span>
         <span class="info-value jones">{{ currentInfo.jones }}</span>
       </div>
     </div>
@@ -146,6 +149,9 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const W = 520
 const H = 300
@@ -155,12 +161,12 @@ const amp = 40
 const axisLen = 160
 
 const polOptions = [
-  { key: 'te', label: 'TE (s-polarization)' },
-  { key: 'tm', label: 'TM (p-polarization)' },
-  { key: 'rcp', label: 'Circular (RCP)' },
-  { key: 'lcp', label: 'Circular (LCP)' },
-  { key: 'elliptical', label: 'Elliptical' },
-  { key: 'unpolarized', label: 'Unpolarized' },
+  { key: 'te', label: 'TE (s-polarization)', labelKo: 'TE (s-편광)' },
+  { key: 'tm', label: 'TM (p-polarization)', labelKo: 'TM (p-편광)' },
+  { key: 'rcp', label: 'Circular (RCP)', labelKo: '원형 편광 (RCP)' },
+  { key: 'lcp', label: 'Circular (LCP)', labelKo: '원형 편광 (LCP)' },
+  { key: 'elliptical', label: 'Elliptical', labelKo: '타원 편광' },
+  { key: 'unpolarized', label: 'Unpolarized', labelKo: '비편광' },
 ]
 
 const polType = ref('rcp')
@@ -172,12 +178,12 @@ let animFrame = null
 let unpolarizedTimer = 0
 
 const polInfo = {
-  te: { type: 'TE (s-pol)', ex: '0', ey: 'E0 cos(wt-kz)', jones: '[0, 1]' },
-  tm: { type: 'TM (p-pol)', ex: 'E0 cos(wt-kz)', ey: '0', jones: '[1, 0]' },
-  rcp: { type: 'Right Circular', ex: 'E0 cos(wt-kz)', ey: 'E0 sin(wt-kz)', jones: '[1, -i] / sqrt(2)' },
-  lcp: { type: 'Left Circular', ex: 'E0 cos(wt-kz)', ey: '-E0 sin(wt-kz)', jones: '[1, i] / sqrt(2)' },
-  elliptical: { type: 'Elliptical', ex: 'E0 cos(wt-kz)', ey: '0.5 E0 sin(wt-kz)', jones: '[1, -0.5i]' },
-  unpolarized: { type: 'Unpolarized', ex: 'Random', ey: 'Random', jones: 'N/A (mixed state)' },
+  te: { type: 'TE (s-pol)', typeKo: 'TE (s-편광)', ex: '0', ey: 'E0 cos(wt-kz)', jones: '[0, 1]' },
+  tm: { type: 'TM (p-pol)', typeKo: 'TM (p-편광)', ex: 'E0 cos(wt-kz)', ey: '0', jones: '[1, 0]' },
+  rcp: { type: 'Right Circular', typeKo: '우원형 편광', ex: 'E0 cos(wt-kz)', ey: 'E0 sin(wt-kz)', jones: '[1, -i] / sqrt(2)' },
+  lcp: { type: 'Left Circular', typeKo: '좌원형 편광', ex: 'E0 cos(wt-kz)', ey: '-E0 sin(wt-kz)', jones: '[1, i] / sqrt(2)' },
+  elliptical: { type: 'Elliptical', typeKo: '타원 편광', ex: 'E0 cos(wt-kz)', ey: '0.5 E0 sin(wt-kz)', jones: '[1, -0.5i]' },
+  unpolarized: { type: 'Unpolarized', typeKo: '비편광', ex: 'Random', ey: 'Random', jones: 'N/A (mixed state)' },
 }
 
 const currentInfo = computed(() => polInfo[polType.value])

@@ -1,16 +1,17 @@
 <template>
   <div class="fourier-container">
-    <h4>Fourier Order Approximation Demo</h4>
+    <h4>{{ t('Fourier Order Approximation Demo', '푸리에 차수 근사 데모') }}</h4>
     <p class="component-description">
-      See how increasing the number of Fourier harmonics improves the approximation of a
-      square wave (representing a DTI trench or metal grid cross-section). Notice the
-      Gibbs phenomenon ringing at the edges.
+      {{ t(
+        'See how increasing the number of Fourier harmonics improves the approximation of a square wave (representing a DTI trench or metal grid cross-section). Notice the Gibbs phenomenon ringing at the edges.',
+        '푸리에 고조파 수를 늘리면 사각파(DTI 트렌치 또는 금속 격자 단면을 나타냄)의 근사가 어떻게 개선되는지 확인하세요. 가장자리에서 깁스 현상 링잉을 관찰할 수 있습니다.'
+      ) }}
     </p>
 
     <div class="controls-row">
       <div class="slider-group">
         <label for="order-input">
-          Fourier Order N: <strong>{{ order }}</strong>
+          {{ t('Fourier Order', '푸리에 차수') }} N: <strong>{{ order }}</strong>
         </label>
         <input
           id="order-input"
@@ -24,7 +25,7 @@
       </div>
       <div class="slider-group">
         <label for="duty-input">
-          Duty Cycle: <strong>{{ (dutyCycle * 100).toFixed(0) }}%</strong>
+          {{ t('Duty Cycle', '듀티 사이클') }}: <strong>{{ (dutyCycle * 100).toFixed(0) }}%</strong>
         </label>
         <input
           id="duty-input"
@@ -40,15 +41,15 @@
 
     <div class="info-row">
       <div class="info-card">
-        <span class="info-label">Harmonics used:</span>
+        <span class="info-label">{{ t('Total Harmonics', '전체 고조파 수') }}:</span>
         <span class="info-value">{{ 2 * order + 1 }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">RCWA matrix size:</span>
+        <span class="info-label">{{ t('Matrix Size', '행렬 크기') }} (RCWA):</span>
         <span class="info-value">{{ (2 * order + 1) }}&times;{{ (2 * order + 1) }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Max overshoot:</span>
+        <span class="info-label">{{ t('Gibbs Overshoot', '깁스 오버슈트') }}:</span>
         <span class="info-value">{{ (overshoot * 100).toFixed(1) }}%</span>
       </div>
     </div>
@@ -73,7 +74,7 @@
         <text :x="padL" :y="botY + 24" text-anchor="middle" class="tick-label">0</text>
         <text :x="padL + plotW / 2" :y="botY + 24" text-anchor="middle" class="tick-label">&Lambda;/2</text>
         <text :x="padL + plotW" :y="botY + 24" text-anchor="middle" class="tick-label">&Lambda;</text>
-        <text :x="padL + plotW / 2" :y="botY + 38" text-anchor="middle" class="axis-label">Position within unit cell</text>
+        <text :x="padL + plotW / 2" :y="botY + 38" text-anchor="middle" class="axis-label">{{ t('Position within unit cell', '단위 셀 내 위치') }}</text>
 
         <!-- Original square wave (two periods shown) -->
         <path :d="squarePath" fill="none" stroke="var(--vp-c-text-3)" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.7" />
@@ -96,20 +97,21 @@
 
         <!-- Legend -->
         <line :x1="svgW - padR - 160" :y1="topY + 2" :x2="svgW - padR - 140" :y2="topY + 2" stroke="var(--vp-c-text-3)" stroke-width="1.5" stroke-dasharray="6,4" />
-        <text :x="svgW - padR - 135" :y="topY + 6" class="legend-label">Original</text>
+        <text :x="svgW - padR - 135" :y="topY + 6" class="legend-label">{{ t('Original', '원본') }}</text>
         <line :x1="svgW - padR - 160" :y1="topY + 18" :x2="svgW - padR - 140" :y2="topY + 18" stroke="var(--vp-c-brand-1)" stroke-width="2.5" />
-        <text :x="svgW - padR - 135" :y="topY + 22" class="legend-label">Fourier (N={{ order }})</text>
+        <text :x="svgW - padR - 135" :y="topY + 22" class="legend-label">{{ t('Fourier', '푸리에') }} (N={{ order }})</text>
         <rect :x="svgW - padR - 160" :y="topY + 28" width="20" height="10" fill="#e74c3c" opacity="0.15" rx="2" />
-        <text :x="svgW - padR - 135" :y="topY + 37" class="legend-label">Gibbs region</text>
+        <text :x="svgW - padR - 135" :y="topY + 37" class="legend-label">{{ t('Gibbs region', '깁스 영역') }}</text>
       </svg>
     </div>
 
     <div class="explanation">
       <p>
-        <strong>Gibbs phenomenon:</strong> Even with many harmonics, the Fourier series
-        overshoots by ~9% at discontinuities. In RCWA, this affects convergence at
-        sharp material boundaries (e.g., Si/SiO<sub>2</sub> DTI walls).
-        Li's factorization rules mitigate this for TM polarization.
+        <strong>{{ t('Gibbs phenomenon', '깁스 현상') }}:</strong>
+        {{ t(
+          'Even with many harmonics, the Fourier series overshoots by ~9% at discontinuities. In RCWA, this affects convergence at sharp material boundaries (e.g., Si/SiO₂ DTI walls). Li\'s factorization rules mitigate this for TM polarization.',
+          '많은 고조파를 사용하더라도 푸리에 급수는 불연속점에서 약 9% 오버슈트합니다. RCWA에서는 급격한 재료 경계(예: Si/SiO₂ DTI 벽)에서 수렴에 영향을 미칩니다. Li의 인수분해 규칙이 TM 편광에 대해 이를 완화합니다.'
+        ) }}
       </p>
     </div>
   </div>
@@ -117,6 +119,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const order = ref(5)
 const dutyCycle = ref(0.5)

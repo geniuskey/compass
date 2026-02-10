@@ -1,13 +1,13 @@
 <template>
   <div class="wavelength-slider-container">
-    <h4>Interactive Wavelength Explorer</h4>
+    <h4>{{ t('Interactive Wavelength Explorer', '대화형 파장 탐색기') }}</h4>
     <p class="component-description">
-      Drag the slider to explore how wavelength affects color and silicon absorption depth.
+      {{ t('Drag the slider to explore how wavelength affects color and silicon absorption depth.', '슬라이더를 드래그하여 파장이 색상과 실리콘 흡수 깊이에 미치는 영향을 살펴보세요.') }}
     </p>
 
     <div class="slider-section">
       <label for="wavelength-input">
-        Wavelength: <strong>{{ wavelength }} nm</strong>
+        {{ t('Wavelength', '파장') }}: <strong>{{ wavelength }} nm</strong>
       </label>
       <div class="slider-with-gradient">
         <div class="spectrum-gradient" ref="gradientBar"></div>
@@ -30,17 +30,17 @@
       </div>
 
       <div class="result-card">
-        <div class="result-label">Extinction Coefficient (k)</div>
+        <div class="result-label">{{ t('Extinction Coefficient', '소광 계수') }} (k)</div>
         <div class="result-value">{{ kValue.toExponential(3) }}</div>
       </div>
 
       <div class="result-card">
-        <div class="result-label">Absorption Coefficient</div>
+        <div class="result-label">{{ t('Absorption Coefficient', '흡수 계수') }}</div>
         <div class="result-value">&alpha; = {{ alpha.toFixed(0) }} cm<sup>-1</sup></div>
       </div>
 
       <div class="result-card">
-        <div class="result-label">Absorption Depth (1/&alpha;)</div>
+        <div class="result-label">{{ t('Absorption Depth', '흡수 깊이') }} (1/&alpha;)</div>
         <div class="result-value">{{ absorptionDepthDisplay }}</div>
       </div>
     </div>
@@ -49,7 +49,7 @@
       <div class="formula">
         &alpha; = 4&pi;k / &lambda;
         &nbsp;&nbsp;&rarr;&nbsp;&nbsp;
-        Absorption depth &approx; &lambda; / (4&pi;k)
+        {{ t('Absorption depth', '흡수 깊이') }} &approx; &lambda; / (4&pi;k)
       </div>
     </div>
 
@@ -81,6 +81,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const wavelength = ref(550)
 

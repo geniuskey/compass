@@ -1,25 +1,28 @@
 <template>
   <div class="solver-cmp-container">
-    <h4>RCWA vs FDTD Solver Comparison</h4>
+    <h4>{{ t('RCWA vs FDTD Solver Comparison', 'RCWA vs FDTD 솔버 비교') }}</h4>
     <p class="component-description">
-      Compare simulated quantum efficiency (QE) curves from RCWA and FDTD solvers. Adjust pixel pitch and solver parameters to see how results and performance change.
+      {{ t(
+        'Compare simulated quantum efficiency (QE) curves from RCWA and FDTD solvers. Adjust pixel pitch and solver parameters to see how results and performance change.',
+        'RCWA와 FDTD 솔버의 양자 효율(QE) 시뮬레이션 곡선을 비교합니다. 픽셀 피치와 솔버 매개변수를 조정하여 결과와 성능 변화를 확인하세요.'
+      ) }}
     </p>
 
     <div class="controls-row">
       <div class="select-group">
-        <label for="sc-pitch">Pixel pitch:</label>
+        <label for="sc-pitch">{{ t('Pixel pitch:', '픽셀 피치:') }}</label>
         <select id="sc-pitch" v-model.number="pitch" class="param-select">
           <option v-for="p in pitchOptions" :key="p" :value="p">{{ p }} um</option>
         </select>
       </div>
       <div class="slider-group">
-        <label>RCWA Fourier order: <strong>{{ fourierOrder }}</strong></label>
+        <label>{{ t('RCWA Fourier order:', 'RCWA Fourier 차수:') }} <strong>{{ fourierOrder }}</strong></label>
         <select v-model.number="fourierOrder" class="param-select">
           <option v-for="o in fourierOptions" :key="o" :value="o">{{ o }}</option>
         </select>
       </div>
       <div class="slider-group">
-        <label>FDTD grid resolution: <strong>{{ fdtdGrid }} nm</strong></label>
+        <label>{{ t('FDTD grid resolution:', 'FDTD 격자 해상도:') }} <strong>{{ fdtdGrid }} nm</strong></label>
         <select v-model.number="fdtdGrid" class="param-select">
           <option v-for="g in gridOptions" :key="g" :value="g">{{ g }} nm</option>
         </select>
@@ -110,56 +113,56 @@
       <div class="cmp-card">
         <div class="cmp-title">RCWA</div>
         <div class="cmp-row">
-          <span class="cmp-label">Time estimate:</span>
+          <span class="cmp-label">{{ t('Time estimate:', '예상 시간:') }}</span>
           <span class="cmp-value">{{ rcwaTime }}</span>
         </div>
         <div class="cmp-row">
-          <span class="cmp-label">Memory:</span>
+          <span class="cmp-label">{{ t('Memory:', '메모리:') }}</span>
           <span class="cmp-value">{{ rcwaMemory }}</span>
         </div>
         <div class="cmp-row">
-          <span class="cmp-label">Periodic structures:</span>
-          <span class="cmp-value check">Yes</span>
+          <span class="cmp-label">{{ t('Periodic structures:', '주기 구조:') }}</span>
+          <span class="cmp-value check">{{ t('Yes', '예') }}</span>
         </div>
         <div class="cmp-row">
-          <span class="cmp-label">Arbitrary geometry:</span>
-          <span class="cmp-value cross">Limited</span>
+          <span class="cmp-label">{{ t('Arbitrary geometry:', '임의 형상:') }}</span>
+          <span class="cmp-value cross">{{ t('Limited', '제한적') }}</span>
         </div>
       </div>
 
       <div class="cmp-card">
         <div class="cmp-title">FDTD</div>
         <div class="cmp-row">
-          <span class="cmp-label">Time estimate:</span>
+          <span class="cmp-label">{{ t('Time estimate:', '예상 시간:') }}</span>
           <span class="cmp-value">{{ fdtdTime }}</span>
         </div>
         <div class="cmp-row">
-          <span class="cmp-label">Memory:</span>
+          <span class="cmp-label">{{ t('Memory:', '메모리:') }}</span>
           <span class="cmp-value">{{ fdtdMemory }}</span>
         </div>
         <div class="cmp-row">
-          <span class="cmp-label">Periodic structures:</span>
-          <span class="cmp-value check">Yes</span>
+          <span class="cmp-label">{{ t('Periodic structures:', '주기 구조:') }}</span>
+          <span class="cmp-value check">{{ t('Yes', '예') }}</span>
         </div>
         <div class="cmp-row">
-          <span class="cmp-label">Arbitrary geometry:</span>
-          <span class="cmp-value check">Yes</span>
+          <span class="cmp-label">{{ t('Arbitrary geometry:', '임의 형상:') }}</span>
+          <span class="cmp-value check">{{ t('Yes', '예') }}</span>
         </div>
       </div>
 
       <div class="cmp-card agreement-card">
-        <div class="cmp-title">Agreement</div>
+        <div class="cmp-title">{{ t('Agreement', '일치도') }}</div>
         <div class="cmp-row">
-          <span class="cmp-label">Max |Delta QE|:</span>
+          <span class="cmp-label">{{ t('Max |Delta QE|:', '최대 |Delta QE|:') }}</span>
           <span class="cmp-value" :class="{ warn: maxDeltaQE > 5 }">{{ maxDeltaQE.toFixed(1) }}%</span>
         </div>
         <div class="cmp-row">
-          <span class="cmp-label">Avg |Delta QE|:</span>
+          <span class="cmp-label">{{ t('Avg |Delta QE|:', '평균 |Delta QE|:') }}</span>
           <span class="cmp-value">{{ avgDeltaQE.toFixed(1) }}%</span>
         </div>
         <div class="cmp-row">
-          <span class="cmp-label">Status:</span>
-          <span class="cmp-value" :class="maxDeltaQE <= 3 ? 'check' : 'warn'">{{ maxDeltaQE <= 3 ? 'Good agreement' : 'Check parameters' }}</span>
+          <span class="cmp-label">{{ t('Status:', '상태:') }}</span>
+          <span class="cmp-value" :class="maxDeltaQE <= 3 ? 'check' : 'warn'">{{ maxDeltaQE <= 3 ? t('Good agreement', '양호한 일치') : t('Check parameters', '매개변수 확인 필요') }}</span>
         </div>
       </div>
     </div>
@@ -168,6 +171,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 // Plot dimensions
 const pW = 460

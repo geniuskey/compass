@@ -1,15 +1,18 @@
 <template>
   <div class="thinfilm-container">
-    <h4>Interactive Thin Film Reflectance Calculator</h4>
+    <h4>{{ t('Interactive Thin Film Reflectance Calculator', '대화형 박막 반사율 계산기') }}</h4>
     <p class="component-description">
-      Compute reflectance spectra using the transfer matrix method for common anti-reflection coating configurations.
+      {{ t(
+        'Compute reflectance spectra using the transfer matrix method for common anti-reflection coating configurations.',
+        '전달 행렬법을 사용하여 일반적인 반사 방지막 구성의 반사율 스펙트럼을 계산합니다.'
+      ) }}
     </p>
 
     <div class="controls-row">
       <div class="select-group">
-        <label for="thinfilm-preset">Preset:</label>
+        <label for="thinfilm-preset">{{ t('Preset:', '프리셋:') }}</label>
         <select id="thinfilm-preset" v-model="selectedPreset" class="preset-select">
-          <option v-for="p in presets" :key="p.key" :value="p.key">{{ p.label }}</option>
+          <option v-for="p in presets" :key="p.key" :value="p.key">{{ t(p.label, p.labelKo) }}</option>
         </select>
       </div>
     </div>
@@ -17,11 +20,11 @@
     <div class="layers-section">
       <div class="layer-card" v-for="(layer, idx) in currentLayers" :key="idx">
         <div class="layer-header">
-          <span class="layer-index">Layer {{ idx + 1 }}</span>
+          <span class="layer-index">{{ t('Layer', '레이어') }} {{ idx + 1 }}</span>
           <span class="layer-material">{{ layer.name }} (n={{ layer.n.toFixed(2) }})</span>
         </div>
         <div class="layer-slider">
-          <label>Thickness: <strong>{{ layer.d }} nm</strong></label>
+          <label>{{ t('Thickness:', '두께:') }} <strong>{{ layer.d }} nm</strong></label>
           <input
             type="range"
             min="10"
@@ -37,19 +40,19 @@
 
     <div class="results-grid">
       <div class="result-card">
-        <div class="result-label">Min Reflectance</div>
+        <div class="result-label">{{ t('Min Reflectance', '최소 반사율') }}</div>
         <div class="result-value">{{ minReflectance.value.toFixed(2) }}%</div>
       </div>
       <div class="result-card">
-        <div class="result-label">At Wavelength</div>
+        <div class="result-label">{{ t('At Wavelength', '해당 파장') }}</div>
         <div class="result-value">{{ minReflectance.wl }} nm</div>
       </div>
       <div class="result-card">
-        <div class="result-label">Substrate</div>
+        <div class="result-label">{{ t('Substrate', '기판') }}</div>
         <div class="result-value">Si (n=4.0)</div>
       </div>
       <div class="result-card">
-        <div class="result-label">Incident Medium</div>
+        <div class="result-label">{{ t('Incident Medium', '입사 매질') }}</div>
         <div class="result-value">Air (n=1.0)</div>
       </div>
     </div>
@@ -142,6 +145,9 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const W = 540
 const H = 340
@@ -188,9 +194,9 @@ const presetConfigs = {
 }
 
 const presets = [
-  { key: 'single_arc', label: 'Single layer ARC' },
-  { key: 'barl', label: 'BARL (SiO2/HfO2)' },
-  { key: 'qw_stack', label: 'Quarter-wave stack' },
+  { key: 'single_arc', label: 'Single layer ARC', labelKo: '단층 반사 방지막' },
+  { key: 'barl', label: 'BARL (SiO2/HfO2)', labelKo: 'BARL (SiO2/HfO2)' },
+  { key: 'qw_stack', label: 'Quarter-wave stack', labelKo: '쿼터파 스택' },
 ]
 
 const selectedPreset = ref('single_arc')

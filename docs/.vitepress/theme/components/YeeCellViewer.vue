@@ -1,40 +1,43 @@
 <template>
   <div class="yee-container">
-    <h4>Interactive Yee Cell Viewer</h4>
+    <h4>{{ t('Interactive Yee Cell Viewer', '대화형 Yee 셀 뷰어') }}</h4>
     <p class="component-description">
-      Visualize the staggered Yee grid cell used in FDTD simulations. E-field components sit on cell edges, while H-field components sit on face centers.
+      {{ t(
+        'Visualize the staggered Yee grid cell used in FDTD simulations. E-field components sit on cell edges, while H-field components sit on face centers.',
+        'FDTD 시뮬레이션에서 사용되는 엇갈린 Yee 격자 셀을 시각화합니다. 전기장 성분은 셀 모서리에, 자기장 성분은 면 중심에 위치합니다.'
+      ) }}
     </p>
 
     <div class="controls-row">
       <div class="toggle-group">
         <label class="toggle-label">
-          <input type="checkbox" v-model="showE" /> Show E-fields
+          <input type="checkbox" v-model="showE" /> {{ t('Show E-fields', '전기장 표시') }}
         </label>
         <label class="toggle-label">
-          <input type="checkbox" v-model="showH" /> Show H-fields
+          <input type="checkbox" v-model="showH" /> {{ t('Show H-fields', '자기장 표시') }}
         </label>
       </div>
       <div class="slider-group">
-        <label>Grid spacing dx: <strong>{{ dx }} nm</strong></label>
+        <label>{{ t('Grid spacing', '격자 간격') }} dx: <strong>{{ dx }} nm</strong></label>
         <input type="range" min="10" max="100" step="5" v-model.number="dx" class="ctrl-range" />
       </div>
     </div>
 
     <div class="info-row">
       <div class="info-card">
-        <span class="info-label">Cells per wavelength (550 nm):</span>
+        <span class="info-label">{{ t('Cells per wavelength (550 nm):', '파장당 셀 수 (550 nm):') }}</span>
         <span class="info-value" :class="{ warn: cellsPerWl < 10 }">{{ cellsPerWl.toFixed(1) }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Courant number S:</span>
+        <span class="info-label">{{ t('Courant number S:', '쿠랑 수 S:') }}</span>
         <span class="info-value" :class="{ warn: courant >= courantLimit }">{{ courant.toFixed(4) }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">Stability limit (1/sqrt(3)):</span>
+        <span class="info-label">{{ t('Stability limit (1/sqrt(3)):', '안정성 한계 (1/sqrt(3)):') }}</span>
         <span class="info-value">{{ courantLimit.toFixed(4) }}</span>
       </div>
       <div class="info-card" v-if="cellsPerWl < 10">
-        <span class="info-value warn">Warning: Need 10+ cells/wavelength for accuracy</span>
+        <span class="info-value warn">{{ t('Warning: Need 10+ cells/wavelength for accuracy', '경고: 정확도를 위해 파장당 10개 이상의 셀이 필요합니다') }}</span>
       </div>
     </div>
 
@@ -143,21 +146,36 @@
       </div>
 
       <div class="explain-panel">
-        <div class="explain-title">Staggered Grid Concept</div>
+        <div class="explain-title">{{ t('Staggered Grid Concept', '엇갈린 격자 개념') }}</div>
         <p class="explain-text">
-          The Yee cell staggers E and H field components in both space and time.
-          E-field components are located on the <strong>edges</strong> of the cell,
-          while H-field components are located at the <strong>face centers</strong>.
+          {{ t(
+            'The Yee cell staggers E and H field components in both space and time. E-field components are located on the',
+            'Yee 셀은 E장과 H장 성분을 공간과 시간 모두에서 엇갈리게 배치합니다. 전기장 성분은 셀의'
+          ) }}
+          <strong>{{ t('edges', '모서리') }}</strong>
+          {{ t(
+            'of the cell, while H-field components are located at the',
+            '에, 자기장 성분은'
+          ) }}
+          <strong>{{ t('face centers', '면 중심') }}</strong>{{ t('.', '에 위치합니다.') }}
         </p>
         <p class="explain-text">
-          This arrangement ensures that every curl finite-difference is centered,
-          giving second-order accuracy. The spatial staggering by half a grid cell
-          naturally satisfies the divergence-free conditions for both E and B fields.
+          {{ t(
+            'This arrangement ensures that every curl finite-difference is centered, giving second-order accuracy. The spatial staggering by half a grid cell naturally satisfies the divergence-free conditions for both E and B fields.',
+            '이 배치는 모든 curl 유한 차분이 중심에 위치하도록 보장하여 2차 정확도를 제공합니다. 반 격자 셀만큼의 공간적 엇갈림은 E장과 B장 모두의 발산 없는 조건을 자연스럽게 만족시킵니다.'
+          ) }}
         </p>
         <p class="explain-text">
-          For a grid spacing of <strong>{{ dx }} nm</strong>, the cell resolves
-          <strong>{{ cellsPerWl.toFixed(1) }}</strong> points per wavelength at 550 nm
-          in silicon (n=4). A minimum of 10 cells per wavelength is recommended.
+          {{ t(
+            `For a grid spacing of`,
+            `격자 간격`
+          ) }}
+          <strong>{{ dx }} nm</strong>{{ t(', the cell resolves', '에서, 셀은') }}
+          <strong>{{ cellsPerWl.toFixed(1) }}</strong>
+          {{ t(
+            'points per wavelength at 550 nm in silicon (n=4). A minimum of 10 cells per wavelength is recommended.',
+            '개의 포인트를 파장당 분해합니다 (550 nm, silicon, n=4). 파장당 최소 10개의 셀을 권장합니다.'
+          ) }}
         </p>
       </div>
     </div>
@@ -166,6 +184,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const W = 480
 const H = 360

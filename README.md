@@ -1,5 +1,11 @@
 # COMPASS
 
+[![CI](https://github.com/geniuskey/compass/actions/workflows/ci.yml/badge.svg)](https://github.com/geniuskey/compass/actions/workflows/ci.yml)
+[![Docs](https://github.com/geniuskey/compass/actions/workflows/docs.yml/badge.svg)](https://geniuskey.github.io/compass/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+
 **Cross-solver Optical Modeling Platform for Advanced Sensor Simulation**
 
 COMPASS is a Python framework for pixel-level quantum efficiency (QE) simulation
