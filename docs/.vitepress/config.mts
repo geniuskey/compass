@@ -11,6 +11,7 @@ const theorySidebar = [
     { text: 'RCWA vs FDTD', link: '/theory/rcwa-vs-fdtd' },
     { text: 'Image Sensor Optics', link: '/theory/image-sensor-optics' },
     { text: 'Quantum Efficiency', link: '/theory/quantum-efficiency' },
+    { text: 'Signal Chain', link: '/theory/signal-chain' },
     { text: 'Numerical Stability', link: '/theory/numerical-stability' },
   ]}
 ]
@@ -33,6 +34,7 @@ const guideSidebar = [
   ]},
   { text: 'Advanced', items: [
     { text: 'Cone Illumination', link: '/guide/cone-illumination' },
+    { text: 'Signal Simulation', link: '/guide/signal-simulation' },
     { text: 'ROI Sweep', link: '/guide/roi-sweep' },
     { text: 'Visualization', link: '/guide/visualization' },
     { text: 'Troubleshooting', link: '/guide/troubleshooting' },
@@ -87,6 +89,7 @@ const theorySidebarKo = [
     { text: 'RCWA vs FDTD', link: '/ko/theory/rcwa-vs-fdtd' },
     { text: '이미지 센서 광학', link: '/ko/theory/image-sensor-optics' },
     { text: '양자 효율', link: '/ko/theory/quantum-efficiency' },
+    { text: '신호 체인', link: '/ko/theory/signal-chain' },
     { text: '수치 안정성', link: '/ko/theory/numerical-stability' },
   ]}
 ]
@@ -109,6 +112,7 @@ const guideSidebarKo = [
   ]},
   { text: '고급', items: [
     { text: '원뿔 조명', link: '/ko/guide/cone-illumination' },
+    { text: '신호 시뮬레이션', link: '/ko/guide/signal-simulation' },
     { text: 'ROI 스윕', link: '/ko/guide/roi-sweep' },
     { text: '시각화', link: '/ko/guide/visualization' },
     { text: '문제 해결', link: '/ko/guide/troubleshooting' },

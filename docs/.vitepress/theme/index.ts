@@ -19,6 +19,8 @@ import ThinFilmReflectance from './components/ThinFilmReflectance.vue'
 import PolarizationViewer from './components/PolarizationViewer.vue'
 import YeeCellViewer from './components/YeeCellViewer.vue'
 import SolverComparisonChart from './components/SolverComparisonChart.vue'
+import BlackbodySpectrum from './components/BlackbodySpectrum.vue'
+import SignalChainDiagram from './components/SignalChainDiagram.vue'
 
 export default {
   extends: DefaultTheme,
@@ -41,5 +43,7 @@ export default {
     app.component('PolarizationViewer', PolarizationViewer)
     app.component('YeeCellViewer', YeeCellViewer)
     app.component('SolverComparisonChart', SolverComparisonChart)
+    app.component('BlackbodySpectrum', BlackbodySpectrum)
+    app.component('SignalChainDiagram', SignalChainDiagram)
   },
 }

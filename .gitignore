@@ -40,3 +40,4 @@ docs/.vitepress/cache/
 # Coverage
 .coverage
 htmlcov/
+docs/package-lock.json
