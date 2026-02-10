@@ -82,6 +82,8 @@ The convergence of RCWA depends critically on how the permittivity Fourier coeff
 
 The accuracy of RCWA improves as the Fourier order increases, but so does the computational cost (the eigenvalue problem scales as $O(M^3)$). A typical convergence study sweeps `fourier_order` from 3 to 25 and plots QE vs order:
 
+<RCWAConvergenceDemo />
+
 ```yaml
 solver:
   convergence:

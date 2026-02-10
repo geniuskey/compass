@@ -58,6 +58,8 @@ The color filter array (CFA) selectively absorbs light to create color sensitivi
 
 Each color filter material has a wavelength-dependent complex refractive index with absorption ($k > 0$) outside its passband and low absorption within the passband. The filters absorb unwanted wavelengths while transmitting the target color.
 
+<BayerPatternViewer />
+
 The **metal grid** between color filter sub-pixels (typically tungsten, 40-80 nm wide) provides optical isolation, preventing light from leaking between adjacent color channels.
 
 ## BARL: Bottom Anti-Reflection Layer

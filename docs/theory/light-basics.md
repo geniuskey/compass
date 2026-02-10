@@ -56,6 +56,12 @@ This is why silicon absorbs short-wavelength (blue) light near the surface but l
 
 <WavelengthSlider />
 
+## Refraction: Snell's law
+
+When light passes from one medium to another, it changes direction according to Snell's law: $n_1 \sin\theta_1 = n_2 \sin\theta_2$. If the incidence angle exceeds the critical angle (when going from a denser to a less dense medium), total internal reflection occurs.
+
+<SnellCalculator />
+
 ## Polarization
 
 Light is a transverse wave -- the electric field oscillates perpendicular to the direction of propagation. The orientation of this oscillation is the **polarization state**.

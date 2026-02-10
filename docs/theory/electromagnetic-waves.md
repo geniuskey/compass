@@ -2,6 +2,8 @@
 
 This page introduces Maxwell's equations and the wave formalism that RCWA and FDTD solvers use internally.
 
+<EMWaveAnimation />
+
 ## Maxwell's equations
 
 All electromagnetic phenomena are governed by four equations. In a linear, isotropic, non-magnetic medium with no free charges:

@@ -1,15 +1,15 @@
 ---
-title: Material Database
-description: Reference for the COMPASS material system including built-in materials, dispersion models (constant, tabulated, Cauchy, Sellmeier), custom CSV loading, and the MaterialDB API.
+title: 재료 데이터베이스
+description: 내장 재료, 분산 모델(상수, 표 형식, 코시, 셀마이어), 사용자 정의 CSV 로딩, MaterialDB API를 포함한 COMPASS 재료 시스템 참조 문서.
 ---
 
-# Material Database
+# 재료 데이터베이스(Material Database)
 
-COMPASS models the optical properties of every layer in the pixel stack through complex refractive indices $\tilde{n}(\lambda) = n(\lambda) + i k(\lambda)$, where $n$ is the real refractive index and $k$ is the extinction coefficient. The `MaterialDB` class manages all material definitions and provides wavelength-dependent interpolation.
+COMPASS는 픽셀 스택(Pixel Stack)의 모든 레이어의 광학 특성을 복소 굴절률 $\tilde{n}(\lambda) = n(\lambda) + i k(\lambda)$로 모델링합니다. 여기서 $n$은 실수 굴절률이고 $k$는 소광 계수(Extinction Coefficient)입니다. `MaterialDB` 클래스는 모든 재료 정의를 관리하고 파장 의존적 보간(Interpolation)을 제공합니다.
 
 <MaterialBrowser />
 
-## Architecture overview
+## 아키텍처 개요
 
 ```mermaid
 flowchart LR
@@ -24,11 +24,11 @@ flowchart LR
     G --> H["GeometryBuilder<br>eps_grid for solver"]
 ```
 
-When you create a `MaterialDB` instance, it automatically:
+`MaterialDB` 인스턴스를 생성하면 자동으로 다음을 수행합니다:
 
-1. Registers **built-in constant and analytical materials** (air, polymers, dielectrics)
-2. Loads **tabulated CSV data** from the `materials/` directory (silicon, tungsten, color filters)
-3. Falls back to **approximate built-in data** if CSV files are not found
+1. **내장 상수 및 해석적 재료**(공기, 폴리머, 유전체)를 등록합니다
+2. `materials/` 디렉토리에서 **표 형식 CSV 데이터**(실리콘, 텅스텐, 컬러 필터)를 로드합니다
+3. CSV 파일을 찾을 수 없으면 **근사 내장 데이터**로 폴백합니다
 
 ```python
 from compass.materials.database import MaterialDB
@@ -39,29 +39,29 @@ print(mat_db.list_materials())
 #  'si3n4', 'silicon', 'sio2', 'tio2', 'tungsten']
 ```
 
-## Built-in materials
+## 내장 재료
 
-| Material           | DB Name          | Type      | Source / Model                       | $n$ at 550 nm |
+| 재료               | DB 이름          | 타입      | 출처 / 모델                            | 550 nm에서 $n$ |
 |--------------------|------------------|-----------|--------------------------------------|---------------|
-| Air                | `air`            | constant  | $n = 1.0$, $k = 0.0$                | 1.000         |
-| Microlens polymer  | `polymer_n1p56`  | cauchy    | $A = 1.56$, $B = 0.004$             | 1.573         |
-| Silicon dioxide    | `sio2`           | sellmeier | 3-term Sellmeier (Malitson 1965)     | 1.460         |
-| Silicon nitride    | `si3n4`          | sellmeier | 2-term Sellmeier                     | 2.020         |
-| Hafnium dioxide    | `hfo2`           | cauchy    | $A = 1.90$, $B = 0.02$              | 1.966         |
-| Titanium dioxide   | `tio2`           | cauchy    | $A = 2.27$, $B = 0.05$ (anatase)    | 2.435         |
-| Crystalline Si     | `silicon`        | tabulated | Green 2008 (350--1100 nm)            | 4.082         |
-| Tungsten           | `tungsten`       | tabulated | Palik data (380--780 nm)             | 3.650         |
-| Red color filter   | `cf_red`         | tabulated | Lorentzian absorption model          | 1.550         |
-| Green color filter | `cf_green`       | tabulated | Lorentzian absorption model          | 1.550         |
-| Blue color filter  | `cf_blue`        | tabulated | Lorentzian absorption model          | 1.550         |
+| 공기               | `air`            | constant  | $n = 1.0$, $k = 0.0$                | 1.000         |
+| 마이크로렌즈 폴리머  | `polymer_n1p56`  | cauchy    | $A = 1.56$, $B = 0.004$             | 1.573         |
+| 이산화규소          | `sio2`           | sellmeier | 3항 셀마이어(Sellmeier) (Malitson 1965)| 1.460         |
+| 질화규소           | `si3n4`          | sellmeier | 2항 셀마이어                           | 2.020         |
+| 이산화하프늄        | `hfo2`           | cauchy    | $A = 1.90$, $B = 0.02$              | 1.966         |
+| 이산화티타늄        | `tio2`           | cauchy    | $A = 2.27$, $B = 0.05$ (아나타제)     | 2.435         |
+| 결정질 실리콘       | `silicon`        | tabulated | Green 2008 (350--1100 nm)            | 4.082         |
+| 텅스텐             | `tungsten`       | tabulated | Palik 데이터 (380--780 nm)            | 3.650         |
+| 적색 컬러 필터      | `cf_red`         | tabulated | 로렌츠 흡수 모델                       | 1.550         |
+| 녹색 컬러 필터      | `cf_green`       | tabulated | 로렌츠 흡수 모델                       | 1.550         |
+| 청색 컬러 필터      | `cf_blue`        | tabulated | 로렌츠 흡수 모델                       | 1.550         |
 
-## Material data types
+## 재료 데이터 타입
 
-COMPASS supports four dispersion model types for specifying how $n$ and $k$ vary with wavelength.
+COMPASS는 $n$과 $k$가 파장에 따라 변하는 방식을 지정하는 네 가지 분산 모델(Dispersion Model) 타입을 지원합니다.
 
-### Constant
+### Constant (상수)
 
-Fixed refractive index independent of wavelength. Suitable for non-dispersive media such as air or idealized dielectrics.
+파장에 무관한 고정 굴절률입니다. 공기나 이상화된 유전체와 같은 비분산 매질에 적합합니다.
 
 $$n(\lambda) = n_0, \quad k(\lambda) = k_0$$
 
@@ -72,9 +72,9 @@ n, k = mat_db.get_nk("my_dielectric", 0.55)
 # n=1.45, k=0.0 at any wavelength
 ```
 
-### Tabulated
+### Tabulated (표 형식)
 
-Wavelength-dependent $n(\lambda)$ and $k(\lambda)$ from discrete data points. COMPASS interpolates between points using **cubic spline interpolation** when 4 or more data points are available, or **linear interpolation** for fewer points.
+이산 데이터 점으로부터의 파장 의존적 $n(\lambda)$ 및 $k(\lambda)$입니다. COMPASS는 4개 이상의 데이터 점이 있을 때 **큐빅 스플라인 보간(Cubic Spline Interpolation)**을, 더 적은 점에서는 **선형 보간(Linear Interpolation)**을 사용합니다.
 
 ```python
 # Internally, tabulated materials build scipy interpolators:
@@ -83,19 +83,19 @@ n_interp = CubicSpline(wavelengths, n_data, extrapolate=True)
 k_interp = CubicSpline(wavelengths, k_data, extrapolate=True)
 ```
 
-Important behaviors:
+주요 동작:
 
-- Wavelengths outside the data range are **clamped** to the nearest boundary value
-- A warning is logged when clamping occurs
-- The extinction coefficient is clamped non-negative: $k = \max(k_\text{interp}, 0)$
+- 데이터 범위 밖의 파장은 가장 가까운 경계값으로 **클램핑(Clamping)**됩니다
+- 클램핑이 발생하면 경고가 로그에 기록됩니다
+- 소광 계수는 비음수로 클램핑됩니다: $k = \max(k_\text{interp}, 0)$
 
-### Cauchy
+### Cauchy (코시)
 
-Analytical dispersion model for transparent dielectrics. Accurate in the visible range for materials without strong absorption bands.
+투명 유전체를 위한 해석적 분산 모델입니다. 강한 흡수 밴드가 없는 재료에서 가시광 범위에서 정확합니다.
 
 $$n(\lambda) = A + \frac{B}{\lambda^2} + \frac{C}{\lambda^4}$$
 
-where $\lambda$ is in micrometers. The Cauchy model always returns $k = 0$.
+여기서 $\lambda$는 마이크로미터 단위입니다. 코시 모델은 항상 $k = 0$을 반환합니다.
 
 ```python
 mat_db.register_cauchy("my_polymer", A=1.56, B=0.004, C=0.0)
@@ -104,21 +104,21 @@ n, k = mat_db.get_nk("my_polymer", 0.55)
 # n = 1.56 + 0.004 / 0.3025 = 1.573, k = 0.0
 ```
 
-Built-in Cauchy coefficients:
+내장 코시 계수:
 
-| Material        | $A$   | $B$    | $C$   |
+| 재료            | $A$   | $B$    | $C$   |
 |----------------|-------|--------|-------|
 | `polymer_n1p56` | 1.56  | 0.004  | 0.0   |
 | `hfo2`          | 1.90  | 0.02   | 0.0   |
 | `tio2`          | 2.27  | 0.05   | 0.0   |
 
-### Sellmeier
+### Sellmeier (셀마이어)
 
-Multi-term Sellmeier equation for high-accuracy dispersion modeling of glasses and dielectrics:
+유리 및 유전체의 고정밀 분산 모델링을 위한 다항 셀마이어 방정식입니다:
 
 $$n^2(\lambda) = 1 + \sum_{i} \frac{B_i \lambda^2}{\lambda^2 - C_i}$$
 
-where $B_i$ are oscillator strengths and $C_i$ are resonance wavelengths squared (in um$^2$). The model returns $k = 0$ and clamps $n^2 \geq 1$.
+여기서 $B_i$는 진동자 강도이고 $C_i$는 공명 파장의 제곱(um$^2$)입니다. 이 모델은 $k = 0$을 반환하고 $n^2 \geq 1$로 클램핑합니다.
 
 ```python
 mat_db.register_sellmeier(
@@ -128,16 +128,16 @@ mat_db.register_sellmeier(
 )
 ```
 
-Built-in Sellmeier coefficients:
+내장 셀마이어 계수:
 
-| Material | $B_1$   | $B_2$   | $B_3$   | $C_1$ (um$^2$) | $C_2$ (um$^2$) | $C_3$ (um$^2$) |
+| 재료     | $B_1$   | $B_2$   | $B_3$   | $C_1$ (um$^2$) | $C_2$ (um$^2$) | $C_3$ (um$^2$) |
 |----------|---------|---------|---------|-----------------|-----------------|-----------------|
 | `sio2`   | 0.6962  | 0.4079  | 0.8975  | 0.00468         | 0.01352         | 97.934          |
 | `si3n4`  | 2.8939  | 0.0     | --      | 0.01951         | 1.0             | --              |
 
-## Permittivity conversion
+## 유전율 변환
 
-Solvers consume complex permittivity $\varepsilon$ rather than refractive index. The conversion is:
+솔버는 굴절률이 아닌 복소 유전율(Permittivity) $\varepsilon$을 사용합니다. 변환식은 다음과 같습니다:
 
 $$\varepsilon(\lambda) = \tilde{n}^2 = (n + ik)^2 = (n^2 - k^2) + i\,2nk$$
 
@@ -152,11 +152,11 @@ wavelengths = np.arange(0.40, 0.701, 0.01)
 eps_spectrum = mat_db.get_epsilon_spectrum("silicon", wavelengths)
 ```
 
-## Adding custom materials via CSV
+## CSV를 통한 사용자 정의 재료 추가
 
-To add a material not in the built-in database, create a CSV file with three columns: wavelength (um), $n$, $k$. Lines starting with `#` are treated as comments.
+내장 데이터베이스에 없는 재료를 추가하려면 세 개의 열(파장(um), $n$, $k$)이 있는 CSV 파일을 생성합니다. `#`으로 시작하는 줄은 주석으로 처리됩니다.
 
-### CSV format
+### CSV 형식
 
 ```
 # Custom infrared filter material
@@ -173,7 +173,7 @@ To add a material not in the built-in database, create a CSV file with three col
 0.750, 1.57, 0.08
 ```
 
-### Loading and using a custom CSV
+### 사용자 정의 CSV 로딩 및 사용
 
 ```python
 mat_db = MaterialDB()
@@ -187,17 +187,17 @@ n, k = mat_db.get_nk("ir_cut_filter", 0.55)
 print(f"IR cut filter at 550nm: n={n:.3f}, k={k:.4f}")
 ```
 
-You can also override the interpolation method:
+보간 방법을 오버라이드할 수도 있습니다:
 
 ```python
 mat_db.load_csv("my_mat", "data.csv", interpolation="linear")
 ```
 
-### Automatic CSV discovery
+### 자동 CSV 검색
 
-COMPASS searches the `materials/` directory (configurable via the `COMPASS_MATERIALS` environment variable) for known filenames:
+COMPASS는 `materials/` 디렉토리(`COMPASS_MATERIALS` 환경 변수로 설정 가능)에서 알려진 파일명을 검색합니다:
 
-| Material name | Searched filenames                          |
+| 재료명         | 검색되는 파일명                              |
 |---------------|---------------------------------------------|
 | `silicon`     | `silicon_green2008.csv`, `silicon_palik.csv` |
 | `tungsten`    | `tungsten.csv`                               |
@@ -205,11 +205,11 @@ COMPASS searches the `materials/` directory (configurable via the `COMPASS_MATER
 | `cf_green`    | `color_filter_green.csv`                     |
 | `cf_blue`     | `color_filter_blue.csv`                      |
 
-If no CSV is found, approximate built-in fallback data is used.
+CSV를 찾을 수 없으면 근사 내장 폴백 데이터가 사용됩니다.
 
-### Using custom materials in YAML configs
+### YAML 설정에서 사용자 정의 재료 사용
 
-After registering a custom material, reference it by name in your pixel configuration:
+사용자 정의 재료를 등록한 후, 픽셀 설정에서 이름으로 참조합니다:
 
 ```yaml
 color_filter:
@@ -219,7 +219,7 @@ color_filter:
     B: "cf_blue"
 ```
 
-Ensure the material is registered before calling `GeometryBuilder`:
+`GeometryBuilder`를 호출하기 전에 재료가 등록되어 있는지 확인하십시오:
 
 ```python
 mat_db = MaterialDB()
@@ -229,7 +229,7 @@ builder = GeometryBuilder(config.pixel, mat_db)
 pixel_stack = builder.build()
 ```
 
-## Interpolation flow
+## 보간 흐름
 
 ```mermaid
 flowchart TD
@@ -246,7 +246,7 @@ flowchart TD
     H --> K
 ```
 
-## MaterialDB API summary
+## MaterialDB API 요약
 
 ```python
 class MaterialDB:
@@ -262,7 +262,7 @@ class MaterialDB:
     def has_material(self, name: str) -> bool: ...
 ```
 
-## Example: plotting material dispersion
+## 예시: 재료 분산 플롯
 
 ```python
 import numpy as np
@@ -295,8 +295,8 @@ ax2.grid(True, alpha=0.3)
 plt.tight_layout()
 ```
 
-## Next steps
+## 다음 단계
 
-- [Pixel Stack Configuration](./pixel-stack-config.md) -- reference materials in pixel layer definitions
-- [Choosing a Solver](./choosing-solver.md) -- how material complexity affects solver choice
-- [Troubleshooting](./troubleshooting.md) -- handling material wavelength range warnings
+- [픽셀 스택 설정](./pixel-stack-config.md) -- 픽셀 레이어 정의에서 재료 참조
+- [솔버 선택](./choosing-solver.md) -- 재료 복잡성이 솔버 선택에 미치는 영향
+- [문제 해결](./troubleshooting.md) -- 재료 파장 범위 경고 처리

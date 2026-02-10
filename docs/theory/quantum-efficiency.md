@@ -87,6 +87,8 @@ The diagonal elements represent correctly detected signal; off-diagonal elements
 
 The `QECalculator.compute_crosstalk` method computes this matrix from the per-pixel QE data.
 
+<CrosstalkHeatmap />
+
 ## Energy balance
 
 A fundamental physical constraint is energy conservation:
