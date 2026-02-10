@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
+  base: '/compass/',
   title: 'COMPASS',
   description: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation',
   themeConfig: {
@@ -82,7 +83,7 @@ export default defineConfig({
       ],
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/compass-sim/compass' }
+      { icon: 'github', link: 'https://github.com/geniuskey/compass' }
     ],
     search: { provider: 'local' },
   },
