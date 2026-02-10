@@ -156,6 +156,10 @@ export default defineConfig({
   title: 'COMPASS',
   description: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation',
 
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/compass/favicon.svg' }],
+  ],
+
   locales: {
     root: {
       label: 'English',
