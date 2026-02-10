@@ -29,6 +29,11 @@ outputs/
 *.h5
 *.hdf5
 
+# Node.js (docs)
+node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
 # Jupyter
 .ipynb_checkpoints/
 
