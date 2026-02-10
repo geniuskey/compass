@@ -26,17 +26,20 @@
   --vp-c-brand-3: #3a5ccc;
 }
 
-/* Math block styling */
-.MathJax {
-  overflow-x: auto;
-  overflow-y: hidden;
+/* Inline math: keep on baseline with surrounding text */
+mjx-container:not([display="true"]) {
+  display: inline !important;
+  margin: 0 !important;
+  vertical-align: baseline !important;
 }
 
-mjx-container {
-  display: inline-block;
+/* Block math: scrollable for wide equations */
+mjx-container[display="true"] {
+  display: block !important;
   overflow-x: auto;
   overflow-y: hidden;
   max-width: 100%;
+  margin: 1em 0;
 }
 
 /* Table improvements */
