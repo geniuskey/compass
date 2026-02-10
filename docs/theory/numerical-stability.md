@@ -4,6 +4,8 @@ RCWA simulations can suffer from numerical instability, especially at high Fouri
 
 ## Sources of instability
 
+<PrecisionComparison />
+
 ### 1. Eigenvalue decomposition errors
 
 The core of RCWA is solving a $2M \times 2M$ eigenvalue problem (where $M$ can be 300+). In single precision (float32), the limited mantissa bits cause:

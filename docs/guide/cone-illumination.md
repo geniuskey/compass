@@ -9,6 +9,8 @@ In a real camera system, light reaching each pixel comes from the full area of t
 
 ## Physical background
 
+<ConeIlluminationViewer />
+
 The illumination cone is characterized by:
 
 - **CRA (Chief Ray Angle)**: The angle between the optical axis and the central ray from the exit pupil to the pixel. CRA is zero at the sensor center and increases toward the edges.

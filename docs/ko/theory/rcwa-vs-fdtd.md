@@ -102,6 +102,8 @@ solvers:
 
 RCWA는 협대역 또는 중간 규모의 스윕에서 유리하며, FDTD는 매우 넓은 대역 연구에서 경쟁력이 있을 수 있습니다.
 
+<SolverComparisonChart />
+
 ## 결과 결합
 
 두 솔버가 동일한 구성에 대해 결과를 생성한 경우, `SolverComparison` 클래스를 사용합니다:

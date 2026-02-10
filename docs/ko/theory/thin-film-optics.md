@@ -49,6 +49,8 @@ $$M = M_1 \cdot M_2 \cdots M_N$$
 
 전체 반사 및 투과 계수는 이 행렬의 요소로부터 구할 수 있습니다.
 
+<ThinFilmReflectance />
+
 ## BSI 픽셀에서의 역할
 
 후면 조사(Backside-Illuminated, BSI) 픽셀에서 빛은 실리콘 후면을 통해 입사하며, 포토다이오드에 도달하기 전에 여러 층을 통과해야 합니다:

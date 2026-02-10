@@ -11,6 +11,14 @@ import MaterialBrowser from './components/MaterialBrowser.vue'
 import EMWaveAnimation from './components/EMWaveAnimation.vue'
 import RCWAConvergenceDemo from './components/RCWAConvergenceDemo.vue'
 import CrosstalkHeatmap from './components/CrosstalkHeatmap.vue'
+import QESpectrumChart from './components/QESpectrumChart.vue'
+import PixelStackBuilder from './components/PixelStackBuilder.vue'
+import ConeIlluminationViewer from './components/ConeIlluminationViewer.vue'
+import PrecisionComparison from './components/PrecisionComparison.vue'
+import ThinFilmReflectance from './components/ThinFilmReflectance.vue'
+import PolarizationViewer from './components/PolarizationViewer.vue'
+import YeeCellViewer from './components/YeeCellViewer.vue'
+import SolverComparisonChart from './components/SolverComparisonChart.vue'
 
 export default {
   extends: DefaultTheme,
@@ -25,5 +33,13 @@ export default {
     app.component('EMWaveAnimation', EMWaveAnimation)
     app.component('RCWAConvergenceDemo', RCWAConvergenceDemo)
     app.component('CrosstalkHeatmap', CrosstalkHeatmap)
+    app.component('QESpectrumChart', QESpectrumChart)
+    app.component('PixelStackBuilder', PixelStackBuilder)
+    app.component('ConeIlluminationViewer', ConeIlluminationViewer)
+    app.component('PrecisionComparison', PrecisionComparison)
+    app.component('ThinFilmReflectance', ThinFilmReflectance)
+    app.component('PolarizationViewer', PolarizationViewer)
+    app.component('YeeCellViewer', YeeCellViewer)
+    app.component('SolverComparisonChart', SolverComparisonChart)
   },
 }

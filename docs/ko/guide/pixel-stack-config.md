@@ -7,6 +7,8 @@ description: BSI 픽셀 구조를 YAML로 설정하는 완전한 참조 문서. 
 
 픽셀 구조는 모든 COMPASS 시뮬레이션(Simulation)의 핵심 입력입니다. YAML 파일의 `pixel:` 키 아래에 정의되며, BSI(후면 조사, Back-Side Illuminated) CMOS 이미지 센서 픽셀을 광학 레이어의 수직 스택으로 기술합니다. 이 페이지에서는 모든 파라미터의 타입, 기본값, 물리적 의미를 문서화합니다.
 
+<PixelStackBuilder />
+
 ## 좌표계
 
 COMPASS는 빛이 스택을 아래로 전파하는 오른손 좌표계를 사용합니다.

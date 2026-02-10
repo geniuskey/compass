@@ -102,6 +102,8 @@ For a 41-wavelength sweep (380-780 nm, 10 nm step):
 
 RCWA wins for narrow-band or moderate sweeps; FDTD can be competitive for very wide-band studies.
 
+<SolverComparisonChart />
+
 ## Combining results
 
 When both solvers produce results for the same configuration, use the `SolverComparison` class:

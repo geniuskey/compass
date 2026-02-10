@@ -74,6 +74,8 @@ COMPASS supports TE, TM, and unpolarized excitation. For unpolarized light, the 
 
 $$\text{QE}_\text{unpol} = \frac{1}{2}(\text{QE}_\text{TE} + \text{QE}_\text{TM})$$
 
+<PolarizationViewer />
+
 ## Relevance to COMPASS
 
 Every COMPASS simulation begins by defining wavelength range, incidence angle, and polarization state through the source configuration. These parameters determine:

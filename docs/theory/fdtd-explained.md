@@ -24,6 +24,8 @@ The Yee cell places the six field components ($E_x, E_y, E_z, H_x, H_y, H_z$) at
 
 This staggering ensures that every finite-difference curl approximation is second-order accurate and naturally satisfies the divergence conditions ($\nabla \cdot \mathbf{B} = 0$).
 
+<YeeCellViewer />
+
 ## Update equations
 
 The update equations for a single component (e.g., $E_x$) in a non-magnetic medium:

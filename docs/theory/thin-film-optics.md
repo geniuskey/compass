@@ -49,6 +49,8 @@ $$M = M_1 \cdot M_2 \cdots M_N$$
 
 The overall reflection and transmission coefficients follow from the matrix elements.
 
+<ThinFilmReflectance />
+
 ## Role in BSI pixels
 
 In a backside-illuminated pixel, light enters through the silicon backside and must pass through several layers before reaching the photodiode:

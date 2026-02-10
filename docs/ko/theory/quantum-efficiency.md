@@ -105,6 +105,8 @@ $$\sum_\text{pixels} \text{QE}_i \leq A_\text{Si}$$
 
 ## 일반적인 QE 스펙트럼
 
+<QESpectrumChart />
+
 잘 설계된 1 um 피치 BSI 픽셀의 경우:
 
 | 채널 | 최대 QE | 최대 QE 파장 |

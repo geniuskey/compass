@@ -9,6 +9,8 @@ description: COMPASS에서 렌즈 사출 동공으로부터의 원뿔 조명 설
 
 ## 물리적 배경
 
+<ConeIlluminationViewer />
+
 조명 원뿔은 다음으로 특성화됩니다:
 
 - **CRA(주광선 각도, Chief Ray Angle)**: 광축과 사출 동공에서 픽셀까지의 중심 광선 사이의 각도. CRA는 센서 중심에서 0이고 가장자리로 갈수록 증가합니다.

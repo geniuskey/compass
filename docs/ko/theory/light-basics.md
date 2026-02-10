@@ -74,6 +74,8 @@ COMPASS는 TE, TM, 무편광 여기(Excitation)를 모두 지원합니다. 무�
 
 $$\text{QE}_\text{unpol} = \frac{1}{2}(\text{QE}_\text{TE} + \text{QE}_\text{TM})$$
 
+<PolarizationViewer />
+
 ## COMPASS와의 관련성
 
 모든 COMPASS 시뮬레이션은 소스 설정(Source Configuration)을 통해 파장 범위, 입사각, 편광 상태를 정의하는 것에서 시작됩니다. 이 매개변수들은 다음을 결정합니다:

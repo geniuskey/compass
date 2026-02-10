@@ -105,6 +105,8 @@ The inequality is strict because some light is absorbed in the color filter, met
 
 ## Typical QE spectra
 
+<QESpectrumChart />
+
 For a well-designed 1 um pitch BSI pixel:
 
 | Channel | Peak QE | Peak wavelength |

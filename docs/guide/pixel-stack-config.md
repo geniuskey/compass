@@ -7,6 +7,8 @@ description: Complete reference for configuring BSI pixel structures in YAML, in
 
 The pixel structure is the central input to any COMPASS simulation. It is defined in a YAML file under the `pixel:` key and describes a Back-Side Illuminated (BSI) CMOS image sensor pixel as a vertical stack of optical layers. This page documents every parameter with its type, default value, and physical meaning.
 
+<PixelStackBuilder />
+
 ## Coordinate system
 
 COMPASS uses a right-handed coordinate system where light propagates downward through the stack.
