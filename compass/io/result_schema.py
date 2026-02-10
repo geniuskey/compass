@@ -8,12 +8,10 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
 # Re-export core types for convenience
-from compass.core.types import SimulationResult, FieldData, LayerSlice
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +33,8 @@ class _GroupDef:
     """Specification for a single HDF5 group."""
     name: str
     required: bool = True
-    attrs: Dict[str, str] = field(default_factory=dict)
-    datasets: List[_DatasetDef] = field(default_factory=list)
+    attrs: dict[str, str] = field(default_factory=dict)
+    datasets: list[_DatasetDef] = field(default_factory=list)
     description: str = ""
 
 
@@ -67,7 +65,7 @@ class ResultSchema:
 
     # Class-level group definitions ----------------------------------------
 
-    GROUPS: List[_GroupDef] = [
+    GROUPS: list[_GroupDef] = [
         _GroupDef(
             name="metadata",
             required=True,
@@ -110,7 +108,7 @@ class ResultSchema:
     # Public API -----------------------------------------------------------
 
     @classmethod
-    def validate(cls, filepath: str) -> List[str]:
+    def validate(cls, filepath: str) -> list[str]:
         """Validate an HDF5 file against the COMPASS result schema.
 
         Args:
@@ -122,7 +120,7 @@ class ResultSchema:
         """
         import h5py
 
-        errors: List[str] = []
+        errors: list[str] = []
 
         try:
             f = h5py.File(filepath, "r")
@@ -206,7 +204,7 @@ class ResultSchema:
     @classmethod
     def describe(cls) -> str:
         """Return a human-readable description of the schema layout."""
-        lines: List[str] = [
+        lines: list[str] = [
             f"COMPASS HDF5 Result Schema v{SCHEMA_VERSION}",
             "=" * 50,
         ]

@@ -32,12 +32,12 @@ H_JS = 6.62607015e-34
 Q_C = 1.602176634e-19
 
 
-def um_to_nm(um: float) -> float:
+def um_to_nm(um: float | np.ndarray) -> float | np.ndarray:
     """Convert micrometers to nanometers."""
     return um * 1000.0
 
 
-def nm_to_um(nm: float) -> float:
+def nm_to_um(nm: float | np.ndarray) -> float | np.ndarray:
     """Convert nanometers to micrometers."""
     return nm / 1000.0
 
@@ -75,12 +75,12 @@ def um_to_eV(wavelength_um: float) -> float:
 
 def deg_to_rad(deg: float) -> float:
     """Convert degrees to radians."""
-    return np.deg2rad(deg)
+    return float(np.deg2rad(deg))
 
 
 def rad_to_deg(rad: float) -> float:
     """Convert radians to degrees."""
-    return np.rad2deg(rad)
+    return float(np.rad2deg(rad))
 
 
 def wavelength_to_k0(wavelength_um: float) -> float:

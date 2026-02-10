@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Literal
 
 import numpy as np
 from scipy.interpolate import CubicSpline, interp1d
@@ -32,19 +32,19 @@ class MaterialData:
     n_const: float = 1.0
     k_const: float = 0.0
     # For tabulated
-    wavelengths: Optional[np.ndarray] = None
-    n_data: Optional[np.ndarray] = None
-    k_data: Optional[np.ndarray] = None
-    _n_interp: Optional[object] = field(default=None, repr=False)
-    _k_interp: Optional[object] = field(default=None, repr=False)
+    wavelengths: np.ndarray | None = None
+    n_data: np.ndarray | None = None
+    k_data: np.ndarray | None = None
+    _n_interp: object | None = field(default=None, repr=False)
+    _k_interp: object | None = field(default=None, repr=False)
     interpolation: str = "cubic_spline"
     # For Cauchy
     cauchy_A: float = 1.0
     cauchy_B: float = 0.0
     cauchy_C: float = 0.0
     # For Sellmeier
-    sellmeier_B: Optional[List[float]] = None
-    sellmeier_C: Optional[List[float]] = None
+    sellmeier_B: list[float] | None = None
+    sellmeier_C: list[float] | None = None
 
     def _build_interpolators(self) -> None:
         """Build interpolation functions from tabulated data."""
@@ -63,7 +63,7 @@ class MaterialData:
                 kind="linear", fill_value="extrapolate",
             )
 
-    def get_nk(self, wavelength: float) -> Tuple[float, float]:
+    def get_nk(self, wavelength: float) -> tuple[float, float]:
         """Get refractive index (n, k) at a given wavelength in um."""
         if self.mat_type == "constant":
             return self.n_const, self.k_const
@@ -71,6 +71,7 @@ class MaterialData:
         elif self.mat_type == "tabulated":
             if self._n_interp is None:
                 self._build_interpolators()
+            assert self.wavelengths is not None
             wl_clamped = np.clip(
                 wavelength,
                 self.wavelengths.min(),
@@ -82,6 +83,8 @@ class MaterialData:
                     f"outside data range [{self.wavelengths.min():.4f}, "
                     f"{self.wavelengths.max():.4f}], clamping."
                 )
+            assert self._n_interp is not None and callable(self._n_interp)
+            assert self._k_interp is not None and callable(self._k_interp)
             n = float(self._n_interp(wl_clamped))
             k = float(self._k_interp(wl_clamped))
             return n, max(k, 0.0)
@@ -94,6 +97,8 @@ class MaterialData:
         elif self.mat_type == "sellmeier":
             lam2 = wavelength ** 2
             n2 = 1.0
+            assert self.sellmeier_B is not None
+            assert self.sellmeier_C is not None
             for B, C in zip(self.sellmeier_B, self.sellmeier_C):
                 n2 += B * lam2 / (lam2 - C)
             return np.sqrt(max(n2, 1.0)), 0.0
@@ -109,8 +114,8 @@ class MaterialData:
 class MaterialDB:
     """Central material property database."""
 
-    def __init__(self, db_path: Optional[str] = None):
-        self._materials: Dict[str, MaterialData] = {}
+    def __init__(self, db_path: str | None = None):
+        self._materials: dict[str, MaterialData] = {}
         self._db_path = Path(db_path) if db_path else _MATERIALS_DIR
         self._load_builtin()
 
@@ -257,7 +262,7 @@ class MaterialDB:
             cauchy_A=A, cauchy_B=B, cauchy_C=C,
         )
 
-    def register_sellmeier(self, name: str, B: List[float], C: List[float]) -> None:
+    def register_sellmeier(self, name: str, B: list[float], C: list[float]) -> None:
         """Register a material with Sellmeier dispersion model."""
         self._materials[name] = MaterialData(
             name=name, mat_type="sellmeier",
@@ -293,7 +298,7 @@ class MaterialDB:
         mat._build_interpolators()
         self._materials[name] = mat
 
-    def get_nk(self, name: str, wavelength: float) -> Tuple[float, float]:
+    def get_nk(self, name: str, wavelength: float) -> tuple[float, float]:
         """Get (n, k) for a material at a given wavelength (um)."""
         if name not in self._materials:
             raise KeyError(f"Unknown material: '{name}'. Available: {list(self._materials.keys())}")
@@ -309,7 +314,7 @@ class MaterialDB:
         """Get complex permittivity over wavelength array."""
         return np.array([self.get_epsilon(name, wl) for wl in wavelengths])
 
-    def list_materials(self) -> List[str]:
+    def list_materials(self) -> list[str]:
         """List all available material names."""
         return sorted(self._materials.keys())
 

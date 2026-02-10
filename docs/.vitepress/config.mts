@@ -184,7 +184,7 @@ export default defineConfig({
           { text: '가이드', link: '/ko/guide/installation' },
           { text: '이론', link: '/ko/theory/light-basics' },
           { text: '레퍼런스', link: '/ko/reference/api-overview' },
-          { text: '요리책', link: '/ko/cookbook/bsi-2x2-basic' },
+          { text: '레시피', link: '/ko/cookbook/bsi-2x2-basic' },
         ],
         sidebar: {
           '/ko/theory/': theorySidebarKo,

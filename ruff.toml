@@ -1,7 +1,16 @@
+target-version = "py311"
+line-length = 100
+
 [lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
 ignore = [
     "E501",   # line too long - handled by formatter
+    "E741",   # ambiguous variable name (I, l) - physics convention
+    "N802",   # function name should be lowercase - physics convention (eV_to_um)
+    "N803",   # argument name should be lowercase - physics convention (R, T, A, E)
+    "N806",   # variable in function should be lowercase - physics convention (R, T, S, A)
+    "N815",   # mixed-case variable in class scope - physics convention (cauchy_A)
+    "B905",   # zip() without strict= - not needed for numeric arrays
     "RUF012", # mutable class variable - common in dataclasses
     "SIM108", # ternary operator - readability preference
 ]
@@ -16,6 +25,3 @@ known-first-party = ["compass"]
 [format]
 quote-style = "double"
 indent-style = "space"
-
-target-version = "py311"
-line-length = 100

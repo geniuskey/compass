@@ -1,9 +1,9 @@
 """QE (Quantum Efficiency) calculation module."""
 from __future__ import annotations
+
 import logging
+
 import numpy as np
-from typing import Dict, Optional, Tuple
-from compass.core.types import SimulationResult
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ class QECalculator:
     """Compute per-pixel QE from simulation results."""
 
     @staticmethod
-    def from_absorption(absorption_per_pixel: Dict[str, np.ndarray], incident_power: np.ndarray) -> Dict[str, np.ndarray]:
+    def from_absorption(absorption_per_pixel: dict[str, np.ndarray], incident_power: np.ndarray) -> dict[str, np.ndarray]:
         """Calculate QE from absorbed power in each photodiode.
         QE = P_absorbed_in_PD / P_incident
         """
@@ -24,10 +24,10 @@ class QECalculator:
     def from_poynting_flux(flux_top: np.ndarray, flux_bottom: np.ndarray, incident_power: np.ndarray) -> np.ndarray:
         """QE from Poynting vector flux difference at PD boundaries."""
         absorbed = flux_top - flux_bottom
-        return np.clip(absorbed / np.maximum(incident_power, 1e-30), 0, 1)
+        return np.asarray(np.clip(absorbed / np.maximum(incident_power, 1e-30), 0, 1))
 
     @staticmethod
-    def compute_crosstalk(qe_per_pixel: Dict[str, np.ndarray], bayer_map: list) -> np.ndarray:
+    def compute_crosstalk(qe_per_pixel: dict[str, np.ndarray], bayer_map: list) -> np.ndarray:
         """Compute crosstalk matrix.
         Crosstalk(i,j) = fraction of light intended for pixel i that ends up in pixel j.
         """
@@ -35,14 +35,14 @@ class QECalculator:
         n = len(pixels)
         n_wl = len(next(iter(qe_per_pixel.values())))
         ct = np.zeros((n, n, n_wl))
-        for i, pi in enumerate(pixels):
+        for i, _pi in enumerate(pixels):
             total = sum(qe_per_pixel[pj] for pj in pixels)
             for j, pj in enumerate(pixels):
                 ct[i, j, :] = qe_per_pixel[pj] / np.maximum(total, 1e-30)
         return ct
 
     @staticmethod
-    def spectral_response(qe_per_pixel: Dict[str, np.ndarray], wavelengths: np.ndarray) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
+    def spectral_response(qe_per_pixel: dict[str, np.ndarray], wavelengths: np.ndarray) -> dict[str, tuple[np.ndarray, np.ndarray]]:
         """Group QE by color channel (average over same-color pixels)."""
         color_qe = {}
         color_count = {}

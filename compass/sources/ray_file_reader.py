@@ -1,9 +1,10 @@
 """Zemax ray file reader."""
 from __future__ import annotations
+
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -12,14 +13,14 @@ class RayFileReader:
     """Read CRA/MRA data from Zemax JSON or CSV files."""
 
     @staticmethod
-    def read_json(filepath: str) -> Dict:
+    def read_json(filepath: str) -> dict:
         """Read Zemax JSON ray file."""
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             data = json.load(f)
-        return data
+        return dict(data)
 
     @staticmethod
-    def read_csv(filepath: str) -> Dict:
+    def read_csv(filepath: str) -> dict:
         """Read CSV with columns: image_height, cra_deg, mra_deg, f_number."""
         data = np.loadtxt(filepath, delimiter=",", skiprows=1)
         return {
@@ -30,7 +31,7 @@ class RayFileReader:
         }
 
     @staticmethod
-    def read(filepath: str, format: str = "auto") -> Dict:
+    def read(filepath: str, format: str = "auto") -> dict:
         """Read ray file with auto-detected format."""
         path = Path(filepath)
         if format == "auto":

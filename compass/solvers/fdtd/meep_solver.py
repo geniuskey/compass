@@ -14,12 +14,10 @@ Reference: https://meep.readthedocs.io/
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
 from compass.core.types import FieldData, SimulationResult
-from compass.core.units import um_to_m, wavelength_to_frequency, C_UM_PER_S
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
 from compass.sources.planewave import PlanewaveSource
@@ -60,9 +58,9 @@ class MeepSolver(SolverBase):
                 "Install with: pip install meep (or conda install -c conda-forge pymeep)"
             )
         super().__init__(config, device)
-        self._source: Optional[PlanewaveSource] = None
+        self._source: PlanewaveSource | None = None
         self._last_sim: object = None  # Store last mp.Simulation for field extraction
-        self._last_fields: Optional[Dict[str, FieldData]] = None
+        self._last_fields: dict[str, FieldData] | None = None
         self._last_dft_fields: object = None
 
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
@@ -149,10 +147,10 @@ class MeepSolver(SolverBase):
         )
 
         pol_runs = self._source.get_polarization_runs()
-        all_qe: Dict[str, List[float]] = {}
-        all_R: List[float] = []
-        all_T: List[float] = []
-        all_A: List[float] = []
+        all_qe: dict[str, list[float]] = {}
+        all_R: list[float] = []
+        all_T: list[float] = []
+        all_A: list[float] = []
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
             logger.debug(
@@ -162,10 +160,10 @@ class MeepSolver(SolverBase):
 
             fcen = 1.0 / wavelength  # meep frequency in units of c/um
 
-            R_pol: List[float] = []
-            T_pol: List[float] = []
-            A_pol: List[float] = []
-            qe_pol_accum: Dict[str, List[float]] = {}
+            R_pol: list[float] = []
+            T_pol: list[float] = []
+            A_pol: list[float] = []
+            qe_pol_accum: dict[str, list[float]] = {}
 
             for pol in pol_runs:
                 try:
@@ -240,7 +238,7 @@ class MeepSolver(SolverBase):
         trans_z: float,
         polarization: str,
         use_dispersive: bool,
-    ) -> Tuple[float, float, float, Optional[object]]:
+    ) -> tuple[float, float, float, object | None]:
         """Run a single-wavelength, single-polarization Meep simulation.
 
         This method:
@@ -274,6 +272,7 @@ class MeepSolver(SolverBase):
 
         # Bloch periodic boundaries on x/y, PML on z
         k_point = mp.Vector3(0, 0, 0)
+        assert self._source is not None
         if self._source.theta_deg != 0.0:
             # Bloch periodic with oblique incidence
             theta_rad = self._source.theta_rad
@@ -379,6 +378,7 @@ class MeepSolver(SolverBase):
         sim.load_minus_flux_data(refl_fr, refl_flux_data)
 
         # Add DFT volume monitor in silicon region for QE computation
+        assert self._pixel_stack is not None
         si_layer = None
         for layer in self._pixel_stack.layers:
             if layer.name == "silicon":
@@ -439,7 +439,7 @@ class MeepSolver(SolverBase):
         wavelength: float,
         z_center: float,
         use_dispersive: bool,
-    ) -> List:
+    ) -> list:
         """Build Meep geometry objects from PixelStack.
 
         Converts each layer in the PixelStack to mp.Block objects with
@@ -456,6 +456,7 @@ class MeepSolver(SolverBase):
             List of mp.GeometryObject instances.
         """
         geometry = []
+        assert self._pixel_stack is not None
         lx, ly = self._pixel_stack.domain_size
 
         for layer in self._pixel_stack.layers:
@@ -671,6 +672,7 @@ class MeepSolver(SolverBase):
         Returns:
             mp.Medium instance.
         """
+        assert self._pixel_stack is not None
         mat_db = self._pixel_stack.material_db
 
         if not mat_db.has_material(mat_name):
@@ -721,7 +723,7 @@ class MeepSolver(SolverBase):
         lx: float,
         ly: float,
         z_center: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Compute per-pixel quantum efficiency from DFT volume fields.
 
         QE is computed by integrating |E|^2 * Im(eps) over each photodiode
@@ -738,9 +740,10 @@ class MeepSolver(SolverBase):
         Returns:
             Dict mapping pixel key to QE value.
         """
-        qe_per_pixel: Dict[str, float] = {}
+        qe_per_pixel: dict[str, float] = {}
+        assert self._pixel_stack is not None
         bayer = self._pixel_stack.bayer_map
-        n_pixels = self._pixel_stack.unit_cell[0] * self._pixel_stack.unit_cell[1]
+        _n_pixels = self._pixel_stack.unit_cell[0] * self._pixel_stack.unit_cell[1]
 
         if dft_vol is None or self._last_sim is None:
             # Fallback: no DFT data available, return zeros
@@ -754,9 +757,9 @@ class MeepSolver(SolverBase):
             sim = self._last_sim
 
             # Get DFT field arrays from the volume monitor
-            ex_dft = sim.get_dft_array(dft_vol, mp.Ex, 0)
-            ey_dft = sim.get_dft_array(dft_vol, mp.Ey, 0)
-            ez_dft = sim.get_dft_array(dft_vol, mp.Ez, 0)
+            ex_dft = sim.get_dft_array(dft_vol, mp.Ex, 0)  # type: ignore[attr-defined]
+            ey_dft = sim.get_dft_array(dft_vol, mp.Ey, 0)  # type: ignore[attr-defined]
+            ez_dft = sim.get_dft_array(dft_vol, mp.Ez, 0)  # type: ignore[attr-defined]
 
             E_sq = np.abs(ex_dft)**2 + np.abs(ey_dft)**2 + np.abs(ez_dft)**2
 
@@ -878,6 +881,7 @@ class MeepSolver(SolverBase):
         import meep as mp
 
         sim = self._last_sim
+        assert self._pixel_stack is not None
         lx, ly = self._pixel_stack.domain_size
         z_min, z_max = self._pixel_stack.z_range
         z_center = (z_min + z_max) / 2.0
@@ -922,15 +926,15 @@ class MeepSolver(SolverBase):
                 )
 
             if meep_comp is not None:
-                field_slice = np.abs(sim.get_array(vol=vol, component=meep_comp)) ** 2
+                field_slice = np.abs(sim.get_array(vol=vol, component=meep_comp)) ** 2  # type: ignore[attr-defined]
             else:
                 # |E|^2 = |Ex|^2 + |Ey|^2 + |Ez|^2
-                ex = sim.get_array(vol=vol, component=mp.Ex)
-                ey = sim.get_array(vol=vol, component=mp.Ey)
-                ez = sim.get_array(vol=vol, component=mp.Ez)
+                ex = sim.get_array(vol=vol, component=mp.Ex)  # type: ignore[attr-defined]
+                ey = sim.get_array(vol=vol, component=mp.Ey)  # type: ignore[attr-defined]
+                ez = sim.get_array(vol=vol, component=mp.Ez)  # type: ignore[attr-defined]
                 field_slice = np.abs(ex)**2 + np.abs(ey)**2 + np.abs(ez)**2
 
-            return field_slice
+            return np.asarray(field_slice)
 
         except Exception as e:
             logger.warning(f"meep: field extraction failed: {e}, returning zeros")

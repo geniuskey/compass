@@ -1,18 +1,20 @@
 """Solver comparison analysis module."""
 from __future__ import annotations
+
 import numpy as np
-from typing import Dict, List, Optional
+
 from compass.core.types import SimulationResult
+
 
 class SolverComparison:
     """Compare results from multiple solvers."""
 
-    def __init__(self, results: List[SimulationResult], labels: List[str], reference_idx: int = 0):
+    def __init__(self, results: list[SimulationResult], labels: list[str], reference_idx: int = 0):
         self.results = results
         self.labels = labels
         self.reference_idx = reference_idx
 
-    def qe_difference(self) -> Dict[str, np.ndarray]:
+    def qe_difference(self) -> dict[str, np.ndarray]:
         """Absolute QE difference vs reference for each pixel."""
         ref = self.results[self.reference_idx]
         diffs = {}
@@ -25,7 +27,7 @@ class SolverComparison:
                     diffs[key] = np.abs(result.qe_per_pixel[pixel] - ref.qe_per_pixel[pixel])
         return diffs
 
-    def qe_relative_error(self) -> Dict[str, np.ndarray]:
+    def qe_relative_error(self) -> dict[str, np.ndarray]:
         """Relative QE error (%) vs reference."""
         ref = self.results[self.reference_idx]
         errors = {}
@@ -39,7 +41,7 @@ class SolverComparison:
                     errors[key] = 100.0 * np.abs(result.qe_per_pixel[pixel] - ref_qe) / np.maximum(np.abs(ref_qe), 1e-10)
         return errors
 
-    def runtime_comparison(self) -> Dict[str, float]:
+    def runtime_comparison(self) -> dict[str, float]:
         """Compare runtime across solvers."""
         return {label: result.metadata.get("runtime_seconds", 0.0) for label, result in zip(self.labels, self.results)}
 

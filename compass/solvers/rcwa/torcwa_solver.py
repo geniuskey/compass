@@ -7,11 +7,10 @@ torcwa is a PyTorch-based RCWA solver with GPU support.
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
 
 import numpy as np
 
-from compass.core.types import FieldData, SimulationResult
+from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
 from compass.sources.planewave import PlanewaveSource
@@ -28,12 +27,12 @@ class TorcwaSolver(SolverBase):
 
     def __init__(self, config: dict, device: str = "cpu"):
         super().__init__(config, device)
-        self._source: Optional[PlanewaveSource] = None
+        self._source: PlanewaveSource | None = None
         self._layer_slices = None
         self._sim = None
         self._last_sim = None
-        self._last_layer_info = None
-        self._last_wavelength = None
+        self._last_layer_info: list | None = None
+        self._last_wavelength: float | None = None
 
         # Configure precision
         self._setup_precision()
@@ -75,10 +74,10 @@ class TorcwaSolver(SolverBase):
         try:
             import torch
             import torcwa
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "torcwa is required. Install with: pip install torcwa"
-            )
+            ) from err
 
         params = self.config.get("params", {})
         fourier_order = params.get("fourier_order", [9, 9])
@@ -95,7 +94,7 @@ class TorcwaSolver(SolverBase):
         ny = max(64, (2 * fourier_order[1] + 1) * 3)
 
         pol_runs = self._source.get_polarization_runs()
-        all_qe: Dict[str, List[np.ndarray]] = {}
+        all_qe: dict[str, list[np.ndarray]] = {}
         all_R, all_T, all_A = [], [], []
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
@@ -105,7 +104,7 @@ class TorcwaSolver(SolverBase):
                 wavelength, nx, ny, n_lens_slices=30
             )
 
-            qe_pol_accum = {}
+            qe_pol_accum: dict[str, list] = {}
             R_pol, T_pol, A_pol = [], [], []
 
             for pol in pol_runs:
@@ -192,6 +191,7 @@ class TorcwaSolver(SolverBase):
         sim.add_output_layer(eps=1.0)
 
         # Set incidence angle
+        assert self._source is not None
         sim.set_incident_angle(
             inc_ang=self._source.theta_rad,
             azi_ang=self._source.phi_rad,
@@ -227,10 +227,11 @@ class TorcwaSolver(SolverBase):
         is available, uses Poynting vector differences; otherwise falls
         back to eps_imag weighting.
         """
+        assert self._pixel_stack is not None
         bayer = self._pixel_stack.bayer_map
         n_rows, n_cols = self._pixel_stack.unit_cell
         n_pixels = n_rows * n_cols
-        pitch = self._pixel_stack.pitch
+        _pitch = self._pixel_stack.pitch
 
         # Build absorption weight per pixel from eps_imag in PD regions
         pixel_weights = {}
@@ -338,10 +339,10 @@ class TorcwaSolver(SolverBase):
         self, sim, layer_info, component, plane, position,
     ) -> np.ndarray:
         """Extract field using torcwa's internal field reconstruction."""
-        import torch
+        assert self._pixel_stack is not None
 
         nx_field, ny_field = 64, 64
-        lx, ly = self._pixel_stack.domain_size
+        _lx, _ly = self._pixel_stack.domain_size
 
         if plane == "xy":
             # Find the layer at the given z position
@@ -357,7 +358,7 @@ class TorcwaSolver(SolverBase):
 
             # Use torcwa field_cell if available
             if hasattr(sim, 'field_cell'):
-                E, H = sim.field_cell(
+                E, _H = sim.field_cell(
                     layer_idx=target_layer_idx,
                     nx=nx_field,
                     ny=ny_field,
@@ -376,6 +377,7 @@ class TorcwaSolver(SolverBase):
         Models field intensity as roughly proportional to exp(-alpha*z)
         where alpha depends on the imaginary part of the permittivity.
         """
+        assert self._pixel_stack is not None
         nz = len(layer_info)
         nx_out, ny_out = 64, 64
         lx, ly = self._pixel_stack.domain_size
@@ -392,12 +394,12 @@ class TorcwaSolver(SolverBase):
                         zx = target_shape[0] / eps.shape[0]
                         zy = target_shape[1] / eps.shape[1]
                         if component == "|E|2":
-                            return np.abs(zoom(np.real(eps), (zx, zy), order=1))
+                            return np.asarray(np.abs(zoom(np.real(eps), (zx, zy), order=1)))
                         else:
-                            return zoom(np.real(eps), (zx, zy), order=1)
+                            return np.asarray(zoom(np.real(eps), (zx, zy), order=1))
                     if component == "|E|2":
-                        return np.abs(np.real(eps))
-                    return np.real(eps)
+                        return np.asarray(np.abs(np.real(eps)))
+                    return np.asarray(np.real(eps))
                 z_accum += s.thickness
             return np.zeros((nx_out, ny_out))
 
@@ -417,6 +419,7 @@ class TorcwaSolver(SolverBase):
 
             if component == "|E|2":
                 # Approximate |E|^2 decay through absorbing media
+                assert self._last_wavelength is not None
                 k0 = 2 * np.pi / self._last_wavelength
                 for xi in range(nx_out):
                     intensity = 1.0
@@ -440,6 +443,7 @@ class TorcwaSolver(SolverBase):
                 field_2d[:, zi] = np.interp(y_new, y_orig, np.abs(np.imag(col)) + 1e-10)
 
             if component == "|E|2":
+                assert self._last_wavelength is not None
                 k0 = 2 * np.pi / self._last_wavelength
                 for yi in range(ny_out):
                     intensity = 1.0
@@ -456,17 +460,17 @@ class TorcwaSolver(SolverBase):
     def _component_from_field(E: np.ndarray, component: str) -> np.ndarray:
         """Extract a specific component from a 3-component field array."""
         if component == "Ex":
-            return np.abs(E[..., 0]) ** 2
+            return np.asarray(np.abs(E[..., 0]) ** 2)
         elif component == "Ey":
-            return np.abs(E[..., 1]) ** 2
+            return np.asarray(np.abs(E[..., 1]) ** 2)
         elif component == "Ez":
-            return np.abs(E[..., 2]) ** 2
+            return np.asarray(np.abs(E[..., 2]) ** 2)
         elif component == "|E|2":
-            return np.sum(np.abs(E) ** 2, axis=-1)
+            return np.asarray(np.sum(np.abs(E) ** 2, axis=-1))
         elif component == "Sz":
             # Approximate Poynting z: Re(Ex*Hy - Ey*Hx) ~ |E|^2 for planewave
-            return np.sum(np.abs(E) ** 2, axis=-1)
-        return np.abs(E[..., 0]) ** 2
+            return np.asarray(np.sum(np.abs(E) ** 2, axis=-1))
+        return np.asarray(np.abs(E[..., 0]) ** 2)
 
 
 # Register with factory

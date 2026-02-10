@@ -14,12 +14,10 @@ Reference: https://github.com/google/fdtdz
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
 from compass.core.types import FieldData, SimulationResult
-from compass.core.units import um_to_m, wavelength_to_frequency, wavelength_to_k0
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
 from compass.sources.planewave import PlanewaveSource
@@ -30,7 +28,6 @@ _FDTDZ_AVAILABLE = False
 _JAX_AVAILABLE = False
 try:
     import jax
-    import jax.numpy as jnp
 
     _JAX_AVAILABLE = True
 except ImportError:
@@ -71,8 +68,8 @@ class FdtdzSolver(SolverBase):
                 "Install with: pip install fdtdz"
             )
         super().__init__(config, device)
-        self._source: Optional[PlanewaveSource] = None
-        self._last_fields: Optional[Dict[str, FieldData]] = None
+        self._source: PlanewaveSource | None = None
+        self._last_fields: dict[str, FieldData] | None = None
 
         # Configure JAX device
         self._configure_jax_device()
@@ -154,8 +151,8 @@ class FdtdzSolver(SolverBase):
                 "fdtdz is required. Install with: pip install fdtdz"
             )
 
-        import jax.numpy as jnp
         import fdtdz as fz
+        import jax.numpy as jnp
 
         params = self.config.get("params", {})
         grid_spacing = params.get("grid_spacing", 0.02)  # um
@@ -189,11 +186,11 @@ class FdtdzSolver(SolverBase):
         _, pd_masks = self._pixel_stack.get_photodiode_mask(nx, ny, nz_interior)
 
         pol_runs = self._source.get_polarization_runs()
-        all_qe: Dict[str, List[float]] = {}
-        all_R: List[float] = []
-        all_T: List[float] = []
-        all_A: List[float] = []
-        all_fields: Dict[str, FieldData] = {}
+        all_qe: dict[str, list[float]] = {}
+        all_R: list[float] = []
+        all_T: list[float] = []
+        all_A: list[float] = []
+        all_fields: dict[str, FieldData] = {}
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
             logger.debug(
@@ -210,10 +207,10 @@ class FdtdzSolver(SolverBase):
             eps_full = np.ones((ny, nx, nz), dtype=complex)
             eps_full[:, :, pml_layers:pml_layers + nz_interior] = eps_3d_np
 
-            R_pol: List[float] = []
-            T_pol: List[float] = []
-            A_pol: List[float] = []
-            qe_pol_accum: Dict[str, List[float]] = {}
+            R_pol: list[float] = []
+            T_pol: list[float] = []
+            A_pol: list[float] = []
+            qe_pol_accum: dict[str, list[float]] = {}
 
             for pol in pol_runs:
                 try:
@@ -288,7 +285,7 @@ class FdtdzSolver(SolverBase):
         refl_z: int,
         trans_z: int,
         polarization: str,
-    ) -> Tuple[float, float, float, Optional[FieldData]]:
+    ) -> tuple[float, float, float, FieldData | None]:
         """Run a single-wavelength, single-polarization fdtdz simulation.
 
         Args:
@@ -312,7 +309,7 @@ class FdtdzSolver(SolverBase):
         # fdtdz uses real permittivity for the main simulation.
         # Imaginary part (loss) is handled separately.
         eps_real = np.real(eps_full).astype(np.float32)
-        eps_imag = np.imag(eps_full).astype(np.float32)
+        _eps_imag = np.imag(eps_full).astype(np.float32)
 
         # Convert permittivity to JAX arrays.
         # fdtdz expects permittivity as (xx, yy, zz) diagonal tensor components.
@@ -320,8 +317,8 @@ class FdtdzSolver(SolverBase):
         eps_jax = jnp.array(eps_real.transpose(2, 0, 1))  # (nz, ny, nx)
 
         # Compute source parameters
-        omega = 2.0 * np.pi / wavelength  # angular frequency in 1/um
-        dt = dt_factor * grid_spacing  # time step in um/c units
+        _omega = 2.0 * np.pi / wavelength  # angular frequency in 1/um
+        _dt = dt_factor * grid_spacing  # time step in um/c units
         wavelength_cells = wavelength / grid_spacing  # wavelength in grid cells
 
         # Build source: a planar current sheet at source_z
@@ -336,7 +333,7 @@ class FdtdzSolver(SolverBase):
 
         # Build PML conductivity profile (sigma on z boundaries)
         pml_sigma = self._build_pml_profile(nz, pml_layers, grid_spacing, wavelength)
-        pml_sigma_jax = jnp.array(pml_sigma.astype(np.float32))
+        _pml_sigma_jax = jnp.array(pml_sigma.astype(np.float32))
 
         # Run fdtdz simulation
         # fdtdz.simulate() returns the full field state
@@ -357,33 +354,33 @@ class FdtdzSolver(SolverBase):
             ez = np.array(result.ez)
             hx = np.array(result.hx)
             hy = np.array(result.hy)
-            hz = np.array(result.hz)
+            _hz = np.array(result.hz)
         elif isinstance(result, tuple) and len(result) >= 2:
             # result = (E, H) where E and H are (3, nz, ny, nx) arrays
             E = np.array(result[0])
             H = np.array(result[1])
             ex, ey, ez = E[0], E[1], E[2]
-            hx, hy, hz = H[0], H[1], H[2]
+            hx, hy, _hz = H[0], H[1], H[2]
         elif isinstance(result, dict):
             ex = np.array(result.get("ex", np.zeros((nz, ny, nx))))
             ey = np.array(result.get("ey", np.zeros((nz, ny, nx))))
             ez = np.array(result.get("ez", np.zeros((nz, ny, nx))))
             hx = np.array(result.get("hx", np.zeros((nz, ny, nx))))
             hy = np.array(result.get("hy", np.zeros((nz, ny, nx))))
-            hz = np.array(result.get("hz", np.zeros((nz, ny, nx))))
+            _hz = np.array(result.get("hz", np.zeros((nz, ny, nx))))
         else:
             # Fallback: try to treat result as a JAX array directly
             fields_arr = np.array(result)
             if fields_arr.ndim == 4 and fields_arr.shape[0] == 6:
                 ex, ey, ez = fields_arr[0], fields_arr[1], fields_arr[2]
-                hx, hy, hz = fields_arr[3], fields_arr[4], fields_arr[5]
+                hx, hy, _hz = fields_arr[3], fields_arr[4], fields_arr[5]
             else:
                 logger.warning(
                     f"fdtdz: unexpected result shape {fields_arr.shape}, "
                     "using zeros for fields"
                 )
                 ex = ey = ez = np.zeros((nz, ny, nx))
-                hx = hy = hz = np.zeros((nz, ny, nx))
+                hx = hy = _hz = np.zeros((nz, ny, nx))
 
         # Compute Poynting flux Sz = 0.5 * Re(Ex*Hy* - Ey*Hx*)
         # At reflection monitor
@@ -417,6 +414,7 @@ class FdtdzSolver(SolverBase):
         A = float(np.clip(1.0 - R - T, 0.0, 1.0))
 
         # Store field data (transpose back from (nz, ny, nx) to (ny, nx, nz))
+        assert self._pixel_stack is not None
         z_coords = np.linspace(
             self._pixel_stack.z_range[0],
             self._pixel_stack.z_range[1],
@@ -477,8 +475,8 @@ class FdtdzSolver(SolverBase):
 
     def _compute_pixel_qe(
         self,
-        fields: Optional[FieldData],
-        pd_masks: Dict[str, np.ndarray],
+        fields: FieldData | None,
+        pd_masks: dict[str, np.ndarray],
         eps_3d: np.ndarray,
         wavelength: float,
         grid_spacing: float,
@@ -486,7 +484,7 @@ class FdtdzSolver(SolverBase):
         ny: int,
         nz_interior: int,
         pml_layers: int,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Compute per-pixel quantum efficiency from volume absorption.
 
         QE for each pixel is proportional to the power absorbed in its
@@ -508,9 +506,10 @@ class FdtdzSolver(SolverBase):
         Returns:
             Dict mapping pixel key (e.g. "R_0_0") to QE value.
         """
-        qe_per_pixel: Dict[str, float] = {}
+        qe_per_pixel: dict[str, float] = {}
+        assert self._pixel_stack is not None
         bayer = self._pixel_stack.bayer_map
-        n_pixels = self._pixel_stack.unit_cell[0] * self._pixel_stack.unit_cell[1]
+        _n_pixels = self._pixel_stack.unit_cell[0] * self._pixel_stack.unit_cell[1]
 
         if fields is None or fields.Ex is None:
             # Fallback: distribute total absorption evenly
@@ -522,6 +521,8 @@ class FdtdzSolver(SolverBase):
             return qe_per_pixel
 
         # |E|^2 in the interior region (strip PML layers from field arrays)
+        assert fields.Ey is not None
+        assert fields.Ez is not None
         ex_int = fields.Ex[:, :, pml_layers:pml_layers + nz_interior]
         ey_int = fields.Ey[:, :, pml_layers:pml_layers + nz_interior]
         ez_int = fields.Ez[:, :, pml_layers:pml_layers + nz_interior]

@@ -8,7 +8,7 @@ support for multi-wavelength comparison.
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,8 +25,8 @@ _VALID_COMPONENTS = ("Ex", "Ey", "Ez", "|E|2", "Sz")
 def _extract_field_component(
     field_data: FieldData,
     component: str,
-    poynting: Optional[np.ndarray] = None,
-) -> Optional[np.ndarray]:
+    poynting: np.ndarray | None = None,
+) -> np.ndarray | None:
     """Extract a specific field component from FieldData.
 
     Args:
@@ -50,15 +50,15 @@ def _extract_field_component(
     if component == "Ex":
         if field_data.Ex is None:
             return None
-        return np.abs(field_data.Ex)
+        return np.asarray(np.abs(field_data.Ex))
     elif component == "Ey":
         if field_data.Ey is None:
             return None
-        return np.abs(field_data.Ey)
+        return np.asarray(np.abs(field_data.Ey))
     elif component == "Ez":
         if field_data.Ez is None:
             return None
-        return np.abs(field_data.Ez)
+        return np.asarray(np.abs(field_data.Ez))
     elif component == "|E|2":
         return field_data.E_intensity
     elif component == "Sz":
@@ -76,10 +76,10 @@ def _extract_field_component(
 
 def _take_slice(
     data_3d: np.ndarray,
-    coords: Tuple[np.ndarray, np.ndarray, np.ndarray],
+    coords: tuple[np.ndarray, np.ndarray, np.ndarray],
     plane: str,
     position: float,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Extract a 2D slice from a 3D field array.
 
     The 3D array is assumed to have shape (ny, nx, nz) with coordinate arrays
@@ -116,10 +116,10 @@ def plot_field_2d(
     component: str = "|E|2",
     plane: str = "xz",
     position: float = 0.0,
-    wavelength_key: Optional[str] = None,
+    wavelength_key: str | None = None,
     overlay_structure: bool = True,
-    ax: Optional[plt.Axes] = None,
-    figsize: Tuple[float, float] = (10, 6),
+    ax: plt.Axes | None = None,
+    figsize: tuple[float, float] = (10, 6),
     log_scale: bool = False,
     cmap: str = "hot",
 ) -> plt.Axes:
@@ -155,7 +155,7 @@ def plot_field_2d(
         raise ValueError(f"Unsupported plane '{plane}'. Must be 'xz', 'yz', or 'xy'.")
 
     if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
+        _fig, ax = plt.subplots(1, 1, figsize=figsize)
 
     # Resolve field data
     if result.fields is None or len(result.fields) == 0:
@@ -208,6 +208,7 @@ def plot_field_2d(
     vmin = float(np.nanmin(slice_2d)) if not log_scale else max(float(np.nanmin(slice_2d)), 1e-10)
     vmax = float(np.nanmax(slice_2d))
 
+    norm: LogNorm | Normalize
     if log_scale:
         # Clamp small values for log scale
         slice_2d_plot = np.where(slice_2d > 0, slice_2d, vmin)
@@ -263,7 +264,7 @@ def _overlay_structure_outline(
     plane: str,
     position: float,
     ax: plt.Axes,
-    coords: Tuple[np.ndarray, np.ndarray, np.ndarray],
+    coords: tuple[np.ndarray, np.ndarray, np.ndarray],
 ) -> None:
     """Overlay material boundary contours on the field plot.
 
@@ -280,6 +281,8 @@ def _overlay_structure_outline(
         ax: Axes to draw on.
         coords: (x, y, z) coordinate arrays.
     """
+    if result.fields is None:
+        return
     field_data = result.fields.get(wavelength_key)
     if field_data is None:
         return
@@ -315,7 +318,7 @@ def plot_field_multi_wavelength(
     plane: str = "xz",
     position: float = 0.0,
     ncols: int = 3,
-    figsize_per_plot: Tuple[float, float] = (5, 4),
+    figsize_per_plot: tuple[float, float] = (5, 4),
     log_scale: bool = False,
     cmap: str = "hot",
 ) -> plt.Figure:

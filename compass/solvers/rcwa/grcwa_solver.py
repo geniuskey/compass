@@ -6,7 +6,6 @@ Wraps the grcwa library (GPU-accelerated RCWA with autograd backend).
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -27,9 +26,9 @@ class GrcwaSolver(SolverBase):
 
     def __init__(self, config: dict, device: str = "cpu"):
         super().__init__(config, device)
-        self._source: Optional[PlanewaveSource] = None
-        self._last_layer_slices = None
-        self._last_wavelength = None
+        self._source: PlanewaveSource | None = None
+        self._last_layer_slices: list | None = None
+        self._last_wavelength: float | None = None
 
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
         self._pixel_stack = pixel_stack
@@ -48,8 +47,8 @@ class GrcwaSolver(SolverBase):
 
         try:
             import grcwa
-        except ImportError:
-            raise ImportError("grcwa is required. Install with: pip install grcwa")
+        except ImportError as err:
+            raise ImportError("grcwa is required. Install with: pip install grcwa") from err
 
         params = self.config.get("params", {})
         fourier_order = params.get("fourier_order", [9, 9])
@@ -60,16 +59,16 @@ class GrcwaSolver(SolverBase):
         ny = max(64, (2 * nG + 1) * 3)
 
         pol_runs = self._source.get_polarization_runs()
-        all_qe: Dict[str, List[float]] = {}
+        all_qe: dict[str, list[float]] = {}
         all_R, all_T, all_A = [], [], []
 
-        for wl_idx, wavelength in enumerate(self._source.wavelengths):
+        for _wl_idx, wavelength in enumerate(self._source.wavelengths):
             freq = 1.0 / wavelength  # normalized frequency
 
             layer_slices = self._pixel_stack.get_layer_slices(wavelength, nx, ny)
 
             R_pol, T_pol, A_pol = [], [], []
-            qe_pol_accum: Dict[str, List[float]] = {}
+            qe_pol_accum: dict[str, list[float]] = {}
 
             for pol in pol_runs:
                 # Set polarization
@@ -138,6 +137,7 @@ class GrcwaSolver(SolverBase):
         self, layer_slices, wavelength: float, total_absorption: float,
     ) -> dict:
         """Compute per-pixel QE using eps_imag weighting in PD regions."""
+        assert self._pixel_stack is not None
         bayer = self._pixel_stack.bayer_map
         n_rows, n_cols = self._pixel_stack.unit_cell
         n_pixels = n_rows * n_cols
@@ -194,6 +194,7 @@ class GrcwaSolver(SolverBase):
             logger.warning("grcwa: no simulation data, returning zeros")
             return np.zeros((64, 64))
 
+        assert self._pixel_stack is not None
         layer_info = self._last_layer_slices
         lx, ly = self._pixel_stack.domain_size
         nz = len(layer_info)
@@ -251,7 +252,7 @@ class GrcwaSolver(SolverBase):
                     eps = s.eps_grid
                     zx = nx_out / eps.shape[0]
                     zy = ny_out / eps.shape[1]
-                    return np.abs(zoom(np.real(eps), (zx, zy), order=1))
+                    return np.asarray(np.abs(zoom(np.real(eps), (zx, zy), order=1)))
                 z_accum += s.thickness
             return np.zeros((nx_out, ny_out))
 

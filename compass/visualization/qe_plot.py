@@ -7,7 +7,7 @@ pixel-to-pixel crosstalk heatmaps, and angular response curves.
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,19 +18,19 @@ from compass.core.units import um_to_nm
 logger = logging.getLogger(__name__)
 
 # Default color mapping for Bayer channels.
-_CHANNEL_COLORS: Dict[str, str] = {
+_CHANNEL_COLORS: dict[str, str] = {
     "R": "red",
     "G": "green",
     "B": "blue",
 }
 
 # Line style rotation for multi-solver comparison.
-_LINE_STYLES: List[str] = ["-", "--", "-.", ":", (0, (3, 1, 1, 1))]
+_LINE_STYLES: list = ["-", "--", "-.", ":", (0, (3, 1, 1, 1))]
 
 
 def _classify_pixels(
-    qe_per_pixel: Dict[str, np.ndarray],
-) -> Dict[str, List[Tuple[str, np.ndarray]]]:
+    qe_per_pixel: dict[str, np.ndarray],
+) -> dict[str, list[tuple[str, np.ndarray]]]:
     """Group pixel QE arrays by color channel.
 
     Pixel keys are expected to follow the pattern '{Color}_{row}_{col}'
@@ -44,7 +44,7 @@ def _classify_pixels(
         Dictionary mapping color character ('R', 'G', 'B') to a list of
         (pixel_name, qe_array) tuples.
     """
-    channels: Dict[str, List[Tuple[str, np.ndarray]]] = {}
+    channels: dict[str, list[tuple[str, np.ndarray]]] = {}
     for pname, qe_arr in qe_per_pixel.items():
         channel = pname[0].upper() if pname else "?"
         if channel not in channels:
@@ -55,8 +55,8 @@ def _classify_pixels(
 
 def plot_qe_spectrum(
     result: SimulationResult,
-    ax: Optional[plt.Axes] = None,
-    figsize: Tuple[float, float] = (8, 5),
+    ax: plt.Axes | None = None,
+    figsize: tuple[float, float] = (8, 5),
 ) -> plt.Axes:
     """Plot quantum efficiency vs wavelength for R, G, B channels.
 
@@ -73,9 +73,9 @@ def plot_qe_spectrum(
         The matplotlib Axes containing the plot.
     """
     if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
+        _fig, ax = plt.subplots(1, 1, figsize=figsize)
 
-    wavelengths_nm = um_to_nm(result.wavelengths)
+    wavelengths_nm = np.asarray(um_to_nm(result.wavelengths))
 
     if not result.qe_per_pixel:
         logger.warning("No QE data available in SimulationResult.")
@@ -129,10 +129,10 @@ def plot_qe_spectrum(
 def plot_qe_comparison(
     results: Sequence[SimulationResult],
     labels: Sequence[str],
-    ax: Optional[plt.Axes] = None,
-    figsize: Tuple[float, float] = (10, 6),
+    ax: plt.Axes | None = None,
+    figsize: tuple[float, float] = (10, 6),
     show_difference: bool = False,
-) -> Union[plt.Axes, Tuple[plt.Axes, plt.Axes]]:
+) -> plt.Axes | tuple[plt.Axes, plt.Axes]:
     """Overlay QE spectra from multiple solver results for comparison.
 
     Each solver result is rendered with a distinct line style while
@@ -181,7 +181,7 @@ def plot_qe_comparison(
 
     for res_idx, (result, label) in enumerate(zip(results, labels)):
         ls = _LINE_STYLES[res_idx % len(_LINE_STYLES)]
-        wavelengths_nm = um_to_nm(result.wavelengths)
+        wavelengths_nm = np.asarray(um_to_nm(result.wavelengths))
 
         if not result.qe_per_pixel:
             logger.warning("Result '%s' has no QE data; skipping.", label)
@@ -212,9 +212,10 @@ def plot_qe_comparison(
             if ax_diff is not None and res_idx > 0:
                 ref_channels = _classify_pixels(results[0].qe_per_pixel)
                 if channel in ref_channels:
+                    ref_wl_nm = np.asarray(um_to_nm(results[0].wavelengths))
                     ref_arrays = [
                         qe for _, qe in ref_channels[channel]
-                        if len(qe) == len(um_to_nm(results[0].wavelengths))
+                        if len(qe) == len(ref_wl_nm)
                     ]
                     if ref_arrays:
                         ref_mean = np.mean(ref_arrays, axis=0)
@@ -224,7 +225,7 @@ def plot_qe_comparison(
                         else:
                             diff = np.interp(
                                 wavelengths_nm,
-                                um_to_nm(results[0].wavelengths),
+                                ref_wl_nm,
                                 ref_mean,
                             )
                             diff = mean_qe - diff
@@ -247,17 +248,19 @@ def plot_qe_comparison(
         ax_diff.legend(loc="best", fontsize=7, ncol=2)
         ax_diff.grid(True, alpha=0.3)
         fig.tight_layout()
-        return ax_main, ax_diff
+        result_axes: plt.Axes | tuple[plt.Axes, plt.Axes] = (ax_main, ax_diff)
+        return result_axes
     else:
         ax_main.set_xlabel("Wavelength (nm)")
-        return ax_main
+        result_ax: plt.Axes = ax_main
+        return result_ax
 
 
 def plot_crosstalk_heatmap(
     result: SimulationResult,
-    wavelength_idx: Optional[int] = None,
-    ax: Optional[plt.Axes] = None,
-    figsize: Tuple[float, float] = (7, 6),
+    wavelength_idx: int | None = None,
+    ax: plt.Axes | None = None,
+    figsize: tuple[float, float] = (7, 6),
 ) -> plt.Axes:
     """Plot pixel-to-pixel crosstalk as a heatmap matrix.
 
@@ -279,7 +282,7 @@ def plot_crosstalk_heatmap(
         The matplotlib Axes containing the heatmap.
     """
     if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
+        _fig, ax = plt.subplots(1, 1, figsize=figsize)
 
     if not result.qe_per_pixel:
         logger.warning("No QE data available for crosstalk computation.")
@@ -371,9 +374,9 @@ def plot_crosstalk_heatmap(
 def plot_angular_response(
     results_vs_angle: Sequence[SimulationResult],
     angles: Sequence[float],
-    wavelength_idx: Optional[int] = None,
-    ax: Optional[plt.Axes] = None,
-    figsize: Tuple[float, float] = (8, 5),
+    wavelength_idx: int | None = None,
+    ax: plt.Axes | None = None,
+    figsize: tuple[float, float] = (8, 5),
 ) -> plt.Axes:
     """Plot QE vs incidence angle at a fixed wavelength.
 
@@ -400,7 +403,7 @@ def plot_angular_response(
         )
 
     if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
+        _fig, ax = plt.subplots(1, 1, figsize=figsize)
 
     if not results_vs_angle:
         logger.warning("No angular results provided.")
@@ -410,7 +413,7 @@ def plot_angular_response(
     angles_arr = np.array(angles, dtype=float)
 
     # Collect mean QE per channel at each angle
-    channel_data: Dict[str, List[float]] = {}
+    channel_data: dict[str, list[float]] = {}
 
     for result in results_vs_angle:
         if not result.qe_per_pixel:

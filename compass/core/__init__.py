@@ -24,17 +24,22 @@ from compass.core.units import (
 )
 
 __all__ = [
+    "C_UM_PER_S",
     "CompassConfig",
-    "SimulationResult",
     "FieldData",
     "Layer",
     "LayerSlice",
     "MicrolensSpec",
     "PhotodiodeSpec",
-    "um_to_nm",
-    "nm_to_um",
+    "SimulationResult",
     "deg_to_rad",
+    "eV_to_um",
+    "frequency_to_wavelength",
+    "nm_to_um",
     "rad_to_deg",
+    "um_to_eV",
+    "um_to_m",
+    "um_to_nm",
     "wavelength_to_frequency",
     "wavelength_to_k0",
 ]

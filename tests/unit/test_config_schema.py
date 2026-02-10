@@ -1,6 +1,5 @@
 """Unit tests for configuration schema."""
 
-import pytest
 
 from compass.core.config_schema import (
     CompassConfig,

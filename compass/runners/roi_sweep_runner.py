@@ -1,8 +1,10 @@
 """ROI sweep runner — sweep across sensor image plane."""
 from __future__ import annotations
+
 import logging
+
 import numpy as np
-from typing import Dict, List
+
 from compass.core.types import SimulationResult
 from compass.runners.single_run import SingleRunner
 
@@ -12,7 +14,7 @@ class ROISweepRunner:
     """Run simulations at different sensor ROI positions."""
 
     @staticmethod
-    def run(config: dict, roi_config: dict) -> Dict[str, List[SimulationResult]]:
+    def run(config: dict, roi_config: dict) -> dict[str, SimulationResult]:
         """Execute ROI sweep. Each ROI has different CRA and microlens shift."""
         image_heights = roi_config.get("image_heights", [0.0])
         cra_table = roi_config.get("cra_table", [])

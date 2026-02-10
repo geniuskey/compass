@@ -9,7 +9,6 @@ import pytest
 
 from compass.geometry.builder import GeometryBuilder
 from compass.geometry.pixel_stack import PixelStack
-from compass.materials.database import MaterialDB
 
 
 def make_pixel_config(unit_cell=(2, 2), pitch=1.0):

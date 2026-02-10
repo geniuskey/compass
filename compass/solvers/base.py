@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, Optional
 
 import numpy as np
 
@@ -31,18 +30,18 @@ class SolverBase(ABC):
         """
         self.config = config
         self.device = device
-        self._pixel_stack: Optional[PixelStack] = None
-        self._source_config: Optional[dict] = None
+        self._pixel_stack: PixelStack | None = None
+        self._source_config: dict | None = None
 
     @property
     def name(self) -> str:
         """Solver name."""
-        return self.config.get("name", self.__class__.__name__)
+        return str(self.config.get("name", self.__class__.__name__))
 
     @property
     def solver_type(self) -> str:
         """Solver type (rcwa or fdtd)."""
-        return self.config.get("type", "unknown")
+        return str(self.config.get("type", "unknown"))
 
     @abstractmethod
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
@@ -129,7 +128,7 @@ class SolverBase(ABC):
 class SolverFactory:
     """Factory for creating solver instances by name."""
 
-    _registry: Dict[str, type] = {}
+    _registry: dict[str, type] = {}
 
     @classmethod
     def register(cls, name: str, solver_class: type) -> None:
@@ -159,7 +158,8 @@ class SolverFactory:
                 f"Make sure the solver package is installed."
             )
 
-        return cls._registry[name](config, device)
+        solver: SolverBase = cls._registry[name](config, device)
+        return solver
 
     @classmethod
     def _try_import(cls, name: str) -> None:

@@ -4,18 +4,16 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from compass.core.types import SimulationResult
-from compass.core.units import um_to_nm
 from compass.analysis.crosstalk import CrosstalkAnalyzer
 from compass.analysis.solver_comparison import SolverComparison
+from compass.core.types import SimulationResult
 from compass.visualization.qe_plot import (
-    plot_qe_comparison,
     plot_crosstalk_heatmap,
+    plot_qe_comparison,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,8 +36,8 @@ class ReportGenerator:
 
     def __init__(
         self,
-        results: List[SimulationResult],
-        labels: List[str],
+        results: list[SimulationResult],
+        labels: list[str],
         output_dir: str,
     ) -> None:
         if len(results) != len(labels):
@@ -56,13 +54,13 @@ class ReportGenerator:
     # Figure generation
     # ------------------------------------------------------------------
 
-    def generate_figures(self) -> List[str]:
+    def generate_figures(self) -> list[str]:
         """Save QE comparison, crosstalk, and energy balance figures.
 
         Returns:
             List of file paths for the saved figure images.
         """
-        saved: List[str] = []
+        saved: list[str] = []
 
         # 1. QE comparison figure
         saved.append(self._make_qe_comparison_figure())
@@ -161,11 +159,11 @@ class ReportGenerator:
         comp_summary = comparison.summary()
 
         # Crosstalk summaries
-        ct_summaries: List[Dict] = []
+        ct_summaries: list[dict] = []
         for result in self.results:
             ct_summaries.append(CrosstalkAnalyzer.summarize(result))
 
-        lines: List[str] = [
+        lines: list[str] = [
             "<!DOCTYPE html>",
             "<html><head>",
             "<meta charset='utf-8'>",

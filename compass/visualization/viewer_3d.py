@@ -8,7 +8,7 @@ DTI trenches, and photodiode regions.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Material-to-RGBA color mapping for 3D rendering.
 # Values are (R, G, B) in 0-255 range; opacity is set per layer type.
-MATERIAL_COLORS_3D: Dict[str, Tuple[int, int, int]] = {
+MATERIAL_COLORS_3D: dict[str, tuple[int, int, int]] = {
     "silicon": (160, 160, 160),
     "si": (160, 160, 160),
     "sio2": (173, 216, 230),
@@ -42,7 +42,7 @@ MATERIAL_COLORS_3D: Dict[str, Tuple[int, int, int]] = {
 def _resolve_color_3d(
     material_name: str,
     layer_name: str = "",
-) -> Tuple[int, int, int]:
+) -> tuple[int, int, int]:
     """Resolve RGB color tuple for a material in 3D rendering.
 
     Args:
@@ -69,7 +69,7 @@ def _make_box_mesh(
     x0: float, x1: float,
     y0: float, y1: float,
     z0: float, z1: float,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Generate vertex arrays for a rectangular box as a triangulated mesh.
 
     Returns the (x, y, z, i, j, k) arrays suitable for plotly Mesh3d.
@@ -108,7 +108,7 @@ def _make_lens_surface(
     shift_x: float = 0.0,
     shift_y: float = 0.0,
     resolution: int = 40,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Generate a smooth microlens surface mesh.
 
     Uses the superellipse profile to compute the lens height map on a polar
@@ -185,11 +185,11 @@ def view_pixel_3d(
 
     try:
         import plotly.graph_objects as go
-    except ImportError:
+    except ImportError as err:
         raise ImportError(
             "The 'plotly' package is required for 3D visualization. "
             "Install it with: pip install plotly"
-        )
+        ) from err
 
     lx, ly = pixel_stack.domain_size
     layers = pixel_stack.layers
@@ -200,7 +200,7 @@ def view_pixel_3d(
         fig.update_layout(title="Empty Pixel Stack")
         return fig
 
-    traces: List[Any] = []
+    traces: list[Any] = []
 
     # Opacity mapping per layer type
     opacity_map = {

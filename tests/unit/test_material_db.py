@@ -46,12 +46,12 @@ class TestMaterialDB:
 
     def test_silicon_uv_high_absorption(self, db):
         """Silicon should have high k in UV."""
-        n, k = db.get_nk("silicon", 0.40)
+        _n, k = db.get_nk("silicon", 0.40)
         assert k > 0.1, f"Si k={k} at 400nm should be high"
 
     def test_silicon_nir_low_absorption(self, db):
         """Silicon should have low k in NIR."""
-        n, k = db.get_nk("silicon", 0.80)
+        _n, k = db.get_nk("silicon", 0.80)
         assert k < 0.05, f"Si k={k} at 800nm should be low"
 
     def test_sio2_transparent(self, db):
@@ -94,7 +94,7 @@ class TestMaterialDB:
     def test_register_cauchy(self, db):
         """Should register custom Cauchy material."""
         db.register_cauchy("my_polymer", A=1.60, B=0.005, C=0.001)
-        n, k = db.get_nk("my_polymer", 0.55)
+        n, _k = db.get_nk("my_polymer", 0.55)
         assert n > 1.6
 
     def test_unknown_material_raises(self, db):

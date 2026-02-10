@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import List, Tuple
-
 import numpy as np
 
 
@@ -59,10 +57,10 @@ class GeometryBuilder:
         mask = r <= 1.0
         z[mask] = height * (1.0 - r[mask] ** 2) ** (1.0 / (2.0 * alpha))
 
-        return z
+        return np.asarray(z)
 
     @staticmethod
-    def bayer_pattern(unit_cell: Tuple[int, int], pattern: str = "bayer_rggb") -> List[List[str]]:
+    def bayer_pattern(unit_cell: tuple[int, int], pattern: str = "bayer_rggb") -> list[list[str]]:
         """Generate Bayer color filter map for NxM unit cell.
 
         Args:
@@ -111,7 +109,7 @@ class GeometryBuilder:
         nx: int,
         ny: int,
         pitch: float,
-        unit_cell: Tuple[int, int],
+        unit_cell: tuple[int, int],
         dti_width: float,
     ) -> np.ndarray:
         """Generate DTI (Deep Trench Isolation) grid pattern as 2D binary mask.
@@ -142,17 +140,17 @@ class GeometryBuilder:
         # Vertical lines at pixel boundaries
         for c in range(cols + 1):
             x_pos = c * pitch
-            mask |= np.abs(xx - x_pos) < half_w
+            mask = mask | (np.abs(xx - x_pos) < half_w)
             # Handle periodicity
             if c == 0:
-                mask |= np.abs(xx - lx) < half_w
+                mask = mask | (np.abs(xx - lx) < half_w)
 
         # Horizontal lines at pixel boundaries
         for r in range(rows + 1):
             y_pos = r * pitch
-            mask |= np.abs(yy - y_pos) < half_w
+            mask = mask | (np.abs(yy - y_pos) < half_w)
             if r == 0:
-                mask |= np.abs(yy - ly) < half_w
+                mask = mask | (np.abs(yy - ly) < half_w)
 
         return mask.astype(np.float64)
 
@@ -161,7 +159,7 @@ class GeometryBuilder:
         nx: int,
         ny: int,
         pitch: float,
-        unit_cell: Tuple[int, int],
+        unit_cell: tuple[int, int],
         grid_width: float,
     ) -> np.ndarray:
         """Generate metal grid pattern between color filters.
@@ -186,13 +184,13 @@ class GeometryBuilder:
         ny: int,
         nz: int,
         pitch: float,
-        unit_cell: Tuple[int, int],
-        pd_position: Tuple[float, float, float],
-        pd_size: Tuple[float, float, float],
+        unit_cell: tuple[int, int],
+        pd_position: tuple[float, float, float],
+        pd_size: tuple[float, float, float],
         si_z_start: float,
         si_z_end: float,
-        bayer_map: List[List[str]],
-    ) -> Tuple[np.ndarray, dict]:
+        bayer_map: list[list[str]],
+    ) -> tuple[np.ndarray, dict]:
         """Generate 3D photodiode mask and per-pixel masks.
 
         Args:
@@ -236,7 +234,7 @@ class GeometryBuilder:
                     & (np.abs(zz - cz) < dz / 2.0)
                 )
 
-                full_mask |= pixel_mask
+                full_mask = full_mask | pixel_mask
                 color = bayer_map[r][c]
                 per_pixel[f"{color}_{r}_{c}"] = pixel_mask.astype(np.float64)
 

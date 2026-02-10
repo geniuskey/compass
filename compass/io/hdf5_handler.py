@@ -1,10 +1,11 @@
 """HDF5 result storage and retrieval."""
 from __future__ import annotations
+
 import logging
 from pathlib import Path
-from typing import Optional
-import numpy as np
-import yaml
+
+import yaml  # type: ignore[import-untyped]
+
 from compass.core.types import SimulationResult
 
 logger = logging.getLogger(__name__)

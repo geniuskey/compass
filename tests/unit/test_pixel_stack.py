@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 
 from compass.geometry.pixel_stack import PixelStack
-from compass.materials.database import MaterialDB
 
 
 @pytest.fixture

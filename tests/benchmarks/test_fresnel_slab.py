@@ -142,7 +142,7 @@ class TestMaterialDBProperties:
 
     def test_si3n4_refractive_index(self, db):
         """Si3N4 should have n ~ 2.0 in visible."""
-        n, k = db.get_nk("si3n4", 0.550)
+        n, _k = db.get_nk("si3n4", 0.550)
         assert 1.8 < n < 2.3, f"Si3N4 n={n} outside expected range"
 
     def test_all_builtin_materials_exist(self, db):

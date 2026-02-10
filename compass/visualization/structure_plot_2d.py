@@ -7,22 +7,18 @@ of the pixel stack, with material color-coding and layer annotations.
 from __future__ import annotations
 
 import logging
-from typing import Dict, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import patches as mpatches
-from matplotlib.collections import PatchCollection
 
-from compass.core.types import Layer
 from compass.geometry.pixel_stack import PixelStack
-from compass.materials.database import MaterialDB
 
 logger = logging.getLogger(__name__)
 
 # Material-to-color mapping for structure visualization.
 # Keys are matched as substrings against material/layer names.
-MATERIAL_COLORS: Dict[str, str] = {
+MATERIAL_COLORS: dict[str, str] = {
     "silicon": "gray",
     "si": "gray",
     "sio2": "lightblue",
@@ -73,8 +69,8 @@ def plot_pixel_cross_section(
     plane: str = "xz",
     position: float = 0.0,
     wavelength: float = 0.55,
-    ax: Optional[plt.Axes] = None,
-    figsize: Tuple[float, float] = (12, 6),
+    ax: plt.Axes | None = None,
+    figsize: tuple[float, float] = (12, 6),
 ) -> plt.Axes:
     """Plot a 2D cross-section of the pixel stack.
 
@@ -109,7 +105,7 @@ def plot_pixel_cross_section(
         raise ValueError(f"Unsupported plane '{plane}'. Must be 'xz', 'yz', or 'xy'.")
 
     if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
+        _fig, ax = plt.subplots(1, 1, figsize=figsize)
 
     if plane in ("xz", "yz"):
         _plot_vertical_cross_section(pixel_stack, plane, position, wavelength, ax)
@@ -321,7 +317,7 @@ def _plot_xy_cross_section(
         shading="auto",
         cmap="viridis",
     )
-    cbar = plt.colorbar(im, ax=ax, label="Re(epsilon)")
+    _cbar = plt.colorbar(im, ax=ax, label="Re(epsilon)")
 
     # Add pixel boundary lines
     pitch = pixel_stack.pitch

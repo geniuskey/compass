@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import List, Literal, Optional, Tuple
+from dataclasses import dataclass
+from typing import Literal
 
 import numpy as np
 
@@ -30,7 +30,7 @@ class PlanewaveSource:
     polarization: Literal["TE", "TM", "unpolarized"] = "unpolarized"
 
     @classmethod
-    def from_config(cls, source_config: dict) -> "PlanewaveSource":
+    def from_config(cls, source_config: dict) -> PlanewaveSource:
         """Create PlanewaveSource from source config dictionary.
 
         Args:
@@ -84,7 +84,7 @@ class PlanewaveSource:
         """Whether simulation needs TE+TM averaging."""
         return self.polarization == "unpolarized"
 
-    def get_polarization_runs(self) -> List[str]:
+    def get_polarization_runs(self) -> list[str]:
         """Get list of polarization states to simulate.
 
         For unpolarized, returns ["TE", "TM"] for averaging.

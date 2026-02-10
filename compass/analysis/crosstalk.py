@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -22,7 +21,7 @@ class CrosstalkAnalyzer:
 
     @staticmethod
     def compute_matrix(
-        qe_per_pixel: Dict[str, np.ndarray],
+        qe_per_pixel: dict[str, np.ndarray],
         bayer_map: list,
         wavelengths: np.ndarray,
     ) -> np.ndarray:
@@ -44,7 +43,7 @@ class CrosstalkAnalyzer:
         n_wl = len(wavelengths)
         ct = np.zeros((n_pixels, n_pixels, n_wl))
 
-        for i, pi in enumerate(pixels):
+        for i, _pi in enumerate(pixels):
             # Total signal collected across all pixels when pixel i is
             # the intended target.
             total = np.zeros(n_wl)
@@ -93,7 +92,7 @@ class CrosstalkAnalyzer:
     def peak_crosstalk(
         ct_matrix: np.ndarray,
         wavelengths: np.ndarray,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Find peak crosstalk value and corresponding wavelength.
 
         The peak is defined as the maximum average off-diagonal crosstalk
@@ -116,7 +115,7 @@ class CrosstalkAnalyzer:
     def neighbor_crosstalk(
         ct_matrix: np.ndarray,
         bayer_map: list,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Nearest-neighbour crosstalk for each pixel.
 
         Uses the Bayer map to determine pixel adjacency.  For each pixel
@@ -135,8 +134,8 @@ class CrosstalkAnalyzer:
         rows = len(bayer_map)
         cols = len(bayer_map[0]) if rows > 0 else 0
 
-        pixel_names: List[str] = []
-        pos_map: Dict[str, Tuple[int, int]] = {}
+        pixel_names: list[str] = []
+        pos_map: dict[str, tuple[int, int]] = {}
         for r in range(rows):
             for c in range(cols):
                 name = f"{bayer_map[r][c]}_{r}_{c}"
@@ -144,10 +143,10 @@ class CrosstalkAnalyzer:
                 pos_map[name] = (r, c)
 
         pixel_names.sort()
-        n_pixels = len(pixel_names)
+        _n_pixels = len(pixel_names)
         name_to_idx = {name: idx for idx, name in enumerate(pixel_names)}
 
-        neighbor_ct: Dict[str, float] = {}
+        neighbor_ct: dict[str, float] = {}
 
         for name in pixel_names:
             r, c = pos_map[name]

@@ -1,11 +1,12 @@
 """Single simulation runner."""
 from __future__ import annotations
+
 import logging
+
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.materials.database import MaterialDB
-from compass.solvers.base import SolverBase, SolverFactory
-from compass.sources.planewave import PlanewaveSource
+from compass.solvers.base import SolverFactory
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class SingleRunner:
     @staticmethod
     def run(config: dict) -> SimulationResult:
         """Execute a single simulation from config dict."""
-        pixel_config = config.get("pixel", config)
+        _pixel_config = config.get("pixel", config)
         solver_config = config.get("solver", {})
         source_config = config.get("source", {})
         compute_config = config.get("compute", {})

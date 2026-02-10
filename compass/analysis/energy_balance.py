@@ -1,7 +1,10 @@
 """Energy balance verification: R + T + A = 1."""
 from __future__ import annotations
-import numpy as np
+
 import logging
+
+import numpy as np
+
 from compass.core.types import SimulationResult
 
 logger = logging.getLogger(__name__)

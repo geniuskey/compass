@@ -6,7 +6,6 @@ Wraps the flaport fdtd library (Python-native 3D FDTD with PyTorch backend).
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -26,9 +25,9 @@ class FlaportFdtdSolver(SolverBase):
 
     def __init__(self, config: dict, device: str = "cpu"):
         super().__init__(config, device)
-        self._source: Optional[PlanewaveSource] = None
-        self._last_grid = None
-        self._last_eps_3d = None
+        self._source: PlanewaveSource | None = None
+        self._last_grid: object = None
+        self._last_eps_3d: np.ndarray | None = None
 
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
         self._pixel_stack = pixel_stack
@@ -47,8 +46,8 @@ class FlaportFdtdSolver(SolverBase):
 
         try:
             import fdtd
-        except ImportError:
-            raise ImportError("fdtd is required. Install with: pip install fdtd")
+        except ImportError as err:
+            raise ImportError("fdtd is required. Install with: pip install fdtd") from err
 
         params = self.config.get("params", {})
         grid_spacing = params.get("grid_spacing", 0.02)  # um
@@ -74,14 +73,14 @@ class FlaportFdtdSolver(SolverBase):
         nz = int(total_z / grid_spacing) + 1 + 2 * pml_layers
 
         pol_runs = self._source.get_polarization_runs()
-        all_qe: Dict[str, List[float]] = {}
+        all_qe: dict[str, list[float]] = {}
         all_R, all_T, all_A = [], [], []
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
             logger.debug(f"fdtd_flaport: wavelength {wavelength:.4f} um ({wl_idx+1}/{self._source.n_wavelengths})")
 
             R_pol, T_pol, A_pol = [], [], []
-            qe_pol_accum: Dict[str, List[float]] = {}
+            qe_pol_accum: dict[str, list[float]] = {}
 
             for pol in pol_runs:
                 try:
@@ -193,6 +192,7 @@ class FlaportFdtdSolver(SolverBase):
 
         Uses eps_imag to weight the absorption distribution among pixels.
         """
+        assert self._pixel_stack is not None
         bayer = self._pixel_stack.bayer_map
         n_rows, n_cols = self._pixel_stack.unit_cell
         n_pixels = n_rows * n_cols
@@ -263,7 +263,7 @@ class FlaportFdtdSolver(SolverBase):
         if self._last_grid is not None:
             try:
                 grid = self._last_grid
-                E = grid.E
+                E = grid.E  # type: ignore[attr-defined]
                 if E is not None:
                     E_np = np.array(E)  # (nx, ny, nz, 3)
                     return self._slice_field(E_np, component, plane, position)
@@ -283,6 +283,7 @@ class FlaportFdtdSolver(SolverBase):
         self, E: np.ndarray, component: str, plane: str, position: float,
     ) -> np.ndarray:
         """Slice a 4D field array (nx, ny, nz, 3) along the given plane."""
+        assert self._pixel_stack is not None
         nx, ny, nz = E.shape[:3]
         lx, ly = self._pixel_stack.domain_size
         z_min, z_max = self._pixel_stack.z_range
@@ -301,21 +302,22 @@ class FlaportFdtdSolver(SolverBase):
         if plane == "xy":
             z_idx = int(((position - z_min) / (z_max - z_min)) * nz)
             z_idx = max(0, min(nz - 1, z_idx))
-            return field[:, :, z_idx]
+            return np.asarray(field[:, :, z_idx])
         elif plane == "xz":
             y_idx = int(((position + ly / 2) / ly) * ny)
             y_idx = max(0, min(ny - 1, y_idx))
-            return field[:, y_idx, :]
+            return np.asarray(field[:, y_idx, :])
         elif plane == "yz":
             x_idx = int(((position + lx / 2) / lx) * nx)
             x_idx = max(0, min(nx - 1, x_idx))
-            return field[x_idx, :, :]
+            return np.asarray(field[x_idx, :, :])
         return np.zeros((64, 64))
 
     def _approximate_field_from_eps(
         self, eps_3d: np.ndarray, component: str, plane: str, position: float,
     ) -> np.ndarray:
         """Approximate field from permittivity using Beer-Lambert decay."""
+        assert self._pixel_stack is not None
         nx, ny, nz = eps_3d.shape
         lx, ly = self._pixel_stack.domain_size
 
@@ -333,15 +335,15 @@ class FlaportFdtdSolver(SolverBase):
         if plane == "xy":
             z_idx = int(position / ((self._pixel_stack.z_range[1] - self._pixel_stack.z_range[0]) / nz))
             z_idx = max(0, min(nz - 1, z_idx))
-            return intensity[:, :, z_idx]
+            return np.asarray(intensity[:, :, z_idx])
         elif plane == "xz":
             y_idx = int(((position + ly / 2) / ly) * ny)
             y_idx = max(0, min(ny - 1, y_idx))
-            return intensity[:, y_idx, :]
+            return np.asarray(intensity[:, y_idx, :])
         elif plane == "yz":
             x_idx = int(((position + lx / 2) / lx) * nx)
             x_idx = max(0, min(nx - 1, x_idx))
-            return intensity[x_idx, :, :]
+            return np.asarray(intensity[x_idx, :, :])
         return np.zeros((64, 64))
 
 

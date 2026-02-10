@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 
 class MicrolensProfileConfig(BaseModel):
@@ -41,7 +41,7 @@ class GridConfig(BaseModel):
 class ColorFilterConfig(BaseModel):
     thickness: float = 0.6
     pattern: str = "bayer_rggb"
-    materials: Dict[str, str] = Field(default_factory=lambda: {"R": "cf_red", "G": "cf_green", "B": "cf_blue"})
+    materials: dict[str, str] = Field(default_factory=lambda: {"R": "cf_red", "G": "cf_green", "B": "cf_blue"})
     grid: GridConfig = Field(default_factory=GridConfig)
 
 
@@ -51,12 +51,12 @@ class BarlLayerConfig(BaseModel):
 
 
 class BarlConfig(BaseModel):
-    layers: List[BarlLayerConfig] = Field(default_factory=list)
+    layers: list[BarlLayerConfig] = Field(default_factory=list)
 
 
 class PhotodiodeConfig(BaseModel):
-    position: Tuple[float, float, float] = (0.0, 0.0, 0.5)
-    size: Tuple[float, float, float] = (0.7, 0.7, 2.0)
+    position: tuple[float, float, float] = (0.0, 0.0, 0.5)
+    size: tuple[float, float, float] = (0.7, 0.7, 2.0)
 
 
 class DtiConfig(BaseModel):
@@ -89,9 +89,9 @@ class LayersConfig(BaseModel):
 
 class PixelConfig(BaseModel):
     pitch: float = 1.0
-    unit_cell: Tuple[int, int] = (2, 2)
+    unit_cell: tuple[int, int] = (2, 2)
     layers: LayersConfig = Field(default_factory=LayersConfig)
-    bayer_map: List[List[str]] = Field(default_factory=lambda: [["R", "G"], ["G", "B"]])
+    bayer_map: list[list[str]] = Field(default_factory=lambda: [["R", "G"], ["G", "B"]])
 
 
 class EnergyCheckConfig(BaseModel):
@@ -112,15 +112,15 @@ class StabilityConfig(BaseModel):
 
 class ConvergenceConfig(BaseModel):
     auto_converge: bool = False
-    order_range: Tuple[int, int] = (5, 25)
+    order_range: tuple[int, int] = (5, 25)
     qe_tolerance: float = 0.01
-    spacing_range: Optional[Tuple[float, float]] = None
+    spacing_range: tuple[float, float] | None = None
 
 
 class SolverConfig(BaseModel):
     name: str = "torcwa"
     type: Literal["rcwa", "fdtd"] = "rcwa"
-    params: Dict = Field(default_factory=lambda: {"fourier_order": [9, 9], "dtype": "complex64"})
+    params: dict = Field(default_factory=lambda: {"fourier_order": [9, 9], "dtype": "complex64"})
     convergence: ConvergenceConfig = Field(default_factory=ConvergenceConfig)
     stability: StabilityConfig = Field(default_factory=StabilityConfig)
 
@@ -133,9 +133,9 @@ class WavelengthSweepConfig(BaseModel):
 
 class WavelengthConfig(BaseModel):
     mode: Literal["single", "sweep", "list"] = "single"
-    value: Optional[float] = 0.55
-    sweep: Optional[WavelengthSweepConfig] = None
-    values: Optional[List[float]] = None
+    value: float | None = 0.55
+    sweep: WavelengthSweepConfig | None = None
+    values: list[float] | None = None
 
 
 class AngleConfig(BaseModel):
@@ -167,8 +167,8 @@ class SourceConfig(BaseModel):
     wavelength: WavelengthConfig = Field(default_factory=WavelengthConfig)
     angle: AngleConfig = Field(default_factory=AngleConfig)
     polarization: Literal["TE", "TM", "unpolarized"] = "unpolarized"
-    cone: Optional[ConeConfig] = None
-    ray_file: Optional[RayFileConfig] = None
+    cone: ConeConfig | None = None
+    ray_file: RayFileConfig | None = None
 
 
 class ComputeConfig(BaseModel):

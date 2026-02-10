@@ -1,8 +1,8 @@
 """Wavelength sweep runner."""
 from __future__ import annotations
+
 import logging
-import numpy as np
-from tqdm import tqdm
+
 from compass.core.types import SimulationResult
 from compass.runners.single_run import SingleRunner
 

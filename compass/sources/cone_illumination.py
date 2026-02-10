@@ -1,8 +1,10 @@
 """Cone illumination model — exit pupil illumination."""
 from __future__ import annotations
+
 import logging
+
 import numpy as np
-from typing import List, Tuple
+
 from compass.core.units import deg_to_rad
 
 logger = logging.getLogger(__name__)
@@ -22,7 +24,7 @@ class ConeIllumination:
         self.weighting = weighting
         self.half_cone_rad = np.arcsin(1.0 / (2.0 * f_number))
 
-    def get_sampling_points(self) -> List[Tuple[float, float, float]]:
+    def get_sampling_points(self) -> list[tuple[float, float, float]]:
         """Generate angular sampling points with weights.
         Returns: list of (theta_deg, phi_deg, weight)
         """
@@ -35,7 +37,7 @@ class ConeIllumination:
         else:
             return self._fibonacci_sampling()
 
-    def _fibonacci_sampling(self) -> List[Tuple[float, float, float]]:
+    def _fibonacci_sampling(self) -> list[tuple[float, float, float]]:
         """Fibonacci spiral sampling on hemisphere cone."""
         points = []
         golden_ratio = (1 + np.sqrt(5)) / 2
@@ -51,7 +53,7 @@ class ConeIllumination:
         total_w = sum(p[2] for p in points)
         return [(t, p, w / total_w) for t, p, w in points]
 
-    def _grid_sampling(self) -> List[Tuple[float, float, float]]:
+    def _grid_sampling(self) -> list[tuple[float, float, float]]:
         """Uniform grid sampling."""
         n_theta = max(int(np.sqrt(self.n_points)), 3)
         n_phi = max(self.n_points // n_theta, 4)
@@ -67,7 +69,7 @@ class ConeIllumination:
         total_w = sum(p[2] for p in points)
         return [(t, p, w / total_w) for t, p, w in points]
 
-    def _gaussian_quadrature_sampling(self) -> List[Tuple[float, float, float]]:
+    def _gaussian_quadrature_sampling(self) -> list[tuple[float, float, float]]:
         """Gauss-Legendre quadrature in theta, uniform in phi.
 
         Uses numpy's Gauss-Legendre nodes and weights mapped to the
@@ -87,8 +89,8 @@ class ConeIllumination:
         phi_vals = np.linspace(0, 2 * np.pi, n_phi, endpoint=False)
         phi_weight = 1.0 / n_phi
 
-        points: List[Tuple[float, float, float]] = []
-        for ti, (theta_local, tw) in enumerate(zip(theta_nodes, theta_weights)):
+        points: list[tuple[float, float, float]] = []
+        for _ti, (theta_local, tw) in enumerate(zip(theta_nodes, theta_weights)):
             for phi in phi_vals:
                 theta = theta_local + cra_rad
                 weight = tw * phi_weight * self._compute_weight(theta_local)
@@ -104,12 +106,12 @@ class ConeIllumination:
         if self.weighting == "uniform":
             return 1.0
         elif self.weighting == "cosine":
-            return np.cos(theta)
+            return float(np.cos(theta))
         elif self.weighting == "cos4":
-            return np.cos(theta)**4
+            return float(np.cos(theta)**4)
         elif self.weighting == "gaussian":
             sigma = self.half_cone_rad / 2
-            return np.exp(-theta**2 / (2 * sigma**2))
+            return float(np.exp(-theta**2 / (2 * sigma**2)))
         elif self.weighting == "custom":
             # Default to uniform when no callable is provided via string
             return 1.0

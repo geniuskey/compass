@@ -17,9 +17,11 @@ References:
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+
+from compass.core.types import SimulationResult
+from compass.geometry.pixel_stack import PixelStack
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +54,7 @@ class PrecisionManager:
             )
 
     @staticmethod
-    def mixed_precision_eigen(matrix: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def mixed_precision_eigen(matrix: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Eigendecomposition with float64 precision.
 
         Performs eigendecomp in float64 regardless of input precision,
@@ -75,7 +77,7 @@ class PrecisionManager:
         return eigenvalues, eigenvectors
 
     @staticmethod
-    def mixed_precision_eigen_torch(matrix: "torch.Tensor") -> Tuple["torch.Tensor", "torch.Tensor"]:
+    def mixed_precision_eigen_torch(matrix: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Eigendecomposition with float64 precision (PyTorch version).
 
         CPU fallback for better stability.
@@ -104,9 +106,9 @@ class StableSMatrixAlgorithm:
 
     @staticmethod
     def redheffer_star_product(
-        SA: Dict[str, np.ndarray],
-        SB: Dict[str, np.ndarray],
-    ) -> Dict[str, np.ndarray]:
+        SA: dict[str, np.ndarray],
+        SB: dict[str, np.ndarray],
+    ) -> dict[str, np.ndarray]:
         """Redheffer star product of two S-matrices.
 
         All intermediate matrices remain bounded → no overflow.
@@ -135,7 +137,7 @@ class StableSMatrixAlgorithm:
         return S
 
     @staticmethod
-    def identity_smatrix(n: int, dtype=np.complex128) -> Dict[str, np.ndarray]:
+    def identity_smatrix(n: int, dtype=np.complex128) -> dict[str, np.ndarray]:
         """Create identity S-matrix (no scattering)."""
         I = np.eye(n, dtype=dtype)
         Z = np.zeros((n, n), dtype=dtype)
@@ -148,7 +150,7 @@ class StableSMatrixAlgorithm:
         V: np.ndarray,
         thickness: float,
         k0: float,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Compute single layer S-matrix.
 
         Uses exp(-j*λ*k0*d) which is bounded for all eigenvalues:
@@ -176,11 +178,13 @@ class StableSMatrixAlgorithm:
         A_inv = np.linalg.inv(A)
         D = A - X @ B @ A_inv @ X @ B
 
-        S = {
-            "S11": np.linalg.solve(D, X @ B @ A_inv @ X @ A - B),
-            "S12": np.linalg.solve(D, X @ (A - B @ A_inv @ B)),
-            "S21": S.get("S12", np.eye(n, dtype=W.dtype)),  # Reciprocity
-            "S22": S.get("S11", np.zeros((n, n), dtype=W.dtype)),
+        S11 = np.linalg.solve(D, X @ B @ A_inv @ X @ A - B)
+        S12 = np.linalg.solve(D, X @ (A - B @ A_inv @ B))
+        S: dict[str, np.ndarray] = {
+            "S11": S11,
+            "S12": S12,
+            "S21": S12,  # Reciprocity
+            "S22": S11,
         }
         return S
 
@@ -316,7 +320,7 @@ class EigenvalueStabilizer:
         eigenvalues: np.ndarray,
         eigenvectors: np.ndarray,
         broadening: float = 1e-10,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Handle near-degenerate eigenvalues.
 
         Detects eigenvalue pairs that are too close and applies
@@ -383,7 +387,7 @@ class EigenvalueStabilizer:
         R: np.ndarray,
         T: np.ndarray,
         tolerance: float = 0.05,
-    ) -> Dict:
+    ) -> dict:
         """Validate energy conservation from R, T values.
 
         Args:
@@ -458,7 +462,7 @@ class AdaptivePrecisionRunner:
                         logger.warning(
                             f"λ={wavelength:.3f}um: fallback to {strategy['label']}"
                         )
-                    return result
+                    return dict(result)
                 else:
                     logger.warning(
                         f"λ={wavelength:.3f}um: energy violation "
@@ -482,9 +486,9 @@ class StabilityDiagnostics:
 
     @staticmethod
     def pre_simulation_check(
-        pixel_stack: "PixelStack",
+        pixel_stack: PixelStack,
         solver_config: dict,
-    ) -> List[str]:
+    ) -> list[str]:
         """Check for potential stability issues before simulation.
 
         Args:
@@ -540,7 +544,7 @@ class StabilityDiagnostics:
         return warnings
 
     @staticmethod
-    def post_simulation_check(result: "SimulationResult") -> Dict:
+    def post_simulation_check(result: SimulationResult) -> dict:
         """Validate simulation results for physical plausibility.
 
         Args:

@@ -7,7 +7,6 @@ producing both layer-slice output (for RCWA) and voxel-grid output (for FDTD).
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -26,29 +25,29 @@ class PixelStack:
     with methods to generate RCWA layer slices or FDTD 3D permittivity grids.
     """
 
-    def __init__(self, config: dict, material_db: Optional[MaterialDB] = None):
+    def __init__(self, config: dict, material_db: MaterialDB | None = None):
         """Initialize PixelStack from config dict.
 
         Args:
             config: Configuration dictionary with 'pixel' key.
             material_db: Material database instance (created if None).
         """
-        pixel_cfg = config if "pixel" not in config else config["pixel"]
+        pixel_cfg = config.get("pixel", config)
 
         self.pitch: float = pixel_cfg["pitch"]
-        self.unit_cell: Tuple[int, int] = tuple(pixel_cfg["unit_cell"])
+        self.unit_cell: tuple[int, int] = tuple(pixel_cfg["unit_cell"])
         self.material_db = material_db or MaterialDB()
 
-        self.layers: List[Layer] = []
-        self.microlenses: List[MicrolensSpec] = []
-        self.photodiodes: List[PhotodiodeSpec] = []
-        self.bayer_map: List[List[str]] = []
+        self.layers: list[Layer] = []
+        self.microlenses: list[MicrolensSpec] = []
+        self.photodiodes: list[PhotodiodeSpec] = []
+        self.bayer_map: list[list[str]] = []
 
         self._layer_configs: dict = pixel_cfg.get("layers", {})
         self._build_from_config(pixel_cfg)
 
     @property
-    def domain_size(self) -> Tuple[float, float]:
+    def domain_size(self) -> tuple[float, float]:
         """(Lx, Ly) simulation domain size in um."""
         return (self.pitch * self.unit_cell[1], self.pitch * self.unit_cell[0])
 
@@ -60,7 +59,7 @@ class PixelStack:
         return self.layers[-1].z_end - self.layers[0].z_start
 
     @property
-    def z_range(self) -> Tuple[float, float]:
+    def z_range(self) -> tuple[float, float]:
         """(z_min, z_max) of the stack."""
         if not self.layers:
             return (0.0, 0.0)
@@ -125,7 +124,7 @@ class PixelStack:
         # 3. Color filter layer
         cf_cfg = layers_cfg.get("color_filter", {})
         cf_thickness = cf_cfg.get("thickness", 0.6)
-        has_grid = cf_cfg.get("grid", {}).get("enabled", False)
+        _has_grid = cf_cfg.get("grid", {}).get("enabled", False)
         self.layers.append(Layer(
             name="color_filter",
             z_start=z_cursor,
@@ -176,8 +175,8 @@ class PixelStack:
             ))
 
             # Create microlens specs for each pixel
-            for r in range(self.unit_cell[0]):
-                for c in range(self.unit_cell[1]):
+            for _r in range(self.unit_cell[0]):
+                for _c in range(self.unit_cell[1]):
                     self.microlenses.append(MicrolensSpec(
                         height=ml_height,
                         radius_x=ml_cfg.get("radius_x", 0.48),
@@ -208,7 +207,7 @@ class PixelStack:
         nx: int = 128,
         ny: int = 128,
         n_lens_slices: int = 30,
-    ) -> List[LayerSlice]:
+    ) -> list[LayerSlice]:
         """Get z-wise layer decomposition for RCWA solvers.
 
         Each slice contains a 2D permittivity grid eps(x,y) at that z-level.
@@ -223,7 +222,7 @@ class PixelStack:
             List of LayerSlice from bottom (z_min) to top (z_max).
         """
         slices = []
-        lx, ly = self.domain_size
+        _lx, _ly = self.domain_size
         cf_cfg = self._layer_configs.get("color_filter", {})
         si_cfg = self._layer_configs.get("silicon", {})
 
@@ -281,7 +280,7 @@ class PixelStack:
         nx: int,
         ny: int,
         n_slices: int,
-    ) -> List[LayerSlice]:
+    ) -> list[LayerSlice]:
         """Generate staircase approximation of microlens layer."""
         lx, ly = self.domain_size
         x = np.linspace(0, lx, nx, endpoint=False)
@@ -446,7 +445,7 @@ class PixelStack:
         nx: int = 64,
         ny: int = 64,
         nz: int = 128,
-    ) -> Tuple[np.ndarray, Dict[str, np.ndarray]]:
+    ) -> tuple[np.ndarray, dict[str, np.ndarray]]:
         """Generate 3D photodiode mask.
 
         Returns:

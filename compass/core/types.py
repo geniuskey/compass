@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -42,20 +41,20 @@ class FieldData:
         z: z-coordinate array.
     """
 
-    Ex: Optional[np.ndarray] = None
-    Ey: Optional[np.ndarray] = None
-    Ez: Optional[np.ndarray] = None
-    x: Optional[np.ndarray] = None
-    y: Optional[np.ndarray] = None
-    z: Optional[np.ndarray] = None
+    Ex: np.ndarray | None = None
+    Ey: np.ndarray | None = None
+    Ez: np.ndarray | None = None
+    x: np.ndarray | None = None
+    y: np.ndarray | None = None
+    z: np.ndarray | None = None
 
     @property
-    def E_intensity(self) -> Optional[np.ndarray]:
+    def E_intensity(self) -> np.ndarray | None:
         """Compute |E|^2 = |Ex|^2 + |Ey|^2 + |Ez|^2."""
         components = [c for c in [self.Ex, self.Ey, self.Ez] if c is not None]
         if not components:
             return None
-        return sum(np.abs(c) ** 2 for c in components)
+        return np.asarray(sum(np.abs(c) ** 2 for c in components))
 
 
 @dataclass
@@ -72,14 +71,14 @@ class SimulationResult:
         metadata: Solver info, timing, convergence data.
     """
 
-    qe_per_pixel: Dict[str, np.ndarray]
+    qe_per_pixel: dict[str, np.ndarray]
     wavelengths: np.ndarray
-    fields: Optional[Dict[str, FieldData]] = None
-    poynting: Optional[Dict[str, np.ndarray]] = None
-    reflection: Optional[np.ndarray] = None
-    transmission: Optional[np.ndarray] = None
-    absorption: Optional[np.ndarray] = None
-    metadata: Dict = field(default_factory=dict)
+    fields: dict[str, FieldData] | None = None
+    poynting: dict[str, np.ndarray] | None = None
+    reflection: np.ndarray | None = None
+    transmission: np.ndarray | None = None
+    absorption: np.ndarray | None = None
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -141,7 +140,7 @@ class PhotodiodeSpec:
         color: Color channel (R, G, B).
     """
 
-    position: Tuple[float, float, float]
-    size: Tuple[float, float, float]
-    pixel_index: Tuple[int, int]
+    position: tuple[float, float, float]
+    size: tuple[float, float, float]
+    pixel_index: tuple[int, int]
     color: str = ""
