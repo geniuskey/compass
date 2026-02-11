@@ -171,6 +171,7 @@ class SolverFactory:
             "fmmax": "compass.solvers.rcwa.fmmax_solver",
             "fdtd_flaport": "compass.solvers.fdtd.flaport_solver",
             "fdtdz": "compass.solvers.fdtd.fdtdz_solver",
+            "fdtdx": "compass.solvers.fdtd.fdtdx_solver",
             "meep": "compass.solvers.fdtd.meep_solver",
             "tmm": "compass.solvers.tmm.tmm_solver",
         }

@@ -146,6 +146,7 @@ def list_solvers(cls) -> list:
 | `meent` | `compass.solvers.rcwa.meent_solver` | RCWA | |
 | `fmmax` | `compass.solvers.rcwa.fmmax_solver` | RCWA | |
 | `fdtd_flaport` | `compass.solvers.fdtd.flaport_solver` | FDTD | |
+| `fdtdx` | `compass.solvers.fdtd.fdtdx_solver` | FDTD | JAX-based 3D FDTD, multi-GPU, fully differentiable, MIT license |
 | `tmm` | `compass.solvers.tmm.tmm_solver` | TMM | 1D 평면 스택 전용, RCWA 대비 ~1000배 빠름 |
 
 <SolverComparisonChart />

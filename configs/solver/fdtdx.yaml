@@ -1,0 +1,16 @@
+# @package _global_
+solver:
+  name: "fdtdx"
+  type: "fdtd"
+
+  params:
+    grid_spacing: 0.02      # um, ~lambda/20 for visible
+    pml_layers: 10
+    time_steps: 2000
+    dtype: "float32"
+    courant_factor: 0.5
+
+  convergence:
+    auto_converge: false
+    spacing_range: [0.01, 0.05]
+    qe_tolerance: 0.01

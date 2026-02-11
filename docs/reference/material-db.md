@@ -135,6 +135,8 @@ Lines starting with `#` are treated as comments. Data is automatically sorted by
 
 ## Built-in materials
 
+### Core materials
+
 | Name | Type | Model | Typical n | Typical k |
 |------|------|-------|-----------|-----------|
 | `air` | Constant | n=1.0, k=0.0 | 1.0 | 0.0 |
@@ -148,6 +150,55 @@ Lines starting with `#` are treated as comments. Data is automatically sorted by
 | `cf_red` | Tabulated | Lorentzian | 1.55 | 0-0.15 |
 | `cf_green` | Tabulated | Lorentzian | 1.55 | 0-0.12 |
 | `cf_blue` | Tabulated | Lorentzian | 1.55 | 0-0.18 |
+
+### Metals
+
+Tabulated optical constants for metals commonly used in CIS interconnects, metal grids, and plasmonic structures. Wavelength range: 300--1100 nm.
+
+| Name | Formula | Source | Typical n (550nm) | Typical k (550nm) |
+|------|---------|--------|--------------------|--------------------|
+| `aluminum` | Al | Rakic 1998 | 0.58 | 5.52 |
+| `gold` | Au | Johnson & Christy 1972 | 0.17 | 3.29 |
+| `silver` | Ag | Johnson & Christy 1972 | 0.07 | 4.39 |
+| `copper` | Cu | Johnson & Christy 1972 | 0.53 | 1.74 |
+| `titanium` | Ti | Johnson & Christy 1974 | 2.37 | 3.30 |
+| `titanium_nitride` | TiN | Patsalas 2003 | 1.31 | 2.31 |
+
+### Dielectrics
+
+Tabulated optical constants for dielectric films used in antireflection coatings (ARC), passivation, and transparent conductors.
+
+| Name | Formula | Source | Typical n (550nm) | Typical k (550nm) |
+|------|---------|--------|--------------------|--------------------|
+| `silicon_nitride` | Si3N4 | Philipp 1973 | 2.02 | 0.0 |
+| `aluminum_oxide` | Al2O3 | Malitson 1962 | 1.77 | 0.0 |
+| `tantalum_pentoxide` | Ta2O5 | Bright 2012 | 2.11 | 0.0 |
+| `magnesium_fluoride` | MgF2 | Dodge 1984 | 1.38 | 0.0 |
+| `zinc_oxide` | ZnO | Bond 1965 | 2.07 | 0.0 |
+| `indium_tin_oxide` | ITO | Konig 2014 | 1.95 | 0.0 |
+| `silicon_oxynitride` | SiON | Approximate | 1.70 | 0.0 |
+
+### Polymers
+
+Tabulated optical constants for polymer materials used in microlenses, planarization layers, and photoresists.
+
+| Name | Formula | Source | Typical n (550nm) | Typical k (550nm) |
+|------|---------|--------|--------------------|--------------------|
+| `pmma` | PMMA | Sultanova 2009 | 1.49 | 0.0 |
+| `polycarbonate` | PC | Sultanova 2009 | 1.58 | 0.0 |
+| `polyimide` | PI | Birkholz 2000 | 1.70 | 0.0 |
+| `benzocyclobutene` | BCB | Dow Chemical | 1.54 | 0.0 |
+| `su8` | SU-8 | MicroChem | 1.59 | 0.0 |
+
+### Semiconductors
+
+Tabulated optical constants for semiconductor materials beyond silicon, for NIR and III-V sensor modeling.
+
+| Name | Formula | Source | Typical n (550nm) | Typical k (550nm) |
+|------|---------|--------|--------------------|--------------------|
+| `germanium` | Ge | Aspnes 1983 | 4.04 | 0.36 |
+| `gallium_arsenide` | GaAs | Aspnes 1983 | 3.98 | 0.17 |
+| `indium_phosphide` | InP | Aspnes 1983 | 3.70 | 0.17 |
 
 ## MaterialData
 
@@ -183,6 +234,8 @@ Returns $\varepsilon = (n + ik)^2$.
 
 On construction, `MaterialDB` looks for CSV files in the materials directory using these filename mappings:
 
+**Core materials** (top-level directory):
+
 | Material name | Expected filenames |
 |--------------|-------------------|
 | `silicon` | `silicon_green2008.csv`, `silicon_palik.csv` |
@@ -192,3 +245,14 @@ On construction, `MaterialDB` looks for CSV files in the materials directory usi
 | `cf_blue` | `color_filter_blue.csv` |
 
 If a CSV file is found, it is loaded automatically. Otherwise, a built-in approximation is used.
+
+**Extended materials** (categorized subdirectories):
+
+| Subdirectory | Materials |
+|-------------|-----------|
+| `metals/` | `aluminum.csv`, `gold.csv`, `silver.csv`, `copper.csv`, `titanium.csv`, `titanium_nitride.csv` |
+| `dielectrics/` | `silicon_nitride.csv`, `aluminum_oxide.csv`, `tantalum_pentoxide.csv`, `magnesium_fluoride.csv`, `zinc_oxide.csv`, `indium_tin_oxide.csv`, `silicon_oxynitride.csv` |
+| `polymers/` | `pmma.csv`, `polycarbonate.csv`, `polyimide.csv`, `benzocyclobutene.csv`, `su8.csv` |
+| `semiconductors/` | `germanium.csv`, `gallium_arsenide.csv`, `indium_phosphide.csv` |
+
+Extended material CSV files are optional. If a file is missing, the corresponding material is simply not registered (no fallback).

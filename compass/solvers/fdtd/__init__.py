@@ -10,7 +10,11 @@ with contextlib.suppress(ImportError):
 with contextlib.suppress(ImportError):
     from compass.solvers.fdtd.meep_solver import MeepSolver
 
+with contextlib.suppress(ImportError):
+    from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
+
 __all__ = [
+    "FdtdxSolver",
     "FdtdzSolver",
     "FlaportFdtdSolver",
     "MeepSolver",

@@ -146,6 +146,7 @@ Returns names of all registered solvers.
 | `meent` | `compass.solvers.rcwa.meent_solver` | RCWA | |
 | `fmmax` | `compass.solvers.rcwa.fmmax_solver` | RCWA | |
 | `fdtd_flaport` | `compass.solvers.fdtd.flaport_solver` | FDTD | |
+| `fdtdx` | `compass.solvers.fdtd.fdtdx_solver` | FDTD | JAX-based 3D FDTD, multi-GPU, fully differentiable, MIT license |
 | `tmm` | `compass.solvers.tmm.tmm_solver` | TMM | 1D planar stacks only, ~1000x faster than RCWA |
 
 <SolverComparisonChart />

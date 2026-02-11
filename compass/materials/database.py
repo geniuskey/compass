@@ -170,7 +170,8 @@ class MaterialDB:
 
     def _load_csv_materials(self) -> None:
         """Load tabulated materials from CSV files."""
-        csv_mapping = {
+        # Original materials (top-level CSV files)
+        csv_mapping: dict[str, list[str]] = {
             "silicon": ["silicon_green2008.csv", "silicon_palik.csv"],
             "tungsten": ["tungsten.csv"],
             "cf_red": ["color_filter_red.csv"],
@@ -192,6 +193,69 @@ class MaterialDB:
                     self._register_tungsten_fallback()
                 elif name.startswith("cf_"):
                     self._register_color_filter_fallback(name)
+
+        # Extended material library organized by category
+        self._load_extended_csv_materials()
+
+    def _load_extended_csv_materials(self) -> None:
+        """Load extended material library from categorized subdirectories.
+
+        Materials are organized under metals/, dielectrics/, polymers/,
+        and semiconductors/ subdirectories within the materials directory.
+        """
+        # Metals (interconnects, metal grids, plasmonic structures)
+        metals_mapping: dict[str, str] = {
+            "aluminum": "metals/aluminum.csv",
+            "gold": "metals/gold.csv",
+            "silver": "metals/silver.csv",
+            "copper": "metals/copper.csv",
+            "titanium": "metals/titanium.csv",
+            "titanium_nitride": "metals/titanium_nitride.csv",
+        }
+
+        # Dielectrics (ARC, passivation, transparent conductors)
+        dielectrics_mapping: dict[str, str] = {
+            "silicon_nitride": "dielectrics/silicon_nitride.csv",
+            "aluminum_oxide": "dielectrics/aluminum_oxide.csv",
+            "tantalum_pentoxide": "dielectrics/tantalum_pentoxide.csv",
+            "magnesium_fluoride": "dielectrics/magnesium_fluoride.csv",
+            "zinc_oxide": "dielectrics/zinc_oxide.csv",
+            "indium_tin_oxide": "dielectrics/indium_tin_oxide.csv",
+            "silicon_oxynitride": "dielectrics/silicon_oxynitride.csv",
+        }
+
+        # Polymers (microlens, planarization, photoresist)
+        polymers_mapping: dict[str, str] = {
+            "pmma": "polymers/pmma.csv",
+            "polycarbonate": "polymers/polycarbonate.csv",
+            "polyimide": "polymers/polyimide.csv",
+            "benzocyclobutene": "polymers/benzocyclobutene.csv",
+            "su8": "polymers/su8.csv",
+        }
+
+        # Semiconductors (beyond silicon)
+        semiconductors_mapping: dict[str, str] = {
+            "germanium": "semiconductors/germanium.csv",
+            "gallium_arsenide": "semiconductors/gallium_arsenide.csv",
+            "indium_phosphide": "semiconductors/indium_phosphide.csv",
+        }
+
+        all_mappings = {
+            **metals_mapping,
+            **dielectrics_mapping,
+            **polymers_mapping,
+            **semiconductors_mapping,
+        }
+
+        for name, rel_path in all_mappings.items():
+            csv_path = self._db_path / rel_path
+            if csv_path.exists():
+                self.load_csv(name, str(csv_path))
+                logger.debug(f"Loaded extended material '{name}' from {rel_path}")
+            else:
+                logger.debug(
+                    f"Extended material CSV not found for '{name}': {csv_path}"
+                )
 
     def _register_silicon_fallback(self) -> None:
         """Register silicon with approximate tabulated data (Green 2008)."""

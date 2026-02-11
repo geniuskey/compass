@@ -135,6 +135,8 @@ CSV 파일에서 테이블화된 재료 데이터를 로드합니다. CSV 형식
 
 ## 내장 재료
 
+### 기본 재료
+
 | 이름 | 유형 | 모델 | 일반적인 n | 일반적인 k |
 |------|------|------|-----------|-----------|
 | `air` | 상수 | n=1.0, k=0.0 | 1.0 | 0.0 |
@@ -148,6 +150,55 @@ CSV 파일에서 테이블화된 재료 데이터를 로드합니다. CSV 형식
 | `cf_red` | 테이블화 | 로렌츠 | 1.55 | 0-0.15 |
 | `cf_green` | 테이블화 | 로렌츠 | 1.55 | 0-0.12 |
 | `cf_blue` | 테이블화 | 로렌츠 | 1.55 | 0-0.18 |
+
+### 금속 (Metals)
+
+CIS 배선, 금속 그리드, 플라즈모닉 구조에 사용되는 금속의 테이블화된 광학 상수입니다. 파장 범위: 300--1100 nm.
+
+| 이름 | 화학식 | 출처 | n (550nm) | k (550nm) |
+|------|--------|------|-----------|-----------|
+| `aluminum` | Al | Rakic 1998 | 0.58 | 5.52 |
+| `gold` | Au | Johnson & Christy 1972 | 0.17 | 3.29 |
+| `silver` | Ag | Johnson & Christy 1972 | 0.07 | 4.39 |
+| `copper` | Cu | Johnson & Christy 1972 | 0.53 | 1.74 |
+| `titanium` | Ti | Johnson & Christy 1974 | 2.37 | 3.30 |
+| `titanium_nitride` | TiN | Patsalas 2003 | 1.31 | 2.31 |
+
+### 유전체 (Dielectrics)
+
+반사 방지 코팅(ARC), 패시베이션, 투명 전도체에 사용되는 유전체 박막의 테이블화된 광학 상수입니다.
+
+| 이름 | 화학식 | 출처 | n (550nm) | k (550nm) |
+|------|--------|------|-----------|-----------|
+| `silicon_nitride` | Si3N4 | Philipp 1973 | 2.02 | 0.0 |
+| `aluminum_oxide` | Al2O3 | Malitson 1962 | 1.77 | 0.0 |
+| `tantalum_pentoxide` | Ta2O5 | Bright 2012 | 2.11 | 0.0 |
+| `magnesium_fluoride` | MgF2 | Dodge 1984 | 1.38 | 0.0 |
+| `zinc_oxide` | ZnO | Bond 1965 | 2.07 | 0.0 |
+| `indium_tin_oxide` | ITO | Konig 2014 | 1.95 | 0.0 |
+| `silicon_oxynitride` | SiON | 근사값 | 1.70 | 0.0 |
+
+### 폴리머 (Polymers)
+
+마이크로렌즈, 평탄화층, 포토레지스트에 사용되는 폴리머 재료의 테이블화된 광학 상수입니다.
+
+| 이름 | 화학식 | 출처 | n (550nm) | k (550nm) |
+|------|--------|------|-----------|-----------|
+| `pmma` | PMMA | Sultanova 2009 | 1.49 | 0.0 |
+| `polycarbonate` | PC | Sultanova 2009 | 1.58 | 0.0 |
+| `polyimide` | PI | Birkholz 2000 | 1.70 | 0.0 |
+| `benzocyclobutene` | BCB | Dow Chemical | 1.54 | 0.0 |
+| `su8` | SU-8 | MicroChem | 1.59 | 0.0 |
+
+### 반도체 (Semiconductors)
+
+실리콘 외의 반도체 재료로, NIR 센서 및 III-V족 센서 모델링에 사용됩니다.
+
+| 이름 | 화학식 | 출처 | n (550nm) | k (550nm) |
+|------|--------|------|-----------|-----------|
+| `germanium` | Ge | Aspnes 1983 | 4.04 | 0.36 |
+| `gallium_arsenide` | GaAs | Aspnes 1983 | 3.98 | 0.17 |
+| `indium_phosphide` | InP | Aspnes 1983 | 3.70 | 0.17 |
 
 ## MaterialData
 
@@ -183,6 +234,8 @@ $\varepsilon = (n + ik)^2$을 반환합니다.
 
 생성 시 `MaterialDB`는 다음 파일명 매핑을 사용하여 재료 디렉터리에서 CSV 파일을 검색합니다:
 
+**기본 재료** (최상위 디렉터리):
+
 | 재료 이름 | 예상 파일명 |
 |-----------|------------|
 | `silicon` | `silicon_green2008.csv`, `silicon_palik.csv` |
@@ -192,3 +245,14 @@ $\varepsilon = (n + ik)^2$을 반환합니다.
 | `cf_blue` | `color_filter_blue.csv` |
 
 CSV 파일이 발견되면 자동으로 로드됩니다. 그렇지 않으면 내장 근사값이 사용됩니다.
+
+**확장 재료** (분류된 하위 디렉터리):
+
+| 하위 디렉터리 | 재료 |
+|---------------|------|
+| `metals/` | `aluminum.csv`, `gold.csv`, `silver.csv`, `copper.csv`, `titanium.csv`, `titanium_nitride.csv` |
+| `dielectrics/` | `silicon_nitride.csv`, `aluminum_oxide.csv`, `tantalum_pentoxide.csv`, `magnesium_fluoride.csv`, `zinc_oxide.csv`, `indium_tin_oxide.csv`, `silicon_oxynitride.csv` |
+| `polymers/` | `pmma.csv`, `polycarbonate.csv`, `polyimide.csv`, `benzocyclobutene.csv`, `su8.csv` |
+| `semiconductors/` | `germanium.csv`, `gallium_arsenide.csv`, `indium_phosphide.csv` |
+
+확장 재료 CSV 파일은 선택 사항입니다. 파일이 없으면 해당 재료는 등록되지 않습니다 (대체 데이터 없음).
