@@ -10,14 +10,18 @@ hero:
     alt: COMPASS
   actions:
     - theme: brand
+      text: 입문 — 이미지 센서 기초
+      link: /ko/introduction/what-is-cmos-sensor
+    - theme: alt
       text: 시작하기
       link: /ko/guide/installation
     - theme: alt
-      text: 이론 배우기
-      link: /ko/theory/light-basics
-    - theme: alt
-      text: GitHub에서 보기
+      text: GitHub
       link: https://github.com/geniuskey/compass
+features:
+  - title: "\U0001F4D6 입문자 친화적"
+    details: 처음부터 시작하세요 — 시뮬레이션에 들어가기 전에 이미지 센서 광학 기초를 배우세요
+    link: /ko/introduction/what-is-cmos-sensor
 ---
 
 <HeroAnimation />
@@ -76,6 +80,10 @@ for pixel, qe in result.qe_per_pixel.items():
 ## 시작하기
 
 <div class="cta-grid">
+<a href="/ko/introduction/what-is-cmos-sensor" class="cta-card">
+  <strong>이미지 센서 기초</strong>
+  <span>이미지 센서가 처음이라면 여기서 시작하세요</span>
+</a>
 <a href="/ko/guide/installation" class="cta-card">
   <strong>설치 가이드</strong>
   <span>COMPASS와 솔버 백엔드를 설정하세요</span>

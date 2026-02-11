@@ -1,5 +1,23 @@
 import { defineConfig } from 'vitepress'
 
+const introSidebar = [
+  { text: 'Introduction', items: [
+    { text: 'What is a CMOS Image Sensor?', link: '/introduction/what-is-cmos-sensor' },
+    { text: 'Optics Primer', link: '/introduction/optics-primer' },
+    { text: 'Pixel Anatomy', link: '/introduction/pixel-anatomy' },
+    { text: 'Understanding QE', link: '/introduction/qe-intuitive' },
+  ]}
+]
+
+const introSidebarKo = [
+  { text: '입문', items: [
+    { text: 'CMOS 이미지 센서란?', link: '/ko/introduction/what-is-cmos-sensor' },
+    { text: '광학 기초 입문', link: '/ko/introduction/optics-primer' },
+    { text: '픽셀 해부학', link: '/ko/introduction/pixel-anatomy' },
+    { text: '양자 효율 이해', link: '/ko/introduction/qe-intuitive' },
+  ]}
+]
+
 const theorySidebar = [
   { text: 'Theory', items: [
     { text: 'Light Basics', link: '/theory/light-basics' },
@@ -203,6 +221,7 @@ export default defineConfig({
       lang: 'en',
       themeConfig: {
         nav: [
+          { text: 'Introduction', link: '/introduction/what-is-cmos-sensor' },
           { text: 'Guide', link: '/guide/installation' },
           { text: 'Theory', link: '/theory/light-basics' },
           { text: 'Reference', link: '/reference/api-overview' },
@@ -210,6 +229,7 @@ export default defineConfig({
           { text: 'Research', link: '/research/open-source-em-solvers-survey' },
         ],
         sidebar: {
+          '/introduction/': introSidebar,
           '/theory/': theorySidebar,
           '/guide/': guideSidebar,
           '/reference/': referenceSidebar,
@@ -224,6 +244,7 @@ export default defineConfig({
       lang: 'ko',
       themeConfig: {
         nav: [
+          { text: '입문', link: '/ko/introduction/what-is-cmos-sensor' },
           { text: '가이드', link: '/ko/guide/installation' },
           { text: '이론', link: '/ko/theory/light-basics' },
           { text: '레퍼런스', link: '/ko/reference/api-overview' },
@@ -231,6 +252,7 @@ export default defineConfig({
           { text: '리서치', link: '/ko/research/open-source-em-solvers-survey' },
         ],
         sidebar: {
+          '/ko/introduction/': introSidebarKo,
           '/ko/theory/': theorySidebarKo,
           '/ko/guide/': guideSidebarKo,
           '/ko/reference/': referenceSidebarKo,

@@ -1,5 +1,11 @@
 # Diffraction and Periodic Structures
 
+::: tip 선수 지식 | Prerequisites
+[픽셀 해부학](/introduction/pixel-anatomy) → [빛의 기초](/theory/light-basics) → 이 페이지
+:::
+
+As pixel pitches shrink below 1 um, the pixel structures become comparable in size to the wavelength of light. At this point, light doesn't just travel in straight lines -- it bends around edges and through openings. This is diffraction, and it's the fundamental reason why we need wave-optics simulation rather than simple ray tracing.
+
 ## Why Diffraction Matters for Image Sensors
 
 When a CMOS pixel pitch (typically 0.7--1.4 um) approaches the wavelength of visible light (0.38--0.78 um), simple ray optics breaks down. Light diffracts around the pixel structures -- microlens edges, deep trench isolation (DTI) walls, metal grids -- and interference effects dominate the optical behavior. This is precisely why we need wave-optics solvers like RCWA and FDTD.

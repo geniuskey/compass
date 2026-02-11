@@ -1,5 +1,12 @@
 # FDTD 상세 설명
 
+::: tip 선수 지식
+[전자기파](/ko/theory/electromagnetic-waves) → 이 페이지
+FDTD가 처음이라면 먼저 [솔버 선택 가이드](/ko/guide/choosing-solver)에서 개요를 확인하세요.
+:::
+
+FDTD(유한차분 시간영역법)는 COMPASS의 또 다른 주요 솔버 유형입니다. 주파수 공간에서 작동하는 RCWA와 달리, FDTD는 전자기파가 시간에 따라 공간을 통해 어떻게 전파되는지를 직접 시뮬레이션합니다. 공간을 3D 격자로 나누고 시간 단계별로 전진하며, 마치 빛이 픽셀을 통과하는 영상을 보는 것과 같습니다.
+
 유한차분 시간영역법(Finite-Difference Time-Domain, FDTD)은 COMPASS의 두 번째 주요 솔버 방법입니다. 이산화된 공간 및 시간 격자 위에서 맥스웰 방정식을 직접 풉니다.
 
 ## 핵심 개념

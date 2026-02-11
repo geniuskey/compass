@@ -1,5 +1,9 @@
 # RCWA vs FDTD
 
+::: tip 선수 지식
+[RCWA 설명](/ko/theory/rcwa-explained) → [FDTD 설명](/ko/theory/fdtd-explained) → 이 페이지
+:::
+
 COMPASS는 RCWA와 FDTD 솔버를 모두 지원합니다. 이 페이지에서는 각 솔버의 장단점을 이해하고 시뮬레이션에 적합한 솔버를 선택하는 데 도움을 드립니다.
 
 ## 나란히 비교

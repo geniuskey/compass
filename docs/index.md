@@ -10,14 +10,18 @@ hero:
     alt: COMPASS
   actions:
     - theme: brand
+      text: Start Here — Image Sensor Basics
+      link: /introduction/what-is-cmos-sensor
+    - theme: alt
       text: Get Started
       link: /guide/installation
     - theme: alt
-      text: Theory Background
-      link: /theory/light-basics
-    - theme: alt
       text: View on GitHub
       link: https://github.com/geniuskey/compass
+features:
+  - title: "\U0001F4D6 Beginner Friendly"
+    details: Start from zero — learn image sensor optics fundamentals before diving into simulation
+    link: /introduction/what-is-cmos-sensor
 ---
 
 <HeroAnimation />
@@ -76,6 +80,10 @@ for pixel, qe in result.qe_per_pixel.items():
 ## Get Started
 
 <div class="cta-grid">
+<a href="/introduction/what-is-cmos-sensor" class="cta-card">
+  <strong>Image Sensor Basics</strong>
+  <span>New to image sensors? Start here</span>
+</a>
 <a href="/guide/installation" class="cta-card">
   <strong>Installation Guide</strong>
   <span>Set up COMPASS and solver backends</span>

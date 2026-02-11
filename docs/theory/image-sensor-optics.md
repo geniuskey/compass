@@ -1,5 +1,9 @@
 # Image Sensor Optics
 
+::: tip 선수 지식 | Prerequisites
+[CMOS 이미지 센서란?](/introduction/what-is-cmos-sensor) → [픽셀 해부학](/introduction/pixel-anatomy) → 이 페이지
+:::
+
 This page describes the optical structure of a backside-illuminated (BSI) CMOS image sensor pixel, which is the primary simulation target of COMPASS.
 
 ## BSI pixel architecture

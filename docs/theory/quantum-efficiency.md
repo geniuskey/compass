@@ -1,5 +1,9 @@
 # Quantum Efficiency
 
+::: tip 선수 지식 | Prerequisites
+[양자 효율 이해](/introduction/qe-intuitive) (직관적 설명) → 이 페이지 (수학적 분석)
+:::
+
 Quantum Efficiency (QE) is the primary figure of merit computed by COMPASS. It measures how effectively a pixel converts incident photons into electrical signal.
 
 ## Definition

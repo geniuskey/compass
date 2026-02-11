@@ -1,5 +1,12 @@
 # Electromagnetic Waves
 
+::: tip 선수 지식 | Prerequisites
+이 페이지를 읽기 전에 [광학 기초 입문](/introduction/optics-primer)과 [빛의 기초](/theory/light-basics)를 먼저 읽어보세요.
+Before reading this page, check out the [Optics Primer](/introduction/optics-primer) and [Light Basics](/theory/light-basics).
+:::
+
+Why do we need Maxwell's equations? Because they tell us exactly how light behaves when it encounters the tiny structures inside a pixel. When pixel features are smaller than the wavelength of light (~0.5 um), we can't use simple ray tracing -- we need the full wave picture that Maxwell's equations provide. The solvers in COMPASS (RCWA and FDTD) are both methods for solving these equations numerically.
+
 This page introduces Maxwell's equations and the wave formalism that RCWA and FDTD solvers use internally.
 
 <EMWaveAnimation />

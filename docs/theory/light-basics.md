@@ -1,5 +1,10 @@
 # Light Basics
 
+::: tip 학습 경로 | Learning Path
+처음이라면? [CMOS 이미지 센서란?](/introduction/what-is-cmos-sensor)부터 시작하세요.
+New here? Start with [What is a CMOS Image Sensor?](/introduction/what-is-cmos-sensor)
+:::
+
 This page covers the fundamental properties of light that underpin every simulation in COMPASS.
 
 ## What is light?

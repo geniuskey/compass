@@ -1,5 +1,12 @@
 # FDTD Explained
 
+::: tip 선수 지식 | Prerequisites
+[전자기파](/theory/electromagnetic-waves) → 이 페이지
+FDTD가 처음이라면 먼저 [솔버 선택 가이드](/guide/choosing-solver)에서 개요를 확인하세요.
+:::
+
+FDTD (Finite-Difference Time-Domain) is the other main solver type in COMPASS. Unlike RCWA which works in frequency space, FDTD directly simulates how electromagnetic waves propagate through space over time. It divides space into a 3D grid and marches forward in time step by step, like watching a movie of light passing through the pixel.
+
 The Finite-Difference Time-Domain (FDTD) method is the second major solver approach in COMPASS. It directly solves Maxwell's equations on a discrete spatial and temporal grid.
 
 ## Core idea

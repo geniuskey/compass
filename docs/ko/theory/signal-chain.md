@@ -5,6 +5,10 @@ description: 광원에서 장면 반사율, 카메라 광학계, IR 필터를 �
 
 # 복사 측정 신호 체인(Radiometric Signal Chain)
 
+::: tip 선수 지식
+[양자 효율](/ko/theory/quantum-efficiency) → 이 페이지
+:::
+
 완전한 복사 측정 신호 체인(Radiometric Signal Chain)을 이해하는 것은 이미지 센서 픽셀의 신호 수준과 색 정확도를 예측하는 데 필수적입니다. 이 장에서는 광원에서 전기 신호에 이르기까지 빛의 여정을 추적하며, 각 단계를 분광 모델로 정량화합니다.
 
 ## 장면에서 센서 신호까지

@@ -1,5 +1,11 @@
 # 박막 광학
 
+::: tip 선수 지식
+[광학 기초 입문](/ko/introduction/optics-primer) → [빛의 기초](/ko/theory/light-basics) → [전자기파](/ko/theory/electromagnetic-waves) → 이 페이지
+:::
+
+박막은 이미지 센서 픽셀 곳곳에 존재합니다 -- 반사 방지 코팅(BARL), 컬러 필터, 심지어 마이크로렌즈까지. 층의 두께가 수 나노미터에 불과할 때, 간섭 효과가 매우 중요해집니다. 박막 광학을 이해하면 더 나은 BARL 스택을 설계하고, 층 두께가 QE에 미치는 영향을 예측할 수 있습니다.
+
 박막 간섭(Thin Film Interference)은 이미지 센서 설계에서 가장 중요한 광학 효과 중 하나입니다. 반사 방지 코팅(Anti-Reflection Coating), BARL 층, 그리고 평탄화층(Planarization Layer)까지 모두 박막 원리에 기반합니다.
 
 ## 단일 박막

@@ -1,5 +1,9 @@
 # 이미지 센서 광학
 
+::: tip 선수 지식
+[CMOS 이미지 센서란?](/ko/introduction/what-is-cmos-sensor) → [픽셀 해부학](/ko/introduction/pixel-anatomy) → 이 페이지
+:::
+
 이 페이지에서는 COMPASS의 주요 시뮬레이션 대상인 후면 조사(Backside-Illuminated, BSI) CMOS 이미지 센서 픽셀의 광학 구조를 설명합니다.
 
 ## BSI 픽셀 구조

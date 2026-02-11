@@ -1,5 +1,10 @@
 # 수치 안정성
 
+::: tip 선수 지식
+[RCWA 설명](/ko/theory/rcwa-explained) → [FDTD 설명](/ko/theory/fdtd-explained) → 이 페이지
+이 페이지는 고급 주제입니다. 처음 사용하시는 분은 건너뛰어도 됩니다.
+:::
+
 RCWA 시뮬레이션은 높은 푸리에 차수, 짧은 파장, 흡수 재료 등의 조건에서 수치적 불안정(Numerical Instability)이 발생할 수 있습니다. COMPASS는 이러한 문제를 해결하기 위해 5단계 방어 체계를 구현합니다.
 
 ## 불안정의 원인

@@ -29,6 +29,9 @@ import HeroAnimation from './components/HeroAnimation.vue'
 import FeatureShowcase from './components/FeatureShowcase.vue'
 import ArchitectureOverview from './components/ArchitectureOverview.vue'
 import SolverShowcase from './components/SolverShowcase.vue'
+import PixelAnatomyViewer from './components/PixelAnatomyViewer.vue'
+import PhotonJourneyAnimation from './components/PhotonJourneyAnimation.vue'
+import WavelengthExplorer from './components/WavelengthExplorer.vue'
 
 export default {
   extends: DefaultTheme,
@@ -61,5 +64,8 @@ export default {
     app.component('FeatureShowcase', FeatureShowcase)
     app.component('ArchitectureOverview', ArchitectureOverview)
     app.component('SolverShowcase', SolverShowcase)
+    app.component('PixelAnatomyViewer', PixelAnatomyViewer)
+    app.component('PhotonJourneyAnimation', PhotonJourneyAnimation)
+    app.component('WavelengthExplorer', WavelengthExplorer)
   },
 }

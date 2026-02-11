@@ -1,5 +1,12 @@
 # RCWA 상세 설명
 
+::: tip 선수 지식
+[전자기파](/ko/theory/electromagnetic-waves) → [회절](/ko/theory/diffraction) → 이 페이지
+RCWA가 처음이라면 먼저 [솔버 선택 가이드](/ko/guide/choosing-solver)에서 개요를 확인하세요.
+:::
+
+RCWA(엄밀 결합파 해석법)는 COMPASS의 두 가지 주요 솔버 유형 중 하나입니다. 픽셀 구조를 공간 주파수 성분(푸리에 급수)으로 분해한 다음, 각 성분에 대해 맥스웰 방정식을 푸는 방법이라고 생각하면 됩니다. 픽셀 배열과 같은 주기 구조에 특히 빠릅니다.
+
 엄밀 결합파 해석법(Rigorous Coupled-Wave Analysis, RCWA)은 COMPASS의 주요 솔버 방법입니다. 주파수 영역에서 전기장을 푸리에 고조파(Fourier Harmonics)로 전개하여 주기 구조에 대한 맥스웰 방정식을 풉니다.
 
 ## 핵심 개념

@@ -1,5 +1,11 @@
 # Numerical Stability
 
+::: tip 선수 지식 | Prerequisites
+[RCWA 설명](/theory/rcwa-explained) → [FDTD 설명](/theory/fdtd-explained) → 이 페이지
+이 페이지는 고급 주제입니다. 처음 사용하시는 분은 건너뛰어도 됩니다.
+This is an advanced topic. If you're just getting started, feel free to skip this for now.
+:::
+
 RCWA simulations can suffer from numerical instability, especially at high Fourier orders, short wavelengths, and with absorbing materials. COMPASS implements a five-layer defense system to address these issues.
 
 ## Sources of instability
