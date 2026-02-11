@@ -85,6 +85,7 @@ const cookbookSidebar = [
     { text: 'BARL Design', link: '/cookbook/barl-design' },
     { text: 'DTI Crosstalk', link: '/cookbook/dti-crosstalk' },
     { text: 'Signal Chain Color Accuracy', link: '/cookbook/signal-chain-color-accuracy' },
+    { text: 'TMM Validation Results', link: '/cookbook/tmm-validation-results' },
   ]}
 ]
 
@@ -175,6 +176,7 @@ const cookbookSidebarKo = [
     { text: 'BARL 설계', link: '/ko/cookbook/barl-design' },
     { text: 'DTI 크로스토크', link: '/ko/cookbook/dti-crosstalk' },
     { text: '신호 체인 색 정확도', link: '/ko/cookbook/signal-chain-color-accuracy' },
+    { text: 'TMM 검증 결과', link: '/ko/cookbook/tmm-validation-results' },
   ]}
 ]
 
