@@ -72,6 +72,10 @@ ax = plot_pixel_cross_section(
 - DTI(Deep Trench Isolation) 트렌치가 실리콘 레이어에서 보이는지
 - 레이어 두께가 합리적인지
 
+픽셀 스택 구조를 인터랙티브하게 탐색해 보십시오:
+
+<StackVisualizer />
+
 ## 4단계: 솔버 생성
 
 ```python
@@ -159,6 +163,10 @@ plt.tight_layout()
 plt.savefig("qe_spectrum.png", dpi=150)
 ```
 
+아래에서 QE 스펙트럼을 인터랙티브하게 확인할 수 있습니다. 곡선 위에 마우스를 올려 각 파장에서의 채널별 QE를 확인하십시오:
+
+<QESpectrumChart />
+
 ## 8단계: 에너지 균형(Energy Balance) 확인
 
 ```python
@@ -192,6 +200,10 @@ plt.tight_layout()
 ```
 
 오차는 모든 파장에서 1% (0.01) 미만이어야 합니다. 이를 초과하는 경우 [문제 해결](./troubleshooting.md)을 참조하십시오.
+
+아래 인터랙티브 다이어그램은 반사, 투과, 흡수가 에너지 보존과 어떻게 관련되는지를 보여줍니다:
+
+<EnergyBalanceDiagram />
 
 ## 9단계: 결과 저장
 

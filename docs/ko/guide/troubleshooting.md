@@ -183,6 +183,10 @@ flowchart TD
     I --> G
 ```
 
+아래 인터랙티브 다이어그램을 사용하여 반사, 투과, 흡수의 합이 1이 되어야 하는 원리를 이해하십시오:
+
+<EnergyBalanceDiagram />
+
 **1단계: 정밀도 증가**
 ```yaml
 solver:
@@ -224,6 +228,10 @@ solver:
 ```
 
 ## RCWA 수치 안정성
+
+다양한 푸리에 차수를 실험하여 RCWA 수렴 동작을 확인해 보십시오:
+
+<RCWAConvergenceDemo />
 
 ### S-행렬 vs T-행렬
 

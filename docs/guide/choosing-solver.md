@@ -57,6 +57,10 @@ graph TD
 | **Convergence parameter**   | Fourier order $N$           | Grid spacing $\Delta x$      |
 | **Numerical stability**     | S-matrix required           | CFL condition                 |
 
+Compare solver performance and accuracy trade-offs interactively:
+
+<SolverComparisonChart />
+
 ### When RCWA excels
 
 - Standard Bayer pixel QE sweeps (the primary COMPASS use case)
@@ -70,6 +74,10 @@ graph TD
 - Broadband response in a single simulation
 - Situations where near-field detail inside the structure matters
 - Cross-validation against RCWA
+
+The following diagram shows how data flows through the solver pipeline, from configuration to simulation results:
+
+<SolverPipelineDiagram />
 
 ## Solver configuration reference
 
@@ -111,6 +119,10 @@ The Fourier order $N$ determines the number of harmonics retained in each direct
 | [17,17]| 1225  | 2450x2450   | 5.0 s           | Very high |
 
 **Key parameter: `precision_strategy`**
+
+Explore how different precision strategies affect numerical accuracy and runtime:
+
+<PrecisionComparison />
 
 The `"mixed"` strategy (default) runs the main simulation in `complex64` but promotes eigendecomposition to `complex128` and executes it on CPU. This provides a good balance of speed and stability.
 

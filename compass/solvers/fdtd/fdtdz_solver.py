@@ -101,6 +101,10 @@ class FdtdzSolver(SolverBase):
         Args:
             pixel_stack: Solver-agnostic pixel stack structure.
         """
+        if pixel_stack is None:
+            raise ValueError("pixel_stack must not be None")
+        if not pixel_stack.layers:
+            raise ValueError("pixel_stack must have at least one layer")
         self._pixel_stack = pixel_stack
         logger.info(
             f"fdtdz: geometry setup for {pixel_stack.unit_cell} unit cell, "
@@ -115,6 +119,10 @@ class FdtdzSolver(SolverBase):
             source_config: Source configuration dictionary.
         """
         self._source = PlanewaveSource.from_config(source_config)
+        if self._source.n_wavelengths == 0:
+            raise ValueError("wavelengths array must not be empty")
+        if np.any(self._source.wavelengths <= 0):
+            raise ValueError("all wavelengths must be positive")
         self._source_config = source_config
         logger.info(
             f"fdtdz: source setup - {self._source.n_wavelengths} wavelengths, "
@@ -251,13 +259,21 @@ class FdtdzSolver(SolverBase):
 
         self._last_fields = all_fields if all_fields else None
 
+        result_arrays = {
+            "reflection": np.array(all_R),
+            "transmission": np.array(all_T),
+            "absorption": np.array(all_A),
+        }
+        for arr_name, arr in result_arrays.items():
+            if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
+                import warnings
+                warnings.warn(f"fdtdz: NaN/Inf detected in {arr_name} output")
+
         return SimulationResult(
             qe_per_pixel={k: np.array(v) for k, v in all_qe.items()},
             wavelengths=self._source.wavelengths,
             fields=self._last_fields,
-            reflection=np.array(all_R),
-            transmission=np.array(all_T),
-            absorption=np.array(all_A),
+            **result_arrays,
             metadata={
                 "solver_name": "fdtdz",
                 "grid_spacing": grid_spacing,
@@ -414,7 +430,8 @@ class FdtdzSolver(SolverBase):
         A = float(np.clip(1.0 - R - T, 0.0, 1.0))
 
         # Store field data (transpose back from (nz, ny, nx) to (ny, nx, nz))
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         z_coords = np.linspace(
             self._pixel_stack.z_range[0],
             self._pixel_stack.z_range[1],
@@ -507,7 +524,8 @@ class FdtdzSolver(SolverBase):
             Dict mapping pixel key (e.g. "R_0_0") to QE value.
         """
         qe_per_pixel: dict[str, float] = {}
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         bayer = self._pixel_stack.bayer_map
         _n_pixels = self._pixel_stack.unit_cell[0] * self._pixel_stack.unit_cell[1]
 
@@ -521,8 +539,8 @@ class FdtdzSolver(SolverBase):
             return qe_per_pixel
 
         # |E|^2 in the interior region (strip PML layers from field arrays)
-        assert fields.Ey is not None
-        assert fields.Ez is not None
+        if fields.Ey is None or fields.Ez is None:
+            raise ValueError("FieldData is missing Ey or Ez components")
         ex_int = fields.Ex[:, :, pml_layers:pml_layers + nz_interior]
         ey_int = fields.Ey[:, :, pml_layers:pml_layers + nz_interior]
         ez_int = fields.Ez[:, :, pml_layers:pml_layers + nz_interior]

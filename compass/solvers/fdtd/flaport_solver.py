@@ -30,11 +30,19 @@ class FlaportFdtdSolver(SolverBase):
         self._last_eps_3d: np.ndarray | None = None
 
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
+        if pixel_stack is None:
+            raise ValueError("pixel_stack must not be None")
+        if not pixel_stack.layers:
+            raise ValueError("pixel_stack must have at least one layer")
         self._pixel_stack = pixel_stack
         logger.info(f"fdtd_flaport: geometry setup for {pixel_stack.unit_cell} unit cell")
 
     def setup_source(self, source_config: dict) -> None:
         self._source = PlanewaveSource.from_config(source_config)
+        if self._source.n_wavelengths == 0:
+            raise ValueError("wavelengths array must not be empty")
+        if np.any(self._source.wavelengths <= 0):
+            raise ValueError("all wavelengths must be positive")
         self._source_config = source_config
         logger.info(f"fdtd_flaport: source setup - {self._source.n_wavelengths} wavelengths")
 
@@ -102,9 +110,11 @@ class FlaportFdtdSolver(SolverBase):
                         wavelength, nx, ny, nz - 2 * pml_layers
                     )
                     # Place permittivity in grid center (between PMLs)
+                    eps_real = np.real(eps_3d).transpose(1, 0, 2)
+                    eps_real_safe = np.where(np.abs(eps_real) > 1e-30, eps_real, 1.0)
                     grid.inverse_permittivity[
                         :, :, pml_layers:-pml_layers
-                    ] = 1.0 / np.real(eps_3d).transpose(1, 0, 2)
+                    ] = 1.0 / eps_real_safe
 
                     # Add source
                     wavelength_m = wavelength * 1e-6
@@ -176,12 +186,20 @@ class FlaportFdtdSolver(SolverBase):
             for k, vals in qe_pol_accum.items():
                 all_qe.setdefault(k, []).append(sum(vals) / n_pol)
 
+        result_arrays = {
+            "reflection": np.array(all_R),
+            "transmission": np.array(all_T),
+            "absorption": np.array(all_A),
+        }
+        for arr_name, arr in result_arrays.items():
+            if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
+                import warnings
+                warnings.warn(f"fdtd_flaport: NaN/Inf detected in {arr_name} output")
+
         return SimulationResult(
             qe_per_pixel={k: np.array(v) for k, v in all_qe.items()},
             wavelengths=self._source.wavelengths,
-            reflection=np.array(all_R),
-            transmission=np.array(all_T),
-            absorption=np.array(all_A),
+            **result_arrays,
             metadata={"solver_name": "fdtd_flaport", "grid_spacing": grid_spacing, "device": self.device},
         )
 
@@ -192,10 +210,13 @@ class FlaportFdtdSolver(SolverBase):
 
         Uses eps_imag to weight the absorption distribution among pixels.
         """
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         bayer = self._pixel_stack.bayer_map
         n_rows, n_cols = self._pixel_stack.unit_cell
         n_pixels = n_rows * n_cols
+        if n_pixels == 0:
+            return {}
         lx, ly = self._pixel_stack.domain_size
         z_min, z_max = self._pixel_stack.z_range
         nx, ny, nz = eps_3d.shape
@@ -283,7 +304,8 @@ class FlaportFdtdSolver(SolverBase):
         self, E: np.ndarray, component: str, plane: str, position: float,
     ) -> np.ndarray:
         """Slice a 4D field array (nx, ny, nz, 3) along the given plane."""
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         nx, ny, nz = E.shape[:3]
         lx, ly = self._pixel_stack.domain_size
         z_min, z_max = self._pixel_stack.z_range
@@ -317,7 +339,8 @@ class FlaportFdtdSolver(SolverBase):
         self, eps_3d: np.ndarray, component: str, plane: str, position: float,
     ) -> np.ndarray:
         """Approximate field from permittivity using Beer-Lambert decay."""
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         nx, ny, nz = eps_3d.shape
         lx, ly = self._pixel_stack.domain_size
 

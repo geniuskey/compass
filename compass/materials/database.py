@@ -45,6 +45,8 @@ class MaterialData:
     # For Sellmeier
     sellmeier_B: list[float] | None = None
     sellmeier_C: list[float] | None = None
+    # Cache for n,k lookups keyed by wavelength (rounded to avoid float issues)
+    _nk_cache: dict[float, tuple[float, float]] = field(default_factory=dict, repr=False)
 
     def _build_interpolators(self) -> None:
         """Build interpolation functions from tabulated data."""
@@ -64,11 +66,21 @@ class MaterialData:
             )
 
     def get_nk(self, wavelength: float) -> tuple[float, float]:
-        """Get refractive index (n, k) at a given wavelength in um."""
+        """Get refractive index (n, k) at a given wavelength in um.
+
+        Results are cached to avoid redundant computation for repeated lookups
+        at the same wavelength (common in multi-pixel RCWA sweeps).
+        """
         if self.mat_type == "constant":
             return self.n_const, self.k_const
 
-        elif self.mat_type == "tabulated":
+        # Check cache (round to 10 decimal places to avoid float precision issues)
+        cache_key = round(wavelength, 10)
+        cached = self._nk_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        if self.mat_type == "tabulated":
             if self._n_interp is None:
                 self._build_interpolators()
             assert self.wavelengths is not None
@@ -87,12 +99,12 @@ class MaterialData:
             assert self._k_interp is not None and callable(self._k_interp)
             n = float(self._n_interp(wl_clamped))
             k = float(self._k_interp(wl_clamped))
-            return n, max(k, 0.0)
+            result = (n, max(k, 0.0))
 
         elif self.mat_type == "cauchy":
             lam2 = wavelength ** 2
             n = self.cauchy_A + self.cauchy_B / lam2 + self.cauchy_C / (lam2 ** 2)
-            return n, 0.0
+            result = (n, 0.0)
 
         elif self.mat_type == "sellmeier":
             lam2 = wavelength ** 2
@@ -101,9 +113,13 @@ class MaterialData:
             assert self.sellmeier_C is not None
             for B, C in zip(self.sellmeier_B, self.sellmeier_C):
                 n2 += B * lam2 / (lam2 - C)
-            return np.sqrt(max(n2, 1.0)), 0.0
+            result = (float(np.sqrt(max(n2, 1.0))), 0.0)
 
-        raise ValueError(f"Unknown material type: {self.mat_type}")
+        else:
+            raise ValueError(f"Unknown material type: {self.mat_type}")
+
+        self._nk_cache[cache_key] = result
+        return result
 
     def get_epsilon(self, wavelength: float) -> complex:
         """Get complex permittivity epsilon = (n + ik)^2."""
@@ -117,6 +133,8 @@ class MaterialDB:
     def __init__(self, db_path: str | None = None):
         self._materials: dict[str, MaterialData] = {}
         self._db_path = Path(db_path) if db_path else _MATERIALS_DIR
+        # Cache for epsilon lookups: (material_name, rounded_wavelength) -> complex
+        self._epsilon_cache: dict[tuple[str, float], complex] = {}
         self._load_builtin()
 
     def _load_builtin(self) -> None:
@@ -305,10 +323,19 @@ class MaterialDB:
         return self._materials[name].get_nk(wavelength)
 
     def get_epsilon(self, name: str, wavelength: float) -> complex:
-        """Get complex permittivity at given wavelength. ε = (n + ik)²."""
+        """Get complex permittivity at given wavelength. ε = (n + ik)².
+
+        Results are cached to avoid redundant computation during wavelength sweeps.
+        """
+        cache_key = (name, round(wavelength, 10))
+        cached = self._epsilon_cache.get(cache_key)
+        if cached is not None:
+            return cached
         if name not in self._materials:
             raise KeyError(f"Unknown material: '{name}'. Available: {list(self._materials.keys())}")
-        return self._materials[name].get_epsilon(wavelength)
+        eps = self._materials[name].get_epsilon(wavelength)
+        self._epsilon_cache[cache_key] = eps
+        return eps
 
     def get_epsilon_spectrum(self, name: str, wavelengths: np.ndarray) -> np.ndarray:
         """Get complex permittivity over wavelength array."""

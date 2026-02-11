@@ -44,6 +44,13 @@ class PixelStack:
         self.bayer_map: list[list[str]] = []
 
         self._layer_configs: dict = pixel_cfg.get("layers", {})
+
+        # Geometry caches (wavelength-independent, invalidated on config change)
+        self._meshgrid_cache: dict[tuple[int, int], tuple[np.ndarray, np.ndarray]] = {}
+        self._height_map_cache: dict[tuple[int, int], np.ndarray] = {}
+        self._dti_mask_cache: dict[tuple[int, int], np.ndarray] = {}
+        self._metal_grid_cache: dict[tuple[int, int], np.ndarray] = {}
+
         self._build_from_config(pixel_cfg)
 
     @property
@@ -273,6 +280,48 @@ class PixelStack:
 
         return slices
 
+    def _get_meshgrid(self, nx: int, ny: int) -> tuple[np.ndarray, np.ndarray]:
+        """Get cached meshgrid for given resolution.
+
+        The meshgrid only depends on domain size and resolution, not wavelength,
+        so it can be reused across all wavelength sweeps.
+        """
+        cache_key = (nx, ny)
+        if cache_key not in self._meshgrid_cache:
+            lx, ly = self.domain_size
+            x = np.linspace(0, lx, nx, endpoint=False)
+            y = np.linspace(0, ly, ny, endpoint=False)
+            self._meshgrid_cache[cache_key] = np.meshgrid(x, y, indexing="xy")
+        return self._meshgrid_cache[cache_key]
+
+    def _get_height_map(self, nx: int, ny: int) -> np.ndarray:
+        """Get cached microlens height map for given resolution.
+
+        The height map is purely geometric (no wavelength dependence),
+        so it can be computed once and reused for all wavelengths.
+        """
+        cache_key = (nx, ny)
+        if cache_key not in self._height_map_cache:
+            xx, yy = self._get_meshgrid(nx, ny)
+            height_map = np.zeros((ny, nx))
+            for idx, ml in enumerate(self.microlenses):
+                r = idx // self.unit_cell[1]
+                c = idx % self.unit_cell[1]
+                cx = (c + 0.5) * self.pitch
+                cy = (r + 0.5) * self.pitch
+
+                h = GeometryBuilder.superellipse_lens(
+                    xx, yy,
+                    center_x=cx, center_y=cy,
+                    rx=ml.radius_x, ry=ml.radius_y,
+                    height=ml.height,
+                    n=ml.n_param, alpha=ml.alpha_param,
+                    shift_x=ml.shift_x, shift_y=ml.shift_y,
+                )
+                height_map = np.maximum(height_map, h)
+            self._height_map_cache[cache_key] = height_map
+        return self._height_map_cache[cache_key]
+
     def _microlens_staircase(
         self,
         layer: Layer,
@@ -282,30 +331,10 @@ class PixelStack:
         n_slices: int,
     ) -> list[LayerSlice]:
         """Generate staircase approximation of microlens layer."""
-        lx, ly = self.domain_size
-        x = np.linspace(0, lx, nx, endpoint=False)
-        y = np.linspace(0, ly, ny, endpoint=False)
-        xx, yy = np.meshgrid(x, y, indexing="xy")
+        # Use cached height map (geometry doesn't change with wavelength)
+        height_map = self._get_height_map(nx, ny)
 
-        # Build full height map for all lenses in unit cell
-        height_map = np.zeros((ny, nx))
-        for idx, ml in enumerate(self.microlenses):
-            r = idx // self.unit_cell[1]
-            c = idx % self.unit_cell[1]
-            cx = (c + 0.5) * self.pitch
-            cy = (r + 0.5) * self.pitch
-
-            h = GeometryBuilder.superellipse_lens(
-                xx, yy,
-                center_x=cx, center_y=cy,
-                rx=ml.radius_x, ry=ml.radius_y,
-                height=ml.height,
-                n=ml.n_param, alpha=ml.alpha_param,
-                shift_x=ml.shift_x, shift_y=ml.shift_y,
-            )
-            height_map = np.maximum(height_map, h)
-
-        # Slice the lens into thin layers
+        # Only the permittivity values depend on wavelength
         eps_lens = self.material_db.get_epsilon(layer.base_material, wavelength)
         eps_air = self.material_db.get_epsilon("air", wavelength)
 
@@ -349,8 +378,11 @@ class PixelStack:
 
         # Assign color filter materials per pixel
         cf_materials = cf_cfg.get("materials", {"R": "cf_red", "G": "cf_green", "B": "cf_blue"})
-        x = np.linspace(0, lx, nx, endpoint=False)
-        y = np.linspace(0, ly, ny, endpoint=False)
+
+        # Use cached meshgrid coordinates
+        xx, yy = self._get_meshgrid(nx, ny)
+        x = xx[0, :]  # 1D x coords from first row
+        y = yy[:, 0]  # 1D y coords from first column
 
         for r in range(self.unit_cell[0]):
             for c in range(self.unit_cell[1]):
@@ -369,15 +401,18 @@ class PixelStack:
                 mask_2d = np.outer(y_mask, x_mask)
                 eps_grid[mask_2d] = eps
 
-        # Metal grid overlay
+        # Metal grid overlay (mask is geometry-only, cache it)
         grid_cfg = cf_cfg.get("grid", {})
         if grid_cfg.get("enabled", False):
             grid_width = grid_cfg.get("width", 0.05)
             grid_material = grid_cfg.get("material", "tungsten")
             eps_grid_metal = self.material_db.get_epsilon(grid_material, wavelength)
-            metal_mask = GeometryBuilder.metal_grid(
-                nx, ny, self.pitch, self.unit_cell, grid_width
-            )
+            cache_key = (nx, ny)
+            if cache_key not in self._metal_grid_cache:
+                self._metal_grid_cache[cache_key] = GeometryBuilder.metal_grid(
+                    nx, ny, self.pitch, self.unit_cell, grid_width
+                )
+            metal_mask = self._metal_grid_cache[cache_key]
             eps_grid[metal_mask > 0.5] = eps_grid_metal
 
         return eps_grid
@@ -400,9 +435,13 @@ class PixelStack:
             dti_width = dti_cfg.get("width", 0.1)
             dti_material = dti_cfg.get("material", "sio2")
             eps_dti = self.material_db.get_epsilon(dti_material, wavelength)
-            dti_mask = GeometryBuilder.dti_grid(
-                nx, ny, self.pitch, self.unit_cell, dti_width
-            )
+            # DTI mask is geometry-only (no wavelength dependence), cache it
+            cache_key = (nx, ny)
+            if cache_key not in self._dti_mask_cache:
+                self._dti_mask_cache[cache_key] = GeometryBuilder.dti_grid(
+                    nx, ny, self.pitch, self.unit_cell, dti_width
+                )
+            dti_mask = self._dti_mask_cache[cache_key]
             eps_grid[dti_mask > 0.5] = eps_dti
 
         return eps_grid

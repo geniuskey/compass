@@ -51,6 +51,14 @@ print(f"Unit cell: {config.pixel.unit_cell}")
 print(f"Solver: {config.solver.name}")
 ```
 
+Try building a pixel stack interactively by adjusting layer parameters:
+
+<PixelStackBuilder />
+
+Experiment with different wavelength values using the slider below:
+
+<WavelengthSlider />
+
 ## 2. Initialize the material database
 
 The `MaterialDB` loads built-in materials automatically and supports custom CSV files.

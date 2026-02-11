@@ -249,7 +249,8 @@ class LiFactorization:
         Returns:
             Convolution matrix with inverse rule applied.
         """
-        eps_inv = 1.0 / eps_grid
+        eps_safe = np.where(np.abs(eps_grid) > 1e-30, eps_grid, 1e-30)
+        eps_inv = 1.0 / eps_safe
         convmat_inv = LiFactorization.toeplitz_from_fft(eps_inv, n_harmonics)
         return np.linalg.inv(convmat_inv)
 
@@ -277,7 +278,8 @@ class LiFactorization:
 
         if use_inverse_rule:
             # Apply inverse rule row by row, then column by column
-            eps_inv = 1.0 / eps_grid_2d
+            eps_safe_2d = np.where(np.abs(eps_grid_2d) > 1e-30, eps_grid_2d, 1e-30)
+            eps_inv = 1.0 / eps_safe_2d
 
             # 2D FFT approach
             coeffs = np.fft.fft2(eps_inv) / (nx * ny)

@@ -49,6 +49,10 @@ class TorcwaSolver(SolverBase):
 
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
         """Convert PixelStack to torcwa layer structure."""
+        if pixel_stack is None:
+            raise ValueError("pixel_stack must not be None")
+        if not pixel_stack.layers:
+            raise ValueError("pixel_stack must have at least one layer")
         self._pixel_stack = pixel_stack
         logger.info(
             f"torcwa: geometry setup for {pixel_stack.unit_cell} unit cell, "
@@ -58,6 +62,10 @@ class TorcwaSolver(SolverBase):
     def setup_source(self, source_config: dict) -> None:
         """Configure planewave source from config."""
         self._source = PlanewaveSource.from_config(source_config)
+        if self._source.n_wavelengths == 0:
+            raise ValueError("wavelengths array must not be empty")
+        if np.any(self._source.wavelengths <= 0):
+            raise ValueError("all wavelengths must be positive")
         self._source_config = source_config
         logger.info(
             f"torcwa: source setup - {self._source.n_wavelengths} wavelengths, "
@@ -139,12 +147,20 @@ class TorcwaSolver(SolverBase):
         # Assemble result
         qe_per_pixel = {k: np.array(v) for k, v in all_qe.items()}
 
+        result_arrays = {
+            "reflection": np.array(all_R),
+            "transmission": np.array(all_T),
+            "absorption": np.array(all_A),
+        }
+        for arr_name, arr in result_arrays.items():
+            if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
+                import warnings
+                warnings.warn(f"torcwa: NaN/Inf detected in {arr_name} output")
+
         return SimulationResult(
             qe_per_pixel=qe_per_pixel,
             wavelengths=self._source.wavelengths,
-            reflection=np.array(all_R),
-            transmission=np.array(all_T),
-            absorption=np.array(all_A),
+            **result_arrays,
             metadata={
                 "solver_name": "torcwa",
                 "fourier_order": fourier_order,
@@ -191,7 +207,8 @@ class TorcwaSolver(SolverBase):
         sim.add_output_layer(eps=1.0)
 
         # Set incidence angle
-        assert self._source is not None
+        if self._source is None:
+            raise RuntimeError("source is not set; call setup_source() first")
         sim.set_incident_angle(
             inc_ang=self._source.theta_rad,
             azi_ang=self._source.phi_rad,
@@ -227,10 +244,13 @@ class TorcwaSolver(SolverBase):
         is available, uses Poynting vector differences; otherwise falls
         back to eps_imag weighting.
         """
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         bayer = self._pixel_stack.bayer_map
         n_rows, n_cols = self._pixel_stack.unit_cell
         n_pixels = n_rows * n_cols
+        if n_pixels == 0:
+            return {}
         _pitch = self._pixel_stack.pitch
 
         # Build absorption weight per pixel from eps_imag in PD regions
@@ -339,7 +359,8 @@ class TorcwaSolver(SolverBase):
         self, sim, layer_info, component, plane, position,
     ) -> np.ndarray:
         """Extract field using torcwa's internal field reconstruction."""
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
 
         nx_field, ny_field = 64, 64
         _lx, _ly = self._pixel_stack.domain_size
@@ -377,7 +398,8 @@ class TorcwaSolver(SolverBase):
         Models field intensity as roughly proportional to exp(-alpha*z)
         where alpha depends on the imaginary part of the permittivity.
         """
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         nz = len(layer_info)
         nx_out, ny_out = 64, 64
         lx, ly = self._pixel_stack.domain_size
@@ -419,7 +441,8 @@ class TorcwaSolver(SolverBase):
 
             if component == "|E|2":
                 # Approximate |E|^2 decay through absorbing media
-                assert self._last_wavelength is not None
+                if self._last_wavelength is None:
+                    raise RuntimeError("no wavelength data; run a simulation first")
                 k0 = 2 * np.pi / self._last_wavelength
                 for xi in range(nx_out):
                     intensity = 1.0
@@ -443,7 +466,8 @@ class TorcwaSolver(SolverBase):
                 field_2d[:, zi] = np.interp(y_new, y_orig, np.abs(np.imag(col)) + 1e-10)
 
             if component == "|E|2":
-                assert self._last_wavelength is not None
+                if self._last_wavelength is None:
+                    raise RuntimeError("no wavelength data; run a simulation first")
                 k0 = 2 * np.pi / self._last_wavelength
                 for yi in range(ny_out):
                     intensity = 1.0

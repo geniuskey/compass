@@ -72,6 +72,10 @@ Check that:
 - DTI trenches are visible in the silicon layer
 - Layer thicknesses look reasonable
 
+Explore the pixel stack structure interactively:
+
+<StackVisualizer />
+
 ## Step 4: Create the solver
 
 ```python
@@ -159,6 +163,10 @@ plt.tight_layout()
 plt.savefig("qe_spectrum.png", dpi=150)
 ```
 
+Visualize the QE spectrum interactively below. Hover over the curves to inspect per-channel QE at each wavelength:
+
+<QESpectrumChart />
+
 ## Step 8: Check energy balance
 
 ```python
@@ -192,6 +200,10 @@ plt.tight_layout()
 ```
 
 The error should be below 1% (0.01) at all wavelengths. If it exceeds this, see [Troubleshooting](./troubleshooting.md).
+
+The interactive diagram below illustrates how reflection, transmission, and absorption relate to energy conservation:
+
+<EnergyBalanceDiagram />
 
 ## Step 9: Save results
 

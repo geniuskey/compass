@@ -51,6 +51,14 @@ print(f"Unit cell: {config.pixel.unit_cell}")
 print(f"Solver: {config.solver.name}")
 ```
 
+레이어 파라미터를 조정하여 인터랙티브하게 픽셀 스택을 구성해 보십시오:
+
+<PixelStackBuilder />
+
+아래 슬라이더를 사용하여 다양한 파장 값을 실험해 보십시오:
+
+<WavelengthSlider />
+
 ## 2. 재료 데이터베이스(Material Database) 초기화
 
 `MaterialDB`는 내장 재료를 자동으로 로드하며 사용자 정의 CSV 파일을 지원합니다.

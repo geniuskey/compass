@@ -121,6 +121,10 @@ The QE spectrum typically shows:
 - A gradual decline at the red edge due to decreasing silicon absorption (absorption depth exceeds pixel thickness)
 - Spectral ripples from thin-film interference in the BARL stack
 
+The blackbody spectrum below shows how the solar spectral irradiance relates to the wavelength range where QE is most critical for image sensor performance:
+
+<BlackbodySpectrum />
+
 ::: info
 QE above 80% for a single channel is rare because color filter absorption, reflection losses, and photodiode fill factor all reduce the total efficiency.
 :::

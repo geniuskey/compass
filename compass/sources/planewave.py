@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Literal
 
@@ -28,6 +29,18 @@ class PlanewaveSource:
     theta_deg: float = 0.0
     phi_deg: float = 0.0
     polarization: Literal["TE", "TM", "unpolarized"] = "unpolarized"
+
+    def __post_init__(self) -> None:
+        if len(self.wavelengths) == 0:
+            raise ValueError("wavelengths array must not be empty")
+        if np.any(self.wavelengths <= 0):
+            raise ValueError("all wavelengths must be positive")
+        if np.any(self.wavelengths < 0.1) or np.any(self.wavelengths > 100):
+            warnings.warn(
+                f"PlanewaveSource: wavelengths outside typical range [0.1, 100] um "
+                f"(min={float(np.min(self.wavelengths)):.4f}, "
+                f"max={float(np.max(self.wavelengths)):.4f})"
+            )
 
     @classmethod
     def from_config(cls, source_config: dict) -> PlanewaveSource:

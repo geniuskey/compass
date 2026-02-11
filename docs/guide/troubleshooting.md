@@ -183,6 +183,10 @@ flowchart TD
     I --> G
 ```
 
+Use the interactive diagram below to understand how reflection, transmission, and absorption must sum to 1:
+
+<EnergyBalanceDiagram />
+
 **Step 1: Increase precision**
 ```yaml
 solver:
@@ -224,6 +228,10 @@ solver:
 ```
 
 ## RCWA numerical stability
+
+Experiment with different Fourier orders to see how RCWA convergence behaves:
+
+<RCWAConvergenceDemo />
 
 ### S-matrix vs T-matrix
 

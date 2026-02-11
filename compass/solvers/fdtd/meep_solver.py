@@ -73,6 +73,10 @@ class MeepSolver(SolverBase):
         Args:
             pixel_stack: Solver-agnostic pixel stack structure.
         """
+        if pixel_stack is None:
+            raise ValueError("pixel_stack must not be None")
+        if not pixel_stack.layers:
+            raise ValueError("pixel_stack must have at least one layer")
         self._pixel_stack = pixel_stack
         logger.info(
             f"meep: geometry setup for {pixel_stack.unit_cell} unit cell, "
@@ -87,6 +91,10 @@ class MeepSolver(SolverBase):
             source_config: Source configuration dictionary.
         """
         self._source = PlanewaveSource.from_config(source_config)
+        if self._source.n_wavelengths == 0:
+            raise ValueError("wavelengths array must not be empty")
+        if np.any(self._source.wavelengths <= 0):
+            raise ValueError("all wavelengths must be positive")
         self._source_config = source_config
         logger.info(
             f"meep: source setup - {self._source.n_wavelengths} wavelengths, "
@@ -204,12 +212,20 @@ class MeepSolver(SolverBase):
             for k, vals in qe_pol_accum.items():
                 all_qe.setdefault(k, []).append(sum(vals) / n_pol)
 
+        result_arrays = {
+            "reflection": np.array(all_R),
+            "transmission": np.array(all_T),
+            "absorption": np.array(all_A),
+        }
+        for arr_name, arr in result_arrays.items():
+            if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
+                import warnings
+                warnings.warn(f"meep: NaN/Inf detected in {arr_name} output")
+
         return SimulationResult(
             qe_per_pixel={k: np.array(v) for k, v in all_qe.items()},
             wavelengths=self._source.wavelengths,
-            reflection=np.array(all_R),
-            transmission=np.array(all_T),
-            absorption=np.array(all_A),
+            **result_arrays,
             metadata={
                 "solver_name": "meep",
                 "resolution": resolution,
@@ -272,7 +288,8 @@ class MeepSolver(SolverBase):
 
         # Bloch periodic boundaries on x/y, PML on z
         k_point = mp.Vector3(0, 0, 0)
-        assert self._source is not None
+        if self._source is None:
+            raise RuntimeError("source is not set; call setup_source() first")
         if self._source.theta_deg != 0.0:
             # Bloch periodic with oblique incidence
             theta_rad = self._source.theta_rad
@@ -378,7 +395,8 @@ class MeepSolver(SolverBase):
         sim.load_minus_flux_data(refl_fr, refl_flux_data)
 
         # Add DFT volume monitor in silicon region for QE computation
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         si_layer = None
         for layer in self._pixel_stack.layers:
             if layer.name == "silicon":
@@ -456,7 +474,8 @@ class MeepSolver(SolverBase):
             List of mp.GeometryObject instances.
         """
         geometry = []
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         lx, ly = self._pixel_stack.domain_size
 
         for layer in self._pixel_stack.layers:
@@ -672,7 +691,8 @@ class MeepSolver(SolverBase):
         Returns:
             mp.Medium instance.
         """
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         mat_db = self._pixel_stack.material_db
 
         if not mat_db.has_material(mat_name):
@@ -741,7 +761,8 @@ class MeepSolver(SolverBase):
             Dict mapping pixel key to QE value.
         """
         qe_per_pixel: dict[str, float] = {}
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         bayer = self._pixel_stack.bayer_map
         _n_pixels = self._pixel_stack.unit_cell[0] * self._pixel_stack.unit_cell[1]
 
@@ -881,7 +902,8 @@ class MeepSolver(SolverBase):
         import meep as mp
 
         sim = self._last_sim
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         lx, ly = self._pixel_stack.domain_size
         z_min, z_max = self._pixel_stack.z_range
         z_center = (z_min + z_max) / 2.0

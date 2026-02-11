@@ -153,3 +153,9 @@ print(f"Registered solvers: {SolverFactory.list_solvers()}")
 ```
 
 If you see `ModuleNotFoundError` for a solver package, install the corresponding optional dependency group (see table above).
+
+## System architecture overview
+
+The diagram below shows the overall COMPASS module architecture, illustrating how the core, geometry, materials, solvers, and analysis components connect together:
+
+<ModuleArchitectureDiagram />

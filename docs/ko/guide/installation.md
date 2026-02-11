@@ -153,3 +153,9 @@ print(f"Registered solvers: {SolverFactory.list_solvers()}")
 ```
 
 솔버 패키지에 대해 `ModuleNotFoundError`가 표시되면 해당하는 선택적 의존성 그룹을 설치하십시오(위 표 참조).
+
+## 시스템 아키텍처 개요
+
+아래 다이어그램은 코어, 지오메트리, 재료, 솔버, 분석 컴포넌트가 어떻게 연결되는지를 보여주는 COMPASS 모듈 아키텍처 전체 구조입니다:
+
+<ModuleArchitectureDiagram />
