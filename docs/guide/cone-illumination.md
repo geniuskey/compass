@@ -19,6 +19,19 @@ The illumination cone is characterized by:
 
 The cone illumination result is obtained by running multiple planewave simulations at sampled angles within the cone and then computing the weighted average of the QE.
 
+## Top view: footprint on the pixel array
+
+<ConeIlluminationTopView />
+
+The side view above shows the cone geometry in cross-section. The **top view** provides a complementary perspective: looking down at the pixel array from above, you can see how the illumination cone projects onto the 2x2 Bayer pattern.
+
+Key observations from the top view:
+
+- **Footprint diameter**: The cone footprint on the focal plane has diameter $d = 2 h \tan(\theta_{\text{half}})$, where $h$ is the pixel stack height. A lower F-number produces a wider footprint.
+- **CRA shift**: A nonzero CRA shifts the footprint center away from the pixel center. At CRA = 20° on a typical 5 um stack, the shift can exceed 1.5 um — comparable to the pixel pitch itself.
+- **Sampling coverage**: The interactive viewer above shows how fibonacci and grid sampling points distribute across the footprint. Fibonacci sampling provides more uniform angular coverage.
+- **Lens area**: The footprint area $A = \pi r^2$ where $r = h \tan(\theta_{\text{half}})$ determines how much of the neighboring pixel receives light from the cone, which directly affects crosstalk.
+
 ## Creating a ConeIllumination instance
 
 ```python
@@ -202,6 +215,143 @@ for n in [7, 19, 37, 61, 91]:
 ```
 
 Typically, 37 points gives results within 1% of the fully converged integral for F/2.0 and below.
+
+## Lens area sweep: F-number vs QE and crosstalk
+
+The illumination cone footprint area scales with F-number. Sweeping the F-number reveals how lens speed affects QE and optical crosstalk — a critical trade-off in CIS design.
+
+### Footprint area vs F-number
+
+The footprint radius $r = h \tan(\theta_{\text{half}})$ where $\theta_{\text{half}} = \arcsin(1/2F)$. The footprint area $A = \pi r^2$ thus grows rapidly as F-number decreases:
+
+| F-number | $\theta_{\text{half}}$ (deg) | Footprint radius (um) | Area (um²) |
+|----------|------|----------|--------|
+| F/1.4    | 20.9 | 1.91     | 11.5   |
+| F/2.0    | 14.5 | 1.29     | 5.3    |
+| F/2.8    | 10.3 | 0.91     | 2.6    |
+| F/4.0    | 7.2  | 0.63     | 1.2    |
+| F/5.6    | 5.1  | 0.45     | 0.63   |
+
+*(Assuming stack height h = 5.0 um)*
+
+### Running an F-number sweep
+
+```python
+import numpy as np
+from compass.sources.cone_illumination import ConeIllumination
+from compass.solvers.base import SolverFactory
+
+f_numbers = [1.4, 2.0, 2.8, 4.0, 5.6, 8.0]
+wavelength = 0.55
+cra_deg = 15.0
+
+solver = SolverFactory.create("torcwa", solver_config, device="cuda")
+solver.setup_geometry(pixel_stack)
+
+results = {}
+for fn in f_numbers:
+    cone = ConeIllumination(cra_deg=cra_deg, f_number=fn, n_points=37)
+    points = cone.get_sampling_points()
+
+    weighted_qe = {}
+    for theta_deg, phi_deg, weight in points:
+        solver.setup_source({
+            "wavelength": wavelength,
+            "theta": float(theta_deg),
+            "phi": float(phi_deg),
+            "polarization": "unpolarized",
+        })
+        result = solver.run()
+
+        for pixel_name, qe in result.qe_per_pixel.items():
+            if pixel_name not in weighted_qe:
+                weighted_qe[pixel_name] = 0.0
+            weighted_qe[pixel_name] += weight * float(np.mean(qe))
+
+    results[fn] = weighted_qe
+    print(f"F/{fn}: {weighted_qe}")
+```
+
+### Analyzing the trade-off
+
+Faster lenses (lower F-number) collect more light, improving signal. But the wider cone also increases angular spread and crosstalk between adjacent pixels:
+
+```python
+import matplotlib.pyplot as plt
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+# QE vs F-number for the green pixel
+green_qe = [results[fn].get("green_tl", 0) for fn in f_numbers]
+ax1.plot(f_numbers, green_qe, "go-", linewidth=2, markersize=8)
+ax1.set_xlabel("F-number")
+ax1.set_ylabel("QE (green pixel)")
+ax1.set_title("QE vs F-number (550 nm)")
+ax1.grid(True, alpha=0.3)
+ax1.invert_xaxis()
+
+# Crosstalk: ratio of non-target pixel QE to target pixel QE
+crosstalk = []
+for fn in f_numbers:
+    green = results[fn].get("green_tl", 1e-9)
+    red = results[fn].get("red_tr", 0)
+    xtalk = red / green * 100  # percentage
+    crosstalk.append(xtalk)
+
+ax2.plot(f_numbers, crosstalk, "rs-", linewidth=2, markersize=8)
+ax2.set_xlabel("F-number")
+ax2.set_ylabel("Crosstalk (%)")
+ax2.set_title("Green→Red crosstalk vs F-number")
+ax2.grid(True, alpha=0.3)
+ax2.invert_xaxis()
+
+plt.tight_layout()
+```
+
+### Combined CRA + F-number sweep
+
+For a full lens-area sensitivity study, sweep both CRA and F-number to build a 2D map:
+
+```python
+cra_values = [0, 5, 10, 15, 20, 25, 30]
+f_numbers = [1.4, 2.0, 2.8, 4.0]
+wavelength = 0.55
+
+qe_map = np.zeros((len(cra_values), len(f_numbers)))
+
+for i, cra in enumerate(cra_values):
+    for j, fn in enumerate(f_numbers):
+        cone = ConeIllumination(cra_deg=cra, f_number=fn, n_points=37)
+        points = cone.get_sampling_points()
+
+        weighted_qe = 0.0
+        for theta_deg, phi_deg, weight in points:
+            solver.setup_source({
+                "wavelength": wavelength,
+                "theta": float(theta_deg),
+                "phi": float(phi_deg),
+                "polarization": "unpolarized",
+            })
+            result = solver.run()
+            weighted_qe += weight * float(
+                np.mean(result.qe_per_pixel.get("green_tl", [0]))
+            )
+
+        qe_map[i, j] = weighted_qe
+
+# Plot as heatmap
+fig, ax = plt.subplots(figsize=(8, 6))
+im = ax.imshow(qe_map, aspect="auto", origin="lower",
+               extent=[f_numbers[0], f_numbers[-1],
+                       cra_values[0], cra_values[-1]])
+ax.set_xlabel("F-number")
+ax.set_ylabel("CRA (degrees)")
+ax.set_title("Green pixel QE: CRA vs F-number")
+plt.colorbar(im, ax=ax, label="QE")
+plt.tight_layout()
+```
+
+This 2D sweep helps identify the CRA and F-number limits for a target QE threshold — essential information for microlens design optimization.
 
 ## Configuration via YAML
 

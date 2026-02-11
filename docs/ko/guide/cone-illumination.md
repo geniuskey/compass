@@ -19,6 +19,19 @@ description: COMPASS에서 렌즈 사출 동공으로부터의 원뿔 조명 설
 
 원뿔 조명 결과는 원뿔 내 샘플링된 각도에서 여러 평면파 시뮬레이션(Simulation)을 실행한 다음 QE의 가중 평균을 계산하여 얻습니다.
 
+## 상면도: 픽셀 어레이 위의 풋프린트
+
+<ConeIlluminationTopView />
+
+위의 측면도는 원뿔 기하학을 단면으로 보여줍니다. **상면도(Top View)**는 보완적인 관점을 제공합니다: 픽셀 어레이를 위에서 내려다보면, 조명 원뿔이 2x2 Bayer 패턴에 어떻게 투영되는지 확인할 수 있습니다.
+
+상면도에서의 핵심 관찰 사항:
+
+- **풋프린트 직경**: 초점면에서의 원뿔 풋프린트 직경은 $d = 2 h \tan(\theta_{\text{half}})$이며, 여기서 $h$는 픽셀 스택 높이입니다. F 넘버가 낮을수록 더 넓은 풋프린트가 생성됩니다.
+- **CRA 시프트**: CRA가 0이 아닌 경우 풋프린트 중심이 픽셀 중심에서 벗어납니다. 일반적인 5 um 스택에서 CRA = 20°일 때, 시프트는 1.5 um을 초과할 수 있으며 이는 픽셀 피치와 비슷한 수준입니다.
+- **샘플링 커버리지**: 위의 인터랙티브 뷰어에서 피보나치와 격자 샘플링 포인트가 풋프린트에 어떻게 분포하는지 확인할 수 있습니다. 피보나치 샘플링이 더 균일한 각도 커버리지를 제공합니다.
+- **렌즈 면적**: 풋프린트 면적 $A = \pi r^2$ (여기서 $r = h \tan(\theta_{\text{half}})$)는 인접 픽셀이 원뿔로부터 얼마나 많은 빛을 받는지를 결정하며, 이는 크로스토크에 직접적으로 영향을 미칩니다.
+
 ## ConeIllumination 인스턴스 생성
 
 ```python
@@ -202,6 +215,143 @@ for n in [7, 19, 37, 61, 91]:
 ```
 
 일반적으로 F/2.0 이하에서 37점이면 완전히 수렴된 적분 대비 1% 이내의 결과를 제공합니다.
+
+## 렌즈 면적 스위프: F 넘버 vs QE 및 크로스토크
+
+조명 원뿔의 풋프린트 면적은 F 넘버에 따라 변합니다. F 넘버를 스위프하면 렌즈 속도가 QE와 광학적 크로스토크에 미치는 영향을 파악할 수 있으며, 이는 CIS 설계에서 핵심적인 트레이드오프입니다.
+
+### 풋프린트 면적 vs F 넘버
+
+풋프린트 반경 $r = h \tan(\theta_{\text{half}})$이고 $\theta_{\text{half}} = \arcsin(1/2F)$입니다. 따라서 풋프린트 면적 $A = \pi r^2$는 F 넘버가 감소할수록 급격히 증가합니다:
+
+| F 넘버 | $\theta_{\text{half}}$ (도) | 풋프린트 반경 (um) | 면적 (um²) |
+|--------|------|----------|--------|
+| F/1.4  | 20.9 | 1.91     | 11.5   |
+| F/2.0  | 14.5 | 1.29     | 5.3    |
+| F/2.8  | 10.3 | 0.91     | 2.6    |
+| F/4.0  | 7.2  | 0.63     | 1.2    |
+| F/5.6  | 5.1  | 0.45     | 0.63   |
+
+*(스택 높이 h = 5.0 um 기준)*
+
+### F 넘버 스위프 실행
+
+```python
+import numpy as np
+from compass.sources.cone_illumination import ConeIllumination
+from compass.solvers.base import SolverFactory
+
+f_numbers = [1.4, 2.0, 2.8, 4.0, 5.6, 8.0]
+wavelength = 0.55
+cra_deg = 15.0
+
+solver = SolverFactory.create("torcwa", solver_config, device="cuda")
+solver.setup_geometry(pixel_stack)
+
+results = {}
+for fn in f_numbers:
+    cone = ConeIllumination(cra_deg=cra_deg, f_number=fn, n_points=37)
+    points = cone.get_sampling_points()
+
+    weighted_qe = {}
+    for theta_deg, phi_deg, weight in points:
+        solver.setup_source({
+            "wavelength": wavelength,
+            "theta": float(theta_deg),
+            "phi": float(phi_deg),
+            "polarization": "unpolarized",
+        })
+        result = solver.run()
+
+        for pixel_name, qe in result.qe_per_pixel.items():
+            if pixel_name not in weighted_qe:
+                weighted_qe[pixel_name] = 0.0
+            weighted_qe[pixel_name] += weight * float(np.mean(qe))
+
+    results[fn] = weighted_qe
+    print(f"F/{fn}: {weighted_qe}")
+```
+
+### 트레이드오프 분석
+
+빠른 렌즈(낮은 F 넘버)는 더 많은 빛을 수집하여 신호를 개선합니다. 그러나 넓어진 원뿔은 인접 픽셀 간의 각도 확산과 크로스토크도 증가시킵니다:
+
+```python
+import matplotlib.pyplot as plt
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+# 녹색 픽셀의 QE vs F 넘버
+green_qe = [results[fn].get("green_tl", 0) for fn in f_numbers]
+ax1.plot(f_numbers, green_qe, "go-", linewidth=2, markersize=8)
+ax1.set_xlabel("F-number")
+ax1.set_ylabel("QE (green pixel)")
+ax1.set_title("QE vs F-number (550 nm)")
+ax1.grid(True, alpha=0.3)
+ax1.invert_xaxis()
+
+# 크로스토크: 비대상 픽셀 QE / 대상 픽셀 QE 비율
+crosstalk = []
+for fn in f_numbers:
+    green = results[fn].get("green_tl", 1e-9)
+    red = results[fn].get("red_tr", 0)
+    xtalk = red / green * 100  # 백분율
+    crosstalk.append(xtalk)
+
+ax2.plot(f_numbers, crosstalk, "rs-", linewidth=2, markersize=8)
+ax2.set_xlabel("F-number")
+ax2.set_ylabel("Crosstalk (%)")
+ax2.set_title("Green→Red crosstalk vs F-number")
+ax2.grid(True, alpha=0.3)
+ax2.invert_xaxis()
+
+plt.tight_layout()
+```
+
+### CRA + F 넘버 결합 스위프
+
+완전한 렌즈 면적 감도 분석을 위해, CRA와 F 넘버를 모두 스위프하여 2D 맵을 구축합니다:
+
+```python
+cra_values = [0, 5, 10, 15, 20, 25, 30]
+f_numbers = [1.4, 2.0, 2.8, 4.0]
+wavelength = 0.55
+
+qe_map = np.zeros((len(cra_values), len(f_numbers)))
+
+for i, cra in enumerate(cra_values):
+    for j, fn in enumerate(f_numbers):
+        cone = ConeIllumination(cra_deg=cra, f_number=fn, n_points=37)
+        points = cone.get_sampling_points()
+
+        weighted_qe = 0.0
+        for theta_deg, phi_deg, weight in points:
+            solver.setup_source({
+                "wavelength": wavelength,
+                "theta": float(theta_deg),
+                "phi": float(phi_deg),
+                "polarization": "unpolarized",
+            })
+            result = solver.run()
+            weighted_qe += weight * float(
+                np.mean(result.qe_per_pixel.get("green_tl", [0]))
+            )
+
+        qe_map[i, j] = weighted_qe
+
+# 히트맵으로 시각화
+fig, ax = plt.subplots(figsize=(8, 6))
+im = ax.imshow(qe_map, aspect="auto", origin="lower",
+               extent=[f_numbers[0], f_numbers[-1],
+                       cra_values[0], cra_values[-1]])
+ax.set_xlabel("F-number")
+ax.set_ylabel("CRA (degrees)")
+ax.set_title("Green pixel QE: CRA vs F-number")
+plt.colorbar(im, ax=ax, label="QE")
+plt.tight_layout()
+```
+
+이 2D 스위프는 목표 QE 임계값에 대한 CRA 및 F 넘버 한계를 식별하는 데 도움이 되며, 이는 마이크로렌즈 설계 최적화에 필수적인 정보입니다.
 
 ## YAML을 통한 설정
 

@@ -32,6 +32,7 @@ import SolverShowcase from './components/SolverShowcase.vue'
 import PixelAnatomyViewer from './components/PixelAnatomyViewer.vue'
 import PhotonJourneyAnimation from './components/PhotonJourneyAnimation.vue'
 import WavelengthExplorer from './components/WavelengthExplorer.vue'
+import ConeIlluminationTopView from './components/ConeIlluminationTopView.vue'
 
 export default {
   extends: DefaultTheme,
@@ -67,5 +68,6 @@ export default {
     app.component('PixelAnatomyViewer', PixelAnatomyViewer)
     app.component('PhotonJourneyAnimation', PhotonJourneyAnimation)
     app.component('WavelengthExplorer', WavelengthExplorer)
+    app.component('ConeIlluminationTopView', ConeIlluminationTopView)
   },
 }
