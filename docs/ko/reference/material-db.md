@@ -2,6 +2,8 @@
 
 `compass.materials.database.MaterialDB`는 광학 재료 물성(optical material properties)의 중앙 레지스트리입니다. 시뮬레이션에 사용되는 모든 재료에 대해 파장 의존적 굴절률(refractive index) $(n, k)$ 및 복소 유전율(complex permittivity) $\varepsilon$을 제공합니다.
 
+<MaterialBrowser />
+
 ## 생성자
 
 ```python

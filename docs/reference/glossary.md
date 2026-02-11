@@ -59,6 +59,9 @@ A comprehensive glossary of terms used throughout the COMPASS (Cross-solver Opti
 | Fresnel Equations | Analytical expressions for the reflection and transmission coefficients of light at a planar interface between two media, as functions of incidence angle and polarization. | Snell's Law, TE/TM Polarization, S-Matrix |
 | FSI (Front-Side Illumination) | The traditional sensor architecture in which light enters from the same side as the metal interconnect layers. Metal wiring partially blocks incoming light, limiting fill factor. | BSI, QE |
 
+<FresnelCalculator />
+
+
 ## G
 
 | Term | Definition | Related Topics |

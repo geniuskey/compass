@@ -57,6 +57,8 @@ Computes the crosstalk matrix. Entry $(i,j)$ represents the fraction of light in
 
 **Returns:** 3D array of shape `(n_pixels, n_pixels, n_wavelengths)`.
 
+<CrosstalkHeatmap />
+
 ### `spectral_response`
 
 ```python
@@ -78,6 +80,8 @@ channel_qe = QECalculator.spectral_response(result.qe_per_pixel, result.waveleng
 for color, (wl, qe) in channel_qe.items():
     print(f"{color}: peak QE = {qe.max():.2%} at {wl[qe.argmax()]*1000:.0f} nm")
 ```
+
+<QESpectrumChart />
 
 ## EnergyBalance
 
@@ -111,6 +115,8 @@ check = EnergyBalance.check(result, tolerance=0.02)
 if not check["valid"]:
     print(f"Energy violation: max error = {check['max_error']:.4f}")
 ```
+
+<EnergyBalanceDiagram />
 
 ## SolverComparison
 

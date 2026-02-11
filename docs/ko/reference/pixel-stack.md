@@ -2,6 +2,8 @@
 
 `compass.geometry.pixel_stack.PixelStack`은 BSI 픽셀 구조(BSI pixel structure)의 솔버 비의존적(solver-agnostic) 표현입니다. YAML 설정으로부터 전체 3D 픽셀을 구성하며, RCWA(레이어 슬라이스)와 FDTD(복셀 그리드) 두 가지 형식으로 출력을 제공합니다.
 
+<StackVisualizer />
+
 ## 생성자
 
 ```python
@@ -133,6 +135,10 @@ def get_photodiode_mask(
 4. **평탄화층(Planarization)** (균일 유전체)
 5. **마이크로렌즈(Microlens)** (곡면, 계단식으로 근사)
 6. **에어(Air)** (최상위 레이어)
+
+<StaircaseMicrolensViewer />
+
+<PixelStackBuilder />
 
 ## 데이터 타입
 

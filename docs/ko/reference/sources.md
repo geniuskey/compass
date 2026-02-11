@@ -72,6 +72,8 @@ def get_polarization_runs(self) -> List[str]:
 
 비편광(unpolarized)인 경우 `["TE", "TM"]`을 반환하고, 편광(polarized)인 경우 `["TE"]` 또는 `["TM"]`을 반환합니다.
 
+<PolarizationViewer />
+
 #### `to_solver_params`
 
 ```python
@@ -104,6 +106,8 @@ class ConeIllumination:
 - `n_points` -- 콘 내부의 각도 샘플링 포인트 수.
 - `sampling` -- 샘플링 방법: `"fibonacci"` (기본값) 또는 `"grid"`.
 - `weighting` -- 각도 가중치: `"uniform"`, `"cosine"` (기본값), `"cos4"`, 또는 `"gaussian"`.
+
+<ConeIlluminationViewer />
 
 ### 설정
 

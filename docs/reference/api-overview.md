@@ -75,6 +75,8 @@ graph LR
 5. **SimulationResult** holds QE, fields, R/T/A data.
 6. **Analysis** and **Visualization** modules process the results.
 
+<ModuleArchitectureDiagram />
+
 ## Key entry points
 
 ### Running simulations

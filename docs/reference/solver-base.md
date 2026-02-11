@@ -27,6 +27,8 @@ Solver type: `"rcwa"` or `"fdtd"`, from `config["type"]`.
 
 Every solver backend must implement these four methods:
 
+<SolverPipelineDiagram />
+
 ### `setup_geometry`
 
 ```python
@@ -143,6 +145,8 @@ Returns names of all registered solvers.
 | `grcwa` | `compass.solvers.rcwa.grcwa_solver` | RCWA |
 | `meent` | `compass.solvers.rcwa.meent_solver` | RCWA |
 | `fdtd_flaport` | `compass.solvers.fdtd.flaport_solver` | FDTD |
+
+<SolverComparisonChart />
 
 ## SimulationResult
 

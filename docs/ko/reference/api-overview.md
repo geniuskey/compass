@@ -75,6 +75,8 @@ graph LR
 5. **SimulationResult**가 QE, 전계, R/T/A 데이터를 보유합니다.
 6. **분석(Analysis)** 및 **시각화(Visualization)** 모듈이 결과를 처리합니다.
 
+<ModuleArchitectureDiagram />
+
 ## 주요 진입점
 
 ### 시뮬레이션 실행

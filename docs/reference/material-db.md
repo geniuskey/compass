@@ -2,6 +2,8 @@
 
 `compass.materials.database.MaterialDB` is the central registry for optical material properties. It provides wavelength-dependent refractive index $(n, k)$ and complex permittivity $\varepsilon$ for all materials used in simulations.
 
+<MaterialBrowser />
+
 ## Constructor
 
 ```python

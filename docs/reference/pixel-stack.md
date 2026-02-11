@@ -2,6 +2,8 @@
 
 `compass.geometry.pixel_stack.PixelStack` is the solver-agnostic representation of a BSI pixel structure. It constructs the full 3D pixel from a YAML configuration and provides output in both RCWA (layer slices) and FDTD (voxel grid) formats.
 
+<StackVisualizer />
+
 ## Constructor
 
 ```python
@@ -133,6 +135,10 @@ The `PixelStack` constructs layers from bottom to top, with `z=0` at the bottom 
 4. **Planarization** (uniform dielectric)
 5. **Microlens** (curved, approximated by staircase)
 6. **Air** (top layer)
+
+<StaircaseMicrolensViewer />
+
+<PixelStackBuilder />
 
 ## Data types
 

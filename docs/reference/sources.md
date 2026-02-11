@@ -72,6 +72,8 @@ def get_polarization_runs(self) -> List[str]:
 
 Returns `["TE", "TM"]` for unpolarized light, or `["TE"]` / `["TM"]` for polarized.
 
+<PolarizationViewer />
+
 #### `to_solver_params`
 
 ```python
@@ -104,6 +106,8 @@ class ConeIllumination:
 - `n_points` -- Number of angular sampling points within the cone.
 - `sampling` -- Sampling method: `"fibonacci"` (default) or `"grid"`.
 - `weighting` -- Angular weighting: `"uniform"`, `"cosine"` (default), `"cos4"`, or `"gaussian"`.
+
+<ConeIlluminationViewer />
 
 ### Configuration
 

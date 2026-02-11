@@ -61,6 +61,9 @@ COMPASS(Cross-solver Optical Modeling Platform for Advanced Sensor Simulation) �
 | 프레넬 방정식(Fresnel Equations) | 두 매질 사이의 평면 계면에서 입사각과 편광에 따른 반사 계수 및 투과 계수를 나타내는 해석적 표현식. | 스넬의 법칙, TE/TM 편광, 산란 행렬 |
 | 전면 조사형(Front-Side Illumination, FSI) | 금속 배선층이 있는 쪽에서 빛이 입사하는 전통적인 센서 구조. 금속 배선이 입사광을 부분적으로 차단하여 개구율이 제한된다. | 후면 조사형, 양자 효율 |
 
+<FresnelCalculator />
+
+
 ## G
 
 | 용어 | 정의 | 관련 항목 |

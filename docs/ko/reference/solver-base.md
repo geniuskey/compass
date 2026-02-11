@@ -27,6 +27,8 @@ class SolverBase(ABC):
 
 모든 솔버 백엔드는 다음 네 가지 메서드를 구현해야 합니다:
 
+<SolverPipelineDiagram />
+
 ### `setup_geometry`
 
 ```python
@@ -143,6 +145,8 @@ def list_solvers(cls) -> list:
 | `grcwa` | `compass.solvers.rcwa.grcwa_solver` | RCWA |
 | `meent` | `compass.solvers.rcwa.meent_solver` | RCWA |
 | `fdtd_flaport` | `compass.solvers.fdtd.flaport_solver` | FDTD |
+
+<SolverComparisonChart />
 
 ## SimulationResult
 

@@ -21,6 +21,10 @@ import YeeCellViewer from './components/YeeCellViewer.vue'
 import SolverComparisonChart from './components/SolverComparisonChart.vue'
 import BlackbodySpectrum from './components/BlackbodySpectrum.vue'
 import SignalChainDiagram from './components/SignalChainDiagram.vue'
+import ModuleArchitectureDiagram from './components/ModuleArchitectureDiagram.vue'
+import EnergyBalanceDiagram from './components/EnergyBalanceDiagram.vue'
+import SolverPipelineDiagram from './components/SolverPipelineDiagram.vue'
+import StaircaseMicrolensViewer from './components/StaircaseMicrolensViewer.vue'
 
 export default {
   extends: DefaultTheme,
@@ -45,5 +49,9 @@ export default {
     app.component('SolverComparisonChart', SolverComparisonChart)
     app.component('BlackbodySpectrum', BlackbodySpectrum)
     app.component('SignalChainDiagram', SignalChainDiagram)
+    app.component('ModuleArchitectureDiagram', ModuleArchitectureDiagram)
+    app.component('EnergyBalanceDiagram', EnergyBalanceDiagram)
+    app.component('SolverPipelineDiagram', SolverPipelineDiagram)
+    app.component('StaircaseMicrolensViewer', StaircaseMicrolensViewer)
   },
 }

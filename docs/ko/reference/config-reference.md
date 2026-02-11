@@ -48,6 +48,8 @@ layers:
   silicon: ...
 ```
 
+<PixelStackBuilder />
+
 ### pixel.layers.microlens: MicrolensConfig
 
 | 필드 | 타입 | 기본값 | 설명 |
