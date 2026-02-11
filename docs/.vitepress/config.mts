@@ -68,6 +68,16 @@ const cookbookSidebar = [
   ]}
 ]
 
+const researchSidebar = [
+  { text: 'Research', items: [
+    { text: 'EM Solver Survey', link: '/research/open-source-em-solvers-survey' },
+    { text: 'CIS Technology Trends', link: '/research/cis-technology-trends' },
+    { text: 'Simulation Methods', link: '/research/simulation-methods-comparison' },
+    { text: 'Key Papers', link: '/research/key-papers' },
+    { text: 'Benchmarks & Validation', link: '/research/benchmarks-and-validation' },
+  ]}
+]
+
 const aboutSidebar = [
   { text: 'About', items: [
     { text: 'References', link: '/about/references' },
@@ -147,6 +157,16 @@ const cookbookSidebarKo = [
   ]}
 ]
 
+const researchSidebarKo = [
+  { text: '리서치', items: [
+    { text: 'EM 솔버 서베이', link: '/ko/research/open-source-em-solvers-survey' },
+    { text: 'CIS 기술 동향', link: '/ko/research/cis-technology-trends' },
+    { text: '시뮬레이션 방법론', link: '/ko/research/simulation-methods-comparison' },
+    { text: '핵심 논문', link: '/ko/research/key-papers' },
+    { text: '벤치마크 & 검증', link: '/ko/research/benchmarks-and-validation' },
+  ]}
+]
+
 const aboutSidebarKo = [
   { text: '정보', items: [
     { text: '참고 문헌', link: '/ko/about/references' },
@@ -185,12 +205,14 @@ export default defineConfig({
           { text: 'Theory', link: '/theory/light-basics' },
           { text: 'Reference', link: '/reference/api-overview' },
           { text: 'Cookbook', link: '/cookbook/bsi-2x2-basic' },
+          { text: 'Research', link: '/research/open-source-em-solvers-survey' },
         ],
         sidebar: {
           '/theory/': theorySidebar,
           '/guide/': guideSidebar,
           '/reference/': referenceSidebar,
           '/cookbook/': cookbookSidebar,
+          '/research/': researchSidebar,
           '/about/': aboutSidebar,
         },
       },
@@ -204,12 +226,14 @@ export default defineConfig({
           { text: '이론', link: '/ko/theory/light-basics' },
           { text: '레퍼런스', link: '/ko/reference/api-overview' },
           { text: '레시피', link: '/ko/cookbook/bsi-2x2-basic' },
+          { text: '리서치', link: '/ko/research/open-source-em-solvers-survey' },
         ],
         sidebar: {
           '/ko/theory/': theorySidebarKo,
           '/ko/guide/': guideSidebarKo,
           '/ko/reference/': referenceSidebarKo,
           '/ko/cookbook/': cookbookSidebarKo,
+          '/ko/research/': researchSidebarKo,
           '/ko/about/': aboutSidebarKo,
         },
         docFooter: { prev: '이전', next: '다음' },
