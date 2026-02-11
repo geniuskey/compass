@@ -1,0 +1,33 @@
+# @package _global_
+defaults:
+  - /pixel: default_bsi_1um
+  - /source: wavelength_sweep
+
+experiment:
+  name: "optimize_microlens"
+  description: "Inverse design of microlens geometry for maximum QE with crosstalk penalty"
+
+optimization:
+  solver: meent
+  method: nelder-mead
+  max_iterations: 50
+  tolerance: 1.0e-4
+
+  parameters:
+    - type: microlens_height
+      bounds: [0.2, 1.2]
+    - type: microlens_squareness
+      bounds: [1.5, 5.0]
+
+  objective:
+    type: composite
+    components:
+      - weight: 1.0
+        type: maximize_qe
+        wavelength_range: [0.4, 0.7]
+      - weight: 0.5
+        type: minimize_crosstalk
+      - weight: 0.1
+        type: energy_balance_regularizer
+        tolerance: 0.02
+        penalty_weight: 10.0

@@ -63,3 +63,83 @@ mjx-container[display="true"] {
   text-align: center;
   margin: 1.5em 0;
 }
+
+/* ================================================
+   Landing page styles
+   ================================================ */
+
+/* Smooth scroll for the landing page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Landing page section spacing */
+.VPHome .vp-doc h2 {
+  margin-top: 48px;
+  margin-bottom: 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.VPHome .vp-doc h2:first-of-type {
+  border-top: none;
+  margin-top: 32px;
+}
+
+/* CTA section at bottom */
+.landing-cta-section {
+  margin-top: 48px;
+  padding-top: 8px;
+}
+
+.landing-cta-section h2 {
+  border-top: none !important;
+  margin-top: 0 !important;
+}
+
+.cta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 640px) {
+  .cta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cta-card {
+  display: block;
+  padding: 20px 24px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  background: var(--vp-c-bg-soft);
+  text-decoration: none;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+}
+
+.cta-card:hover {
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 4px 16px rgba(52, 81, 178, 0.08);
+  transform: translateY(-2px);
+}
+
+.dark .cta-card:hover {
+  box-shadow: 0 4px 16px rgba(107, 141, 229, 0.1);
+}
+
+.cta-card strong {
+  display: block;
+  font-size: 1em;
+  color: var(--vp-c-brand-1);
+  margin-bottom: 4px;
+}
+
+.cta-card span {
+  display: block;
+  font-size: 0.88em;
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+}

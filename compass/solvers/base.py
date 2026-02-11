@@ -168,9 +168,11 @@ class SolverFactory:
             "torcwa": "compass.solvers.rcwa.torcwa_solver",
             "grcwa": "compass.solvers.rcwa.grcwa_solver",
             "meent": "compass.solvers.rcwa.meent_solver",
+            "fmmax": "compass.solvers.rcwa.fmmax_solver",
             "fdtd_flaport": "compass.solvers.fdtd.flaport_solver",
             "fdtdz": "compass.solvers.fdtd.fdtdz_solver",
             "meep": "compass.solvers.fdtd.meep_solver",
+            "tmm": "compass.solvers.tmm.tmm_solver",
         }
         module_name = import_map.get(name)
         if module_name:

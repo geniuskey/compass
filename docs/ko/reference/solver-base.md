@@ -139,12 +139,14 @@ def list_solvers(cls) -> list:
 
 ## 사용 가능한 솔버 백엔드
 
-| 이름 | 모듈 | 유형 |
-|------|------|------|
-| `torcwa` | `compass.solvers.rcwa.torcwa_solver` | RCWA |
-| `grcwa` | `compass.solvers.rcwa.grcwa_solver` | RCWA |
-| `meent` | `compass.solvers.rcwa.meent_solver` | RCWA |
-| `fdtd_flaport` | `compass.solvers.fdtd.flaport_solver` | FDTD |
+| 이름 | 모듈 | 유형 | 비고 |
+|------|------|------|------|
+| `torcwa` | `compass.solvers.rcwa.torcwa_solver` | RCWA | |
+| `grcwa` | `compass.solvers.rcwa.grcwa_solver` | RCWA | |
+| `meent` | `compass.solvers.rcwa.meent_solver` | RCWA | |
+| `fmmax` | `compass.solvers.rcwa.fmmax_solver` | RCWA | |
+| `fdtd_flaport` | `compass.solvers.fdtd.flaport_solver` | FDTD | |
+| `tmm` | `compass.solvers.tmm.tmm_solver` | TMM | 1D 평면 스택 전용, RCWA 대비 ~1000배 빠름 |
 
 <SolverComparisonChart />
 

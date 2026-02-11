@@ -1,0 +1,8 @@
+# @package _global_
+solver:
+  name: "tmm"
+  type: "tmm"
+
+  params:
+    polarization_average: true
+    field_resolution: 200

@@ -25,6 +25,10 @@ import ModuleArchitectureDiagram from './components/ModuleArchitectureDiagram.vu
 import EnergyBalanceDiagram from './components/EnergyBalanceDiagram.vue'
 import SolverPipelineDiagram from './components/SolverPipelineDiagram.vue'
 import StaircaseMicrolensViewer from './components/StaircaseMicrolensViewer.vue'
+import HeroAnimation from './components/HeroAnimation.vue'
+import FeatureShowcase from './components/FeatureShowcase.vue'
+import ArchitectureOverview from './components/ArchitectureOverview.vue'
+import SolverShowcase from './components/SolverShowcase.vue'
 
 export default {
   extends: DefaultTheme,
@@ -53,5 +57,9 @@ export default {
     app.component('EnergyBalanceDiagram', EnergyBalanceDiagram)
     app.component('SolverPipelineDiagram', SolverPipelineDiagram)
     app.component('StaircaseMicrolensViewer', StaircaseMicrolensViewer)
+    app.component('HeroAnimation', HeroAnimation)
+    app.component('FeatureShowcase', FeatureShowcase)
+    app.component('ArchitectureOverview', ArchitectureOverview)
+    app.component('SolverShowcase', SolverShowcase)
   },
 }

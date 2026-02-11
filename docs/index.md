@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "COMPASS"
   text: "Cross-solver Optical Modeling Platform for Advanced Sensor Simulation"
-  tagline: Simulate quantum efficiency of BSI CMOS image sensor pixels with RCWA and FDTD solvers
+  tagline: Simulate CMOS image sensor pixels with multiple EM solvers from a single YAML config
   image:
     src: /logo.svg
     alt: COMPASS
@@ -17,48 +17,81 @@ hero:
       link: /theory/light-basics
     - theme: alt
       text: View on GitHub
-      link: https://github.com/compass-sim/compass
-
-features:
-  - title: Multi-Solver Support
-    details: Run the same pixel structure through RCWA (torcwa, grcwa, meent) and FDTD (fdtd, meep) solvers and compare results head-to-head.
-  - title: Parametric Pixel Modeling
-    details: Define complete BSI pixel stacks -- microlens, color filters, BARL, silicon, DTI -- in a single YAML config and sweep any parameter.
-  - title: Built-in Visualization
-    details: Plot QE spectra, field distributions, cross-talk matrices, and 3D structure views out of the box with matplotlib and PyVista.
-  - title: Numerical Stability
-    details: Five-layer stability defense including mixed-precision eigendecomposition, S-matrix recursion, Li factorization, and adaptive fallback.
+      link: https://github.com/geniuskey/compass
 ---
 
-## What is COMPASS?
+<HeroAnimation />
 
-COMPASS is a Python framework for simulating the optical performance of backside-illuminated (BSI) CMOS image sensor pixels. It bridges the gap between electromagnetic (EM) theory and practical sensor design by providing a unified interface to multiple solver backends.
+## Why COMPASS?
 
-Given a pixel stack definition (microlens geometry, color filter pattern, anti-reflection coatings, silicon photodiode), COMPASS computes the **quantum efficiency (QE)** -- the fraction of incident photons that generate electron-hole pairs in each photodiode -- across wavelength, angle, and polarization.
+COMPASS bridges the gap between electromagnetic theory and practical CMOS image sensor design. Define your pixel stack once, run it through any solver, and compare results -- all from Python.
 
-### Typical workflow
+<FeatureShowcase />
 
+## Architecture
+
+A clean five-stage pipeline takes you from YAML configuration to publication-ready results. Click any stage to learn more.
+
+<ArchitectureOverview />
+
+## Solver Backends
+
+COMPASS provides a unified interface to **8 solver backends** across three electromagnetic methods. Click any solver to see details.
+
+<SolverShowcase />
+
+## Quick Example
+
+Define your simulation in a single YAML config and run it with three lines of Python:
+
+```yaml
+# config.yaml
+pixel:
+  pitch: 1.0          # um
+  unit_cell: [2, 2]   # 2x2 Bayer pattern
+
+solver:
+  name: torcwa
+  type: rcwa
+  fourier_order: 9
+
+source:
+  wavelength:
+    mode: sweep
+    sweep: { start: 0.4, stop: 0.7, step: 0.01 }
+  polarization: unpolarized
 ```
-YAML config  -->  PixelStack  -->  Solver (RCWA / FDTD)  -->  QE spectrum
-                                                           -->  Field maps
-                                                           -->  Energy balance
-```
-
-## Quick example
 
 ```python
 from compass.runners.single_run import SingleRunner
 
-result = SingleRunner.run({
-    "pixel": {"pitch": 1.0, "unit_cell": [2, 2]},
-    "solver": {"name": "torcwa", "type": "rcwa"},
-    "source": {
-        "wavelength": {"mode": "sweep", "sweep": {"start": 0.4, "stop": 0.7, "step": 0.01}},
-        "polarization": "unpolarized",
-    },
-})
+result = SingleRunner.run("config.yaml")
 
-# result.qe_per_pixel is a dict mapping pixel names to QE arrays
 for pixel, qe in result.qe_per_pixel.items():
     print(f"{pixel}: peak QE = {qe.max():.2%}")
 ```
+
+<div class="landing-cta-section">
+
+## Get Started
+
+<div class="cta-grid">
+<a href="/guide/installation" class="cta-card">
+  <strong>Installation Guide</strong>
+  <span>Set up COMPASS and solver backends</span>
+</a>
+<a href="/guide/quickstart" class="cta-card">
+  <strong>Quick Start</strong>
+  <span>Run your first simulation in minutes</span>
+</a>
+<a href="/theory/light-basics" class="cta-card">
+  <strong>Theory Background</strong>
+  <span>Understand the physics behind the simulation</span>
+</a>
+<a href="/cookbook/bsi-2x2-basic" class="cta-card">
+  <strong>Cookbook</strong>
+  <span>Practical recipes for common tasks</span>
+</a>
+</div>
+
+</div>
