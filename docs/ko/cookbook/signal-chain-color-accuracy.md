@@ -84,6 +84,8 @@ print("Illuminants created:", list(illuminants.keys()))
 # Expected: Illuminants created: ['D65', 'CIE_A', 'LED_5000K']
 ```
 
+<BlackbodySpectrum />
+
 ## 단계 2: 장면 정의 -- 매크베스 컬러체커 주요 패치
 
 가우시안 혼합 모델(Gaussian mixture model)을 사용하여 6개의 진단 패치에 대한 근사 분광 반사율(spectral reflectance)을 정의합니다. 이는 간소화된 것이지만 주요 분광 특징을 포착합니다.
@@ -140,6 +142,8 @@ for name, refl in patches.items():
 #   light_skin    mean_refl = 0.256
 #   dark_skin     mean_refl = 0.143
 ```
+
+<BayerPatternViewer />
 
 ## 단계 3: 모듈 광학계 구성 -- IR 차단 필터
 

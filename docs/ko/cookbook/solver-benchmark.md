@@ -124,6 +124,10 @@ if len(results) >= 2:
 
 <SolverComparisonChart />
 
+<RCWAConvergenceDemo />
+
+<FourierOrderDemo />
+
 ## 푸리에 차수 수렴 비교
 
 각 솔버가 푸리에 차수(Fourier order)에 따라 어떻게 수렴하는지 비교합니다:

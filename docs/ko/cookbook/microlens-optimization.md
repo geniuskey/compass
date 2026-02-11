@@ -68,6 +68,8 @@ base_config = {
 
 <StaircaseMicrolensViewer />
 
+<PixelStackBuilder />
+
 ## 스윕 1: 마이크로렌즈 높이
 
 ```python

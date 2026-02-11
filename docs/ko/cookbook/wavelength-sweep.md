@@ -2,6 +2,8 @@
 
 이 레시피는 가시광선 전 영역 파장 스윕(wavelength sweep)과 스펙트럼 데이터를 분석하는 방법을 보여줍니다.
 
+<BlackbodySpectrum />
+
 ## 기본 스윕
 
 가장 간단한 파장 스윕은 소스(source) 설정에서 `"sweep"` 모드를 사용합니다:
@@ -77,6 +79,8 @@ ax.set_title("Full Visible Spectrum QE")
 plt.tight_layout()
 plt.savefig("full_spectrum_qe.png", dpi=200)
 ```
+
+<WavelengthExplorer />
 
 ## 반사율, 투과율, 흡수율
 

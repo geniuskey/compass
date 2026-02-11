@@ -4,6 +4,8 @@ A complete recipe for simulating a standard 2x2 Bayer BSI pixel unit cell and co
 
 <StackVisualizer />
 
+<BayerPatternViewer />
+
 ## What you will learn
 
 - Setting up a full BSI pixel configuration from scratch
@@ -16,6 +18,8 @@ A complete recipe for simulating a standard 2x2 Bayer BSI pixel unit cell and co
 ```bash
 pip install -e ".[rcwa]"
 ```
+
+<PixelStackBuilder />
 
 ## Configuration
 
@@ -118,6 +122,8 @@ from compass.analysis.energy_balance import EnergyBalance
 check = EnergyBalance.check(result, tolerance=0.02)
 print(f"Valid: {check['valid']}, max error: {check['max_error']:.4f}")
 ```
+
+<EnergyBalanceDiagram />
 
 ## Extract per-channel QE
 

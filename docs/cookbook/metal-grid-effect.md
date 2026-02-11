@@ -12,6 +12,8 @@ The metal grid sits between adjacent color filter elements. It provides optical 
 
 This recipe runs two simulations -- with and without the metal grid -- and compares the results.
 
+<PixelAnatomyViewer />
+
 ## Setup
 
 ```python

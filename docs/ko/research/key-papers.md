@@ -105,6 +105,8 @@ COMPASS의 대안 솔버인 FDTD(Finite-Difference Time-Domain)의 이론적 기
 - **요약**: 300K에서의 진성 실리콘 광학 상수(흡수 계수, 굴절률, 소멸 계수)를 0.25--1.45um 파장 범위에서 자기일관성 있게 정리한 표준 데이터이다. Kramers-Kronig 분석을 기반으로 업데이트된 반사율 데이터에서 도출했으며, 온도 계수도 포함한다. COMPASS MaterialDB의 실리콘 데이터 기준이 되는 논문이다 (550nm에서 n~4.08, k~0.028).
 - **태그**: [재료] [실리콘] [광학상수]
 
+<MaterialBrowser />
+
 ### 3.2 Aspnes & Studna (1983) -- 분광 타원법 데이터
 
 - **인용**: D. E. Aspnes and A. A. Studna, "Dielectric functions and optical parameters of Si, Ge, GaP, GaAs, GaSb, InP, InAs, and InSb from 1.5 to 6.0 eV," *Phys. Rev. B*, vol. 27, no. 2, pp. 985--1009, 1983. DOI: [10.1103/PhysRevB.27.985](https://doi.org/10.1103/PhysRevB.27.985)

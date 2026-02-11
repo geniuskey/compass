@@ -4,6 +4,8 @@
 
 <StackVisualizer />
 
+<BayerPatternViewer />
+
 ## 학습 내용
 
 - BSI 픽셀 구성을 처음부터 설정하는 방법
@@ -16,6 +18,8 @@
 ```bash
 pip install -e ".[rcwa]"
 ```
+
+<PixelStackBuilder />
 
 ## 구성 설정
 
@@ -118,6 +122,8 @@ from compass.analysis.energy_balance import EnergyBalance
 check = EnergyBalance.check(result, tolerance=0.02)
 print(f"Valid: {check['valid']}, max error: {check['max_error']:.4f}")
 ```
+
+<EnergyBalanceDiagram />
 
 ## 채널별 QE 추출
 

@@ -52,6 +52,8 @@ FSI (Frontside Illumination)         BSI (Backside Illumination)
        ↓ 빛                                ↓ 빛
 ```
 
+<PixelAnatomyViewer />
+
 FSI 구조에서는 입사광이 다층 금속 배선(Metal interconnect)을 통과한 후에야 포토다이오드에 도달한다. 배선층에서의 반사, 산란, 차폐로 인해 유효 개구율 (fill factor)이 크게 저하된다. 특히 픽셀 피치가 2 um 이하로 축소되면 배선과 포토다이오드의 면적 경쟁이 심화된다.
 
 ### 2.2 BSI가 승리한 이유
@@ -91,6 +93,8 @@ FSI 구조에서는 입사광이 다층 금속 배선(Metal interconnect)을 통
 | 3세대 | 3-layer (Pixel + Logic + Memory) | 2021~ | 완전 3층 적층, Global Shutter | Sony IMX900, Exmor T |
 | 4세대 | 2-layer transistor pixel | 2021~ | 포토다이오드/트랜지스터 층 분리 | Sony 2-layer transistor (2021 발표) |
 | 5세대 | 3-layer + AI processor | 2025~ | On-sensor AI 처리 | Sony 200MP + AI (2025 발표) |
+
+<StackVisualizer />
 
 ### 3.2 접합 기술 (Bonding Technology)
 
@@ -232,6 +236,8 @@ CRA는 렌즈 시스템의 주광선이 센서 표면에 입사하는 각도이�
 | Nona-Bayer (Nonacell) | 3x3 동색 | 1x or 1/9x | 3x3 → 1/9 | Samsung HP1 108MP |
 | Hexadeca Bayer | 4x4 동색 | 1x or 1/16x | 이중 빈닝 가능 | Samsung HP3 200MP |
 | QQBC (Quad-Quad) | 16px 클러스터 | 1x or 1/16x | 16→1 초고감도 | Sony 200MP (2025) |
+
+<BayerPatternViewer />
 
 ### 6.2 Quad Bayer / Nona-Bayer의 장점
 

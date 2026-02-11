@@ -84,6 +84,8 @@ print("Illuminants created:", list(illuminants.keys()))
 # Expected: Illuminants created: ['D65', 'CIE_A', 'LED_5000K']
 ```
 
+<BlackbodySpectrum />
+
 ## Step 2: Define scene -- Macbeth ColorChecker key patches
 
 Approximate spectral reflectances for six diagnostic patches using Gaussian mixture models. These are simplified but capture the dominant spectral features.
@@ -140,6 +142,8 @@ for name, refl in patches.items():
 #   light_skin    mean_refl = 0.256
 #   dark_skin     mean_refl = 0.143
 ```
+
+<BayerPatternViewer />
 
 ## Step 3: Configure module optics -- IR-cut filter
 

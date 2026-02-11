@@ -80,6 +80,8 @@ COMPASS 벤치마크 테스트(`tests/benchmarks/test_fresnel_slab.py`)에서 �
 
 이 기준해들은 RCWA 솔버가 균일층에서 올바르게 동작하는지 확인하는 데 사용된다.
 
+<ThinFilmReflectance />
+
 ### 2.3 재료 물성 검증
 
 `tests/benchmarks/test_fresnel_slab.py`의 `TestMaterialDBProperties`에서 내장 재료의 물리적 타당성을 검증한다: Silicon (n~4.08 at 550nm, Green 2008), Air (n=1, k=0), SiO2 (n~1.46), Si3N4 (n~2.0), Polymer의 Cauchy 분산(단파장에서 n 증가) 등.
@@ -105,6 +107,8 @@ RCWA의 정확도는 푸리에 차수(Fourier order)에 의존한다. 차수를 
 | 15 | 961 | 1922x1922 | < 0.05% | 고정밀 |
 
 **수렴 기준**: 연속 두 차수 간 QE 변화가 1% 미만이면 수렴으로 판정한다.
+
+<RCWAConvergenceDemo />
 
 **구조 유형별 권장 차수:**
 
@@ -166,6 +170,8 @@ COMPASS 벤치마크(`tests/benchmarks/test_convergence.py`)에서 확인된 수
 
 주: 위 값은 대표적인 수치이며, 실제 구조 및 재료 파라미터에 따라 달라진다.
 
+<SolverComparisonChart />
+
 ### 4.2 RCWA vs FDTD 비교
 
 RCWA와 FDTD는 서로 다른 수치 방법을 사용하므로, RCWA 솔버 간 비교보다 큰 차이가 예상된다. 그러나 수렴된 결과끼리 비교하면 좋은 일치를 보여야 한다.
@@ -194,6 +200,8 @@ R + T + A = 1
 ```
 
 COMPASS는 `compass/analysis/energy_balance.py`의 `EnergyBalance.check()` 메서드를 통해 모든 시뮬레이션 결과에 대해 에너지 보존을 검증한다.
+
+<EnergyBalanceDiagram />
 
 ### 5.2 허용 오차 기준
 

@@ -2,6 +2,8 @@
 
 This recipe demonstrates a full visible-range wavelength sweep and how to analyze the spectral data.
 
+<BlackbodySpectrum />
+
 ## Basic sweep
 
 The simplest wavelength sweep uses the `"sweep"` mode in the source config:
@@ -77,6 +79,8 @@ ax.set_title("Full Visible Spectrum QE")
 plt.tight_layout()
 plt.savefig("full_spectrum_qe.png", dpi=200)
 ```
+
+<WavelengthExplorer />
 
 ## Reflectance, transmittance, absorption
 

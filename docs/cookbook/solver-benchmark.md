@@ -124,6 +124,10 @@ if len(results) >= 2:
 
 <SolverComparisonChart />
 
+<RCWAConvergenceDemo />
+
+<FourierOrderDemo />
+
 ## Fourier order convergence comparison
 
 Compare how each solver converges with Fourier order:

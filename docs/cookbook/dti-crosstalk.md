@@ -12,6 +12,8 @@ Key DTI parameters:
 - **Depth**: Ranges from partial (1--2 um) to full-depth (equal to silicon thickness). Full-depth DTI provides the best isolation.
 - **Material**: Usually SiO2 (n ~ 1.46). The refractive index contrast with silicon (n ~ 4.0) provides strong optical confinement.
 
+<PixelAnatomyViewer />
+
 ## Setup
 
 ```python
