@@ -1,11 +1,17 @@
 """RCWA Numerical Stability Module — 5-Layer Defense.
 
 Implements comprehensive numerical stability measures for RCWA solvers:
-1. PrecisionManager: TF32 control, mixed precision eigendecomp
+1. PrecisionManager: TF32 control, mixed precision eigendecomp (CPU / cuSOLVER)
 2. StableSMatrixAlgorithm: Redheffer star product (no T-matrix)
 3. LiFactorization: Inverse rule for high-contrast boundaries
 4. EigenvalueStabilizer: Degenerate eigenvalue handling, branch selection
 5. AdaptivePrecisionRunner: Automatic fallback strategy
+
+Eigendecomposition backends:
+    - CPU (default): torch.linalg.eig on CPU with float64
+    - cuSOLVER (via CuPy): GPU-resident eigendecomp via NVIDIA cuSOLVER,
+      zero-copy DLPack transfer between PyTorch ↔ CuPy. Eliminates
+      GPU→CPU→GPU round-trip. Requires: pip install cupy-cuda12x
 
 References:
     - Moharam et al., JOSA A 12(5), 1995 (S-matrix)
@@ -30,6 +36,22 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
+
+try:
+    import cupy as cp
+    HAS_CUPY = True
+except ImportError:
+    HAS_CUPY = False
+
+
+def has_cusolver() -> bool:
+    """Check if cuSOLVER is available via CuPy with a CUDA device."""
+    if not HAS_CUPY:
+        return False
+    try:
+        return cp.cuda.runtime.getDeviceCount() > 0
+    except Exception:
+        return False
 
 
 class PrecisionManager:
@@ -80,16 +102,53 @@ class PrecisionManager:
     def mixed_precision_eigen_torch(matrix: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Eigendecomposition with float64 precision (PyTorch version).
 
-        CPU fallback for better stability.
+        Tries cuSOLVER via CuPy for GPU-resident computation first,
+        then falls back to CPU torch.linalg.eig if CuPy is unavailable
+        or the tensor is not on CUDA.
         """
         if not HAS_TORCH:
             raise ImportError("PyTorch required for torch eigendecomp")
 
         orig_dtype = matrix.dtype
         orig_device = matrix.device
-        matrix_f64 = matrix.to(torch.complex128).cpu()
 
+        # Try GPU path via cuSOLVER (CuPy) — avoids GPU→CPU→GPU round-trip
+        if HAS_CUPY and matrix.is_cuda:
+            try:
+                return PrecisionManager._cusolver_eig(matrix, orig_dtype, orig_device)
+            except Exception as e:
+                logger.debug(f"cuSOLVER eigendecomp failed, falling back to CPU: {e}")
+
+        # CPU fallback
+        matrix_f64 = matrix.to(torch.complex128).cpu()
         eigenvalues, eigenvectors = torch.linalg.eig(matrix_f64)
+
+        return (
+            eigenvalues.to(dtype=orig_dtype, device=orig_device),
+            eigenvectors.to(dtype=orig_dtype, device=orig_device),
+        )
+
+    @staticmethod
+    def _cusolver_eig(
+        matrix: torch.Tensor,
+        orig_dtype: torch.dtype,
+        orig_device: torch.device,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Eigendecomposition on GPU via cuSOLVER (CuPy).
+
+        Uses DLPack for zero-copy memory sharing between PyTorch and CuPy.
+        Computation stays entirely on GPU — no host transfer needed.
+        """
+        # PyTorch → CuPy (zero-copy via DLPack)
+        matrix_f64 = matrix.to(torch.complex128)
+        cp_matrix = cp.from_dlpack(matrix_f64)
+
+        # cuSOLVER geev — runs on same GPU stream
+        eigenvalues_cp, eigenvectors_cp = cp.linalg.eig(cp_matrix)
+
+        # CuPy → PyTorch (zero-copy via DLPack)
+        eigenvalues = torch.from_dlpack(eigenvalues_cp)
+        eigenvectors = torch.from_dlpack(eigenvectors_cp)
 
         return (
             eigenvalues.to(dtype=orig_dtype, device=orig_device),
@@ -416,7 +475,9 @@ class EigenvalueStabilizer:
 class AdaptivePrecisionRunner:
     """Adaptive precision fallback for unstable simulations.
 
-    Strategy: float32 → float64 → CPU float64 (3-level fallback).
+    Strategy: GPU-f32 → GPU-f64-cuSOLVER → GPU-f64 → CPU-f64 (4-level fallback).
+    When CuPy is available, cuSOLVER eigendecomposition on GPU is attempted
+    before falling back to CPU, eliminating GPU↔CPU transfer overhead.
     """
 
     def __init__(self, tolerance: float = 0.02):
@@ -440,6 +501,7 @@ class AdaptivePrecisionRunner:
         """
         strategies = [
             {"dtype": "complex64", "device": "cuda", "label": "GPU-f32"},
+            {"dtype": "complex128", "device": "cuda", "label": "GPU-f64-cuSOLVER"},
             {"dtype": "complex128", "device": "cuda", "label": "GPU-f64"},
             {"dtype": "complex128", "device": "cpu", "label": "CPU-f64"},
         ]

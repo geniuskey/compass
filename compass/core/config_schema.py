@@ -104,7 +104,7 @@ class EnergyCheckConfig(BaseModel):
 class StabilityConfig(BaseModel):
     precision_strategy: Literal["float32", "float64", "mixed", "adaptive"] = "mixed"
     allow_tf32: bool = False
-    eigendecomp_device: Literal["cpu", "gpu"] = "cpu"
+    eigendecomp_device: Literal["cpu", "gpu", "cusolver"] = "cpu"
     fourier_factorization: Literal["naive", "li_inverse", "normal_vector"] = "li_inverse"
     energy_check: EnergyCheckConfig = Field(default_factory=EnergyCheckConfig)
     eigenvalue_broadening: float = 1e-10
