@@ -167,9 +167,10 @@ class PixelStack:
                 shift_x = shift_cfg.get("shift_x", 0.0)
                 shift_y = shift_cfg.get("shift_y", 0.0)
             elif shift_cfg.get("mode") == "auto_cra":
-                cra_rad = deg_to_rad(shift_cfg.get("cra_deg", 0.0))
-                # shift = tan(CRA) * height_above_PD (approximate)
-                shift_x = np.tan(cra_rad) * ml_height * 0.5
+                ref_wl = shift_cfg.get("ref_wavelength", 0.55)
+                shift_x = self._compute_snell_shift(
+                    shift_cfg.get("cra_deg", 0.0), layers_cfg, ref_wl
+                )
                 shift_y = 0.0
 
             self.layers.append(Layer(
@@ -207,6 +208,89 @@ class PixelStack:
             thickness=air_thickness,
             base_material="air",
         ))
+
+    def _compute_snell_shift(
+        self,
+        cra_deg: float,
+        layers_cfg: dict,
+        ref_wavelength: float = 0.55,
+    ) -> float:
+        """Compute microlens CRA shift using Snell's law ray tracing.
+
+        Traces the chief ray through all layers below the microlens
+        (planarization, color filter, BARL, silicon to PD center),
+        accumulating lateral displacement via Snell's law refraction
+        at each interface.
+
+        Based on: J.-H. Hwang and Y. Kim, "A Numerical Method of Aligning
+        the Optical Stacks for All Pixels," Sensors, vol. 23, no. 2, 702, 2023.
+
+        Args:
+            cra_deg: Chief ray angle in degrees (in air).
+            layers_cfg: Layer configuration dictionary.
+            ref_wavelength: Reference wavelength in um for refractive index lookup.
+
+        Returns:
+            Total lateral shift in um.
+        """
+        if cra_deg == 0.0:
+            return 0.0
+
+        cra_rad = deg_to_rad(cra_deg)
+        sin_cra = np.sin(cra_rad)
+        n_air = 1.0
+
+        # Collect layers below microlens (top to bottom): planarization, CF, BARL, Si to PD
+        layer_entries: list[tuple[float, float]] = []  # (thickness, n_real)
+
+        # Planarization
+        plan_cfg = layers_cfg.get("planarization", {})
+        plan_t = plan_cfg.get("thickness", 0.3)
+        plan_mat = plan_cfg.get("material", "sio2")
+        n_plan, _ = self.material_db.get_nk(plan_mat, ref_wavelength)
+        layer_entries.append((plan_t, n_plan))
+
+        # Color filter (use cf_green as reference)
+        cf_cfg = layers_cfg.get("color_filter", {})
+        cf_t = cf_cfg.get("thickness", 0.6)
+        n_cf, _ = self.material_db.get_nk("cf_green", ref_wavelength)
+        layer_entries.append((cf_t, n_cf))
+
+        # BARL sub-layers
+        barl_cfg = layers_cfg.get("barl", {})
+        for bl in barl_cfg.get("layers", []):
+            bl_t = bl.get("thickness", 0.01)
+            bl_mat = bl.get("material", "sio2")
+            n_bl, _ = self.material_db.get_nk(bl_mat, ref_wavelength)
+            layer_entries.append((bl_t, n_bl))
+
+        # Silicon down to photodiode center
+        si_cfg = layers_cfg.get("silicon", {})
+        pd_z = si_cfg.get("photodiode", {}).get("position", [0.0, 0.0, 0.5])
+        if isinstance(pd_z, (list, tuple)):
+            pd_depth = pd_z[2]
+        else:
+            pd_depth = 0.5
+        si_mat = si_cfg.get("material", "silicon")
+        n_si, _ = self.material_db.get_nk(si_mat, ref_wavelength)
+        si_thickness = si_cfg.get("thickness", 3.0)
+        # PD center is at pd_depth from bottom, so distance from Si top = thickness - pd_depth
+        si_to_pd = si_thickness - pd_depth
+        layer_entries.append((si_to_pd, n_si))
+
+        # Accumulate lateral displacement: Snell's law at each layer
+        total_shift = 0.0
+        for thickness, n_layer in layer_entries:
+            # Snell's law: n_air * sin(CRA) = n_layer * sin(theta_layer)
+            sin_theta = n_air * sin_cra / n_layer
+            # Clamp for total internal reflection (shouldn't happen for typical materials)
+            sin_theta = min(sin_theta, 1.0)
+            cos_theta = np.sqrt(1.0 - sin_theta**2)
+            # Lateral displacement: h * tan(theta) = h * sin(theta) / cos(theta)
+            if cos_theta > 0:
+                total_shift += thickness * sin_theta / cos_theta
+
+        return float(total_shift)
 
     def get_layer_slices(
         self,

@@ -18,6 +18,7 @@ class MicrolensShiftConfig(BaseModel):
     cra_deg: float = 0.0
     shift_x: float = 0.0
     shift_y: float = 0.0
+    ref_wavelength: float = 0.55  # Wavelength for refractive index lookup (um)
 
 
 class MicrolensConfig(BaseModel):

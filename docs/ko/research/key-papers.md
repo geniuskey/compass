@@ -149,6 +149,12 @@ CMOS 이미지 센서(CIS) 픽셀의 광학 시뮬레이션에 관한 핵심 논
 - **요약**: BSI(후면 조사) CMOS 이미지 센서에서 2차원 역 피라미드 배열 구조(IPA)와 DTI(Deep Trench Isolation)를 활용한 회절형 광 트래핑 기술을 보고한 논문이다. 850nm에서 80%의 감도 향상을 달성했으며, FDTD 시뮬레이션과 실험 데이터의 비교 분석을 제시한다. COMPASS의 DTI 및 BSI 픽셀 시뮬레이션의 중요한 검증 참고 자료이다.
 - **태그**: [CIS] [BSI] [광트래핑] [DTI]
 
+### 4.5 Hwang & Kim (2023) -- 비축 픽셀의 광학 스택 정렬
+
+- **인용**: J.-H. Hwang and Y. Kim, "A Numerical Method of Aligning the Optical Stacks for All Pixels," *Sensors*, vol. 23, no. 2, 702, 2023. DOI: [10.3390/s23020702](https://doi.org/10.3390/s23020702)
+- **요약**: 비축 픽셀에 대해 레이어별 광학 스택 시프트(마이크로렌즈, 컬러 필터, 패시베이션)를 계산하는 스넬 법칙 기반 폐쇄형 방법을 제안한 논문이다. 쿼드 CF와 인픽셀 DTI가 적용된 서브마이크론 BSI 픽셀(0.5-1.0 um)에서 CRA 0-35° 범위로 검증하였으며, FDTD 대비 오차 <4.2%를 달성했다. COMPASS는 `PixelStack._compute_snell_shift()`에서 스넬 법칙 누적 시프트를 구현한다.
+- **태그**: [CIS] [마이크로렌즈] [CRA] [광학정렬]
+
 ---
 
 ## 5. 수치 안정성

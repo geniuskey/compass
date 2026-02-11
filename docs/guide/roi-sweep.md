@@ -155,11 +155,11 @@ roi_config = {
 
 At each ROI position, the runner automatically sets the microlens shift mode to `auto_cra` and provides the interpolated CRA. The microlens is shifted laterally to re-center the focused light on the photodiode:
 
-The shift direction and magnitude depend on the CRA. For a pixel at image height 0.6 with CRA = 17 degrees, the microlens is shifted toward the optical axis by approximately:
+The shift direction and magnitude depend on the CRA. The microlens is shifted toward the optical axis by an amount computed via Snell's law ray tracing through all layers below the microlens:
 
-$$\Delta x \approx d \times \tan(\text{CRA})$$
+$$\Delta x = \sum_i h_i \cdot \frac{\sin\theta_i}{\cos\theta_i}, \quad \sin\theta_i = \frac{\sin\theta_\text{CRA}}{n_i}$$
 
-where $d$ is the distance from the microlens to the photodiode.
+where $h_i$ and $n_i$ are the thickness and refractive index of each intermediate layer (planarization, color filter, BARL, silicon to PD center). This Snell's law approach accounts for refraction at each interface, providing improved accuracy over a simple $\tan(\text{CRA})$ approximation especially at CRA > 15° (Hwang & Kim, *Sensors* 2023).
 
 This is handled automatically by the COMPASS geometry builder when `shift.mode = "auto_cra"`.
 

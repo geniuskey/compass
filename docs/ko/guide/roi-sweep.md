@@ -155,11 +155,11 @@ roi_config = {
 
 각 관심 영역(Region of Interest, ROI) 위치에서 러너는 자동으로 마이크로렌즈 시프트 모드를 `auto_cra`로 설정하고 보간된 CRA를 제공합니다. 마이크로렌즈는 집광된 빛을 포토다이오드에 다시 중심 정렬하기 위해 횡방향으로 시프트됩니다:
 
-시프트 방향과 크기는 CRA에 따라 달라집니다. 이미지 높이 0.6, CRA = 17도인 픽셀의 경우, 마이크로렌즈는 대략 다음만큼 광축 방향으로 시프트됩니다:
+시프트 방향과 크기는 CRA에 따라 달라집니다. 마이크로렌즈는 마이크로렌즈 아래 모든 레이어를 통해 스넬 법칙 광선 추적으로 계산된 양만큼 광축 방향으로 시프트됩니다:
 
-$$\Delta x \approx d \times \tan(\text{CRA})$$
+$$\Delta x = \sum_i h_i \cdot \frac{\sin\theta_i}{\cos\theta_i}, \quad \sin\theta_i = \frac{\sin\theta_\text{CRA}}{n_i}$$
 
-여기서 $d$는 마이크로렌즈에서 포토다이오드까지의 거리입니다.
+여기서 $h_i$와 $n_i$는 각 중간 레이어(평탄화층, 컬러 필터, BARL, 실리콘~PD 중심)의 두께와 굴절률입니다. 이 스넬 법칙 접근법은 각 계면에서의 굴절을 고려하므로, 특히 CRA > 15°에서 단순 $\tan(\text{CRA})$ 근사보다 정확도가 향상됩니다 (Hwang & Kim, *Sensors* 2023).
 
 이는 `shift.mode = "auto_cra"`일 때 COMPASS 지오메트리 빌더에 의해 자동으로 처리됩니다.
 

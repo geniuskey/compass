@@ -131,7 +131,11 @@ microlens:
 | `shift.cra_deg`  | float | `0.0`              | Chief ray angle in degrees for auto shift.        |
 | `gap`           | float | `0.0`              | Inter-lens gap in um.                             |
 
-When `shift.mode` is `"auto_cra"`, the microlens center is offset from the pixel center to accommodate off-axis chief ray angles at the image sensor edge. The shift is computed as $\Delta x = d \cdot \tan(\theta_\text{CRA})$ where $d$ is the focal distance to the photodiode.
+When `shift.mode` is `"auto_cra"`, the microlens center is offset from the pixel center to accommodate off-axis chief ray angles at the image sensor edge. The shift is computed by tracing the chief ray through each layer below the microlens using Snell's law:
+
+$$\Delta x = \sum_i h_i \cdot \frac{\sin\theta_i}{\cos\theta_i}, \quad \sin\theta_i = \frac{n_\text{air} \cdot \sin\theta_\text{CRA}}{n_i}$$
+
+where $h_i$ and $n_i$ are the thickness and refractive index of each layer (planarization, color filter, BARL, silicon to PD center). This accounts for refraction at each interface, improving accuracy over the simple $\tan(\theta_\text{CRA})$ approximation for CRA > 15° (Hwang & Kim, *Sensors* 2023, DOI: [10.3390/s23020702](https://doi.org/10.3390/s23020702)). The `ref_wavelength` parameter (default 0.55 um) controls which wavelength is used for the refractive index lookup.
 
 ### planarization
 

@@ -131,7 +131,11 @@ microlens:
 | `shift.cra_deg`  | float | `0.0`              | 자동 시프트를 위한 주광선 각도(Chief Ray Angle, CRA)(도). |
 | `gap`           | float | `0.0`              | 인접 렌즈 간 간격(um).                               |
 
-`shift.mode`가 `"auto_cra"`일 때, 마이크로렌즈 중심은 이미지 센서 가장자리에서의 비축 주광선 각도를 수용하기 위해 픽셀 중심에서 오프셋됩니다. 시프트는 $\Delta x = d \cdot \tan(\theta_\text{CRA})$로 계산되며, 여기서 $d$는 포토다이오드까지의 초점 거리입니다.
+`shift.mode`가 `"auto_cra"`일 때, 마이크로렌즈 중심은 이미지 센서 가장자리에서의 비축 주광선 각도를 수용하기 위해 픽셀 중심에서 오프셋됩니다. 시프트는 마이크로렌즈 아래 각 레이어를 통해 스넬 법칙으로 주광선을 추적하여 계산됩니다:
+
+$$\Delta x = \sum_i h_i \cdot \frac{\sin\theta_i}{\cos\theta_i}, \quad \sin\theta_i = \frac{n_\text{air} \cdot \sin\theta_\text{CRA}}{n_i}$$
+
+여기서 $h_i$와 $n_i$는 각 레이어(평탄화층, 컬러 필터, BARL, 실리콘~PD 중심)의 두께와 굴절률입니다. 이 방법은 각 계면에서의 굴절을 고려하므로, CRA > 15°에서 단순 $\tan(\theta_\text{CRA})$ 근사보다 정확도가 향상됩니다 (Hwang & Kim, *Sensors* 2023, DOI: [10.3390/s23020702](https://doi.org/10.3390/s23020702)). `ref_wavelength` 파라미터(기본값 0.55 um)는 굴절률 조회에 사용할 파장을 제어합니다.
 
 ### planarization
 

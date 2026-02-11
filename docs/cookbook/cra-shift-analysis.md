@@ -202,4 +202,4 @@ plt.savefig("cra_spectral.png", dpi=150)
 
 ## Practical note on shift tables
 
-Real sensor designs use a polynomial or lookup table for the microlens shift versus image height, calibrated during lens-sensor co-design. The `auto_cra` mode provides a first-order approximation. For production designs, you can supply a custom shift table through the `shift.table` config option.
+Real sensor designs use a polynomial or lookup table for the microlens shift versus image height, calibrated during lens-sensor co-design. The `auto_cra` mode uses Snell's law ray tracing through all intermediate layers (planarization, color filter, BARL, silicon) to compute the shift, following the method described in Hwang & Kim, "A Numerical Method of Aligning the Optical Stacks for All Pixels," *Sensors*, vol. 23, no. 2, 702, 2023 (DOI: [10.3390/s23020702](https://doi.org/10.3390/s23020702)). For production designs, you can supply a custom shift table through the `shift.table` config option.

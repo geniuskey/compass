@@ -149,6 +149,12 @@ Key papers on the optical simulation of CMOS image sensor (CIS) pixels.
 - **Summary**: This paper reported on diffractive light trapping technology using 2D inverted pyramid array (IPA) structures and DTI (Deep Trench Isolation) in BSI (backside illumination) CMOS image sensors. It achieved an 80% sensitivity improvement at 850nm and presented a comparative analysis of FDTD simulations and experimental data. An important validation reference for DTI and BSI pixel simulations in COMPASS.
 - **Tags**: [CIS] [BSI] [Light Trapping] [DTI]
 
+### 4.5 Hwang & Kim (2023) -- Optical Stack Alignment for Off-Axis Pixels
+
+- **Citation**: J.-H. Hwang and Y. Kim, "A Numerical Method of Aligning the Optical Stacks for All Pixels," *Sensors*, vol. 23, no. 2, 702, 2023. DOI: [10.3390/s23020702](https://doi.org/10.3390/s23020702)
+- **Summary**: Proposed a closed-form Snell's law-based method for computing per-layer optical stack shifts (microlens, color filter, passivation) for off-axis pixels. Validated on sub-micron BSI pixels (0.5-1.0 um) with quad CF and in-pixel DTI at CRA 0-35°, error <4.2% vs FDTD. COMPASS implements the Snell's law cumulative shift in `PixelStack._compute_snell_shift()`.
+- **Tags**: [CIS] [Microlens] [CRA] [Optical Alignment]
+
 ---
 
 ## 5. Numerical Stability

@@ -202,4 +202,4 @@ plt.savefig("cra_spectral.png", dpi=150)
 
 ## 시프트 테이블에 대한 실용적 참고사항
 
-실제 센서 설계에서는 렌즈-센서 공동 설계 과정에서 보정된, 이미지 높이에 대한 마이크로렌즈 시프트의 다항식 또는 조회 테이블(lookup table)을 사용합니다. `auto_cra` 모드는 1차 근사(first-order approximation)를 제공합니다. 양산 설계에서는 `shift.table` 설정 옵션을 통해 사용자 정의 시프트 테이블을 제공할 수 있습니다.
+실제 센서 설계에서는 렌즈-센서 공동 설계 과정에서 보정된, 이미지 높이에 대한 마이크로렌즈 시프트의 다항식 또는 조회 테이블(lookup table)을 사용합니다. `auto_cra` 모드는 Hwang & Kim, "A Numerical Method of Aligning the Optical Stacks for All Pixels," *Sensors*, vol. 23, no. 2, 702, 2023 (DOI: [10.3390/s23020702](https://doi.org/10.3390/s23020702))에서 제안한 방법에 따라, 모든 중간 레이어(평탄화층, 컬러 필터, BARL, 실리콘)를 통해 스넬 법칙 광선 추적으로 시프트를 계산합니다. 양산 설계에서는 `shift.table` 설정 옵션을 통해 사용자 정의 시프트 테이블을 제공할 수 있습니다.
