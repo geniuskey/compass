@@ -60,6 +60,8 @@ base_config = {
 }
 ```
 
+<ConeIlluminationViewer />
+
 ## CRA sweep: no shift vs auto shift
 
 Run each CRA angle twice -- once without microlens shift and once with automatic CRA-based shift:

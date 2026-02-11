@@ -201,6 +201,8 @@ plt.colorbar(im, label="Max |QE diff|")
 ax.set_title("Pairwise Max QE Difference")
 ```
 
+<SolverComparisonChart />
+
 ## RCWA vs FDTD 교차 검증
 
 RCWA와 FDTD를 비교하면 근본적으로 다른 수치 방법을 사용하므로 가장 강력한 검증을 제공합니다:

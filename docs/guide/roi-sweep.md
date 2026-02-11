@@ -76,6 +76,8 @@ roi_config = {
 results = ROISweepRunner.run(config, roi_config)
 ```
 
+<ConeIlluminationViewer />
+
 ## Understanding the output
 
 The output is a dictionary mapping position labels to `SimulationResult` objects:

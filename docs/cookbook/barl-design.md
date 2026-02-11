@@ -91,6 +91,8 @@ plt.tight_layout()
 plt.savefig("barl_vs_no_barl.png", dpi=150)
 ```
 
+<ThinFilmReflectance />
+
 ## Quarter-wave single-layer design
 
 Design a single-layer ARC optimized for 550 nm (green peak):
@@ -257,6 +259,8 @@ ax.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig("barl_reflectance.png", dpi=150)
 ```
+
+<EnergyBalanceDiagram />
 
 ## Design guidelines
 

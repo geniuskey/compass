@@ -63,6 +63,8 @@ In practice, 20 nm is adequate for most visible-range simulations and provides a
 
 Memory scales as $O(1/\Delta x^3)$ in 3D, so halving the grid spacing increases memory by 8x.
 
+<YeeCellViewer />
+
 ## Runtime configuration
 
 The `runtime` parameter (in femtoseconds) controls how long the FDTD simulation runs. The simulation must run long enough for:

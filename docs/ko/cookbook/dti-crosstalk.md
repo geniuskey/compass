@@ -248,6 +248,8 @@ plt.tight_layout()
 plt.savefig("dti_crosstalk_heatmap.png", dpi=150)
 ```
 
+<CrosstalkHeatmap />
+
 ## 예상 관측 결과
 
 1. **DTI 없음**: 특히 긴 파장(>600 nm)에서 상당한 광학적 크로스토크가 발생합니다. 광자가 실리콘 깊숙이 침투하여 흡수되기 전에 인접 픽셀로 측면 확산될 수 있기 때문입니다.

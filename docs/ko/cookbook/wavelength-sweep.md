@@ -55,6 +55,8 @@ print(f"Sweep: {len(result.wavelengths)} wavelengths from "
       f"{result.wavelengths[0]*1000:.0f} to {result.wavelengths[-1]*1000:.0f} nm")
 ```
 
+<WavelengthSlider />
+
 ## 전체 가시광선 스펙트럼 시각화
 
 ```python
@@ -185,3 +187,5 @@ plt.savefig("si_thickness_comparison.png", dpi=150)
 ::: tip
 근적외선(NIR, Near-Infrared) 응용에서는 실리콘 두께를 5-6 um으로 늘리고 스윕을 1000 nm까지 확장하십시오. 780 nm 이상에서의 실리콘 물질 데이터를 추가해야 할 수 있습니다.
 :::
+
+<QESpectrumChart />

@@ -55,6 +55,8 @@ print(f"Sweep: {len(result.wavelengths)} wavelengths from "
       f"{result.wavelengths[0]*1000:.0f} to {result.wavelengths[-1]*1000:.0f} nm")
 ```
 
+<WavelengthSlider />
+
 ## Full visible spectrum plot
 
 ```python
@@ -185,3 +187,5 @@ plt.savefig("si_thickness_comparison.png", dpi=150)
 ::: tip
 For NIR (near-infrared) applications, increase silicon thickness to 5-6 um and extend the sweep to 1000 nm. You may need to add silicon material data beyond 780 nm.
 :::
+
+<QESpectrumChart />

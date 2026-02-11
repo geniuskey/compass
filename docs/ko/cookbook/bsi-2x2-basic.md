@@ -2,6 +2,8 @@
 
 표준 2x2 베이어(Bayer) BSI 픽셀 단위 셀(unit cell)을 시뮬레이션하고 양자 효율(QE, Quantum Efficiency) 스펙트럼을 계산하는 완전한 레시피입니다.
 
+<StackVisualizer />
+
 ## 학습 내용
 
 - BSI 픽셀 구성을 처음부터 설정하는 방법
@@ -136,6 +138,8 @@ B: peak QE = 62.3% at 460 nm
 G: peak QE = 71.5% at 540 nm
 R: peak QE = 59.8% at 620 nm
 ```
+
+<QESpectrumChart />
 
 ## 변형 실험
 

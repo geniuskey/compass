@@ -2,6 +2,8 @@
 
 A complete recipe for simulating a standard 2x2 Bayer BSI pixel unit cell and computing QE spectra.
 
+<StackVisualizer />
+
 ## What you will learn
 
 - Setting up a full BSI pixel configuration from scratch
@@ -136,6 +138,8 @@ B: peak QE = 62.3% at 460 nm
 G: peak QE = 71.5% at 540 nm
 R: peak QE = 59.8% at 620 nm
 ```
+
+<QESpectrumChart />
 
 ## Variations to try
 

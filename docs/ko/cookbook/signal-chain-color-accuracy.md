@@ -27,6 +27,8 @@ flowchart LR
     E --> H[SNR\n분석]
 ```
 
+<SignalChainDiagram />
+
 ## 단계 1: 파장 범위 설정 및 광원 생성
 
 가시광선 파장 격자(wavelength grid)를 정의하고 세 가지 광원의 분광 파워 분포를 구축합니다.

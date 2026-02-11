@@ -244,6 +244,8 @@ def plot_qe_comparison(
 ) -> plt.Axes | tuple[plt.Axes, plt.Axes]:
 ```
 
+<QESpectrumChart />
+
 ## Crosstalk heatmaps
 
 Visualize pixel-to-pixel crosstalk as a matrix where entry $(i, j)$ represents the signal in pixel $i$ relative to the intended target pixel $j$.

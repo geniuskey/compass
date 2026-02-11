@@ -248,6 +248,8 @@ plt.tight_layout()
 plt.savefig("dti_crosstalk_heatmap.png", dpi=150)
 ```
 
+<CrosstalkHeatmap />
+
 ## Expected observations
 
 1. **Without DTI**: Significant optical crosstalk, especially at long wavelengths (>600 nm) where photons penetrate deep into silicon and can diffuse laterally to neighboring pixels before being absorbed.

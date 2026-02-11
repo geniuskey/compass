@@ -91,6 +91,8 @@ plt.tight_layout()
 plt.savefig("barl_vs_no_barl.png", dpi=150)
 ```
 
+<ThinFilmReflectance />
+
 ## 4분의 1 파장 단층 설계
 
 550 nm(녹색 피크)에 최적화된 단층 ARC를 설계합니다:
@@ -257,6 +259,8 @@ ax.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig("barl_reflectance.png", dpi=150)
 ```
+
+<EnergyBalanceDiagram />
 
 ## 설계 가이드라인
 

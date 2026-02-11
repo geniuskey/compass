@@ -60,6 +60,8 @@ base_config = {
 }
 ```
 
+<ConeIlluminationViewer />
+
 ## CRA 스윕: 시프트 없음 vs 자동 시프트
 
 각 CRA 각도에 대해 마이크로렌즈 시프트 없이 한 번, 자동 CRA 기반 시프트로 한 번, 총 두 번 실행합니다:

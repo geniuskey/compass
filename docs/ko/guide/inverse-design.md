@@ -132,6 +132,8 @@ objective = CompositeObjective([
 ])
 ```
 
+<EnergyBalanceDiagram />
+
 ## 최적화 방법
 
 | 방법 | 유형 | 적합한 용도 |

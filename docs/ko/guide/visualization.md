@@ -244,6 +244,8 @@ def plot_qe_comparison(
 ) -> plt.Axes | tuple[plt.Axes, plt.Axes]:
 ```
 
+<QESpectrumChart />
+
 ## 크로스토크 히트맵(Crosstalk Heatmap)
 
 항목 $(i, j)$가 의도된 대상 픽셀 $j$에 대한 픽셀 $i$의 신호를 나타내는 행렬로 픽셀 간 크로스토크를 시각화합니다.

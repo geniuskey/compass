@@ -27,6 +27,8 @@ flowchart LR
     E --> H[SNR\nAnalysis]
 ```
 
+<SignalChainDiagram />
+
 ## Step 1: Set up wavelength range and create illuminants
 
 Define the visible wavelength grid and build spectral power distributions for three illuminants.

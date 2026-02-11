@@ -32,6 +32,8 @@ flowchart LR
 4. 카메라 모듈 광학계(렌즈 투과율, IR 필터) 구성
 5. 전자 수로 픽셀 신호를 계산하고 결과 분석
 
+<SignalChainDiagram />
+
 ## 광원 설정(Setting Up Illuminants)
 
 `Illuminant` 클래스는 일반적인 광원에 대한 팩토리 메서드를 제공합니다:
@@ -88,6 +90,8 @@ spd = data[:, 1]
 
 custom = Illuminant(wavelengths=wl_um, spd=spd, name="Custom LED")
 ```
+
+<BlackbodySpectrum />
 
 ## 장면 반사율 정의(Defining Scene Reflectance)
 

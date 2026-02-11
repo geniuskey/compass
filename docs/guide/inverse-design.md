@@ -132,6 +132,8 @@ objective = CompositeObjective([
 ])
 ```
 
+<EnergyBalanceDiagram />
+
 ## Optimization Methods
 
 | Method | Type | Best For |

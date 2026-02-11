@@ -133,6 +133,8 @@ plt.savefig("metal_grid_crosstalk.png", dpi=150)
 plt.show()
 ```
 
+<CrosstalkHeatmap />
+
 ## Expected observations
 
 1. **QE reduction with grid**: The metal grid slightly reduces peak QE (typically 2-5%) because it blocks some light and absorbs energy.

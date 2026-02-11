@@ -170,6 +170,8 @@ for i in range(1, len(green_qe_values)):
 
 Typical convergence: order [9, 9] is sufficient for most 1 um pitch pixels. Structures with fine metal grids or high-contrast layers may need [13, 13] or higher.
 
+<RCWAConvergenceDemo />
+
 ### Runtime vs accuracy trade-off
 
 | Order   | Matrix size | Typical time (GPU) | Use case            |
@@ -178,6 +180,8 @@ Typical convergence: order [9, 9] is sufficient for most 1 um pitch pixels. Stru
 | [9, 9]  | 361         | 0.3 s               | Standard production |
 | [13,13] | 729         | 1.5 s               | High accuracy       |
 | [17,17] | 1225        | 5.0 s               | Publication quality |
+
+<FourierOrderDemo />
 
 ## Running a complete simulation
 

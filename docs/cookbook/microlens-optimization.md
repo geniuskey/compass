@@ -66,6 +66,8 @@ base_config = {
 }
 ```
 
+<StaircaseMicrolensViewer />
+
 ## Sweep 1: Microlens height
 
 ```python

@@ -227,4 +227,6 @@
 
 ---
 
+<SolverComparisonChart />
+
 *참고: Rust 기반 RCWA 솔버는 현재(2026) 존재하지 않음. FDTD는 1D PoC(REMS)만 존재.*

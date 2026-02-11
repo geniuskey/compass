@@ -122,6 +122,8 @@ if len(results) >= 2:
         print(f"  {solver}: {runtime:.2f}s")
 ```
 
+<SolverComparisonChart />
+
 ## Fourier order convergence comparison
 
 Compare how each solver converges with Fourier order:

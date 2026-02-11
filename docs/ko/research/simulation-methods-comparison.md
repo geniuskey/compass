@@ -371,6 +371,8 @@ EMUstack은 각 층을 2D FEM으로 풀고 층간 연결을 산란 행렬로 처
 | **FEM** | 제한적 | Adjoint method | EMOPT (FDFD) |
 | **TMM** | 용이 | Analytical gradient | 자체 구현 |
 
+<SolverComparisonChart />
+
 ---
 
 ## 10. COMPASS에서의 적용 (Application in COMPASS)

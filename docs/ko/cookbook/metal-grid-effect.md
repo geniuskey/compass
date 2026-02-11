@@ -133,6 +133,8 @@ plt.savefig("metal_grid_crosstalk.png", dpi=150)
 plt.show()
 ```
 
+<CrosstalkHeatmap />
+
 ## 예상 관측 결과
 
 1. **그리드에 의한 QE 감소**: 메탈 그리드는 일부 빛을 차단하고 에너지를 흡수하므로 피크 QE를 약간 감소시킵니다 (일반적으로 2-5%).

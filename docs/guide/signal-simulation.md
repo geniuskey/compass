@@ -32,6 +32,8 @@ flowchart LR
 4. Configure camera module optics (lens transmittance, IR filter)
 5. Compute the pixel signal in electrons and analyze the results
 
+<SignalChainDiagram />
+
 ## Setting Up Illuminants
 
 The `Illuminant` class provides factory methods for common light sources:
@@ -88,6 +90,8 @@ spd = data[:, 1]
 
 custom = Illuminant(wavelengths=wl_um, spd=spd, name="Custom LED")
 ```
+
+<BlackbodySpectrum />
 
 ## Defining Scene Reflectance
 

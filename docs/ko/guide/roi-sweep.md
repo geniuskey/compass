@@ -76,6 +76,8 @@ roi_config = {
 results = ROISweepRunner.run(config, roi_config)
 ```
 
+<ConeIlluminationViewer />
+
 ## 출력 이해
 
 출력은 위치 레이블을 `SimulationResult` 객체에 매핑하는 딕셔너리입니다:

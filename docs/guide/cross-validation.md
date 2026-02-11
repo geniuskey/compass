@@ -201,6 +201,8 @@ plt.colorbar(im, label="Max |QE diff|")
 ax.set_title("Pairwise Max QE Difference")
 ```
 
+<SolverComparisonChart />
+
 ## RCWA vs FDTD cross-validation
 
 Comparing RCWA and FDTD provides the strongest validation because they use fundamentally different numerical methods:
