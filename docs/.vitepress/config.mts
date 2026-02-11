@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
 const introSidebar = [
   { text: 'Introduction', items: [
@@ -197,7 +198,7 @@ const aboutSidebarKo = [
   ]}
 ]
 
-export default defineConfig({
+export default withMermaid(defineConfig({
   base: '/compass/',
   title: 'COMPASS',
   description: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation',
@@ -280,5 +281,9 @@ export default defineConfig({
 
   markdown: {
     math: true
-  }
-})
+  },
+
+  mermaid: {
+    theme: 'default',
+  },
+}))

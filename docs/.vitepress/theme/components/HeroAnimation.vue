@@ -65,10 +65,9 @@
           {{ t('Air', '공기') }}
         </text>
 
-        <!-- Microlens (elliptical dome) -->
-        <ellipse
-          :cx="stackW / 2" :cy="lensY + lensH * 0.3"
-          :rx="stackW * 0.42" :ry="lensH * 0.7"
+        <!-- Microlens (half-ellipse dome: base at bottom, dome curves upward into air) -->
+        <path
+          :d="`M ${stackW / 2 - stackW * 0.42} ${lensY + lensH} A ${stackW * 0.42} ${lensH * 0.85} 0 0 1 ${stackW / 2 + stackW * 0.42} ${lensY + lensH} Z`"
           fill="url(#heroLensGrad)"
           class="layer-pulse layer-pulse-0"
         />

@@ -33,26 +33,23 @@
               @click="selectLayer(layer.id)"
               style="cursor: pointer"
             >
-              <!-- Layer rectangle -->
+              <!-- Layer rectangle (air extends through microlens space; microlens rect hidden) -->
               <rect
                 :x="layerX"
                 :y="layerPositions[idx].y"
                 :width="layerW"
-                :height="layerPositions[idx].h"
-                :fill="layer.color"
-                :stroke="selectedId === layer.id ? 'var(--vp-c-brand-1)' : '#555'"
+                :height="layer.id === 'air' ? layerPositions[0].h + layerPositions[1].h : layerPositions[idx].h"
+                :fill="layer.id === 'microlens' ? 'transparent' : layer.color"
+                :stroke="layer.id === 'microlens' ? 'none' : (selectedId === layer.id ? 'var(--vp-c-brand-1)' : '#555')"
                 :stroke-width="selectedId === layer.id ? 2.5 : 1"
                 rx="2"
                 :opacity="layer.opacity || 1"
               />
 
-              <!-- Microlens curved top -->
-              <ellipse
+              <!-- Microlens dome (half-ellipse: base at bottom, dome curves upward) -->
+              <path
                 v-if="layer.id === 'microlens'"
-                :cx="180"
-                :cy="layerPositions[idx].y"
-                :rx="layerW / 2 - 5"
-                :ry="layerPositions[idx].h * 0.6"
+                :d="`M ${layerX + 5} ${layerPositions[idx].y + layerPositions[idx].h} A ${layerW / 2 - 5} ${layerPositions[idx].h * 0.85} 0 0 1 ${layerX + layerW - 5} ${layerPositions[idx].y + layerPositions[idx].h} Z`"
                 fill="url(#lensGrad)"
                 stroke="#7fb3d3"
                 stroke-width="1"

@@ -54,13 +54,13 @@
               style="cursor: pointer"
             >
               <!-- Main layer rectangle(s) -->
-              <!-- Air layer -->
+              <!-- Air layer — extends through microlens space (air surrounds the domes) -->
               <rect
                 v-if="layer.id === 'air'"
                 :x="leftPixelX"
                 :y="layerPositions[idx].y"
                 :width="totalPixelW"
-                :height="layerPositions[idx].h"
+                :height="layerPositions[0].h + layerPositions[1].h"
                 :fill="layer.color"
                 :stroke="isHighlighted(layer.id) ? 'var(--vp-c-brand-1)' : '#aaa'"
                 :stroke-width="isHighlighted(layer.id) ? 2.5 : 0.5"
@@ -68,36 +68,27 @@
                 rx="1"
               />
 
-              <!-- Microlens — two domes side by side -->
+              <!-- Microlens — two half-ellipse domes side by side -->
               <template v-if="layer.id === 'microlens'">
+                <!-- Transparent click target -->
                 <rect
                   :x="leftPixelX"
                   :y="layerPositions[idx].y"
                   :width="totalPixelW"
                   :height="layerPositions[idx].h"
-                  :fill="layer.color"
-                  :stroke="isHighlighted(layer.id) ? 'var(--vp-c-brand-1)' : '#999'"
-                  :stroke-width="isHighlighted(layer.id) ? 2.5 : 0.5"
-                  :opacity="isHighlighted(layer.id) ? 0.9 : 0.6"
-                  rx="1"
+                  fill="transparent"
                 />
-                <!-- Left dome -->
-                <ellipse
-                  :cx="leftPixelX + pixelW / 2"
-                  :cy="layerPositions[idx].y"
-                  :rx="pixelW / 2 - 4"
-                  :ry="layerPositions[idx].h * 0.7"
+                <!-- Left dome (half-ellipse: base at bottom, dome curves upward) -->
+                <path
+                  :d="`M ${leftPixelX + 4} ${layerPositions[idx].y + layerPositions[idx].h} A ${pixelW / 2 - 4} ${layerPositions[idx].h * 0.85} 0 0 1 ${leftPixelX + pixelW - 4} ${layerPositions[idx].y + layerPositions[idx].h} Z`"
                   fill="url(#paLensGradL)"
                   :stroke="isHighlighted(layer.id) ? 'var(--vp-c-brand-1)' : '#a88bc7'"
                   stroke-width="1"
                   style="pointer-events: none"
                 />
-                <!-- Right dome -->
-                <ellipse
-                  :cx="leftPixelX + pixelW + gapW + pixelW / 2"
-                  :cy="layerPositions[idx].y"
-                  :rx="pixelW / 2 - 4"
-                  :ry="layerPositions[idx].h * 0.7"
+                <!-- Right dome (half-ellipse: base at bottom, dome curves upward) -->
+                <path
+                  :d="`M ${leftPixelX + pixelW + gapW + 4} ${layerPositions[idx].y + layerPositions[idx].h} A ${pixelW / 2 - 4} ${layerPositions[idx].h * 0.85} 0 0 1 ${leftPixelX + pixelW + gapW + pixelW - 4} ${layerPositions[idx].y + layerPositions[idx].h} Z`"
                   fill="url(#paLensGradR)"
                   :stroke="isHighlighted(layer.id) ? 'var(--vp-c-brand-1)' : '#a88bc7'"
                   stroke-width="1"
