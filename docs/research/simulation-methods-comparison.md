@@ -1,440 +1,440 @@
-# 전자기 시뮬레이션 방법론 비교 (EM Simulation Methods Comparison)
+# EM Simulation Methods Comparison
 
-> 작성일: 2026-02-11 | COMPASS 프로젝트 연구 문서
+> Written: 2026-02-11 | COMPASS project research document
 
 ---
 
-## 1. 개요 (Overview)
+## 1. Overview
 
-CMOS 이미지 센서(CIS) 픽셀의 광학 시뮬레이션은 맥스웰 방정식(Maxwell's equations)의 수치적 풀이를 필요로 한다. 픽셀 피치가 가시광 파장(0.38--0.78 um)과 동일한 스케일(0.6--1.4 um)에 도달하면서, 기하광학만으로는 회절, 간섭, 근접장 결합 등의 파동 효과를 포착할 수 없게 되었다.
+Optical simulation of CMOS image sensor (CIS) pixels requires numerical solutions of Maxwell's equations. As pixel pitch has reached the same scale (0.6--1.4 um) as visible light wavelengths (0.38--0.78 um), geometric optics alone can no longer capture wave effects such as diffraction, interference, and near-field coupling.
 
-시뮬레이션 방법론의 선택은 세 가지 근본적 트레이드오프에 의해 결정된다:
+The choice of simulation methodology is determined by three fundamental trade-offs:
 
-| 축 | 설명 |
+| Axis | Description |
 |---|---|
-| **정확도 (Accuracy)** | 물리적 현실에 대한 충실도. 맥스웰 방정식의 근사 수준 |
-| **속도 (Speed)** | 단일 시뮬레이션의 벽시계 시간(wall-clock time) |
-| **범용성 (Generality)** | 다룰 수 있는 기하 구조 및 재료의 범위 |
+| **Accuracy** | Fidelity to physical reality. Level of approximation to Maxwell's equations |
+| **Speed** | Wall-clock time for a single simulation |
+| **Generality** | Range of geometries and materials that can be handled |
 
-어떤 단일 방법도 세 축을 동시에 최적화할 수 없으며, 이것이 다양한 수치 방법이 공존하는 근본적 이유다. COMPASS는 RCWA와 FDTD를 주력 솔버로 채택하고 교차 검증(cross-validation)으로 결과 신뢰성을 확보한다.
+No single method can simultaneously optimize all three axes, which is the fundamental reason why diverse numerical methods coexist. COMPASS adopts RCWA and FDTD as its primary solvers and ensures result reliability through cross-validation.
 
-| 방법론 | 영역 | 차원 | 주기성 | 파장대역 | CIS 적합도 |
+| Method | Domain | Dimension | Periodicity | Wavelength Band | CIS Suitability |
 |--------|------|------|--------|----------|-----------|
-| RCWA | 주파수 | 3D | 필수 | 단일 | ★★★★★ |
-| FDTD | 시간 | 3D | 선택 | 광대역 | ★★★★☆ |
-| FEM | 주파수 | 3D | 선택 | 단일 | ★★★☆☆ |
-| BEM | 주파수 | 표면 | 불필요 | 단일 | ★★☆☆☆ |
-| TMM | 주파수 | 1D | N/A | 단일 | ★★★☆☆ |
-| Ray Tracing | N/A | 3D | 불필요 | 광대역 | ★★☆☆☆ |
+| RCWA | Frequency | 3D | Required | Single | ★★★★★ |
+| FDTD | Time | 3D | Optional | Broadband | ★★★★☆ |
+| FEM | Frequency | 3D | Optional | Single | ★★★☆☆ |
+| BEM | Frequency | Surface | Not required | Single | ★★☆☆☆ |
+| TMM | Frequency | 1D | N/A | Single | ★★★☆☆ |
+| Ray Tracing | N/A | 3D | Not required | Broadband | ★★☆☆☆ |
 
 ---
 
 ## 2. RCWA (Rigorous Coupled-Wave Analysis)
 
-### 2.1 수학적 기초 (Mathematical Foundation)
+### 2.1 Mathematical Foundation
 
-RCWA(엄밀 결합파 해석법)는 주기 구조에 대한 맥스웰 방정식을 주파수 영역에서 푸리에 급수로 전개하여 푸는 반해석적(semi-analytical) 방법이다. 핵심 단계:
+RCWA is a semi-analytical method that solves Maxwell's equations for periodic structures by expanding them in Fourier series in the frequency domain. Key steps:
 
-**(1) 유전율의 푸리에 전개:** 주기 $\Lambda_x, \Lambda_y$ 구조에서 각 층의 유전율을 전개한다:
+**(1) Fourier expansion of permittivity:** For a structure with periods $\Lambda_x, \Lambda_y$, the permittivity of each layer is expanded as:
 
 $$\varepsilon(x, y) = \sum_{p=-N}^{N} \sum_{q=-N}^{N} \hat{\varepsilon}_{pq} \, e^{i(G_{px} x + G_{qy} y)}$$
 
-여기서 역격자 벡터(reciprocal lattice vector) $G_{px} = 2\pi p / \Lambda_x$이며, 총 고조파 수는 $M = (2N+1)^2$이다.
+where the reciprocal lattice vector $G_{px} = 2\pi p / \Lambda_x$, and the total number of harmonics is $M = (2N+1)^2$.
 
-**(2) 고유값 문제 (Eigenvalue problem)**
+**(2) Eigenvalue problem**
 
-각 층에서 푸리에 전개를 맥스웰 방정식에 대입하면 $2M \times 2M$ 고유값 문제가 도출된다:
+Substituting the Fourier expansion into Maxwell's equations for each layer yields a $2M \times 2M$ eigenvalue problem:
 
 $$\Omega \mathbf{w}_j = \gamma_j^2 \mathbf{w}_j$$
 
-여기서 $\gamma_j$는 각 모드의 z방향 전파 상수(propagation constant), $\mathbf{w}_j$는 모드 프로파일이다.
+where $\gamma_j$ is the z-direction propagation constant for each mode, and $\mathbf{w}_j$ is the mode profile.
 
-**(3) S 행렬 연쇄 (S-matrix cascading)**
+**(3) S-matrix cascading**
 
-개별 층의 산란 행렬을 레드헤퍼 스타곱(Redheffer star product)으로 결합한다:
+The scattering matrices of individual layers are combined using the Redheffer star product:
 
 $$S_\text{total} = S_1 \star S_2 \star \cdots \star S_L$$
 
-이 방법은 전달 행렬(T-matrix)과 달리 에바네센트 모드에 대해 수치적으로 안정적이다.
+This method is numerically stable for evanescent modes, unlike the transfer matrix (T-matrix) approach.
 
-### 2.2 강점 (Strengths)
+### 2.2 Strengths
 
-| 강점 | 설명 |
+| Strength | Description |
 |------|------|
-| **주기 구조 최적** | 이미지 센서의 픽셀 배열은 본질적으로 주기적이므로 RCWA에 이상적 |
-| **박막 처리 정확** | 각 층을 공간 이산화 없이 정확히 처리 (anti-reflection coating, color filter) |
-| **스펙트럼 분석** | 단일 파장 계산이 매우 빠름 → QE 스펙트럼을 파장별로 효율적 산출 |
-| **지수 수렴** | 푸리에 차수 증가에 따라 지수적(exponential) 수렴 (매끄러운 프로파일) |
-| **GPU 가속** | 행렬 연산 기반이므로 GPU 가속에 적합 (PyTorch/JAX 백엔드) |
+| **Optimal for periodic structures** | Image sensor pixel arrays are inherently periodic, making them ideal for RCWA |
+| **Accurate thin-film handling** | Each layer is treated exactly without spatial discretization (anti-reflection coating, color filter) |
+| **Spectral analysis** | Single-wavelength computation is very fast → efficient QE spectrum calculation per wavelength |
+| **Exponential convergence** | Exponential convergence with increasing Fourier order (for smooth profiles) |
+| **GPU acceleration** | Matrix operation-based, well-suited for GPU acceleration (PyTorch/JAX backends) |
 
-### 2.3 약점 (Weaknesses)
+### 2.3 Weaknesses
 
-| 약점 | 설명 |
+| Weakness | Description |
 |------|------|
-| **비주기 구조 불가** | 유한 구조, 결함, 비주기 패턴은 원리적으로 처리 불가 |
-| **곡면의 계단 근사** | 마이크로렌즈 등 곡면은 staircase approximation 필요 → 수렴 저하 |
-| **메모리 스케일링** | 고유값 분해의 메모리 $O(M^2)$, 연산 $O(M^3)$. $N=15$이면 $M=961$, 행렬 크기 $1922 \times 1922$ |
-| **분산 재료** | 각 파장마다 별도 계산 필요 (광대역 sweep 시 반복 비용) |
+| **Cannot handle non-periodic structures** | Finite structures, defects, and non-periodic patterns are fundamentally impossible to treat |
+| **Staircase approximation of curved surfaces** | Curved surfaces such as microlenses require staircase approximation → degraded convergence |
+| **Memory scaling** | Memory $O(M^2)$ and computation $O(M^3)$ for eigenvalue decomposition. At $N=15$, $M=961$, matrix size $1922 \times 1922$ |
+| **Dispersive materials** | Separate computation required for each wavelength (repeated cost for broadband sweeps) |
 
-### 2.4 핵심 파라미터 (Key Parameters)
+### 2.4 Key Parameters
 
-| 파라미터 | 역할 | COMPASS 기본값 |
+| Parameter | Role | COMPASS Default |
 |----------|------|---------------|
-| **푸리에 차수** (Fourier order, $N$) | 공간 해상도 결정. 높을수록 정확하나 $O(N^6)$ 비용 증가 | `[9, 9]` |
-| **리 인수분해** (Li's factorization) | 불연속 경계에서의 수렴성 개선. 역규칙(inverse rule), 법선 벡터법(normal vector method) | `li_inverse` |
-| **편광** (Polarization) | TE/TM 또는 임의 편광. TM에서 Li 규칙이 특히 중요 | 무편광 (평균) |
+| **Fourier order** ($N$) | Determines spatial resolution. Higher is more accurate but cost scales as $O(N^6)$ | `[9, 9]` |
+| **Li's factorization** | Improves convergence at discontinuous boundaries. Inverse rule, normal vector method | `li_inverse` |
+| **Polarization** | TE/TM or arbitrary polarization. Li's rule is particularly important for TM | Unpolarized (averaged) |
 
-**리의 푸리에 인수분해 규칙 (Li's Fourier factorization rules):**
+**Li's Fourier factorization rules:**
 
-Lifeng Li (1996)가 도입한 세 가지 규칙은 RCWA 수렴성의 핵심이다:
+The three rules introduced by Lifeng Li (1996) are central to RCWA convergence:
 
-1. **로랑 규칙 (Laurent's rule)**: 두 함수에 동시 불연속이 없을 때 → $[\![f \cdot g]\!] = [\![f]\!] \cdot [\![g]\!]$
-2. **역규칙 (Inverse rule)**: 모든 불연속이 상보적(complementary)일 때 → $[\![f \cdot g]\!] = [\![f^{-1}]\!]^{-1} \cdot [\![g]\!]$
-3. **불가 조건**: 비상보적 동시 불연속이 존재하면 로랑/역규칙 모두 수렴 실패
+1. **Laurent's rule**: When two functions have no simultaneous discontinuities → $[\![f \cdot g]\!] = [\![f]\!] \cdot [\![g]\!]$
+2. **Inverse rule**: When all discontinuities are complementary → $[\![f \cdot g]\!] = [\![f^{-1}]\!]^{-1} \cdot [\![g]\!]$
+3. **Impossible condition**: When non-complementary simultaneous discontinuities exist, both Laurent and inverse rules fail to converge
 
-### 2.5 CIS 적용 시나리오 (When to Use for CIS)
+### 2.5 CIS Application Scenarios (When to Use for CIS)
 
-- **컬러 필터 (Color filter)**: 주기적 배열, 평면 층 → RCWA 최적
-- **BARL (Bottom Anti-Reflection Layer)**: 박막 스택 최적화, 파장 sweep → RCWA 최적
-- **마이크로렌즈 (Microlens)**: staircase 근사 필요하나, 차수 15+ 에서 충분한 정확도
-- **금속 격자 (Metal grid) / DTI**: 급격한 유전율 불연속 → Li 역규칙 필수, 고차수 필요
-- **파라미터 sweep**: 단일 파장 계산이 빠르므로 두께/피치/각도 sweep에 유리
+- **Color filter**: Periodic array, planar layers → optimal for RCWA
+- **BARL (Bottom Anti-Reflection Layer)**: Thin-film stack optimization, wavelength sweep → optimal for RCWA
+- **Microlens**: Staircase approximation required, but sufficient accuracy at order 15+
+- **Metal grid / DTI**: Sharp permittivity discontinuities → Li inverse rule essential, high order required
+- **Parameter sweep**: Single-wavelength computation is fast, advantageous for thickness/pitch/angle sweeps
 
 ---
 
 ## 3. FDTD (Finite-Difference Time-Domain)
 
-### 3.1 수학적 기초 (Mathematical Foundation)
+### 3.1 Mathematical Foundation
 
-FDTD(유한차분 시간영역법)는 맥스웰 방정식의 회전(curl) 방정식을 시간과 공간에서 직접 이산화하는 방법이다.
+FDTD directly discretizes the curl equations of Maxwell's equations in both time and space.
 
-**이 격자 (Yee lattice):**
+**Yee lattice:**
 
-Kane Yee (1966)가 제안한 엇갈린 격자(staggered grid)에서 전기장($\mathbf{E}$)과 자기장($\mathbf{H}$)의 6개 성분을 공간적으로 반 격자점만큼 엇갈려 배치한다. 이 배치는 2차 정확도의 중심차분을 자연스럽게 보장한다.
+The staggered grid proposed by Kane Yee (1966) places the six components of the electric field ($\mathbf{E}$) and magnetic field ($\mathbf{H}$) offset by half a grid point in space. This arrangement naturally ensures second-order accurate central differences.
 
-**갱신 방정식 (Leapfrog time-stepping):**
+**Update equations (Leapfrog time-stepping):**
 
-전기장과 자기장을 교대로 반 시간 스텝씩 갱신한다:
+The electric and magnetic fields are updated alternately in half time steps:
 
 $$H_x^{n+1/2} = H_x^{n-1/2} + \frac{\Delta t}{\mu_0} \left( \frac{E_y^n|_{k+1} - E_y^n|_k}{\Delta z} - \frac{E_z^n|_{j+1} - E_z^n|_j}{\Delta y} \right)$$
 
 $$E_x^{n+1} = E_x^n + \frac{\Delta t}{\varepsilon_0 \varepsilon_r} \left( \frac{H_z^{n+1/2}|_{j} - H_z^{n+1/2}|_{j-1}}{\Delta y} - \frac{H_y^{n+1/2}|_{k} - H_y^{n+1/2}|_{k-1}}{\Delta z} \right)$$
 
-**쿠랑 안정성 조건 (Courant-Friedrichs-Lewy condition):**
+**Courant-Friedrichs-Lewy (CFL) stability condition:**
 
-시간 스텝은 다음 조건을 만족해야 수치적으로 안정적이다:
+The time step must satisfy the following condition for numerical stability:
 
 $$\Delta t \leq \frac{1}{c \sqrt{\frac{1}{\Delta x^2} + \frac{1}{\Delta y^2} + \frac{1}{\Delta z^2}}}$$
 
-### 3.2 강점 (Strengths)
+### 3.2 Strengths
 
-| 강점 | 설명 |
+| Strength | Description |
 |------|------|
-| **광대역 응답** | 단일 시뮬레이션으로 전체 가시광 스펙트럼 획득 (Fourier transform of impulse response) |
-| **임의 기하 구조** | 격자 해상도 내에서 임의의 3D 구조 표현 가능. 주기성 불필요 |
-| **시간 영역 정보** | 펄스 전파, 과도 응답(transient response)을 직접 관찰 가능 |
-| **직관적 구현** | 갱신 방정식이 단순한 산술 연산 → 병렬화 및 GPU 가속 용이 |
-| **비선형 재료** | 시간 영역에서 비선형 응답을 자연스럽게 포함 가능 |
+| **Broadband response** | Entire visible spectrum obtained from a single simulation (Fourier transform of impulse response) |
+| **Arbitrary geometry** | Any 3D structure can be represented within grid resolution. No periodicity required |
+| **Time-domain information** | Pulse propagation and transient response can be directly observed |
+| **Intuitive implementation** | Update equations are simple arithmetic operations → easy parallelization and GPU acceleration |
+| **Nonlinear materials** | Nonlinear response can be naturally included in the time domain |
 
-### 3.3 약점 (Weaknesses)
+### 3.3 Weaknesses
 
-| 약점 | 설명 |
+| Weakness | Description |
 |------|------|
-| **CFL 제약** | 미세 격자 → 작은 시간 스텝 → 긴 시뮬레이션 시간. 박막에서 치명적 |
-| **메모리** | 3D 격자 전체를 메모리에 유지. 5 nm 격자, 1 um 픽셀 → $200^3 \approx 8 \times 10^6$ 셀 × 6 성분 |
-| **분산 재료** | 금속, 반도체의 주파수 의존 유전율을 보조 미분방정식(ADE)으로 처리해야 함 |
-| **박막 비효율** | 수 nm 두께의 BARL도 전체 격자로 분해해야 함 (RCWA는 정확 해석) |
-| **수치 분산** | 격자 해상도가 불충분하면 위상 속도에 인공적 분산 발생 ($\Delta x \leq \lambda / 20$ 권장) |
+| **CFL constraint** | Fine grid → small time step → long simulation time. Critical for thin films |
+| **Memory** | Entire 3D grid must be kept in memory. 5 nm grid, 1 um pixel → $200^3 \approx 8 \times 10^6$ cells x 6 components |
+| **Dispersive materials** | Frequency-dependent permittivity of metals and semiconductors must be handled via auxiliary differential equations (ADE) |
+| **Thin-film inefficiency** | Even BARL layers of a few nm thickness must be resolved by the full grid (RCWA handles them analytically) |
+| **Numerical dispersion** | Insufficient grid resolution causes artificial dispersion in phase velocity ($\Delta x \leq \lambda / 20$ recommended) |
 
-### 3.4 핵심 파라미터 (Key Parameters)
+### 3.4 Key Parameters
 
-| 파라미터 | 역할 | CIS 시뮬레이션 권장값 |
+| Parameter | Role | Recommended for CIS Simulation |
 |----------|------|---------------------|
-| **격자 간격** ($\Delta x, \Delta y, \Delta z$) | 공간 해상도. $\lambda/(20n)$ 이하 권장 | 5--10 nm (가시광, Si) |
-| **시간 스텝** ($\Delta t$) | CFL로 자동 결정 | ~0.01 fs (5 nm 격자) |
-| **PML 층수** | 완전 정합층(Perfectly Matched Layer)의 두께 | 8--16 층 |
-| **총 시간 스텝** | 정상 상태 도달까지 | 수천--수만 스텝 |
-| **소스 유형** | 광대역 펄스 또는 연속파(CW) | Gaussian pulse (380--780 nm) |
+| **Grid spacing** ($\Delta x, \Delta y, \Delta z$) | Spatial resolution. $\lambda/(20n)$ or below recommended | 5--10 nm (visible, Si) |
+| **Time step** ($\Delta t$) | Automatically determined by CFL | ~0.01 fs (5 nm grid) |
+| **PML layer count** | Thickness of Perfectly Matched Layer | 8--16 layers |
+| **Total time steps** | Until steady state is reached | Thousands to tens of thousands of steps |
+| **Source type** | Broadband pulse or continuous wave (CW) | Gaussian pulse (380--780 nm) |
 
-**PML (Perfectly Matched Layer):** Berenger (1994)가 제안한 PML은 계산 영역 경계에서 나가는 파동을 무반사 흡수하는 인공 층이다. UPML과 CPML이 현재 주류 구현이다.
+**PML (Perfectly Matched Layer):** The PML proposed by Berenger (1994) is an artificial layer that absorbs outgoing waves at the computational domain boundary without reflection. UPML and CPML are the current mainstream implementations.
 
-### 3.5 CIS 적용 시나리오 (When to Use for CIS)
+### 3.5 CIS Application Scenarios (When to Use for CIS)
 
-- **복잡한 3D 구조**: 비대칭 DTI, 불규칙한 금속 배선 → FDTD 유리
-- **RCWA 결과 검증**: 선택된 파장에서 FDTD spot-check로 교차 검증
-- **광대역 QE**: 전체 가시광 대역을 단일 실행으로 획득 시
-- **시간 영역 분석**: 마이크로렌즈를 통과하는 빛의 전파 과정 시각화
-- **비주기 구조**: 단일 픽셀 분석, 에지 효과 연구
+- **Complex 3D structures**: Asymmetric DTI, irregular metal interconnects → FDTD advantageous
+- **RCWA result verification**: Cross-validation via FDTD spot-check at selected wavelengths
+- **Broadband QE**: When the entire visible band needs to be obtained in a single run
+- **Time-domain analysis**: Visualization of light propagation through microlenses
+- **Non-periodic structures**: Single-pixel analysis, edge effect studies
 
 ---
 
 ## 4. FEM (Finite Element Method)
 
-유한요소법(FEM)은 맥스웰 방정식의 약형식(weak form)을 사면체/육면체 메시 상에서 푼다. 벡터 파동 방정식의 변분 공식화:
+The Finite Element Method (FEM) solves the weak form of Maxwell's equations on tetrahedral/hexahedral meshes. The variational formulation of the vector wave equation:
 
 $$\int_\Omega \left[ \frac{1}{\mu_r} (\nabla \times \mathbf{E}) \cdot (\nabla \times \mathbf{F}) - k_0^2 \varepsilon_r \mathbf{E} \cdot \mathbf{F} \right] d\Omega = -ik_0 Z_0 \int_\Omega \mathbf{J} \cdot \mathbf{F} \, d\Omega$$
 
-기하 구조를 사면체로 분할하며, 곡면 근처에서 적응 세분화(adaptive mesh refinement)가 가능한 것이 핵심 장점이다.
+The geometry is subdivided into tetrahedra, and the key advantage is the ability to perform adaptive mesh refinement near curved surfaces.
 
-### 강점 및 약점
+### Strengths and Weaknesses
 
-| 강점 | 약점 |
+| Strengths | Weaknesses |
 |------|------|
-| 곡면 기하의 정확한 표현 (곡선 요소) | 대규모 희소 행렬 조립 및 풀이 비용 |
-| 적응적 메시 세분화 (AMR) | 메시 생성 자체가 복잡 (특히 3D) |
-| 다중물리 결합 용이 (열, 구조) | 주파수 영역 → 파장별 반복 필요 |
-| 비균일/이방성 재료 처리 | 오픈소스 광학 FEM 솔버 제한적 |
+| Accurate representation of curved geometry (curvilinear elements) | Cost of assembling and solving large sparse matrices |
+| Adaptive mesh refinement (AMR) | Mesh generation itself is complex (especially in 3D) |
+| Easy multiphysics coupling (thermal, structural) | Frequency domain → repeated computation per wavelength required |
+| Non-uniform/anisotropic material handling | Limited open-source optical FEM solvers |
 
-COMPASS는 현재 FEM을 포함하지 않는다. CIS 픽셀의 주기성에는 RCWA가 더 효율적이며, 상용 FEM(COMSOL)은 라이선스 비용이 높다. 단, 마이크로렌즈 곡면이나 열-광학 다중물리 시뮬레이션에서는 FEM이 유일한 선택지가 될 수 있다.
+COMPASS does not currently include FEM. For the periodicity of CIS pixels, RCWA is more efficient, and commercial FEM (COMSOL) has high licensing costs. However, FEM may be the only option for microlens curved surfaces or thermo-optical multiphysics simulations.
 
 ---
 
 ## 5. BEM (Boundary Element Method)
 
-경계요소법(BEM)은 체적 전체가 아닌 경계면(surface)에서만 미지수를 배치한다. 자유 공간 그린 함수 $G(\mathbf{r}, \mathbf{r}') = e^{ik|\mathbf{r}-\mathbf{r}'|} / (4\pi|\mathbf{r}-\mathbf{r}'|)$를 이용한 표면 적분 방정식으로 3D 체적 문제를 2D 표면 문제로 축소한다.
+The Boundary Element Method (BEM) places unknowns only on boundary surfaces rather than throughout the volume. Using the free-space Green's function $G(\mathbf{r}, \mathbf{r}') = e^{ik|\mathbf{r}-\mathbf{r}'|} / (4\pi|\mathbf{r}-\mathbf{r}'|)$, surface integral equations reduce a 3D volume problem to a 2D surface problem.
 
-### 강점 및 약점
+### Strengths and Weaknesses
 
-| 강점 | 약점 |
+| Strengths | Weaknesses |
 |------|------|
-| 차원 축소: 3D 문제를 2D 표면 문제로 | 밀집 행렬(dense matrix) → $O(N^2)$ 메모리, $O(N^3)$ 풀이 |
-| 개방 경계(open boundary) 자연스럽게 처리 | 비균일/비선형 재료 처리 어려움 |
-| 원거리장(far-field) 계산에 효율적 | 적층 구조(layered media)에는 특수 그린 함수 필요 |
-| 산란 문제에 최적화 | 다층 박막 스택에는 비효율적 |
+| Dimension reduction: 3D problem to 2D surface problem | Dense matrix → $O(N^2)$ memory, $O(N^3)$ solve |
+| Open boundary naturally handled | Difficulty with non-uniform/nonlinear materials |
+| Efficient for far-field calculations | Specialized Green's function needed for layered media |
+| Optimized for scattering problems | Inefficient for multilayer thin-film stacks |
 
-BEM은 CIS 픽셀 시뮬레이션에 일반적으로 사용되지 않는다. 이미지 센서는 다층 구조이며 체적 전체에서의 전기장 분포가 중요하기 때문이다. 개별 마이크로렌즈의 산란 특성이나 금속 나노입자의 플라즈몬 응답 연구에는 유용할 수 있다.
+BEM is not commonly used for CIS pixel simulation. Image sensors are multilayer structures where the electric field distribution throughout the entire volume is important. It may be useful for studying scattering characteristics of individual microlenses or plasmonic responses of metal nanoparticles.
 
 ---
 
 ## 6. TMM (Transfer Matrix Method)
 
-### 6.1 수학적 기초 (Mathematical Foundation)
+### 6.1 Mathematical Foundation
 
-전달 행렬법(TMM)은 평면 다층 박막에서의 전자기파 전파를 행렬 곱으로 기술하는 해석적 방법이다.
+The Transfer Matrix Method (TMM) is an analytical method that describes electromagnetic wave propagation in planar multilayer thin films as matrix products.
 
-**2x2 전달 행렬 (등방성, 수직 입사):**
+**2x2 transfer matrix (isotropic, normal incidence):**
 
-각 층 $j$의 전달 행렬은:
+The transfer matrix for each layer $j$ is:
 
 $$M_j = \begin{pmatrix} \cos\delta_j & -\frac{i}{n_j}\sin\delta_j \\ -in_j\sin\delta_j & \cos\delta_j \end{pmatrix}$$
 
-여기서 위상 두께(phase thickness) $\delta_j = \frac{2\pi}{\lambda} n_j d_j \cos\theta_j$이다.
+where the phase thickness $\delta_j = \frac{2\pi}{\lambda} n_j d_j \cos\theta_j$.
 
-전체 스택의 전달 행렬은 단순 곱이다:
+The transfer matrix for the entire stack is a simple product:
 
 $$M_\text{total} = M_1 \cdot M_2 \cdots M_L$$
 
-**4x4 베레만 행렬 (Berreman matrix, 이방성):**
+**4x4 Berreman matrix (anisotropic):**
 
-이방성 재료를 포함하는 경우, Berreman (1972)의 4x4 공식이 필요하다:
+For cases involving anisotropic materials, Berreman's (1972) 4x4 formulation is required:
 
 $$\frac{d}{dz} \boldsymbol{\Psi}(z) = \frac{i\omega}{c} \mathbf{D}(z) \boldsymbol{\Psi}(z)$$
 
-여기서 $\boldsymbol{\Psi} = (E_x, H_y, E_y, -H_x)^T$이며, $\mathbf{D}$는 유전율 텐서로부터 구성되는 4x4 행렬이다.
+where $\boldsymbol{\Psi} = (E_x, H_y, E_y, -H_x)^T$ and $\mathbf{D}$ is a 4x4 matrix constructed from the permittivity tensor.
 
-### 6.2 강점 및 약점
+### 6.2 Strengths and Weaknesses
 
-| 강점 | 약점 |
+| Strengths | Weaknesses |
 |------|------|
-| **극히 빠름**: 행렬 곱 몇 번으로 완료 | **1D 한정**: 수평 방향 패턴 처리 불가 |
-| 해석적 정확도: 수치 이산화 오차 없음 | 두꺼운 흡수층에서 수치 불안정 가능 |
-| 반사율/투과율/흡수율 즉시 산출 | 회절, 산란 현상 포착 불가 |
-| 다층 박막 설계의 산업 표준 | 마이크로렌즈, 금속 격자 등 2D/3D 패턴 불가 |
+| **Extremely fast**: Completed in just a few matrix multiplications | **Limited to 1D**: Cannot handle lateral patterns |
+| Analytical accuracy: No numerical discretization error | Possible numerical instability in thick absorbing layers |
+| Immediate calculation of reflectance/transmittance/absorptance | Cannot capture diffraction or scattering phenomena |
+| Industry standard for multilayer thin-film design | Cannot handle 2D/3D patterns such as microlenses and metal grids |
 
-### 6.3 CIS 적용 시나리오 (When to Use for CIS)
+### 6.3 CIS Application Scenarios (When to Use for CIS)
 
-TMM은 COMPASS에서 직접 솔버로 사용되지 않지만, 다음 용도로 극히 유용하다:
+TMM is not used as a direct solver in COMPASS, but is extremely useful for the following purposes:
 
-- **초기 스택 설계**: BARL, ARC(Anti-Reflection Coating) 두께 최적화의 출발점
-- **재료 스크리닝**: 컬러 필터 재료의 흡수/투과 특성 빠른 평가
-- **해석적 검증**: 균일 층만으로 구성된 구조에서 RCWA 결과의 레퍼런스
-- **1D 수렴 확인**: RCWA의 $N=0$ (0차만) 결과가 TMM과 일치해야 함
+- **Initial stack design**: Starting point for BARL and ARC (Anti-Reflection Coating) thickness optimization
+- **Material screening**: Rapid evaluation of absorption/transmission characteristics of color filter materials
+- **Analytical verification**: Reference for RCWA results in structures composed only of uniform layers
+- **1D convergence check**: RCWA results at $N=0$ (zeroth order only) should match TMM
 
-COMPASS의 `compass.materials.database.MaterialDB`는 TMM 방식의 박막 반사율 계산을 내부적으로 활용한다.
+COMPASS's `compass.materials.database.MaterialDB` internally uses TMM-based thin-film reflectance calculations.
 
 ---
 
-## 7. 레이 트레이싱 (Ray Tracing)
+## 7. Ray Tracing
 
-### 7.1 기하광학 근사 (Geometric Optics Approximation)
+### 7.1 Geometric Optics Approximation
 
-레이 트레이싱은 빛을 광선(ray)으로 취급하여 스넬의 법칙(Snell's law)과 프레넬 계수(Fresnel coefficients)로 전파를 추적한다. 맥스웰 방정식의 단파장 극한($\lambda \to 0$)에 해당한다.
+Ray tracing treats light as rays and traces propagation using Snell's law and Fresnel coefficients. It corresponds to the short-wavelength limit ($\lambda \to 0$) of Maxwell's equations.
 
-**추적 방정식:**
+**Ray equation:**
 
 $$\frac{d}{ds}\left(n \frac{d\mathbf{r}}{ds}\right) = \nabla n$$
 
-여기서 $s$는 광선 경로를 따른 호 길이(arc length), $n(\mathbf{r})$은 굴절률 분포이다.
+where $s$ is the arc length along the ray path, and $n(\mathbf{r})$ is the refractive index distribution.
 
-### 7.2 강점 및 약점
+### 7.2 Strengths and Weaknesses
 
-| 강점 | 약점 |
+| Strengths | Weaknesses |
 |------|------|
-| **극히 빠름**: 수백만 광선을 초 단위로 추적 | 파장 스케일 구조에서 회절 무시 → 치명적 오류 |
-| 직관적 물리: 광선 경로 시각화 용이 | 간섭 현상 포착 불가 (박막 효과 등) |
-| 렌즈 시스템 설계의 표준 (Zemax, Code V) | 근접장(near-field) 결합 무시 |
-| CRA(Chief Ray Angle) 분석에 적합 | 픽셀 피치 < 수 $\lambda$ 에서 급격히 부정확 |
+| **Extremely fast**: Millions of rays traced in seconds | Ignoring diffraction at wavelength-scale structures → critical errors |
+| Intuitive physics: Easy visualization of ray paths | Cannot capture interference phenomena (thin-film effects, etc.) |
+| Standard for lens system design (Zemax, Code V) | Ignores near-field coupling |
+| Suitable for CRA (Chief Ray Angle) analysis | Rapidly inaccurate when pixel pitch < several $\lambda$ |
 
-### 7.3 CIS에서의 위치
+### 7.3 Role in CIS
 
-현대 CIS 설계에서 레이 트레이싱은 파동 광학(wave optics)의 **전처리(pre-processing)** 단계로 주로 사용된다:
+In modern CIS design, ray tracing is primarily used as a **pre-processing** stage for wave optics:
 
-1. **카메라 렌즈 → 센서 면**: Zemax/Code V에서 CRA, 조사 분포(irradiance distribution) 계산
-2. **핸드오프**: 센서 면에서의 입사 조건(각도, 진폭)을 추출
-3. **파동 광학 시뮬레이션**: COMPASS의 RCWA/FDTD에서 해당 입사 조건으로 픽셀 시뮬레이션
+1. **Camera lens → sensor plane**: Compute CRA and irradiance distribution in Zemax/Code V
+2. **Handoff**: Extract incidence conditions (angle, amplitude) at the sensor plane
+3. **Wave optics simulation**: Pixel simulation with the corresponding incidence conditions in COMPASS's RCWA/FDTD
 
-COMPASS의 `compass.sources.ray_file_reader`와 `compass.sources.cone_illumination` 모듈이 이 핸드오프를 지원한다.
+COMPASS's `compass.sources.ray_file_reader` and `compass.sources.cone_illumination` modules support this handoff.
 
 ---
 
-## 8. 하이브리드 방법 (Hybrid Methods)
+## 8. Hybrid Methods
 
-단일 방법으로는 이미지 센서 시스템의 모든 스케일을 효율적으로 다룰 수 없다. 하이브리드 방법은 각 스케일에 최적인 방법을 조합한다.
+No single method can efficiently handle all scales of an image sensor system. Hybrid methods combine the optimal method for each scale.
 
-### 8.1 레이 트레이싱 → RCWA 핸드오프 (Zemax → COMPASS)
+### 8.1 Ray Tracing → RCWA Handoff (Zemax → COMPASS)
 
 ```
-카메라 렌즈 (mm 스케일)     →  Zemax (Ray Tracing)
+Camera lens (mm scale)          →  Zemax (Ray Tracing)
     ↓ CRA, irradiance
-픽셀 스택 (um 스케일)       →  COMPASS (RCWA/FDTD)
+Pixel stack (um scale)          →  COMPASS (RCWA/FDTD)
     ↓ QE, crosstalk
-센서 성능 (pixel array)     →  시스템 분석
+Sensor performance (pixel array) →  System analysis
 ```
 
-핵심 인터페이스: 입사각($\theta$, $\phi$), 편광 상태, 파워 분포.
+Key interface: angle of incidence ($\theta$, $\phi$), polarization state, power distribution.
 
-### 8.2 FEM + 산란 행렬 (EMUstack 접근법)
+### 8.2 FEM + Scattering Matrix (EMUstack Approach)
 
-EMUstack은 각 층을 2D FEM으로 풀고 층간 연결을 산란 행렬로 처리한다. FEM의 기하 유연성과 S-matrix의 수치 안정성을 결합하지만, 메시 생성의 복잡성은 여전히 존재한다.
+EMUstack solves each layer with 2D FEM and handles inter-layer coupling via scattering matrices. It combines the geometric flexibility of FEM with the numerical stability of S-matrices, but the complexity of mesh generation remains.
 
-### 8.3 다중 스케일 접근 (Multi-scale Approaches)
+### 8.3 Multi-scale Approaches
 
-| 스케일 | 방법 | 대상 |
+| Scale | Method | Target |
 |--------|------|------|
-| 수 mm | Ray Tracing | 카메라 렌즈, 마이크로렌즈 어레이 |
-| 수 um | RCWA / FDTD | 컬러 필터, BARL, DTI |
-| 수 nm | FEM / BEM | 플라즈모닉 나노구조, 표면 거칠기 |
+| Several mm | Ray Tracing | Camera lens, microlens array |
+| Several um | RCWA / FDTD | Color filter, BARL, DTI |
+| Several nm | FEM / BEM | Plasmonic nanostructures, surface roughness |
 
-미래 방향으로는 신경망(neural network) 기반 대리 모델(surrogate model)이 주목받고 있다. RCWA/FDTD의 학습 데이터로 훈련된 신경망이 실시간 예측을 제공하며, 정밀도가 필요한 지점에서만 정밀 솔버를 호출한다.
+As a future direction, neural network-based surrogate models are gaining attention. Neural networks trained on RCWA/FDTD data provide real-time predictions, and precise solvers are called only at points where high accuracy is needed.
 
 ---
 
-## 9. 방법론별 성능 비교표 (Comprehensive Comparison)
+## 9. Comprehensive Performance Comparison
 
-### 9.1 정성적 비교 (Qualitative Comparison)
+### 9.1 Qualitative Comparison
 
-| 특성 | RCWA | FDTD | FEM | BEM | TMM | Ray Tracing |
+| Characteristic | RCWA | FDTD | FEM | BEM | TMM | Ray Tracing |
 |------|------|------|-----|-----|-----|-------------|
-| **정확도** | 높음 (주기) | 높음 | 매우 높음 | 높음 (표면) | 정확 (1D) | 낮음 (파동 효과 무시) |
-| **속도 (단일 파장)** | 매우 빠름 | 느림 | 느림 | 중간 | 극히 빠름 | 극히 빠름 |
-| **속도 (광대역)** | 중간 (반복) | 빠름 (단일 실행) | 느림 (반복) | 느림 (반복) | 극히 빠름 | 극히 빠름 |
-| **메모리** | 중간 | 높음 | 높음 | 높음 (밀집) | 극히 낮음 | 낮음 |
-| **기하 유연성** | 낮음 (주기만) | 높음 | 매우 높음 | 중간 | 없음 (1D만) | 높음 (매크로) |
-| **재료 유연성** | 높음 | 중간 | 매우 높음 | 낮음 | 높음 | 중간 |
-| **자동미분 (AD)** | 가능 | 가능 | 제한적 | 어려움 | 가능 | 어려움 |
-| **GPU 가속** | 매우 적합 | 적합 | 제한적 | 제한적 | 불필요 | 적합 |
+| **Accuracy** | High (periodic) | High | Very high | High (surface) | Exact (1D) | Low (ignores wave effects) |
+| **Speed (single wavelength)** | Very fast | Slow | Slow | Medium | Extremely fast | Extremely fast |
+| **Speed (broadband)** | Medium (repeated) | Fast (single run) | Slow (repeated) | Slow (repeated) | Extremely fast | Extremely fast |
+| **Memory** | Medium | High | High | High (dense) | Extremely low | Low |
+| **Geometric flexibility** | Low (periodic only) | High | Very high | Medium | None (1D only) | High (macro) |
+| **Material flexibility** | High | Medium | Very high | Low | High | Medium |
+| **Automatic differentiation (AD)** | Possible | Possible | Limited | Difficult | Possible | Difficult |
+| **GPU acceleration** | Very suitable | Suitable | Limited | Limited | Unnecessary | Suitable |
 
-### 9.2 계산 복잡도 비교 (Computational Scaling)
+### 9.2 Computational Scaling
 
-| 방법 | 공간 자유도 | 시간 복잡도 | 메모리 복잡도 | 병목 |
+| Method | Spatial DOF | Time Complexity | Memory Complexity | Bottleneck |
 |------|-----------|-----------|-------------|------|
-| **RCWA** | $M = (2N+1)^2$ | $O(M^3)$ per layer | $O(M^2)$ | 고유값 분해 |
-| **FDTD** | $N_x N_y N_z$ | $O(N_\text{total} \cdot T)$ | $O(N_\text{total})$ | 시간 스텝 수 $T$ |
-| **FEM** | $N_\text{DOF}$ (메시 노드) | $O(N_\text{DOF}^{1.5})$ sparse | $O(N_\text{DOF})$ sparse | 행렬 풀이 |
-| **BEM** | $N_\text{surface}$ | $O(N_\text{surface}^3)$ | $O(N_\text{surface}^2)$ | 밀집 행렬 |
-| **TMM** | $L$ (층 수) | $O(L)$ | $O(1)$ | 없음 |
-| **Ray Tracing** | $N_\text{rays}$ | $O(N_\text{rays} \cdot S)$ | $O(N_\text{rays})$ | 광선 수 $N_\text{rays}$, 표면 수 $S$ |
+| **RCWA** | $M = (2N+1)^2$ | $O(M^3)$ per layer | $O(M^2)$ | Eigenvalue decomposition |
+| **FDTD** | $N_x N_y N_z$ | $O(N_\text{total} \cdot T)$ | $O(N_\text{total})$ | Number of time steps $T$ |
+| **FEM** | $N_\text{DOF}$ (mesh nodes) | $O(N_\text{DOF}^{1.5})$ sparse | $O(N_\text{DOF})$ sparse | Matrix solve |
+| **BEM** | $N_\text{surface}$ | $O(N_\text{surface}^3)$ | $O(N_\text{surface}^2)$ | Dense matrix |
+| **TMM** | $L$ (number of layers) | $O(L)$ | $O(1)$ | None |
+| **Ray Tracing** | $N_\text{rays}$ | $O(N_\text{rays} \cdot S)$ | $O(N_\text{rays})$ | Number of rays $N_\text{rays}$, number of surfaces $S$ |
 
-### 9.3 대표 실행 시간 (Typical Problem Sizes)
+### 9.3 Typical Execution Times
 
-1 um 피치 BSI 픽셀, 2x2 Bayer 단위셀, 550 nm 기준:
+1 um pitch BSI pixel, 2x2 Bayer unit cell, at 550 nm:
 
-| 방법 | 파라미터 설정 | 자유도 | 단일 파장 시간 | 41-파장 sweep |
+| Method | Parameter Settings | DOF | Single Wavelength Time | 41-Wavelength Sweep |
 |------|-------------|--------|-------------|--------------|
 | **RCWA** (GPU) | $N = 9$, 10 layers | ~7,000 | **0.3 s** | 12 s |
 | **RCWA** (GPU) | $N = 15$, 10 layers | ~19,000 | 2 s | 80 s |
-| **FDTD** (GPU) | $\Delta x = 5$ nm, PML 12 | ~8M cells | 45 s | **45 s** (광대역) |
+| **FDTD** (GPU) | $\Delta x = 5$ nm, PML 12 | ~8M cells | 45 s | **45 s** (broadband) |
 | **FDTD** (CPU) | $\Delta x = 10$ nm, PML 8 | ~1M cells | 300 s | 300 s |
-| **FEM** | 적응 메시, $\lambda/10$ | ~500K DOF | 60 s | 2,460 s |
+| **FEM** | Adaptive mesh, $\lambda/10$ | ~500K DOF | 60 s | 2,460 s |
 | **TMM** | 10 layers | 10 | **< 0.001 s** | 0.04 s |
 
-> **주의**: 위 수치는 대표적 추정값이며, 하드웨어(GPU: NVIDIA A100, CPU: 8-core)와 구현에 따라 크게 달라질 수 있다.
+> **Note**: The above figures are representative estimates and can vary significantly depending on hardware (GPU: NVIDIA A100, CPU: 8-core) and implementation.
 
-### 9.4 미분가능 시뮬레이션 지원 (Differentiable Simulation Support)
+### 9.4 Differentiable Simulation Support
 
-역설계(inverse design)와 토폴로지 최적화를 위한 자동미분(AD) 지원 현황:
+Automatic differentiation (AD) support for inverse design and topology optimization:
 
-| 방법 | AD 프레임워크 | 그래디언트 방식 | 대표 솔버 |
+| Method | AD Framework | Gradient Method | Representative Solvers |
 |------|-------------|---------------|----------|
 | **RCWA** | PyTorch, JAX | Forward/Reverse AD | meent, fmmax, torcwa |
 | **FDTD** | PyTorch, JAX | Reverse AD, Adjoint | FDTDX, flaport, fdtdz |
-| **FEM** | 제한적 | Adjoint method | EMOPT (FDFD) |
-| **TMM** | 용이 | Analytical gradient | 자체 구현 |
+| **FEM** | Limited | Adjoint method | EMOPT (FDFD) |
+| **TMM** | Easy | Analytical gradient | Custom implementation |
 
 <SolverComparisonChart />
 
 ---
 
-## 10. COMPASS에서의 적용 (Application in COMPASS)
+## 10. Application in COMPASS
 
-### 10.1 RCWA + FDTD 선택 이유
+### 10.1 Rationale for RCWA + FDTD Selection
 
-| 기준 | RCWA | FDTD | 선택 이유 |
+| Criterion | RCWA | FDTD | Rationale |
 |------|------|------|----------|
-| CIS 픽셀의 주기성 | 완벽 적합 | 적합 | 픽셀 배열 = 주기 구조 |
-| 박막 스택 처리 | 정확 해석 | 격자 이산화 | BARL/ARC 설계에 RCWA 우위 |
-| 교차 검증 | - | - | 서로 다른 수학적 접근법으로 독립 검증 |
-| GPU 가속 | 매우 적합 | 적합 | PyTorch/JAX 기반 오픈소스 활용 |
-| 라이선스 | MIT 가능 | MIT 가능 | meent(MIT), flaport(MIT) |
+| CIS pixel periodicity | Perfect fit | Suitable | Pixel array = periodic structure |
+| Thin-film stack handling | Analytical treatment | Grid discretization | RCWA advantage for BARL/ARC design |
+| Cross-validation | - | - | Independent verification via different mathematical approaches |
+| GPU acceleration | Very suitable | Suitable | Leveraging PyTorch/JAX-based open source |
+| License | MIT available | MIT available | meent (MIT), flaport (MIT) |
 
-### 10.2 교차 검증 철학 (Cross-Validation Philosophy)
+### 10.2 Cross-Validation Philosophy
 
-동일한 물리 법칙을 서로 다른 수학적 접근으로 풀기 때문에, 두 솔버의 일치는 결과 신뢰도를 크게 높인다. 불일치 시 점검 사항:
+Because the same physical laws are solved with different mathematical approaches, agreement between the two solvers significantly increases result confidence. Checklist when discrepancies arise:
 
-1. **RCWA 수렴 부족** → 푸리에 차수 증가
-2. **FDTD 해상도 부족** → 격자 미세화
-3. **모델링 차이** → staircase 근사, 재료 모델, 경계 조건 검토
-4. **에너지 보존 위반** ($R + T + A \neq 1$) → 구현 버그
+1. **Insufficient RCWA convergence** → Increase Fourier order
+2. **Insufficient FDTD resolution** → Refine grid
+3. **Modeling differences** → Review staircase approximation, material models, boundary conditions
+4. **Energy conservation violation** ($R + T + A \neq 1$) → Implementation bug
 
-`SolverComparison` 클래스가 QE 차이, 상대 오차, 에너지 보존 검증을 자동화한다.
+The `SolverComparison` class automates QE difference, relative error, and energy conservation verification.
 
-### 10.3 솔버 선택 가이드 (Decision Guide)
+### 10.3 Solver Selection Guide (Decision Guide)
 
 ```
-시뮬레이션 시작
+Start simulation
     │
-    ├─ 구조가 주기적인가?
-    │   ├─ YES → 박막만 있는가?
-    │   │         ├─ YES → TMM (초기 설계) → RCWA (정밀)
-    │   │         └─ NO  → RCWA (기본) + FDTD (검증)
+    ├─ Is the structure periodic?
+    │   ├─ YES → Only thin films?
+    │   │         ├─ YES → TMM (initial design) → RCWA (precise)
+    │   │         └─ NO  → RCWA (default) + FDTD (verification)
     │   └─ NO  → FDTD
     │
-    ├─ 광대역이 필요한가?
-    │   ├─ YES, 50+ 파장 → FDTD (단일 실행이 효율적)
-    │   └─ NO, < 50 파장 → RCWA (파장별 반복이 더 빠름)
+    ├─ Is broadband needed?
+    │   ├─ YES, 50+ wavelengths → FDTD (single run is more efficient)
+    │   └─ NO, < 50 wavelengths → RCWA (per-wavelength iteration is faster)
     │
-    └─ 시간 영역 정보가 필요한가?
+    └─ Is time-domain information needed?
         ├─ YES → FDTD
-        └─ NO  → RCWA (기본 선택)
+        └─ NO  → RCWA (default choice)
 ```
 
-### 10.4 미래 확장 (Future Directions)
+### 10.4 Future Directions
 
-COMPASS의 솔버 확장 로드맵:
+COMPASS solver expansion roadmap:
 
-| 우선순위 | 솔버/방법 | 목적 |
+| Priority | Solver/Method | Purpose |
 |---------|----------|------|
-| **높음** | fmmax (RCWA) 통합 | 벡터 FMM으로 수렴성 향상, JAX 배칭 |
-| **높음** | FDTDX (FDTD) 통합 | 멀티GPU 3D, 대규모 역설계 |
-| **중간** | TMM 모듈 내장 | 빠른 스택 사전 설계, 1D 레퍼런스 |
-| **중간** | 신경망 대리 모델 | 실시간 파라미터 최적화 |
-| **낮음** | FEM 통합 (EMUstack) | 플라즈모닉/곡면 특수 연구 |
+| **High** | fmmax (RCWA) integration | Improved convergence via vector FMM, JAX batching |
+| **High** | FDTDX (FDTD) integration | Multi-GPU 3D, large-scale inverse design |
+| **Medium** | Built-in TMM module | Fast stack pre-design, 1D reference |
+| **Medium** | Neural network surrogate model | Real-time parameter optimization |
+| **Low** | FEM integration (EMUstack) | Plasmonic/curved surface specialized research |
 
 ---
 
-## 참고 문헌 (References)
+## References
 
-### 핵심 논문
+### Key Papers
 
 - K. S. Yee, "Numerical solution of initial boundary value problems involving Maxwell's equations in isotropic media," *IEEE Trans. Antennas Propag.*, vol. 14, no. 3, pp. 302-307, 1966.
 - M. G. Moharam and T. K. Gaylord, "Rigorous coupled-wave analysis of planar-grating diffraction," *J. Opt. Soc. Am.*, vol. 71, no. 7, pp. 811-818, 1981.
@@ -442,7 +442,7 @@ COMPASS의 솔버 확장 로드맵:
 - J.-P. Berenger, "A perfectly matched layer for the absorption of electromagnetic waves," *J. Comput. Phys.*, vol. 114, no. 2, pp. 185-200, 1994.
 - D. W. Berreman, "Optics in stratified and anisotropic media: 4x4-matrix formulation," *J. Opt. Soc. Am.*, vol. 62, no. 4, pp. 502-510, 1972.
 
-### 웹 자료
+### Web Resources
 
 - [Planopsim: RCWA vs FDTD Benchmark](https://planopsim.com/design-example/getting-accurate-and-fast-nano-structure-simulations-a-benchmark-of-rcwa-and-fdtd-for-meta-surface-calculation/)
 - [Ansys: CMOS Optical Simulation Methodology](https://optics.ansys.com/hc/en-us/articles/360042851793-CMOS-Optical-simulation-methodology)

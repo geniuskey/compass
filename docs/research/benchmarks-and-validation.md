@@ -1,165 +1,165 @@
-# 벤치마크 & 검증 데이터 (Benchmarks & Validation)
+# Benchmarks & Validation
 
-COMPASS 프로젝트에서 EM 솔버의 정확도와 성능을 검증하기 위한 방법론, 기준 데이터, 벤치마크 결과를 정리한 문서이다.
+This document describes the methodology, reference data, and benchmark results used to verify the accuracy and performance of EM solvers in the COMPASS project.
 
 ---
 
-## 1. 검증 방법론
+## 1. Validation Methodology
 
-EM 솔버의 신뢰성을 확보하기 위해 COMPASS는 네 가지 계층의 검증 체계를 사용한다.
+To ensure the reliability of EM solvers, COMPASS employs a four-tier validation framework.
 
-### 1.1 검증 피라미드
+### 1.1 Validation Pyramid
 
 ```
         /\
-       /  \        Level 4: 실험 데이터 비교 (발표된 QE 측정값)
+       /  \        Level 4: Comparison with experimental data (published QE measurements)
       /    \
-     /------\      Level 3: 솔버 간 교차 검증 (torcwa vs grcwa vs meent vs FDTD)
+     /------\      Level 3: Cross-validation between solvers (torcwa vs grcwa vs meent vs FDTD)
     /        \
-   /----------\    Level 2: 해석적 기준해 비교 (프레넬, TMM)
+   /----------\    Level 2: Comparison with analytical reference solutions (Fresnel, TMM)
   /            \
- /--------------\  Level 1: 기본 물리 법칙 검증 (에너지 보존, QE 범위)
+ /--------------\  Level 1: Fundamental physics law verification (energy conservation, QE range)
 ```
 
-각 검증 수준은 독립적으로 작동하며, 상위 수준의 검증이 하위 수준을 대체하지 않는다.
+Each validation level operates independently, and higher-level validations do not replace lower-level ones.
 
-### 1.2 검증 원칙
+### 1.2 Validation Principles
 
-| 원칙 | 설명 |
-|------|------|
-| 에너지 보존 | R + T + A = 1 (허용 오차 < 1%) |
-| QE 물리적 범위 | 0 <= QE <= 1 (모든 픽셀, 모든 파장) |
-| NaN/Inf 없음 | 모든 출력값에 수치 이상 없음 |
-| 수렴성 확인 | 해상도/차수 증가 시 결과 수렴 |
-| 재현성 | 동일 입력에 대해 동일 결과 |
+| Principle | Description |
+|-----------|-------------|
+| Energy conservation | R + T + A = 1 (tolerance < 1%) |
+| QE physical range | 0 <= QE <= 1 (all pixels, all wavelengths) |
+| No NaN/Inf | No numerical anomalies in any output values |
+| Convergence check | Results converge as resolution/order increases |
+| Reproducibility | Identical results for identical inputs |
 
 ---
 
-## 2. 해석적 기준해
+## 2. Analytical Reference Solutions
 
-해석해가 존재하는 간단한 구조에 대해 솔버 출력을 검증한다.
+Solver outputs are validated against simple structures for which analytical solutions exist.
 
-### 2.1 프레넬 방정식 -- 단일 계면 반사율
+### 2.1 Fresnel Equations -- Single Interface Reflectance
 
-평면 계면에서의 반사율은 정확한 해석해가 존재한다.
+An exact analytical solution exists for reflectance at a planar interface.
 
-**수직 입사 프레넬 반사율:**
+**Normal incidence Fresnel reflectance:**
 
 ```
 R = |r|^2 = |(n1 - n2) / (n1 + n2)|^2
 ```
 
-COMPASS 벤치마크 테스트(`tests/benchmarks/test_fresnel_slab.py`)에서 검증하는 기준값:
+Reference values validated in the COMPASS benchmark test (`tests/benchmarks/test_fresnel_slab.py`):
 
-| 계면 | 파장 (um) | n1 | n2 (복소) | 이론 R | 허용 오차 |
-|------|-----------|-----|-----------|--------|-----------|
-| Air -> Glass | 전체 | 1.000 | 1.500 + 0i | 0.0400 | 1e-6 |
+| Interface | Wavelength (um) | n1 | n2 (complex) | Theoretical R | Tolerance |
+|-----------|-----------------|-----|--------------|---------------|-----------|
+| Air -> Glass | All | 1.000 | 1.500 + 0i | 0.0400 | 1e-6 |
 | Air -> Si (550nm) | 0.550 | 1.000 | 4.08 + 0.028i | ~0.368 | 0.02 |
 | Air -> SiO2 | 0.550 | 1.000 | 1.46 + 0i | ~0.035 | 1e-3 |
-| Glass -> Air (역) | 전체 | 1.500 | 1.000 | 0.0400 | 1e-6 |
+| Glass -> Air (reverse) | All | 1.500 | 1.000 | 0.0400 | 1e-6 |
 
-**각도 의존 검증:**
+**Angle-dependent validation:**
 
-| 조건 | 기대 결과 | 테스트 |
-|------|-----------|--------|
-| 브루스터 각도 (Air->Glass, 56.31도) | R_p = 0 | `test_brewster_angle` |
-| 스침 입사 (89.9도) | R_s > 0.99, R_p > 0.98 | `test_grazing_incidence` |
-| 역수성 (reciprocity) | R(n1->n2) = R(n2->n1) | `test_reciprocity` |
+| Condition | Expected result | Test |
+|-----------|-----------------|------|
+| Brewster's angle (Air->Glass, 56.31 deg) | R_p = 0 | `test_brewster_angle` |
+| Grazing incidence (89.9 deg) | R_s > 0.99, R_p > 0.98 | `test_grazing_incidence` |
+| Reciprocity | R(n1->n2) = R(n2->n1) | `test_reciprocity` |
 
-### 2.2 전달 행렬법 (TMM) -- 다층 박막 기준해
+### 2.2 Transfer Matrix Method (TMM) -- Multilayer Thin Film Reference Solutions
 
-균일 다층 구조에 대해 TMM(Transfer Matrix Method)은 RCWA의 Fourier order = 0일 때와 동일한 결과를 제공한다. 이를 기준해로 사용하여 솔버의 기본 동작을 검증한다.
+For uniform multilayer structures, TMM (Transfer Matrix Method) yields results identical to RCWA at Fourier order = 0. These are used as reference solutions to validate the basic operation of the solvers.
 
-**단일층 반사방지 코팅 검증:**
+**Single-layer anti-reflection coating validation:**
 
-| 구조 | 조건 | 이론값 | 비고 |
-|------|------|--------|------|
-| Air / SiO2 (93nm) / Si | 550nm, 수직입사 | R ~ 0.12 | 단일 ARC |
-| Air / Si3N4 (69nm) / Si | 550nm, 수직입사 | R ~ 0.08 | 고굴절률 ARC |
-| Air / MgF2 / SiO2 / Si | 550nm, 수직입사 | R < 0.02 | 이중층 ARC |
+| Structure | Condition | Theoretical value | Notes |
+|-----------|-----------|-------------------|-------|
+| Air / SiO2 (93nm) / Si | 550nm, normal incidence | R ~ 0.12 | Single ARC |
+| Air / Si3N4 (69nm) / Si | 550nm, normal incidence | R ~ 0.08 | High-index ARC |
+| Air / MgF2 / SiO2 / Si | 550nm, normal incidence | R < 0.02 | Double-layer ARC |
 
-이 기준해들은 RCWA 솔버가 균일층에서 올바르게 동작하는지 확인하는 데 사용된다.
+These reference solutions are used to verify that the RCWA solvers operate correctly for uniform layers.
 
 <ThinFilmReflectance />
 
-### 2.3 재료 물성 검증
+### 2.3 Material Property Validation
 
-`tests/benchmarks/test_fresnel_slab.py`의 `TestMaterialDBProperties`에서 내장 재료의 물리적 타당성을 검증한다: Silicon (n~4.08 at 550nm, Green 2008), Air (n=1, k=0), SiO2 (n~1.46), Si3N4 (n~2.0), Polymer의 Cauchy 분산(단파장에서 n 증가) 등.
+`TestMaterialDBProperties` in `tests/benchmarks/test_fresnel_slab.py` validates the physical plausibility of built-in materials: Silicon (n~4.08 at 550nm, Green 2008), Air (n=1, k=0), SiO2 (n~1.46), Si3N4 (n~2.0), and Cauchy dispersion of Polymer (n increases at shorter wavelengths), among others.
 
 ---
 
-## 3. 수렴성 분석
+## 3. Convergence Analysis
 
-### 3.1 RCWA 푸리에 차수 수렴
+### 3.1 RCWA Fourier Order Convergence
 
-RCWA의 정확도는 푸리에 차수(Fourier order)에 의존한다. 차수를 높이면 정확도가 향상되지만, 계산 비용이 O(M^3)으로 증가한다 (M = (2N+1)^2 for 2D).
+The accuracy of RCWA depends on the Fourier order. Increasing the order improves accuracy, but computational cost grows as O(M^3) (M = (2N+1)^2 for 2D).
 
-**1um 피치 BSI 픽셀의 전형적 수렴 거동:**
+**Typical convergence behavior for a 1um pitch BSI pixel:**
 
-| 푸리에 차수 | 하모닉 수 (2D) | 행렬 크기 | 상대 QE 변화율 | 수렴 판정 |
-|-------------|---------------|-----------|---------------|-----------|
-| 3 | 49 | 98x98 | 기준 | 미수렴 |
-| 5 | 121 | 242x242 | ~5% | 미수렴 |
-| 7 | 225 | 450x450 | ~2% | 근접수렴 |
-| 9 | 361 | 722x722 | ~0.5% | 수렴 (권장) |
-| 11 | 529 | 1058x1058 | ~0.2% | 수렴 |
-| 13 | 729 | 1458x1458 | < 0.1% | 충분수렴 |
-| 15 | 961 | 1922x1922 | < 0.05% | 고정밀 |
+| Fourier order | Number of harmonics (2D) | Matrix size | Relative QE change | Convergence status |
+|---------------|--------------------------|-------------|---------------------|--------------------|
+| 3 | 49 | 98x98 | Baseline | Not converged |
+| 5 | 121 | 242x242 | ~5% | Not converged |
+| 7 | 225 | 450x450 | ~2% | Near convergence |
+| 9 | 361 | 722x722 | ~0.5% | Converged (recommended) |
+| 11 | 529 | 1058x1058 | ~0.2% | Converged |
+| 13 | 729 | 1458x1458 | < 0.1% | Well converged |
+| 15 | 961 | 1922x1922 | < 0.05% | High precision |
 
-**수렴 기준**: 연속 두 차수 간 QE 변화가 1% 미만이면 수렴으로 판정한다.
+**Convergence criterion**: Convergence is determined when the QE change between two consecutive orders is less than 1%.
 
 <RCWAConvergenceDemo />
 
-**구조 유형별 권장 차수:**
+**Recommended orders by structure type:**
 
-| 구조 | 최소 차수 | 권장 차수 | 비고 |
-|------|-----------|-----------|------|
-| 단순 컬러필터 패턴 | 7 | 9 | CF 경계만 존재 |
-| 금속 그리드 포함 | 11 | 13--15 | 높은 유전율 대비 |
-| DTI 포함 | 9 | 11--13 | SiO2/Si 경계 |
-| 미세 나노구조 | 15 | 17--21 | 파장 이하 피처 |
+| Structure | Minimum order | Recommended order | Notes |
+|-----------|---------------|-------------------|-------|
+| Simple color filter pattern | 7 | 9 | Only CF boundaries present |
+| With metal grid | 11 | 13--15 | High permittivity contrast |
+| With DTI | 9 | 11--13 | SiO2/Si boundary |
+| Fine nanostructures | 15 | 17--21 | Sub-wavelength features |
 
-### 3.2 FDTD 격자 간격 수렴
+### 3.2 FDTD Grid Spacing Convergence
 
-FDTD의 정확도는 공간 격자 간격(dx, dy, dz)에 의존한다. 일반적으로 dx < lambda/(20*n_max)이 권장된다. 550nm, Si 포함 구조에서 dx=20nm이면 QE 변화율 ~1.5% (근접수렴), dx=10nm이면 ~0.2% (충분수렴)이다.
+FDTD accuracy depends on the spatial grid spacing (dx, dy, dz). Generally, dx < lambda/(20*n_max) is recommended. For structures containing Si at 550nm, dx=20nm yields a QE change of ~1.5% (near convergence), while dx=10nm yields ~0.2% (well converged).
 
-### 3.3 마이크로렌즈 계단근사 수렴
+### 3.3 Microlens Staircase Approximation Convergence
 
-RCWA에서 마이크로렌즈는 계단 근사(staircase approximation)로 표현된다. 슬라이스 수를 늘리면 렌즈 체적의 정확도가 향상된다.
+In RCWA, microlenses are represented using a staircase approximation. Increasing the number of slices improves the accuracy of the lens volume representation.
 
-COMPASS 벤치마크(`tests/benchmarks/test_convergence.py`)에서 확인된 수렴 거동:
+Convergence behavior confirmed in the COMPASS benchmark (`tests/benchmarks/test_convergence.py`):
 
-| 슬라이스 수 | 렌즈 체적 오차 | 수렴 판정 |
-|------------|---------------|-----------|
-| 5 | 기준 | 부정확 |
-| 10 | < 10% (vs 80) | 근접 |
-| 20 | < 5% (vs 80) | 수렴 |
-| 40 | < 2% (vs 80) | 충분수렴 |
-| 80 | 기준 (최고해상도) | 참조값 |
+| Number of slices | Lens volume error | Convergence status |
+|------------------|-------------------|--------------------|
+| 5 | Baseline | Inaccurate |
+| 10 | < 10% (vs 80) | Near convergence |
+| 20 | < 5% (vs 80) | Converged |
+| 40 | < 2% (vs 80) | Well converged |
+| 80 | Baseline (highest resolution) | Reference value |
 
-연속 슬라이스 수 간 체적 차이가 단조 감소해야 올바른 수렴을 나타낸다. COMPASS는 기본값으로 30 슬라이스를 사용한다.
+The volume difference between consecutive slice counts should decrease monotonically to indicate proper convergence. COMPASS uses 30 slices as the default.
 
 ---
 
-## 4. 솔버 간 교차 검증
+## 4. Cross-Validation Between Solvers
 
-### 4.1 RCWA 솔버 비교 (torcwa vs grcwa vs meent)
+### 4.1 RCWA Solver Comparison (torcwa vs grcwa vs meent)
 
-동일한 픽셀 구조와 동일한 푸리에 차수에서 세 RCWA 솔버의 결과를 비교한다. 세 솔버 모두 동일한 수학적 알고리즘(RCWA)을 구현하므로, 수치 오차 범위 내에서 결과가 일치해야 한다.
+The results of the three RCWA solvers are compared for the same pixel structure and the same Fourier order. Since all three solvers implement the same mathematical algorithm (RCWA), their results should agree within numerical error bounds.
 
-**허용 불일치 범위:**
+**Acceptable discrepancy ranges:**
 
-| 비교 항목 | 허용 범위 | 비고 |
-|-----------|-----------|------|
-| QE 절대 차이 | < 0.005 (0.5%) | 동일 차수, 동일 인수분해 |
-| QE 상대 오차 | < 1% | 피크 QE 기준 |
-| 반사율 차이 | < 0.002 | 전체 파장 범위 |
-| 에너지 보존 편차 | < 0.01 | |R+T+A-1| |
+| Comparison metric | Acceptable range | Notes |
+|-------------------|------------------|-------|
+| QE absolute difference | < 0.005 (0.5%) | Same order, same factorization |
+| QE relative error | < 1% | Relative to peak QE |
+| Reflectance difference | < 0.002 | Across full wavelength range |
+| Energy conservation deviation | < 0.01 | |R+T+A-1| |
 
-**전형적 비교 결과 (2x2 BSI 픽셀, 1um 피치, 푸리에 차수 9):**
+**Typical comparison results (2x2 BSI pixel, 1um pitch, Fourier order 9):**
 
-| 파장 (nm) | torcwa QE(G) | grcwa QE(G) | meent QE(G) | 최대 차이 |
-|-----------|-------------|-------------|-------------|-----------|
+| Wavelength (nm) | torcwa QE(G) | grcwa QE(G) | meent QE(G) | Max difference |
+|-----------------|-------------|-------------|-------------|----------------|
 | 420 | ~0.15 | ~0.15 | ~0.15 | < 0.005 |
 | 450 | ~0.32 | ~0.32 | ~0.32 | < 0.003 |
 | 500 | ~0.52 | ~0.52 | ~0.52 | < 0.003 |
@@ -168,207 +168,207 @@ COMPASS 벤치마크(`tests/benchmarks/test_convergence.py`)에서 확인된 수
 | 650 | ~0.28 | ~0.28 | ~0.28 | < 0.004 |
 | 680 | ~0.18 | ~0.18 | ~0.18 | < 0.005 |
 
-주: 위 값은 대표적인 수치이며, 실제 구조 및 재료 파라미터에 따라 달라진다.
+Note: The values above are representative and will vary depending on the actual structure and material parameters.
 
 <SolverComparisonChart />
 
-### 4.2 RCWA vs FDTD 비교
+### 4.2 RCWA vs FDTD Comparison
 
-RCWA와 FDTD는 서로 다른 수치 방법을 사용하므로, RCWA 솔버 간 비교보다 큰 차이가 예상된다. 그러나 수렴된 결과끼리 비교하면 좋은 일치를 보여야 한다.
+Since RCWA and FDTD use different numerical methods, larger differences are expected compared to inter-RCWA solver comparisons. However, converged results from both methods should show good agreement.
 
-**허용 불일치 범위:**
+**Acceptable discrepancy ranges:**
 
-| 비교 항목 | 허용 범위 | 비고 |
-|-----------|-----------|------|
-| QE 절대 차이 | < 0.02 (2%) | 수렴된 결과 기준 |
-| QE 상대 오차 | < 5% | 피크 QE 기준 |
-| 반사율 차이 | < 0.01 | |
-| 스펙트럼 형상 일치 | 피크 위치 10nm 이내 | |
+| Comparison metric | Acceptable range | Notes |
+|-------------------|------------------|-------|
+| QE absolute difference | < 0.02 (2%) | Based on converged results |
+| QE relative error | < 5% | Relative to peak QE |
+| Reflectance difference | < 0.01 | |
+| Spectral shape agreement | Peak position within 10nm | |
 
-RCWA와 FDTD 간 차이의 주요 원인은 마이크로렌즈 표현 차이(계단근사 vs 소격자 근사), 분산 매질 처리 방식, 경계 조건(주기 vs PML), 수렴 기준의 차이이다.
+The main sources of differences between RCWA and FDTD are microlens representation differences (staircase approximation vs subgrid approximation), dispersive media treatment methods, boundary conditions (periodic vs PML), and differences in convergence criteria.
 
 ---
 
-## 5. 에너지 보존 검증
+## 5. Energy Conservation Validation
 
-### 5.1 기본 원칙
+### 5.1 Fundamental Principle
 
-에너지 보존 법칙에 의해 입사광의 에너지는 반사(R), 투과(T), 흡수(A)로 나누어져야 한다:
+By the law of energy conservation, the energy of incident light must be divided into reflection (R), transmission (T), and absorption (A):
 
 ```
 R + T + A = 1
 ```
 
-COMPASS는 `compass/analysis/energy_balance.py`의 `EnergyBalance.check()` 메서드를 통해 모든 시뮬레이션 결과에 대해 에너지 보존을 검증한다.
+COMPASS validates energy conservation for all simulation results through the `EnergyBalance.check()` method in `compass/analysis/energy_balance.py`.
 
 <EnergyBalanceDiagram />
 
-### 5.2 허용 오차 기준
+### 5.2 Tolerance Criteria
 
-| 조건 | 허용 오차 | 동작 |
-|------|-----------|------|
-| |R+T+A-1| < 0.01 (1%) | 정상 | 결과 수용 |
-| 0.01 < |R+T+A-1| < 0.02 | 경고 | 결과 수용 + 경고 로그 |
-| 0.02 < |R+T+A-1| < 0.05 | 재시도 | 자동 정밀도 상향 (AdaptivePrecisionRunner) |
-| |R+T+A-1| > 0.05 | 실패 | 결과 거부, 수동 검토 필요 |
+| Condition | Tolerance | Action |
+|-----------|-----------|--------|
+| |R+T+A-1| < 0.01 (1%) | Normal | Accept result |
+| 0.01 < |R+T+A-1| < 0.02 | Warning | Accept result + warning log |
+| 0.02 < |R+T+A-1| < 0.05 | Retry | Automatic precision upgrade (AdaptivePrecisionRunner) |
+| |R+T+A-1| > 0.05 | Failure | Reject result, manual review required |
 
-### 5.3 에너지 보존 위반의 원인과 대처
+### 5.3 Causes of Energy Conservation Violations and Remedies
 
-| 위반 유형 | 주요 원인 | 대처 방법 |
-|-----------|-----------|-----------|
-| R+T+A > 1 (에너지 생성) | 고유값 분해 오류, TF32 사용 | float64 전환, TF32 비활성화 |
-| R+T+A << 1 (에너지 손실) | T-matrix 오버플로우, PML 반사 | S-matrix 사용, PML 두께 증가 |
-| 특정 파장만 위반 | 축퇴 고유값, 높은 Q-factor | 고유값 브로드닝, 정밀도 상향 |
+| Violation type | Primary cause | Remedy |
+|----------------|---------------|--------|
+| R+T+A > 1 (energy creation) | Eigenvalue decomposition error, TF32 usage | Switch to float64, disable TF32 |
+| R+T+A << 1 (energy loss) | T-matrix overflow, PML reflection | Use S-matrix, increase PML thickness |
+| Violation at specific wavelengths only | Degenerate eigenvalues, high Q-factor | Eigenvalue broadening, precision upgrade |
 
-`tests/benchmarks/test_energy_conservation.py`에서 완벽 보존, 전반사/전흡수, 흡수 자동 추론, 허용 오차 경계, 단위 초과/미달, 단일 파장 위반 등 11개 테스트를 수행한다.
+`tests/benchmarks/test_energy_conservation.py` runs 11 tests covering perfect conservation, total reflection/total absorption, automatic absorption inference, tolerance boundaries, over/under unity, and single-wavelength violations.
 
 ---
 
-## 6. 성능 벤치마크
+## 6. Performance Benchmarks
 
-### 6.1 핵심 연산 성능
+### 6.1 Core Operation Performance
 
-`tests/benchmarks/test_performance.py`에서 측정되는 핵심 연산의 성능 기준:
+Performance criteria for core operations measured in `tests/benchmarks/test_performance.py`:
 
-| 연산 | 조건 | 상한 |
-|------|------|------|
-| `get_epsilon_spectrum` | Si, 41 파장 | 1.0 s |
-| 전체 재료 스펙트럼 | 내장 재료 x 41 파장 | 2.0 s |
-| PixelStack 생성 | 2x2 unit cell | 1.0 s |
-| PixelStack 생성 | 4x4 unit cell | 2.0 s |
+| Operation | Condition | Upper bound |
+|-----------|-----------|-------------|
+| `get_epsilon_spectrum` | Si, 41 wavelengths | 1.0 s |
+| Full material spectrum | Built-in materials x 41 wavelengths | 2.0 s |
+| PixelStack creation | 2x2 unit cell | 1.0 s |
+| PixelStack creation | 4x4 unit cell | 2.0 s |
 | `get_layer_slices` | nx=128 | 10 s |
 | `get_permittivity_grid` | 128x128x128 | 60 s |
 
-### 6.2 솔버 실행 시간 (대표 값)
+### 6.2 Solver Execution Times (Representative Values)
 
-**구성**: 2x2 BSI 픽셀, 1um 피치, 단일 파장 (550nm), 비편광
+**Configuration**: 2x2 BSI pixel, 1um pitch, single wavelength (550nm), unpolarized
 
-| 솔버 | 차수/해상도 | CPU 시간 | GPU 시간 (NVIDIA A100) | 비고 |
-|------|-----------|----------|----------------------|------|
-| torcwa | 차수 9 | ~5 s | ~0.3 s | 기본 솔버 |
-| torcwa | 차수 15 | ~40 s | ~2 s | 고정밀 |
-| grcwa | 차수 9 | ~8 s | ~0.5 s | |
-| meent | 차수 9 | ~6 s | ~0.4 s | 해석적 고유값 분해 |
-| flaport FDTD | dx=20nm | ~60 s | ~5 s | 시간영역 |
-| flaport FDTD | dx=10nm | ~300 s | ~25 s | 고정밀 |
+| Solver | Order/Resolution | CPU time | GPU time (NVIDIA A100) | Notes |
+|--------|-----------------|----------|------------------------|-------|
+| torcwa | Order 9 | ~5 s | ~0.3 s | Default solver |
+| torcwa | Order 15 | ~40 s | ~2 s | High precision |
+| grcwa | Order 9 | ~8 s | ~0.5 s | |
+| meent | Order 9 | ~6 s | ~0.4 s | Analytical eigenvalue decomposition |
+| flaport FDTD | dx=20nm | ~60 s | ~5 s | Time-domain |
+| flaport FDTD | dx=10nm | ~300 s | ~25 s | High precision |
 
-주: 위 시간은 대표적인 추정치이며, 하드웨어 및 구성에 따라 크게 달라질 수 있다.
+Note: The times above are representative estimates and may vary significantly depending on hardware and configuration.
 
-FDTD는 시간영역 방법이므로 단일 실행으로 전체 스펙트럼을 얻을 수 있다. RCWA는 파장별로 독립 실행해야 하지만 병렬화가 용이하다. 파장 스윕 (14파장) 시 GPU 기준 RCWA ~4--7s, FDTD ~5s 수준이다.
+FDTD is a time-domain method that can obtain the full spectrum in a single run. RCWA requires independent runs per wavelength but is easily parallelizable. For a wavelength sweep (14 wavelengths) on GPU, RCWA takes ~4--7s and FDTD takes ~5s.
 
-### 6.3 메모리 및 스케일링
+### 6.3 Memory and Scaling
 
-RCWA 메모리 사용량은 푸리에 차수에 따라 증가한다: 차수 9에서 GPU ~0.3GB(f32), 차수 15에서 ~1.2GB(f32), 차수 21에서 ~5GB(f32). float64 사용 시 약 2배 증가한다. FDTD는 격자 간격에 따라 크게 변하며, dx=10nm에서 GPU ~8GB를 사용한다.
+RCWA memory usage increases with Fourier order: ~0.3GB (f32) at order 9, ~1.2GB (f32) at order 15, and ~5GB (f32) at order 21 on GPU. Using float64 approximately doubles memory usage. FDTD memory varies greatly with grid spacing, using ~8GB on GPU at dx=10nm.
 
-RCWA 런타임 스케일링은 행렬 크기 M = (2N+1)^2에 대해 O(M^3), 즉 차수 N에 대해 약 O(N^6)이다. 차수 9 대비 차수 15는 약 11배, 차수 17은 약 20배 느리다.
-
----
-
-## 7. 산업 검증 데이터
-
-### 7.1 발표된 BSI 픽셀 QE 데이터
-
-학술 논문 및 산업 발표에서 보고된 BSI CMOS 이미지 센서의 전형적인 QE 값이다.
-
-**1.0--1.4um 피치 BSI 픽셀 전형적 QE 범위:**
-
-| 색상 채널 | 피크 파장 (nm) | QE 범위 | 전형적 피크 QE | 출처 |
-|-----------|--------------|---------|---------------|------|
-| Blue (B) | 450--470 | 30--55% | ~45% | 다수 문헌 |
-| Green (G) | 530--560 | 45--70% | ~60% | 다수 문헌 |
-| Red (R) | 600--630 | 35--60% | ~50% | 다수 문헌 |
-
-**고성능 과학용 BSI 센서 (피치 > 3um):**
-
-| 조건 | 보고된 QE | 출처 |
-|------|----------|------|
-| 가시광 피크 (400--700nm) | > 75% | 산업 데이터시트 |
-| 광대역 (260--400nm UV) | > 50% | 학술 논문 |
-| 최고 성능 (나노구조 적용) | > 90% | Small, 2023 |
-
-### 7.2 COMPASS 시뮬레이션과 발표 데이터 비교
-
-시뮬레이션 결과가 발표된 데이터와 일치하는지 정성적으로 비교한다.
-
-**기대되는 일치 수준:**
-
-| 비교 항목 | 기대 일치도 | 제한 요인 |
-|-----------|-----------|-----------|
-| QE 스펙트럼 형상 | 우수 | 컬러 필터 모델 정확도 |
-| 피크 QE 절대값 | 양호 (+-10%) | 재료 데이터 정확도, 공정 변수 |
-| 크로스토크 경향 | 정성적 일치 | 3D 구조 단순화 |
-| 각도 의존성 | 양호 | 마이크로렌즈 프로파일 정확도 |
-
-시뮬레이션과 실험 간 불일치의 주요 원인은 컬러 필터의 제조사별 n,k 차이, 비이상적 형상(기울어진 측벽, 거칠기), 조명 조건 재현의 어려움, 막 두께와 정렬 오차 등의 공정 변수이다.
+RCWA runtime scaling is O(M^3) with respect to matrix size M = (2N+1)^2, which translates to approximately O(N^6) with respect to order N. Compared to order 9, order 15 is approximately 11x slower and order 17 is approximately 20x slower.
 
 ---
 
-## 8. COMPASS 벤치마크 스위트
+## 7. Industry Validation Data
 
-### 8.1 테스트 파일 구조
+### 7.1 Published BSI Pixel QE Data
+
+These are typical QE values for BSI CMOS image sensors reported in academic papers and industry presentations.
+
+**Typical QE range for 1.0--1.4um pitch BSI pixels:**
+
+| Color channel | Peak wavelength (nm) | QE range | Typical peak QE | Source |
+|---------------|---------------------|----------|-----------------|--------|
+| Blue (B) | 450--470 | 30--55% | ~45% | Multiple references |
+| Green (G) | 530--560 | 45--70% | ~60% | Multiple references |
+| Red (R) | 600--630 | 35--60% | ~50% | Multiple references |
+
+**High-performance scientific BSI sensors (pitch > 3um):**
+
+| Condition | Reported QE | Source |
+|-----------|------------|--------|
+| Visible peak (400--700nm) | > 75% | Industry datasheets |
+| Broadband (260--400nm UV) | > 50% | Academic papers |
+| Best performance (with nanostructures) | > 90% | Small, 2023 |
+
+### 7.2 Comparison of COMPASS Simulation with Published Data
+
+A qualitative comparison is made to determine whether simulation results are consistent with published data.
+
+**Expected level of agreement:**
+
+| Comparison metric | Expected agreement | Limiting factors |
+|-------------------|--------------------|------------------|
+| QE spectral shape | Excellent | Color filter model accuracy |
+| Peak QE absolute value | Good (+-10%) | Material data accuracy, process variables |
+| Crosstalk trends | Qualitative agreement | 3D structure simplification |
+| Angular dependence | Good | Microlens profile accuracy |
+
+The main sources of discrepancy between simulation and experiment are vendor-specific n,k differences in color filters, non-ideal geometries (tilted sidewalls, roughness), difficulty in reproducing illumination conditions, and process variables such as film thickness and alignment errors.
+
+---
+
+## 8. COMPASS Benchmark Suite
+
+### 8.1 Test File Structure
 
 ```
 tests/benchmarks/
   __init__.py
-  test_fresnel_slab.py       # 프레넬 방정식 및 재료 물성 검증
-  test_energy_conservation.py # 에너지 보존 검증기 테스트
-  test_convergence.py         # 기하 수렴성 테스트
-  test_performance.py         # 성능 벤치마크 (실행 시간)
+  test_fresnel_slab.py       # Fresnel equation and material property validation
+  test_energy_conservation.py # Energy conservation validator tests
+  test_convergence.py         # Geometry convergence tests
+  test_performance.py         # Performance benchmarks (execution time)
 ```
 
-### 8.2 각 테스트 파일 요약
+### 8.2 Summary of Each Test File
 
-| 파일 | 클래스 수 | 테스트 수 | 주요 검증 내용 |
-|------|----------|----------|---------------|
-| `test_fresnel_slab.py` | 3 | 14 | 프레넬 반사율, 재료 물성, epsilon 관계 |
-| `test_energy_conservation.py` | 3 | 11 | 에너지 보존 유효/위반/에지케이스 |
-| `test_convergence.py` | 3 | 9 | 마이크로렌즈 수렴, 레이어 일관성, 베이어 패턴 |
-| `test_performance.py` | 4 | 8 | MaterialDB, PixelStack, 레이어슬라이스, 유전율 격자 성능 |
+| File | Number of classes | Number of tests | Key validation content |
+|------|-------------------|-----------------|------------------------|
+| `test_fresnel_slab.py` | 3 | 14 | Fresnel reflectance, material properties, epsilon relations |
+| `test_energy_conservation.py` | 3 | 11 | Energy conservation valid/violation/edge cases |
+| `test_convergence.py` | 3 | 9 | Microlens convergence, layer consistency, Bayer pattern |
+| `test_performance.py` | 4 | 8 | MaterialDB, PixelStack, layer slices, permittivity grid performance |
 
-### 8.3 벤치마크 실행 방법
+### 8.3 Running Benchmarks
 
 ```bash
-# 전체 벤치마크 실행
+# Run all benchmarks
 PYTHONPATH=. python3.11 -m pytest tests/benchmarks/ -v
 
-# 프레넬 검증만 실행
+# Run Fresnel validation only
 PYTHONPATH=. python3.11 -m pytest tests/benchmarks/test_fresnel_slab.py -v
 
-# 성능 벤치마크 (타이밍 출력 포함)
+# Performance benchmarks (with timing output)
 PYTHONPATH=. python3.11 -m pytest tests/benchmarks/test_performance.py -v -s
 
-# 느린 테스트 포함
+# Include slow tests
 PYTHONPATH=. python3.11 -m pytest tests/benchmarks/ -v --run-slow
 ```
 
-### 8.4 솔버 비교 벤치마크 실행
+### 8.4 Running Solver Comparison Benchmarks
 
-`docs/cookbook/solver-benchmark.md`에 상세한 솔버 비교 워크플로우가 문서화되어 있다.
+A detailed solver comparison workflow is documented in `docs/cookbook/solver-benchmark.md`.
 
 ```bash
-# 솔버 비교 스크립트 실행
+# Run solver comparison script
 python scripts/compare_solvers.py experiment=solver_comparison
 ```
 
-이 스크립트는 동일 픽셀 구조에 대해 torcwa/grcwa/meent를 실행하고, QE 비교, 실행 시간 비교, 에너지 보존 검증, 결과 시각화를 수행한다.
+This script runs torcwa/grcwa/meent on the same pixel structure and performs QE comparison, execution time comparison, energy conservation validation, and result visualization.
 
 ---
 
-## 9. 검증 체크리스트
+## 9. Validation Checklist
 
-새로운 솔버 추가 또는 기존 솔버 수정 시 반드시 확인해야 하는 항목들이다.
+These are items that must be verified when adding a new solver or modifying an existing solver.
 
-**필수 검증 (모든 변경):**
-- [ ] `tests/benchmarks/` 전체 테스트 통과
-- [ ] 에너지 보존: |R+T+A-1| < 0.01 (모든 파장)
-- [ ] QE 범위: 0 <= QE <= 1 (모든 픽셀)
-- [ ] NaN/Inf 없음 (모든 출력)
+**Required validations (all changes):**
+- [ ] All tests in `tests/benchmarks/` pass
+- [ ] Energy conservation: |R+T+A-1| < 0.01 (all wavelengths)
+- [ ] QE range: 0 <= QE <= 1 (all pixels)
+- [ ] No NaN/Inf (all outputs)
 
-**권장 검증 (주요 변경):**
-- [ ] 기존 솔버와 교차 비교 (QE 차이 < 0.5%)
-- [ ] 푸리에 차수 수렴 확인 (차수 7->15 스윕)
-- [ ] GPU/CPU 및 float32/float64 결과 비교
+**Recommended validations (major changes):**
+- [ ] Cross-comparison with existing solvers (QE difference < 0.5%)
+- [ ] Fourier order convergence check (order 7->15 sweep)
+- [ ] GPU/CPU and float32/float64 result comparison
 
-**선택 검증 (성능 변경):**
-- [ ] 성능 벤치마크 회귀 없음
-- [ ] 메모리 사용량 회귀 없음
+**Optional validations (performance changes):**
+- [ ] No performance benchmark regression
+- [ ] No memory usage regression
