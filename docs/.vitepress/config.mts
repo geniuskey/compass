@@ -86,6 +86,7 @@ const cookbookSidebar = [
     { text: 'DTI Crosstalk', link: '/cookbook/dti-crosstalk' },
     { text: 'Signal Chain Color Accuracy', link: '/cookbook/signal-chain-color-accuracy' },
     { text: 'TMM Validation Results', link: '/cookbook/tmm-validation-results' },
+    { text: 'Cross-Solver Validation', link: '/cookbook/cross-solver-validation' },
   ]}
 ]
 
@@ -177,6 +178,7 @@ const cookbookSidebarKo = [
     { text: 'DTI 크로스토크', link: '/ko/cookbook/dti-crosstalk' },
     { text: '신호 체인 색 정확도', link: '/ko/cookbook/signal-chain-color-accuracy' },
     { text: 'TMM 검증 결과', link: '/ko/cookbook/tmm-validation-results' },
+    { text: '크로스 솔버 검증', link: '/ko/cookbook/cross-solver-validation' },
   ]}
 ]
 

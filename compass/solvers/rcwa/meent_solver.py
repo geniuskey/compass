@@ -88,7 +88,7 @@ class MeentSolver(SolverBase):
                         theta=self._source.theta_deg,
                         phi=self._source.phi_deg,
                         fto=fourier_order,
-                        period=[lx, ly],
+                        period=[lx * 1000, ly * 1000],  # meent uses nm
                         wavelength=wavelength * 1000,  # meent uses nm
                         thickness=[s.thickness * 1000 for s in reversed(layer_slices)],
                         type_complex=np.complex128,
@@ -99,12 +99,21 @@ class MeentSolver(SolverBase):
                     for s in reversed(layer_slices):
                         ucell_list.append(s.eps_grid[np.newaxis, :, :])
 
-                    mee.ucell = np.concatenate(ucell_list, axis=0)
+                    # meent ucell expects refractive index (n), not permittivity (eps)
+                    mee.ucell = np.sqrt(np.concatenate(ucell_list, axis=0))
                     result = mee.conv_solve()
-                    de_ri, de_ti = result.res
+                    de_ri = result.de_ri
+                    de_ti = result.de_ti
 
                     R = float(np.sum(de_ri))
                     T = float(np.sum(de_ti))
+                    # meent 0.12.0 has numerical instability for multi-layer
+                    # 2D stacks where R+T > 1. Clamp to physical range.
+                    if R + T > 1.0 + 0.01:
+                        logger.warning(
+                            f"meent: R+T={R+T:.4f} > 1 at λ={wavelength:.4f}um "
+                            f"(numerical instability for multi-layer 2D stack)"
+                        )
                     A = max(0.0, 1.0 - R - T)
 
                 except Exception as e:

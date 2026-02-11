@@ -33,6 +33,7 @@ import PixelAnatomyViewer from './components/PixelAnatomyViewer.vue'
 import PhotonJourneyAnimation from './components/PhotonJourneyAnimation.vue'
 import WavelengthExplorer from './components/WavelengthExplorer.vue'
 import ConeIlluminationTopView from './components/ConeIlluminationTopView.vue'
+import CrossSolverValidation from './components/CrossSolverValidation.vue'
 
 export default {
   extends: DefaultTheme,
@@ -69,5 +70,6 @@ export default {
     app.component('PhotonJourneyAnimation', PhotonJourneyAnimation)
     app.component('WavelengthExplorer', WavelengthExplorer)
     app.component('ConeIlluminationTopView', ConeIlluminationTopView)
+    app.component('CrossSolverValidation', CrossSolverValidation)
   },
 }

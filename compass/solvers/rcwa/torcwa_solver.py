@@ -194,6 +194,14 @@ class TorcwaSolver(SolverBase):
         # Input layer (air, above structure)
         sim.add_input_layer(eps=1.0)
 
+        # Set incidence angle BEFORE adding layers (torcwa needs Kx_norm for eigendecomp)
+        if self._source is None:
+            raise RuntimeError("source is not set; call setup_source() first")
+        sim.set_incident_angle(
+            inc_ang=self._source.theta_rad,
+            azi_ang=self._source.phi_rad,
+        )
+
         # Track layers for per-pixel QE and field extraction
         layer_info = []
         for s in reversed(layer_slices):
@@ -203,24 +211,27 @@ class TorcwaSolver(SolverBase):
             sim.add_layer(thickness=s.thickness, eps=eps_tensor)
             layer_info.append(s)
 
-        # Output layer (substrate below, effectively air or continuation)
-        sim.add_output_layer(eps=1.0)
-
-        # Set incidence angle
-        if self._source is None:
-            raise RuntimeError("source is not set; call setup_source() first")
-        sim.set_incident_angle(
-            inc_ang=self._source.theta_rad,
-            azi_ang=self._source.phi_rad,
-        )
-
-        # Solve
+        # Solve (no add_output_layer — defaults to free space)
         sim.solve_global_smatrix()
 
-        # Extract R, T
-        R = float(sim.S_parameters.R.real) if hasattr(sim.S_parameters, 'R') else 0.0
-        T = float(sim.S_parameters.T.real) if hasattr(sim.S_parameters, 'T') else 0.0
-        A = 1.0 - R - T
+        # Extract R, T via S_parameters method
+        if callable(sim.S_parameters):
+            # torcwa >= 0.1.x: S_parameters is a method
+            S_R = sim.S_parameters(
+                orders=[0, 0], direction='forward', port='reflection',
+                polarization='xx', power_norm=True,
+            )
+            S_T = sim.S_parameters(
+                orders=[0, 0], direction='forward', port='transmission',
+                polarization='xx', power_norm=True,
+            )
+            R = float(torch.abs(S_R) ** 2)
+            T = float(torch.abs(S_T) ** 2)
+        else:
+            # Legacy: S_parameters is an object with R, T attributes
+            R = float(sim.S_parameters.R.real)
+            T = float(sim.S_parameters.T.real)
+        A = max(0.0, 1.0 - R - T)
 
         # Store sim reference for field extraction
         self._last_sim = sim

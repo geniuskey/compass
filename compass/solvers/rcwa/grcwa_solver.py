@@ -86,18 +86,30 @@ class GrcwaSolver(SolverBase):
                     planewave = {"p_amp": 1, "s_amp": 0, "p_phase": 0, "s_phase": 0}
 
                 try:
-                    obj = grcwa.obj(nG, lx, ly, freq, self._source.theta_deg, self._source.phi_deg, verbose=0)
-                    obj.Add_LayerUniform(1.0, 0.0)  # input: air
+                    obj = grcwa.obj(
+                        nG, L1=[lx, 0], L2=[0, ly],
+                        freq=freq, theta=self._source.theta_deg,
+                        phi=self._source.phi_deg, verbose=0,
+                    )
 
+                    # Input layer (semi-infinite air)
+                    obj.Add_LayerUniform(0, 1.0)
+
+                    # Add grid layers (collect eps for later)
+                    grid_eps_list = []
                     for s in reversed(layer_slices):
-                        eps_real = np.real(s.eps_grid)
-                        eps_imag = np.imag(s.eps_grid)
                         obj.Add_LayerGrid(s.thickness, nx, ny)
-                        obj.Grid_SetGrid(eps_real, eps_imag)
+                        grid_eps_list.append(s.eps_grid.flatten())
 
-                    obj.Add_LayerUniform(1.0, 0.0)  # output: air
+                    # Output layer (semi-infinite air)
+                    obj.Add_LayerUniform(0, 1.0)
 
+                    # Init must be called BEFORE GridLayer_geteps (grcwa >= 0.1.2)
                     obj.Init_Setup(Gmethod=0)
+
+                    # Set permittivity for all grid layers (single concatenated call)
+                    obj.GridLayer_geteps(np.concatenate(grid_eps_list))
+
                     obj.MakeExcitationPlanewave(
                         planewave["p_amp"], planewave["s_amp"],
                         planewave["p_phase"], planewave["s_phase"],

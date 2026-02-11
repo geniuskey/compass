@@ -91,6 +91,7 @@ class FlaportFdtdSolver(SolverBase):
             qe_pol_accum: dict[str, list[float]] = {}
 
             for pol in pol_runs:
+                eps_3d = None
                 try:
                     # Create grid
                     grid = fdtd.Grid(
@@ -174,7 +175,10 @@ class FlaportFdtdSolver(SolverBase):
                 A_pol.append(A)
 
                 # Per-pixel QE via eps_imag weighting in PD regions
-                pixel_qe = self._compute_per_pixel_qe(eps_3d, wavelength, A)
+                if eps_3d is not None:
+                    pixel_qe = self._compute_per_pixel_qe(eps_3d, wavelength, A)
+                else:
+                    pixel_qe = {}
                 for key, val in pixel_qe.items():
                     qe_pol_accum.setdefault(key, []).append(val)
 
