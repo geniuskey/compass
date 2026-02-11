@@ -9,7 +9,7 @@ from __future__ import annotations
 import copy
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 from scipy import optimize as sp_optimize
@@ -138,9 +138,7 @@ class PixelOptimizer:
                 options["xatol"] = self.tolerance
                 options["fatol"] = self.tolerance
                 scipy_bounds = None  # Nelder-Mead handles bounds via clipping in _evaluate
-            elif self.method == "l-bfgs-b":
-                scipy_bounds = bounds
-            elif self.method == "powell":
+            elif self.method in ("l-bfgs-b", "powell"):
                 scipy_bounds = bounds
 
             result = sp_optimize.minimize(
@@ -166,8 +164,6 @@ class PixelOptimizer:
         if self._best_params is not None:
             best_x = self._best_params
 
-        # Build final config with best parameters
-        final_config = copy.deepcopy(self.base_config)
         # Re-create parameter space on the final config to apply best values
         self.parameter_space.from_vector(best_x)
 

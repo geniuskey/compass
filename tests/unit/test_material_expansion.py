@@ -99,8 +99,8 @@ class TestMetalProperties:
 
     def test_gold_plasmonic_transition(self, db):
         """Gold should have low n below 500nm and increasing k above it."""
-        n_blue, k_blue = db.get_nk("gold", 0.45)
-        n_red, k_red = db.get_nk("gold", 0.65)
+        _n_blue, k_blue = db.get_nk("gold", 0.45)
+        _n_red, k_red = db.get_nk("gold", 0.65)
         assert k_red > k_blue, "Au k should increase with wavelength above 500nm"
 
     def test_silver_best_visible_reflector(self, db):
@@ -143,7 +143,7 @@ class TestDielectricProperties:
 
     def test_tantalum_pentoxide_high_n(self, db):
         """Ta2O5 should have n ~ 2.1, a high-index dielectric."""
-        n, k = db.get_nk("tantalum_pentoxide", 0.55)
+        n, _k = db.get_nk("tantalum_pentoxide", 0.55)
         assert 2.05 < n < 2.20, f"Ta2O5 n={n} at 550nm, expected ~2.1"
 
     def test_ito_transparent_conductor(self, db):
@@ -211,12 +211,12 @@ class TestSemiconductorProperties:
 
     def test_gaas_high_n(self, db):
         """GaAs should have high n > 3.5 in visible."""
-        n, k = db.get_nk("gallium_arsenide", 0.55)
+        n, _k = db.get_nk("gallium_arsenide", 0.55)
         assert n > 3.5, f"GaAs n={n} at 550nm, expected > 3.5"
 
     def test_inp_high_n(self, db):
         """InP should have high n > 3.0 in visible."""
-        n, k = db.get_nk("indium_phosphide", 0.55)
+        n, _k = db.get_nk("indium_phosphide", 0.55)
         assert n > 3.0, f"InP n={n} at 550nm, expected > 3.0"
 
 

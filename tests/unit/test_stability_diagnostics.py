@@ -7,7 +7,7 @@ Tests cover:
 - Additional edge cases not covered in test_stability.py
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -20,10 +20,7 @@ from compass.diagnostics.stability_diagnostics import (
 )
 from compass.solvers.rcwa.stability import (
     EigenvalueStabilizer,
-    LiFactorization,
-    StableSMatrixAlgorithm,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -320,7 +317,7 @@ class TestAdaptivePrecisionRunner:
         mock_solver.run_single_wavelength.return_value = {"R": 0.6, "T": 0.7}
 
         # Should NOT fall back since total < 1.0 + 0.5 = 1.5
-        result = runner.run_with_fallback(mock_solver, 0.55, {})
+        runner.run_with_fallback(mock_solver, 0.55, {})
         assert mock_solver.run_single_wavelength.call_count == 1
 
     def test_strategy_order(self):
@@ -389,7 +386,7 @@ class TestEigenvalueStabilizerEdgeCases:
         """Non-degenerate eigenvalues are unchanged."""
         eigenvalues = np.array([1.0 + 0j, 5.0 + 0j, 10.0 + 0j])
         eigenvectors = np.eye(3, dtype=complex)
-        vals, vecs = EigenvalueStabilizer.fix_degenerate_eigenvalues(
+        vals, _vecs = EigenvalueStabilizer.fix_degenerate_eigenvalues(
             eigenvalues, eigenvectors, broadening=1e-10
         )
         np.testing.assert_array_equal(vals, eigenvalues)

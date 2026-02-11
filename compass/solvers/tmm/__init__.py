@@ -15,7 +15,7 @@ from compass.solvers.tmm.tmm_solver import TMMSolver
 
 __all__ = [
     "TMMSolver",
-    "transfer_matrix_1d",
-    "tmm_spectrum",
     "tmm_field_profile",
+    "tmm_spectrum",
+    "transfer_matrix_1d",
 ]

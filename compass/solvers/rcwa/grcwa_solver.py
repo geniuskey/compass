@@ -140,7 +140,7 @@ class GrcwaSolver(SolverBase):
         for arr_name, arr in result_arrays.items():
             if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
                 import warnings
-                warnings.warn(f"grcwa: NaN/Inf detected in {arr_name} output")
+                warnings.warn(f"grcwa: NaN/Inf detected in {arr_name} output", stacklevel=2)
 
         return SimulationResult(
             qe_per_pixel={k: np.array(v) for k, v in all_qe.items()},

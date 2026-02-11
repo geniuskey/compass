@@ -17,7 +17,6 @@ from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
 from compass.solvers.tmm.tmm_core import (
     tmm_field_profile,
-    tmm_spectrum,
     transfer_matrix_1d,
 )
 from compass.sources.planewave import PlanewaveSource

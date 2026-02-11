@@ -8,7 +8,6 @@ bounds, and convert to/from flat numpy vectors.
 
 from __future__ import annotations
 
-import copy
 import logging
 from abc import ABC, abstractmethod
 

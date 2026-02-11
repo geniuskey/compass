@@ -1,10 +1,7 @@
 """Unit tests for RayFileReader."""
 
 import json
-import os
-import tempfile
 
-import numpy as np
 import pytest
 
 from compass.sources.ray_file_reader import RayFileReader
@@ -129,7 +126,7 @@ class TestReadAutoDetect:
 
     def test_nonexistent_file_raises(self, tmp_path):
         """Reading a nonexistent file raises an exception."""
-        with pytest.raises(Exception):
+        with pytest.raises((FileNotFoundError, OSError)):
             RayFileReader.read(str(tmp_path / "nonexistent.json"))
 
     def test_unknown_extension_defaults_to_csv(self, tmp_path):

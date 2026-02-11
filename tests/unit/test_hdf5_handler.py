@@ -6,7 +6,6 @@ import pytest
 from compass.core.types import FieldData, SimulationResult
 from compass.io.hdf5_handler import HDF5Handler
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -72,7 +71,7 @@ class TestHDF5RoundTrip:
         filepath = str(tmp_path / "test_result.h5")
 
         HDF5Handler.save_result(result, config, filepath)
-        loaded_result, loaded_config = HDF5Handler.load_result(filepath)
+        loaded_result, _loaded_config = HDF5Handler.load_result(filepath)
 
         np.testing.assert_array_almost_equal(
             loaded_result.wavelengths, result.wavelengths
@@ -228,7 +227,7 @@ class TestHDF5EdgeCases:
 
     def test_load_nonexistent_file_raises(self):
         """Loading a nonexistent file raises an error."""
-        with pytest.raises(Exception):
+        with pytest.raises((FileNotFoundError, OSError)):
             HDF5Handler.load_result("/nonexistent/path/data.h5")
 
     def test_compression_options(self, tmp_path):

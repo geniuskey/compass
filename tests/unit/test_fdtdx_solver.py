@@ -15,7 +15,6 @@ import pytest
 from compass.core.types import FieldData, SimulationResult
 from compass.solvers.base import SolverBase, SolverFactory
 
-
 # ---------------------------------------------------------------------------
 # Helpers: build fake fdtdx + jax ecosystem for import mocking
 # ---------------------------------------------------------------------------
@@ -209,16 +208,16 @@ def _patch_fdtdx_imports():
         "jax.numpy": jnp,
         "fdtdx": fdtdx_mod,
     }
-    with patch.dict(sys.modules, modules):
-        # Patch the module-level flags and mock get_photodiode_mask
-        # to avoid GeometryBuilder's bitwise_or dtype bug
-        with patch("compass.solvers.fdtd.fdtdx_solver._JAX_AVAILABLE", True), \
-             patch("compass.solvers.fdtd.fdtdx_solver._FDTDX_AVAILABLE", True), \
-             patch(
-                 "compass.geometry.pixel_stack.PixelStack.get_photodiode_mask",
-                 side_effect=lambda nx, ny, nz: _mock_get_photodiode_mask(nx, ny, nz),
-             ):
-            yield
+    # Patch the module-level flags and mock get_photodiode_mask
+    # to avoid GeometryBuilder's bitwise_or dtype bug
+    with patch.dict(sys.modules, modules), \
+         patch("compass.solvers.fdtd.fdtdx_solver._JAX_AVAILABLE", True), \
+         patch("compass.solvers.fdtd.fdtdx_solver._FDTDX_AVAILABLE", True), \
+         patch(
+             "compass.geometry.pixel_stack.PixelStack.get_photodiode_mask",
+             side_effect=lambda nx, ny, nz: _mock_get_photodiode_mask(nx, ny, nz),
+         ):
+        yield
 
 
 # ---------------------------------------------------------------------------
@@ -261,12 +260,10 @@ class TestFdtdxSolverRegistration:
         """fdtdx should be in the SolverFactory _try_import map."""
         # Access the import map indirectly -- try_import should not raise
         # for a known solver name
-        from compass.solvers.base import SolverFactory as SF
+        from compass.solvers.base import SolverFactory
 
-        # Verify by checking the source: the key "fdtdx" should be mapped
-        assert "fdtdx" in SolverFactory._registry or True  # registration may vary
         # The real check is that _try_import doesn't crash
-        SF._try_import("fdtdx")
+        SolverFactory._try_import("fdtdx")
 
 
 # ---------------------------------------------------------------------------
@@ -349,8 +346,8 @@ class TestFdtdxSetupGeometry:
 
     def test_valid_pixel_stack_stored(self, simple_pixel_config):
         """Valid pixel_stack is stored after setup_geometry."""
-        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
 
         solver = FdtdxSolver({"name": "fdtdx", "params": {}})
         ps = PixelStack(simple_pixel_config)
@@ -423,8 +420,8 @@ class TestFdtdxRunPrerequisites:
 
     def test_run_without_source_raises(self, simple_pixel_config):
         """run() without setup_source raises RuntimeError."""
-        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
 
         solver = FdtdxSolver({"name": "fdtdx", "params": {}})
         ps = PixelStack(simple_pixel_config)
@@ -446,8 +443,8 @@ class TestFdtdxRunWithMocks:
         self, fdtdx_config, simple_pixel_config, source_config_te
     ):
         """run() returns a valid SimulationResult."""
-        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
 
         solver = FdtdxSolver(fdtdx_config)
         ps = PixelStack(simple_pixel_config)
@@ -470,8 +467,8 @@ class TestFdtdxRunWithMocks:
         self, fdtdx_config, simple_pixel_config, source_config_te
     ):
         """Metadata contains solver name and configuration details."""
-        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
 
         solver = FdtdxSolver(fdtdx_config)
         ps = PixelStack(simple_pixel_config)
@@ -494,8 +491,8 @@ class TestFdtdxRunWithMocks:
         self, fdtdx_config, simple_pixel_config, source_config_te
     ):
         """QE per pixel should have entries for all pixels in the Bayer map."""
-        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
 
         solver = FdtdxSolver(fdtdx_config)
         ps = PixelStack(simple_pixel_config)
@@ -506,7 +503,7 @@ class TestFdtdxRunWithMocks:
 
         # 2x2 Bayer: R_0_0, G_0_1, G_1_0, B_1_1
         assert len(result.qe_per_pixel) == 4
-        for key, spectrum in result.qe_per_pixel.items():
+        for _key, spectrum in result.qe_per_pixel.items():
             assert len(spectrum) == 1  # 1 wavelength
 
     @pytest.mark.usefixtures("_patch_fdtdx_imports")
@@ -514,8 +511,8 @@ class TestFdtdxRunWithMocks:
         self, fdtdx_config, simple_pixel_config, source_config_te
     ):
         """R, T, A values should be in [0, 1] range."""
-        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
 
         solver = FdtdxSolver(fdtdx_config)
         ps = PixelStack(simple_pixel_config)
@@ -536,8 +533,8 @@ class TestFdtdxRunWithMocks:
         self, fdtdx_config, simple_pixel_config, source_config
     ):
         """Unpolarized run should average TE and TM results."""
-        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
 
         solver = FdtdxSolver(fdtdx_config)
         ps = PixelStack(simple_pixel_config)
@@ -612,8 +609,8 @@ class TestFdtdxNanInfGuard:
                  "compass.geometry.pixel_stack.PixelStack.get_photodiode_mask",
                  side_effect=lambda nx, ny, nz: _mock_get_photodiode_mask(nx, ny, nz),
              ):
-            from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
             from compass.geometry.pixel_stack import PixelStack
+            from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
 
             solver = FdtdxSolver(fdtdx_config)
             ps = PixelStack(simple_pixel_config)

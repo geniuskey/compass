@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import json
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -28,7 +25,6 @@ from compass.optimization.parameters import (
     MicrolensSquareness,
     ParameterSpace,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -123,7 +119,7 @@ class TestMaximizeQE:
         """Only specified pixels contribute to the average."""
         result = _make_result(qe_value=0.5, n_pixels=4)
         # Override one pixel to have different QE
-        first_key = list(result.qe_per_pixel.keys())[0]
+        first_key = next(iter(result.qe_per_pixel.keys()))
         result.qe_per_pixel[first_key] = np.full(5, 0.9)
         obj = MaximizeQE(target_pixels=[first_key])
         val = obj.evaluate(result)

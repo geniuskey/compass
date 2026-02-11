@@ -221,7 +221,8 @@ class FmmaxSolver(SolverBase):
         for arr_name, arr in result_arrays.items():
             if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
                 warnings.warn(
-                    f"fmmax: NaN/Inf detected in {arr_name} output"
+                    f"fmmax: NaN/Inf detected in {arr_name} output",
+                    stacklevel=2,
                 )
 
         return SimulationResult(
@@ -304,7 +305,7 @@ class FmmaxSolver(SolverBase):
 
         # Solve each layer eigenmode problem
         layer_solve_results = []
-        for i, eps in enumerate(layer_permittivities):
+        for eps in layer_permittivities:
             solve_result = fmm.eigensolve_isotropic_media(
                 wavelength=jnp.array(wavelength),
                 in_plane_wavevector=in_plane_wavevector,

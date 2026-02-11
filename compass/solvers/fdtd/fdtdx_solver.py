@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 _FDTDX_AVAILABLE = False
 _JAX_AVAILABLE = False
 try:
-    import jax  # noqa: F401
+    import jax
 
     _JAX_AVAILABLE = True
 except ImportError:
@@ -282,7 +282,7 @@ class FdtdxSolver(SolverBase):
         # NaN/Inf guard
         for arr_name, arr in result_arrays.items():
             if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
-                warnings.warn(f"fdtdx: NaN/Inf detected in {arr_name} output")
+                warnings.warn(f"fdtdx: NaN/Inf detected in {arr_name} output", stacklevel=2)
 
         return SimulationResult(
             qe_per_pixel={k: np.array(v) for k, v in all_qe.items()},

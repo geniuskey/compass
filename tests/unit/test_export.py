@@ -8,7 +8,6 @@ import pytest
 from compass.core.types import SimulationResult
 from compass.io.export import ResultExporter
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

@@ -277,9 +277,6 @@ def tmm_field_profile(
     eta_vals = np.array([
         _eta(n_layers[j], cos_theta[j], polarization) for j in range(n_total)
     ])
-    eta_0 = eta_vals[0]
-    eta_s = eta_vals[-1]
-
     # Interface positions: z=0 at first interface
     interface_z = np.zeros(n_total)
     for j in range(2, n_total):

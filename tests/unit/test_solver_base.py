@@ -5,8 +5,6 @@ import pytest
 
 from compass.core.types import SimulationResult
 from compass.solvers.base import SolverBase, SolverFactory
-from compass.geometry.pixel_stack import PixelStack
-
 
 # ---------------------------------------------------------------------------
 # Concrete mock subclass for testing

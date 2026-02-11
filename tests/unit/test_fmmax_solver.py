@@ -12,7 +12,6 @@ import pytest
 from compass.core.types import SimulationResult
 from compass.solvers.base import SolverBase, SolverFactory
 
-
 # ---------------------------------------------------------------------------
 # Helpers: build a fake fmmax + jax ecosystem for import mocking
 # ---------------------------------------------------------------------------
@@ -316,8 +315,8 @@ class TestFmmaxSetupGeometry:
 
     def test_valid_pixel_stack_stored(self, simple_pixel_config):
         """Valid pixel_stack is stored after setup_geometry."""
-        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
 
         solver = FmmaxSolver({"name": "fmmax", "params": {}})
         ps = PixelStack(simple_pixel_config)
@@ -380,8 +379,8 @@ class TestFmmaxRunPrerequisites:
 
     def test_run_without_source_raises(self, simple_pixel_config):
         """run() without setup_source raises RuntimeError."""
-        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
 
         solver = FmmaxSolver({"name": "fmmax", "params": {}})
         ps = PixelStack(simple_pixel_config)
@@ -398,8 +397,8 @@ class TestFmmaxRunWithMocks:
         self, fmmax_config, simple_pixel_config, source_config
     ):
         """run() returns a valid SimulationResult."""
-        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
 
         solver = FmmaxSolver(fmmax_config)
         ps = PixelStack(simple_pixel_config)
@@ -422,8 +421,8 @@ class TestFmmaxRunWithMocks:
         self, fmmax_config, simple_pixel_config, source_config
     ):
         """Metadata contains solver name and formulation."""
-        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
 
         solver = FmmaxSolver(fmmax_config)
         ps = PixelStack(simple_pixel_config)
@@ -442,8 +441,8 @@ class TestFmmaxRunWithMocks:
         self, fmmax_config, simple_pixel_config, source_config
     ):
         """QE per pixel should have entries for all pixels in the Bayer map."""
-        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
 
         solver = FmmaxSolver(fmmax_config)
         ps = PixelStack(simple_pixel_config)
@@ -454,7 +453,7 @@ class TestFmmaxRunWithMocks:
 
         # 2x2 Bayer: R_0_0, G_0_1, G_1_0, B_1_1
         assert len(result.qe_per_pixel) == 4
-        for key, spectrum in result.qe_per_pixel.items():
+        for _key, spectrum in result.qe_per_pixel.items():
             assert len(spectrum) == 3  # 3 wavelengths
 
 
@@ -476,8 +475,8 @@ class TestFmmaxGetFieldDistribution:
         self, fmmax_config, simple_pixel_config, source_config
     ):
         """After run, xz field extraction returns non-trivial array."""
-        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
 
         solver = FmmaxSolver(fmmax_config)
         ps = PixelStack(simple_pixel_config)
@@ -495,8 +494,8 @@ class TestFmmaxGetFieldDistribution:
         self, fmmax_config, simple_pixel_config, source_config
     ):
         """After run, xy field extraction returns non-trivial array."""
-        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
 
         solver = FmmaxSolver(fmmax_config)
         ps = PixelStack(simple_pixel_config)

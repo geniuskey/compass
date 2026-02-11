@@ -18,11 +18,10 @@ import numpy as np
 import pytest
 
 from compass.solvers.tmm.tmm_core import (
-    transfer_matrix_1d,
     tmm_field_profile,
     tmm_spectrum,
+    transfer_matrix_1d,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helper functions
@@ -79,7 +78,7 @@ class TestFresnelSingleInterface:
     def test_air_glass_reflection_value(self):
         """Air-glass gives approximately 4% reflection."""
         n_layers, d_layers = _air_glass_stack(n_glass=1.5)
-        R, T, A = transfer_matrix_1d(n_layers, d_layers, 0.55, 0.0, "TE")
+        R, _T, A = transfer_matrix_1d(n_layers, d_layers, 0.55, 0.0, "TE")
         assert abs(R - 0.04) < 1e-10
         assert abs(A) < 1e-10
 
@@ -108,7 +107,7 @@ class TestQuarterWaveARC:
         """Quarter-wave ARC should nearly eliminate reflection at design wavelength."""
         wavelength = 0.55
         n_layers, d_layers = _arc_on_silicon(wavelength)
-        R, T, A = transfer_matrix_1d(n_layers, d_layers, wavelength, 0.0, "TE")
+        R, _T, _A = transfer_matrix_1d(n_layers, d_layers, wavelength, 0.0, "TE")
 
         # With ideal n_arc = sqrt(n_air * n_si) and d = lambda/(4*n_arc),
         # reflection should be very close to zero for non-absorbing materials
@@ -287,7 +286,10 @@ class TestTMMSpectrum:
     def test_spectrum_correct_length(self):
         """Output arrays should match number of wavelengths."""
         wavelengths = np.linspace(0.4, 0.7, 31)
-        n_layers_func = lambda wl: np.array([1.0, 1.5], dtype=complex)
+
+        def n_layers_func(wl):
+            return np.array([1.0, 1.5], dtype=complex)
+
         d_layers = np.array([np.inf, np.inf])
 
         R, T, A = tmm_spectrum(n_layers_func, d_layers, wavelengths, 0.0, "TE")
@@ -313,10 +315,13 @@ class TestTMMSpectrum:
     def test_single_wavelength_spectrum(self):
         """Spectrum with single wavelength should work."""
         wavelengths = np.array([0.55])
-        n_func = lambda wl: np.array([1.0, 1.5], dtype=complex)
+
+        def n_func(wl):
+            return np.array([1.0, 1.5], dtype=complex)
+
         d_layers = np.array([np.inf, np.inf])
 
-        R, T, A = tmm_spectrum(n_func, d_layers, wavelengths)
+        R, _T, _A = tmm_spectrum(n_func, d_layers, wavelengths)
         assert len(R) == 1
         assert abs(R[0] - 0.04) < 1e-10
 
@@ -441,8 +446,8 @@ class TestTMMSolverAdapter:
 
     def test_full_run(self):
         """Full TMM solver run produces valid SimulationResult."""
-        from compass.solvers.tmm.tmm_solver import TMMSolver
         from compass.core.types import SimulationResult
+        from compass.solvers.tmm.tmm_solver import TMMSolver
 
         solver = TMMSolver(
             {"name": "tmm", "type": "tmm", "params": {"field_resolution": 100}}
@@ -497,8 +502,8 @@ class TestTMMSolverAdapter:
 
     def test_run_without_setup_source_raises(self):
         """run() before setup_source() raises RuntimeError."""
-        from compass.solvers.tmm.tmm_solver import TMMSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.tmm.tmm_solver import TMMSolver
 
         solver = TMMSolver({"name": "tmm", "type": "tmm", "params": {}})
         config = {
@@ -515,8 +520,8 @@ class TestTMMSolverAdapter:
 
     def test_get_field_distribution(self):
         """get_field_distribution returns 2D array after run."""
-        from compass.solvers.tmm.tmm_solver import TMMSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.tmm.tmm_solver import TMMSolver
 
         solver = TMMSolver(
             {"name": "tmm", "type": "tmm", "params": {"field_resolution": 50}}
@@ -543,8 +548,8 @@ class TestTMMSolverAdapter:
 
     def test_validate_energy_balance(self):
         """validate_energy_balance should pass for TMM results."""
-        from compass.solvers.tmm.tmm_solver import TMMSolver
         from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.tmm.tmm_solver import TMMSolver
 
         solver = TMMSolver({"name": "tmm", "type": "tmm", "params": {}})
         config = {

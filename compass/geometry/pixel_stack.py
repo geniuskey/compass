@@ -373,7 +373,7 @@ class PixelStack:
         cf_cfg: dict,
     ) -> np.ndarray:
         """Build color filter layer with Bayer pattern and optional metal grid."""
-        lx, ly = self.domain_size
+        _lx, _ly = self.domain_size
         eps_grid = np.zeros((ny, nx), dtype=complex)
 
         # Assign color filter materials per pixel

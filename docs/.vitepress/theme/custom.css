@@ -68,9 +68,9 @@ mjx-container[display="true"] {
    Landing page styles
    ================================================ */
 
-/* Smooth scroll for the landing page */
+/* Instant page transitions (no scroll animation) */
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 /* Landing page section spacing */

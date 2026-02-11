@@ -6,11 +6,10 @@ import numpy as np
 import pytest
 
 from compass.core.types import SimulationResult
-from compass.runners.single_run import SingleRunner
-from compass.runners.sweep_runner import SweepRunner
 from compass.runners.comparison_runner import ComparisonRunner
 from compass.runners.roi_sweep_runner import ROISweepRunner
-
+from compass.runners.single_run import SingleRunner
+from compass.runners.sweep_runner import SweepRunner
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -373,5 +372,5 @@ class TestROISweepRunner:
 
         results = ROISweepRunner.run(_base_config(), {"image_heights": [0.0, 0.5]})
 
-        for key, val in results.items():
+        for _key, val in results.items():
             assert isinstance(val, SimulationResult)

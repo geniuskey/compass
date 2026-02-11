@@ -39,7 +39,8 @@ class PlanewaveSource:
             warnings.warn(
                 f"PlanewaveSource: wavelengths outside typical range [0.1, 100] um "
                 f"(min={float(np.min(self.wavelengths)):.4f}, "
-                f"max={float(np.max(self.wavelengths)):.4f})"
+                f"max={float(np.max(self.wavelengths)):.4f})",
+                stacklevel=2,
             )
 
     @classmethod
