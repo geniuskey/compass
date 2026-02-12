@@ -37,6 +37,8 @@ import CrossSolverValidation from './components/CrossSolverValidation.vue'
 import RcwaFdtdValidation from './components/RcwaFdtdValidation.vue'
 import ConvergenceStudyChart from './components/ConvergenceStudyChart.vue'
 import PerColorConvergenceChart from './components/PerColorConvergenceChart.vue'
+import PixelCrossSections from './components/PixelCrossSections.vue'
+import Pixel3DViewer from './components/Pixel3DViewer.vue'
 
 export default {
   extends: DefaultTheme,
@@ -77,5 +79,7 @@ export default {
     app.component('RcwaFdtdValidation', RcwaFdtdValidation)
     app.component('ConvergenceStudyChart', ConvergenceStudyChart)
     app.component('PerColorConvergenceChart', PerColorConvergenceChart)
+    app.component('PixelCrossSections', PixelCrossSections)
+    app.component('Pixel3DViewer', Pixel3DViewer)
   },
 }
