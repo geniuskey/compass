@@ -72,7 +72,7 @@ class TestFlaportPMLSliceIndexing:
 
         solver = FlaportFdtdSolver({"params": {}}, device="cpu")
         # Should not raise — slice PML indexing
-        grid = solver._build_grid(
+        grid, damping = solver._build_grid(
             fdtd_mod,
             nx=51,
             ny=51,
@@ -84,6 +84,7 @@ class TestFlaportPMLSliceIndexing:
             eps_3d=None,
         )
         assert grid is not None
+        assert damping is None  # No damping for vacuum run
 
     @patch.dict("sys.modules", {"fdtd": MagicMock()})
     def test_pml_called_twice(self):
@@ -121,11 +122,11 @@ class TestFlaportVacuumEnergyConservation:
         """With vacuum (no absorption), R~0, T~1, A~0."""
         fdtd_mod, _grid = _make_fdtd_mock()
 
-        # Poynting fluxes for vacuum: symmetric source, all power transmitted
-        # Sz_above = +0.5 (upward), Sz_below = -0.5 (downward), Sz_trans = -0.5 (downward)
-        # P_up=0.5, P_down=0.5, P_source=1.0, P_inc=0.5
-        # P_refl=(0.5-0.5)/2=0, R=0, T=0.5/0.5=1.0, A=0
-        poynting_vacuum = (0.5, -0.5, -0.5)
+        # Two-pass normalization: both reference and structure runs return same fluxes
+        # Sz_above = +0.1 (small upward), Sz_below = -0.5 (downward), Sz_trans = -0.5
+        # Reference: P_inc = abs(Sz_ref_below) = 0.5
+        # Structure (vacuum): R = (0.1 - 0.1) / 0.5 = 0.0, T = 0.5/0.5 = 1.0, A = 0.0
+        poynting_vacuum = (0.1, -0.5, -0.5)
 
         with patch.dict("sys.modules", {"fdtd": fdtd_mod}):
             from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
@@ -141,7 +142,7 @@ class TestFlaportVacuumEnergyConservation:
             solver.setup_source(_make_source_config())
 
             with patch.object(
-                FlaportFdtdSolver, "_build_grid", return_value=MagicMock()
+                FlaportFdtdSolver, "_build_grid", return_value=(MagicMock(), None)
             ), patch.object(
                 FlaportFdtdSolver,
                 "_run_and_poynting",
@@ -164,13 +165,14 @@ class TestFlaportEnergyBalance:
         """R + T + A should be within 2% of 1.0."""
         fdtd_mod, _grid = _make_fdtd_mock()
 
-        # Poynting fluxes for structure with ~5% reflection, ~50% transmission
-        # Sz_above = +0.55 (upward), Sz_below = -0.45 (downward), Sz_trans = -0.22 (transmitted)
-        # P_up=0.55, P_down=0.45, P_source=1.0, P_inc=0.5
-        # P_refl=(0.55-0.45)/2=0.05, R=0.05/0.5=0.10
-        # T=0.22/0.5=0.44
-        # A=1-0.10-0.44=0.46
-        poynting_structure = (0.55, -0.45, -0.22)
+        # Two-pass normalization:
+        # Reference run: Sz_ref_above=0.1, Sz_ref_below=-0.5 → P_inc = 0.5
+        # Structure run: Sz_above=0.15, Sz_below=-0.40, Sz_trans=-0.22
+        # R = (0.15 - 0.1) / 0.5 = 0.10
+        # T = 0.22 / 0.5 = 0.44
+        # A = 1 - 0.10 - 0.44 = 0.46
+        poynting_ref = (0.1, -0.5, -0.5)
+        poynting_structure = (0.15, -0.40, -0.22)
 
         with patch.dict("sys.modules", {"fdtd": fdtd_mod}):
             from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
@@ -184,11 +186,11 @@ class TestFlaportEnergyBalance:
             solver.setup_source(_make_source_config())
 
             with patch.object(
-                FlaportFdtdSolver, "_build_grid", return_value=MagicMock()
+                FlaportFdtdSolver, "_build_grid", return_value=(MagicMock(), None)
             ), patch.object(
                 FlaportFdtdSolver,
                 "_run_and_poynting",
-                return_value=poynting_structure,
+                side_effect=[poynting_ref, poynting_structure],
             ):
                 result = solver.run()
 

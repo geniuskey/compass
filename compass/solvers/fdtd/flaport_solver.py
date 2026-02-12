@@ -58,9 +58,9 @@ class FlaportFdtdSolver(SolverBase):
             raise ImportError("fdtd is required. Install with: pip install fdtd") from err
 
         params = self.config.get("params", {})
-        grid_spacing = params.get("grid_spacing", 0.02)  # um
-        runtime = params.get("runtime", 200)  # femtoseconds
-        pml_layers = params.get("pml_layers", 15)
+        grid_spacing = params.get("grid_spacing", 0.015)  # um
+        runtime = params.get("runtime", 500)  # femtoseconds
+        pml_layers = params.get("pml_layers", 20)
 
         # Set backend
         if self.device == "cuda":
@@ -105,11 +105,29 @@ class FlaportFdtdSolver(SolverBase):
                     z_trans = pml_layers + 5  # below structure (transmitted flux)
                     snap_start = n_steps - n_steps // 3
 
-                    # --- Structure run (single pass, Poynting vector method) ---
+                    # --- Pass 1: Vacuum reference run (no structure) ---
+                    grid_ref, _ = self._build_grid(
+                        fdtd,
+                        nx,
+                        ny,
+                        nz,
+                        grid_spacing_m,
+                        pml_layers,
+                        wavelength_m,
+                        pol,
+                        eps_3d=None,
+                    )
+                    Sz_ref_above, Sz_ref_below, _ = self._run_and_poynting(
+                        grid_ref, n_steps, snap_start, z_above, z_below, z_trans,
+                        damping_tensor=None, pml_layers=pml_layers,
+                    )
+                    P_inc = abs(Sz_ref_below)
+
+                    # --- Pass 2: Structure run with material absorption ---
                     eps_3d = self._pixel_stack.get_permittivity_grid(
                         wavelength, nx, ny, nz - 2 * pml_layers
                     )
-                    grid = self._build_grid(
+                    grid, damping_tensor = self._build_grid(
                         fdtd,
                         nx,
                         ny,
@@ -125,24 +143,16 @@ class FlaportFdtdSolver(SolverBase):
                     self._last_grid = grid
                     self._last_eps_3d = eps_3d
 
-                    Sz_above, Sz_below, Sz_trans = self._run_and_poynting(
-                        grid, n_steps, snap_start, z_above, z_below, z_trans
+                    Sz_above, _Sz_below, Sz_trans = self._run_and_poynting(
+                        grid, n_steps, snap_start, z_above, z_below, z_trans,
+                        damping_tensor=damping_tensor, pml_layers=pml_layers,
                     )
 
-                    # --- Compute R, T, A from three-monitor Poynting fluxes ---
-                    # P_up = upward flux above source
-                    # P_down = net downward flux below source
-                    # Symmetric source: P_inc = (P_up + P_down) / 2
-                    P_up = Sz_above  # positive = upward
-                    P_down = abs(Sz_below)  # magnitude of downward flux
-                    P_trans_power = abs(Sz_trans)
-                    P_source = P_up + P_down
-                    P_inc = P_source / 2.0
-
+                    # --- Compute R, T, A using reference normalization ---
                     if P_inc > 0:
-                        P_refl = (P_up - P_down) / 2.0
-                        R = float(np.clip(P_refl / P_inc, 0.0, 1.0))
-                        T = float(np.clip(P_trans_power / P_inc, 0.0, 1.0))
+                        # Excess upward flux compared to reference = reflection
+                        R = float(np.clip((Sz_above - Sz_ref_above) / P_inc, 0.0, 1.0))
+                        T = float(np.clip(abs(Sz_trans) / P_inc, 0.0, 1.0))
                     else:
                         R, T = 0.0, 0.0
                     A = float(np.clip(1.0 - R - T, 0.0, 1.0))
@@ -204,7 +214,7 @@ class FlaportFdtdSolver(SolverBase):
         wavelength_m: float,
         pol: str,
         eps_3d: np.ndarray | None = None,
-    ):
+    ) -> tuple:
         """Build an fdtd.Grid with boundaries, source, and detectors.
 
         Args:
@@ -217,7 +227,7 @@ class FlaportFdtdSolver(SolverBase):
             eps_3d: 3D permittivity array. None for vacuum reference run.
 
         Returns:
-            Configured fdtd.Grid ready for simulation.
+            Tuple of (grid, damping_tensor). damping_tensor is None for vacuum runs.
         """
         grid = fdtd.Grid(
             shape=(nx, ny, nz),
@@ -231,6 +241,8 @@ class FlaportFdtdSolver(SolverBase):
         grid[:, :, 0:pml_layers] = fdtd.PML(name="z_pml_low")
         grid[:, :, -pml_layers:] = fdtd.PML(name="z_pml_high")
 
+        damping_tensor = None
+
         # Set permittivity if structure run — inverse_permittivity is 4D torch tensor (nx,ny,nz,3)
         if eps_3d is not None:
             import torch
@@ -240,6 +252,18 @@ class FlaportFdtdSolver(SolverBase):
             inv_eps = torch.tensor(1.0 / eps_real_safe, dtype=torch.float64).unsqueeze(-1)
             grid.inverse_permittivity[:, :, pml_layers:-pml_layers] = inv_eps
 
+            # Compute per-voxel damping for material absorption
+            eps_imag = np.imag(eps_3d)
+            if np.any(np.abs(eps_imag) > 1e-30):
+                omega = 2 * np.pi * 3e8 / wavelength_m
+                sigma = omega * 8.854e-12 * np.abs(eps_imag)  # equivalent conductivity (S/m)
+                dt = grid.time_step
+                alpha = sigma * dt / (2.0 * 8.854e-12 * eps_real_safe)
+                damping = (1.0 - alpha) / (1.0 + alpha)
+                # Expand to (nx, ny, nz_struct, 3) matching E-field components
+                damping_3d = np.stack([damping, damping, damping], axis=-1)
+                damping_tensor = torch.tensor(damping_3d, dtype=torch.float64)
+
         # Source — placed in air region near top PML (light propagates -z: air→silicon)
         grid[:, :, nz - pml_layers - 3] = fdtd.PlaneSource(
             period=wavelength_m / 3e8,
@@ -247,7 +271,7 @@ class FlaportFdtdSolver(SolverBase):
             name="source",
         )
 
-        return grid
+        return grid, damping_tensor
 
     @staticmethod
     def _run_and_poynting(
@@ -257,11 +281,14 @@ class FlaportFdtdSolver(SolverBase):
         z_above: int,
         z_below: int,
         z_trans: int,
+        damping_tensor=None,
+        pml_layers: int = 0,
     ) -> tuple[float, float, float]:
         """Step the grid and compute time-averaged Poynting flux at three z-planes.
 
         Uses Sz = Ex*Hy - Ey*Hx for power flux. Collects from snap_start
-        onward to capture steady-state behavior.
+        onward to capture steady-state behavior. Applies per-voxel damping
+        after each timestep to model material absorption.
 
         Args:
             grid: The fdtd.Grid to step.
@@ -270,6 +297,9 @@ class FlaportFdtdSolver(SolverBase):
             z_above: Z-index above source (measures upward flux).
             z_below: Z-index below source, above structure (measures downward flux).
             z_trans: Z-index below structure (measures transmitted flux).
+            damping_tensor: Per-voxel E-field damping (shape: nx, ny, nz_struct, 3).
+                None for lossless (vacuum) runs.
+            pml_layers: Number of PML layers (needed to index structure region).
 
         Returns:
             Tuple of (Sz_above, Sz_below, Sz_trans) time-and-space-averaged values.
@@ -280,6 +310,11 @@ class FlaportFdtdSolver(SolverBase):
 
         for step in range(n_steps):
             grid.step()
+
+            # Apply material absorption damping to E-field in structure region
+            if damping_tensor is not None:
+                grid.E[:, :, pml_layers:-pml_layers] *= damping_tensor
+
             if step >= snap_start:
                 E = grid.E
                 H = grid.H

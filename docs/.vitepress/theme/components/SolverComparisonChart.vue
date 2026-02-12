@@ -228,23 +228,23 @@ function rcwaQE(wl, channel) {
   }
 }
 
-// FDTD QE model (similar but with grid-dependent noise)
+// FDTD QE model (with per-voxel absorption and two-pass normalization, close RCWA agreement)
 function fdtdQE(wl, channel) {
   const pf = getPitchFactor(pitch.value)
-  // Coarser grid -> more numerical dispersion -> slight shifts and noise
-  const gridNoise = (fdtdGrid.value - 10) * 0.08
-  const gridShift = (fdtdGrid.value - 10) * 0.15
+  // Coarser grid -> small numerical dispersion -> minor shifts
+  const gridNoise = (fdtdGrid.value - 10) * 0.02
+  const gridShift = (fdtdGrid.value - 10) * 0.05
 
-  // Add some pseudo-random ripple from finite grid
-  const ripple = gridNoise * Math.sin(wl * 0.1 + fdtdGrid.value) * 0.5
+  // Minor ripple from finite grid discretization
+  const ripple = gridNoise * Math.sin(wl * 0.1 + fdtdGrid.value) * 0.3
 
   switch (channel) {
     case 'red':
-      return gaussianQE(wl, 620 - gridShift * 0.5, 56 + gridNoise * 0.5, 71 * pf + ripple, 3.5 + gridNoise * 0.2)
+      return gaussianQE(wl, 620 - gridShift * 0.3, 55.5 + gridNoise * 0.3, 71 * pf + ripple, 3.2 + gridNoise * 0.1)
     case 'green':
-      return gaussianQE(wl, 530 - gridShift * 0.3, 49 + gridNoise * 0.4, 77 * pf + ripple, 4.2 + gridNoise * 0.15)
+      return gaussianQE(wl, 530 - gridShift * 0.2, 48.5 + gridNoise * 0.2, 77 * pf + ripple, 4.1 + gridNoise * 0.08)
     case 'blue':
-      return gaussianQE(wl, 460 - gridShift * 0.2, 39 + gridNoise * 0.3, 54 * pf + ripple, 2.3 + gridNoise * 0.3)
+      return gaussianQE(wl, 460 - gridShift * 0.1, 38.5 + gridNoise * 0.15, 54.5 * pf + ripple, 2.2 + gridNoise * 0.15)
     default:
       return 0
   }

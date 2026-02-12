@@ -12,6 +12,7 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import logging
 import sys
 from pathlib import Path
@@ -120,11 +121,11 @@ def run_experiment_1() -> dict:
         "solver": {
             "name": "grcwa",
             "type": "rcwa",
-            "params": {"fourier_order": [3, 3], "dtype": "complex128"},
+            "params": {"fourier_order": [5, 5], "dtype": "complex128"},
         },
         "source": source,
     }
-    logger.info("Running grcwa [3,3]...")
+    logger.info("Running grcwa [5,5]...")
     grcwa_result = SingleRunner.run(grcwa_config)
 
     # fdtd_flaport
@@ -133,11 +134,11 @@ def run_experiment_1() -> dict:
         "solver": {
             "name": "fdtd_flaport",
             "type": "fdtd",
-            "params": {"grid_spacing": 0.02, "runtime": 300, "pml_layers": 15},
+            "params": {"grid_spacing": 0.015, "runtime": 500, "pml_layers": 20},
         },
         "source": source,
     }
-    logger.info("Running fdtd_flaport (dx=0.02um, 300fs)...")
+    logger.info("Running fdtd_flaport (dx=0.015um, 500fs, pml=20)...")
     fdtd_result = SingleRunner.run(fdtd_config)
 
     # Compare
@@ -167,9 +168,9 @@ def run_experiment_1() -> dict:
 
     logger.info("")
     logger.info(f"Max |A_grcwa - A_fdtd| = {max_dA:.4f}")
-    passed = max_dA < 0.10
+    passed = max_dA < 0.05
     status = "PASS" if passed else "FAIL"
-    logger.info(f"Experiment 1: {status} (threshold: 0.10)")
+    logger.info(f"Experiment 1: {status} (threshold: 0.05)")
 
     return {
         "wavelengths": wl,
@@ -392,6 +393,35 @@ def main():
         logger.info("\nAll validation experiments PASSED.")
     else:
         logger.info("\nSome experiments FAILED — see details above.")
+
+    # Save results to JSON
+    output_dir = Path(__file__).parent.parent / "results" / "benchmark"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "rcwa_vs_fdtd.json"
+
+    def _to_serializable(obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, np.floating):
+            return float(obj)
+        return obj
+
+    serializable = {}
+    for key, val in results.items():
+        if isinstance(val, dict):
+            serializable[key] = {
+                k: (
+                    {kk: _to_serializable(vv) for kk, vv in v.items()}
+                    if isinstance(v, dict)
+                    else _to_serializable(v)
+                )
+                for k, v in val.items()
+            }
+        else:
+            serializable[key] = _to_serializable(val)
+
+    output_path.write_text(json.dumps(serializable, indent=2))
+    logger.info(f"\nResults saved to {output_path}")
 
     return 0 if all_passed else 1
 
