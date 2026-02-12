@@ -34,6 +34,7 @@ import PhotonJourneyAnimation from './components/PhotonJourneyAnimation.vue'
 import WavelengthExplorer from './components/WavelengthExplorer.vue'
 import ConeIlluminationTopView from './components/ConeIlluminationTopView.vue'
 import CrossSolverValidation from './components/CrossSolverValidation.vue'
+import RcwaFdtdValidation from './components/RcwaFdtdValidation.vue'
 
 export default {
   extends: DefaultTheme,
@@ -71,5 +72,6 @@ export default {
     app.component('WavelengthExplorer', WavelengthExplorer)
     app.component('ConeIlluminationTopView', ConeIlluminationTopView)
     app.component('CrossSolverValidation', CrossSolverValidation)
+    app.component('RcwaFdtdValidation', RcwaFdtdValidation)
   },
 }

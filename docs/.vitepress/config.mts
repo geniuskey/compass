@@ -87,6 +87,7 @@ const cookbookSidebar = [
     { text: 'Signal Chain Color Accuracy', link: '/cookbook/signal-chain-color-accuracy' },
     { text: 'TMM Validation Results', link: '/cookbook/tmm-validation-results' },
     { text: 'Cross-Solver Validation', link: '/cookbook/cross-solver-validation' },
+    { text: 'RCWA vs FDTD Validation', link: '/cookbook/rcwa-vs-fdtd-validation' },
   ]}
 ]
 
@@ -179,6 +180,7 @@ const cookbookSidebarKo = [
     { text: '신호 체인 색 정확도', link: '/ko/cookbook/signal-chain-color-accuracy' },
     { text: 'TMM 검증 결과', link: '/ko/cookbook/tmm-validation-results' },
     { text: '크로스 솔버 검증', link: '/ko/cookbook/cross-solver-validation' },
+    { text: 'RCWA vs FDTD 검증', link: '/ko/cookbook/rcwa-vs-fdtd-validation' },
   ]}
 ]
 

@@ -85,7 +85,9 @@ class FlaportFdtdSolver(SolverBase):
         all_R, all_T, all_A = [], [], []
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
-            logger.debug(f"fdtd_flaport: wavelength {wavelength:.4f} um ({wl_idx+1}/{self._source.n_wavelengths})")
+            logger.debug(
+                f"fdtd_flaport: wavelength {wavelength:.4f} um ({wl_idx + 1}/{self._source.n_wavelengths})"
+            )
 
             R_pol, T_pol, A_pol = [], [], []
             qe_pol_accum: dict[str, list[float]] = {}
@@ -93,78 +95,58 @@ class FlaportFdtdSolver(SolverBase):
             for pol in pol_runs:
                 eps_3d = None
                 try:
-                    # Create grid
-                    grid = fdtd.Grid(
-                        shape=(nx, ny, nz),
-                        grid_spacing=grid_spacing_m,
-                        permittivity=1.0,
+                    wavelength_m = wavelength * 1e-6
+                    n_steps = int(runtime * 1e-15 / (grid_spacing_m / 3e8 / 2))
+
+                    # --- Reference run (vacuum) ---
+                    grid_ref = self._build_grid(
+                        fdtd,
+                        nx,
+                        ny,
+                        nz,
+                        grid_spacing_m,
+                        pml_layers,
+                        wavelength_m,
+                        pol,
+                        eps_3d=None,
                     )
+                    grid_ref.run(n_steps, progress_bar=False)
+                    E_top_ref = self._get_detector_E(grid_ref, 0, n_steps)
+                    E_bot_ref = self._get_detector_E(grid_ref, 1, n_steps)
 
-                    # Boundaries: PML on z, periodic on x,y
-                    grid[0, :, :] = fdtd.PeriodicBoundary(name="x_boundary")
-                    grid[:, 0, :] = fdtd.PeriodicBoundary(name="y_boundary")
-                    grid[:, :, 0] = fdtd.PML(name="z_pml_low")
-                    grid[:, :, -1] = fdtd.PML(name="z_pml_high")
-
-                    # Set permittivity from pixel stack
+                    # --- Structure run ---
                     eps_3d = self._pixel_stack.get_permittivity_grid(
                         wavelength, nx, ny, nz - 2 * pml_layers
                     )
-                    # Place permittivity in grid center (between PMLs)
-                    eps_real = np.real(eps_3d).transpose(1, 0, 2)
-                    eps_real_safe = np.where(np.abs(eps_real) > 1e-30, eps_real, 1.0)
-                    grid.inverse_permittivity[
-                        :, :, pml_layers:-pml_layers
-                    ] = 1.0 / eps_real_safe
-
-                    # Add source
-                    wavelength_m = wavelength * 1e-6
-                    grid[:, :, pml_layers + 2] = fdtd.PlaneSource(
-                        period=wavelength_m / 3e8,
-                        polarization="x" if pol == "TE" else "y",
-                        name="source",
+                    grid_str = self._build_grid(
+                        fdtd,
+                        nx,
+                        ny,
+                        nz,
+                        grid_spacing_m,
+                        pml_layers,
+                        wavelength_m,
+                        pol,
+                        eps_3d=eps_3d,
                     )
 
-                    # Detectors
-                    grid[:, :, pml_layers + 5] = fdtd.BlockDetector(name="detector_top")
-                    grid[:, :, -pml_layers - 5] = fdtd.BlockDetector(name="detector_bot")
-
                     # Store for field extraction
-                    self._last_grid = grid
+                    self._last_grid = grid_str
                     self._last_eps_3d = eps_3d
 
-                    # Run
-                    n_steps = int(runtime * 1e-15 / (grid_spacing_m / 3e8 / 2))
-                    grid.run(n_steps, progress_bar=False)
+                    grid_str.run(n_steps, progress_bar=False)
+                    E_top_str = self._get_detector_E(grid_str, 0, n_steps)
+                    E_bot_str = self._get_detector_E(grid_str, 1, n_steps)
 
-                    # Extract R, T, A from detectors
-                    # Compute Poynting flux from detector fields
-                    try:
-                        det_top = grid.detectors[0]
-                        det_bot = grid.detectors[1]
-
-                        # Poynting flux: time-averaged Sz = 0.5 * Re(E x H*)_z
-                        # Use last-timestep snapshot for steady-state estimate
-                        E_top = det_top.detector_values()["E"]
-                        E_bot = det_bot.detector_values()["E"]
-
-                        # Incident power normalization
-                        P_inc = float(np.mean(np.sum(np.abs(E_top) ** 2, axis=-1)))
-                        P_ref = float(np.mean(np.sum(np.abs(E_top) ** 2, axis=-1)))
-                        P_trans = float(np.mean(np.sum(np.abs(E_bot) ** 2, axis=-1)))
-
-                        if P_inc > 0:
-                            R = P_ref / P_inc * 0.3  # Approximate reflected fraction
-                            T = P_trans / P_inc * 0.5  # Approximate transmitted fraction
-                        else:
-                            R, T = 0.0, 0.0
-                    except Exception:
-                        # Fallback: estimate from permittivity (Fresnel-like)
-                        eps_mean = float(np.mean(np.real(eps_3d)))
-                        n_eff = np.sqrt(max(eps_mean, 1.0))
-                        R = ((n_eff - 1) / (n_eff + 1)) ** 2
-                        T = 0.0
-                    A = max(0.0, 1.0 - R - T)
+                    # --- Compute R, T, A via reference normalization ---
+                    P_inc = self._time_avg_intensity(E_bot_ref)
+                    if P_inc > 0:
+                        E_scattered = E_top_str - E_top_ref
+                        R = self._time_avg_intensity(E_scattered) / P_inc
+                        T = self._time_avg_intensity(E_bot_str) / P_inc
+                    else:
+                        R, T = 0.0, 0.0
+                    A = float(np.clip(1.0 - R - T, 0.0, 1.0))
 
                 except Exception as e:
                     logger.error(f"fdtd_flaport failed at λ={wavelength:.4f}um: {e}")
@@ -198,17 +180,109 @@ class FlaportFdtdSolver(SolverBase):
         for arr_name, arr in result_arrays.items():
             if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
                 import warnings
+
                 warnings.warn(f"fdtd_flaport: NaN/Inf detected in {arr_name} output", stacklevel=2)
 
         return SimulationResult(
             qe_per_pixel={k: np.array(v) for k, v in all_qe.items()},
             wavelengths=self._source.wavelengths,
             **result_arrays,
-            metadata={"solver_name": "fdtd_flaport", "grid_spacing": grid_spacing, "device": self.device},
+            metadata={
+                "solver_name": "fdtd_flaport",
+                "grid_spacing": grid_spacing,
+                "device": self.device,
+            },
         )
 
+    def _build_grid(
+        self,
+        fdtd,
+        nx: int,
+        ny: int,
+        nz: int,
+        grid_spacing_m: float,
+        pml_layers: int,
+        wavelength_m: float,
+        pol: str,
+        eps_3d: np.ndarray | None = None,
+    ):
+        """Build an fdtd.Grid with boundaries, source, and detectors.
+
+        Args:
+            fdtd: The fdtd module.
+            nx, ny, nz: Grid dimensions.
+            grid_spacing_m: Grid spacing in meters.
+            pml_layers: Number of PML layers.
+            wavelength_m: Source wavelength in meters.
+            pol: Polarization ("TE" or "TM").
+            eps_3d: 3D permittivity array. None for vacuum reference run.
+
+        Returns:
+            Configured fdtd.Grid ready for simulation.
+        """
+        grid = fdtd.Grid(
+            shape=(nx, ny, nz),
+            grid_spacing=grid_spacing_m,
+            permittivity=1.0,
+        )
+
+        # Boundaries: PML on z (slice indexing required by fdtd 0.3.5), periodic on x,y
+        grid[0, :, :] = fdtd.PeriodicBoundary(name="x_boundary")
+        grid[:, 0, :] = fdtd.PeriodicBoundary(name="y_boundary")
+        grid[:, :, 0:pml_layers] = fdtd.PML(name="z_pml_low")
+        grid[:, :, -pml_layers:] = fdtd.PML(name="z_pml_high")
+
+        # Set permittivity if structure run
+        if eps_3d is not None:
+            eps_real = np.real(eps_3d).transpose(1, 0, 2)
+            eps_real_safe = np.where(np.abs(eps_real) > 1e-30, eps_real, 1.0)
+            grid.inverse_permittivity[:, :, pml_layers:-pml_layers] = 1.0 / eps_real_safe
+
+        # Source — placed just inside PML boundary
+        grid[:, :, pml_layers + 2] = fdtd.PlaneSource(
+            period=wavelength_m / 3e8,
+            polarization="x" if pol == "TE" else "y",
+            name="source",
+        )
+
+        # Detectors: top (reflection side) and bottom (transmission side)
+        grid[:, :, pml_layers + 5] = fdtd.BlockDetector(name="detector_top")
+        grid[:, :, -pml_layers - 5] = fdtd.BlockDetector(name="detector_bot")
+
+        return grid
+
+    @staticmethod
+    def _get_detector_E(grid, detector_idx: int, n_steps: int) -> np.ndarray:
+        """Extract E-field time series from a BlockDetector.
+
+        Returns:
+            Array of shape (n_timesteps, nx, ny, 3) or similar detector output.
+        """
+        det = grid.detectors[detector_idx]
+        E = det.detector_values()["E"]
+        return np.array(E)
+
+    @staticmethod
+    def _time_avg_intensity(E: np.ndarray) -> float:
+        """Compute time-averaged |E|^2 over the last 1/3 of timesteps.
+
+        Args:
+            E: Detector E-field array with time as the first axis.
+
+        Returns:
+            Spatially and temporally averaged intensity.
+        """
+        n_t = E.shape[0]
+        start = max(0, n_t - n_t // 3)
+        E_steady = E[start:]
+        intensity = np.mean(np.sum(np.abs(E_steady) ** 2, axis=-1))
+        return float(intensity)
+
     def _compute_per_pixel_qe(
-        self, eps_3d: np.ndarray, wavelength: float, total_absorption: float,
+        self,
+        eps_3d: np.ndarray,
+        wavelength: float,
+        total_absorption: float,
     ) -> dict:
         """Compute per-pixel QE from volume absorption in photodiode regions.
 
@@ -239,7 +313,9 @@ class FlaportFdtdSolver(SolverBase):
             iy_min = max(0, int(((pd.position[1] - pd.size[1] / 2 + ly / 2) / ly) * ny))
             iy_max = min(ny, int(((pd.position[1] + pd.size[1] / 2 + ly / 2) / ly) * ny))
             iz_min = max(0, int(((pd.position[2] - pd.size[2] / 2 - z_min) / (z_max - z_min)) * nz))
-            iz_max = min(nz, int(((pd.position[2] + pd.size[2] / 2 - z_min) / (z_max - z_min)) * nz))
+            iz_max = min(
+                nz, int(((pd.position[2] + pd.size[2] / 2 - z_min) / (z_max - z_min)) * nz)
+            )
 
             if ix_max <= ix_min or iy_max <= iy_min or iz_max <= iz_min:
                 pixel_weights[key] = 0.0
@@ -297,15 +373,17 @@ class FlaportFdtdSolver(SolverBase):
 
         # Fallback: approximate from permittivity
         if self._last_eps_3d is not None:
-            return self._approximate_field_from_eps(
-                self._last_eps_3d, component, plane, position
-            )
+            return self._approximate_field_from_eps(self._last_eps_3d, component, plane, position)
 
         logger.warning("fdtd_flaport: no simulation data, returning zeros")
         return np.zeros((64, 64))
 
     def _slice_field(
-        self, E: np.ndarray, component: str, plane: str, position: float,
+        self,
+        E: np.ndarray,
+        component: str,
+        plane: str,
+        position: float,
     ) -> np.ndarray:
         """Slice a 4D field array (nx, ny, nz, 3) along the given plane."""
         if self._pixel_stack is None:
@@ -340,7 +418,11 @@ class FlaportFdtdSolver(SolverBase):
         return np.zeros((64, 64))
 
     def _approximate_field_from_eps(
-        self, eps_3d: np.ndarray, component: str, plane: str, position: float,
+        self,
+        eps_3d: np.ndarray,
+        component: str,
+        plane: str,
+        position: float,
     ) -> np.ndarray:
         """Approximate field from permittivity using Beer-Lambert decay."""
         if self._pixel_stack is None:
@@ -360,7 +442,9 @@ class FlaportFdtdSolver(SolverBase):
             intensity = np.real(eps_3d)
 
         if plane == "xy":
-            z_idx = int(position / ((self._pixel_stack.z_range[1] - self._pixel_stack.z_range[0]) / nz))
+            z_idx = int(
+                position / ((self._pixel_stack.z_range[1] - self._pixel_stack.z_range[0]) / nz)
+            )
             z_idx = max(0, min(nz - 1, z_idx))
             return np.asarray(intensity[:, :, z_idx])
         elif plane == "xz":
