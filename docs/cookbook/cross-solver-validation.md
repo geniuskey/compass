@@ -103,7 +103,7 @@ The flaport fdtd 0.3.5 library has PML boundary API changes that require adapter
 
 Energy conservation (R + T + A = 1) is a fundamental physical constraint and serves as a self-consistency check for each solver.
 
-| Solver | max |1 - (R+T+A)| | Notes |
+| Solver | max \|1 - (R+T+A)\| | Notes |
 |--------|:-------------------:|-------|
 | TMM | 1.11 x 10^-16 | Machine precision (analytical transfer matrices) |
 | torcwa | 0.0000 | S-matrix formulation inherently conserves energy |
