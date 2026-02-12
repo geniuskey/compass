@@ -17,7 +17,7 @@
           id="order-input"
           type="range"
           min="1"
-          max="25"
+          max="1000"
           step="1"
           v-model.number="order"
           class="order-range"

@@ -186,7 +186,7 @@ const ppW = pW - pL - pR
 const ppH = pB - pT
 
 const pitchOptions = [0.7, 0.9, 1.0, 1.2, 1.4]
-const fourierOptions = [5, 7, 9, 11, 15]
+const fourierOptions = [3, 5, 7, 9, 11, 15, 21, 31, 51, 101, 201, 501, 1000]
 const gridOptions = [10, 20, 30, 50]
 
 const pitch = ref(1.0)
@@ -212,9 +212,9 @@ function getPitchFactor(p) {
 // RCWA QE model
 function rcwaQE(wl, channel) {
   const pf = getPitchFactor(pitch.value)
-  // Fourier order effect: lower order -> slightly shifted/broader peaks
-  const orderNoise = (15 - fourierOrder.value) * 0.3
-  const orderShift = (15 - fourierOrder.value) * 0.2
+  // Fourier order effect: lower order -> slightly shifted/broader peaks (converged at ~15)
+  const orderNoise = Math.max(0, (15 - fourierOrder.value)) * 0.3
+  const orderShift = Math.max(0, (15 - fourierOrder.value)) * 0.2
 
   switch (channel) {
     case 'red':
@@ -305,14 +305,17 @@ const rcwaTime = computed(() => {
   const M = 2 * fourierOrder.value + 1
   const baseTime = (M * M * M) / 1000 * 0.02 * (pitch.value / 1.0)
   if (baseTime < 1) return `${(baseTime * 1000).toFixed(0)} ms`
-  return `${baseTime.toFixed(1)} s`
+  if (baseTime < 60) return `${baseTime.toFixed(1)} s`
+  if (baseTime < 3600) return `${(baseTime / 60).toFixed(1)} min`
+  return `${(baseTime / 3600).toFixed(1)} hr`
 })
 
 const rcwaMemory = computed(() => {
   const M = 2 * fourierOrder.value + 1
   const mem = M * M * 16 / 1024 // MB estimate
   if (mem < 1) return `${(mem * 1024).toFixed(0)} KB`
-  return `${mem.toFixed(0)} MB`
+  if (mem < 1024) return `${mem.toFixed(0)} MB`
+  return `${(mem / 1024).toFixed(1)} GB`
 })
 
 const fdtdTime = computed(() => {

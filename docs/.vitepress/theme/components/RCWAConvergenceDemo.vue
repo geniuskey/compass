@@ -13,7 +13,7 @@
         <label>
           {{ t('Fourier Order', '푸리에 차수') }} N: <strong>{{ order }}</strong>
         </label>
-        <input type="range" min="1" max="20" step="1" v-model.number="order" class="ctrl-range" />
+        <input type="range" min="1" max="1000" step="1" v-model.number="order" class="ctrl-range" />
       </div>
     </div>
 
@@ -103,9 +103,9 @@
           <!-- T curve -->
           <path :d="tCurvePath" fill="none" stroke="#3498db" stroke-width="2" />
 
-          <!-- Current order marker -->
-          <circle :cx="orderToX(order)" :cy="rtToY(convergenceR[order - 1])" r="5" fill="#e74c3c" stroke="#fff" stroke-width="1.5" />
-          <circle :cx="orderToX(order)" :cy="rtToY(convergenceT[order - 1])" r="5" fill="#3498db" stroke="#fff" stroke-width="1.5" />
+          <!-- Current order marker (clamped to data range) -->
+          <circle :cx="orderToX(Math.min(order, 20))" :cy="rtToY(convergenceR[Math.min(order, 20) - 1])" r="5" fill="#e74c3c" stroke="#fff" stroke-width="1.5" />
+          <circle :cx="orderToX(Math.min(order, 20))" :cy="rtToY(convergenceT[Math.min(order, 20) - 1])" r="5" fill="#3498db" stroke="#fff" stroke-width="1.5" />
 
           <!-- Converged value reference lines -->
           <line :x1="pL" :y1="rtToY(0.285)" :x2="pL + ppW" :y2="rtToY(0.285)" stroke="#e74c3c" stroke-width="0.8" stroke-dasharray="3,4" opacity="0.5" />
@@ -257,7 +257,9 @@ const costDisplay = computed(() => {
   const cost = m * m * m
   if (cost < 1000) return cost.toString()
   if (cost < 1e6) return (cost / 1000).toFixed(1) + 'K'
-  return (cost / 1e6).toFixed(2) + 'M'
+  if (cost < 1e9) return (cost / 1e6).toFixed(2) + 'M'
+  if (cost < 1e12) return (cost / 1e9).toFixed(2) + 'B'
+  return (cost / 1e12).toFixed(2) + 'T'
 })
 </script>
 
