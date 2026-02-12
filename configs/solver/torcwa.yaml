@@ -6,6 +6,8 @@ solver:
   params:
     fourier_order: [9, 9]
     dtype: "complex64"
+    n_lens_slices: 30
+    grid_multiplier: 3
 
   convergence:
     auto_converge: false

@@ -88,6 +88,7 @@ const cookbookSidebar = [
     { text: 'TMM Validation Results', link: '/cookbook/tmm-validation-results' },
     { text: 'Cross-Solver Validation', link: '/cookbook/cross-solver-validation' },
     { text: 'RCWA vs FDTD Validation', link: '/cookbook/rcwa-vs-fdtd-validation' },
+    { text: 'Convergence Study', link: '/cookbook/convergence-study' },
   ]}
 ]
 
@@ -181,6 +182,7 @@ const cookbookSidebarKo = [
     { text: 'TMM 검증 결과', link: '/ko/cookbook/tmm-validation-results' },
     { text: '크로스 솔버 검증', link: '/ko/cookbook/cross-solver-validation' },
     { text: 'RCWA vs FDTD 검증', link: '/ko/cookbook/rcwa-vs-fdtd-validation' },
+    { text: '수렴 연구', link: '/ko/cookbook/convergence-study' },
   ]}
 ]
 

@@ -61,10 +61,12 @@ class GrcwaSolver(SolverBase):
         params = self.config.get("params", {})
         fourier_order = params.get("fourier_order", [9, 9])
         nG = fourier_order[0]  # grcwa uses single order
+        n_lens_slices = params.get("n_lens_slices", 30)
+        grid_multiplier = params.get("grid_multiplier", 3)
 
         lx, ly = self._pixel_stack.domain_size
-        nx = max(64, (2 * nG + 1) * 3)
-        ny = max(64, (2 * nG + 1) * 3)
+        nx = max(64, (2 * nG + 1) * grid_multiplier)
+        ny = max(64, (2 * nG + 1) * grid_multiplier)
 
         pol_runs = self._source.get_polarization_runs()
         all_qe: dict[str, list[float]] = {}
@@ -73,7 +75,9 @@ class GrcwaSolver(SolverBase):
         for _wl_idx, wavelength in enumerate(self._source.wavelengths):
             freq = 1.0 / wavelength  # normalized frequency
 
-            layer_slices = self._pixel_stack.get_layer_slices(wavelength, nx, ny)
+            layer_slices = self._pixel_stack.get_layer_slices(
+                wavelength, nx, ny, n_lens_slices=n_lens_slices,
+            )
 
             R_pol, T_pol, A_pol = [], [], []
             qe_pol_accum: dict[str, list[float]] = {}

@@ -1,0 +1,56 @@
+{
+  "sweep_type": "grid_resolution",
+  "wavelength": 0.55,
+  "fourier_order": 49,
+  "n_lens_slices": 30,
+  "timestamp": "2026-02-12T02:53:04.960421+00:00",
+  "convergence_threshold": 0.001,
+  "converged_at": null,
+  "results": [
+    {
+      "grid_multiplier": 2,
+      "R": 1067040.6134681832,
+      "T": 0.020045214384847666,
+      "A": 0.5,
+      "delta_A": null,
+      "time_s": 0.8459888329962268,
+      "converged": false
+    },
+    {
+      "grid_multiplier": 3,
+      "R": 0.013983717291671756,
+      "T": 0.016123891945384248,
+      "A": 0.969892390762944,
+      "delta_A": 0.469892390762944,
+      "time_s": 0.9393779170059133,
+      "converged": false
+    },
+    {
+      "grid_multiplier": 4,
+      "R": 272084.3023606502,
+      "T": 0.018872728017463633,
+      "A": 0.5,
+      "delta_A": -0.469892390762944,
+      "time_s": 0.9677157920086756,
+      "converged": false
+    },
+    {
+      "grid_multiplier": 5,
+      "R": 0.01403950673797543,
+      "T": 0.016139910258355167,
+      "A": 0.9698205830036695,
+      "delta_A": 0.46982058300366947,
+      "time_s": 1.1378804580017459,
+      "converged": false
+    },
+    {
+      "grid_multiplier": 6,
+      "R": 0.01399445743888941,
+      "T": 0.016127675338636786,
+      "A": 0.9698778672224738,
+      "delta_A": 5.72842188043543e-05,
+      "time_s": 1.2818256249884143,
+      "converged": false
+    }
+  ]
+}

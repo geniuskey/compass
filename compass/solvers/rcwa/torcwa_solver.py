@@ -91,6 +91,8 @@ class TorcwaSolver(SolverBase):
         fourier_order = params.get("fourier_order", [9, 9])
         dtype_str = params.get("dtype", "complex64")
         dtype = getattr(torch, dtype_str)
+        n_lens_slices = params.get("n_lens_slices", 30)
+        grid_multiplier = params.get("grid_multiplier", 3)
 
         stability = self.config.get("stability", {})
         precision_strategy = stability.get("precision_strategy", "mixed")
@@ -98,8 +100,8 @@ class TorcwaSolver(SolverBase):
         lx, ly = self._pixel_stack.domain_size
         L = [lx, ly]  # Period in um
 
-        nx = max(64, (2 * fourier_order[0] + 1) * 3)
-        ny = max(64, (2 * fourier_order[1] + 1) * 3)
+        nx = max(64, (2 * fourier_order[0] + 1) * grid_multiplier)
+        ny = max(64, (2 * fourier_order[1] + 1) * grid_multiplier)
 
         pol_runs = self._source.get_polarization_runs()
         all_qe: dict[str, list[np.ndarray]] = {}
@@ -109,7 +111,7 @@ class TorcwaSolver(SolverBase):
             logger.debug(f"torcwa: wavelength {wavelength:.4f} um ({wl_idx+1}/{self._source.n_wavelengths})")
 
             layer_slices = self._pixel_stack.get_layer_slices(
-                wavelength, nx, ny, n_lens_slices=30
+                wavelength, nx, ny, n_lens_slices=n_lens_slices,
             )
 
             qe_pol_accum: dict[str, list] = {}
