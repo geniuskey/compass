@@ -20,6 +20,18 @@ BSI가 표준이 되기 전에는 센서가 **FSI(Front-Side Illuminated, 전면
 
 <StackVisualizer />
 
+#### default_bsi_1um 픽셀 단면도
+
+아래 인터랙티브 뷰어는 기본 BSI 1µm 픽셀(`default_bsi_1um.yaml`)의 정밀한 2D 단면을 보여줍니다. XZ, YZ, XY 평면을 전환하여 모든 레이어, 하위 구조(DTI, 금속 격자, BARL 서브레이어, 포토다이오드), 초타원 마이크로렌즈 프로파일을 탐색하세요.
+
+<PixelCrossSections />
+
+#### 3D 픽셀 구조
+
+드래그하여 등각(isometric) 3D 뷰를 회전하세요. 분해도(Exploded View)를 토글하여 레이어를 분리하거나, 개별 레이어를 숨겨 내부 구조를 확인할 수 있습니다.
+
+<Pixel3DViewer />
+
 ### 1. 공기(Air) -- 빛이 도달하는 곳
 
 모든 것은 열린 공기 중에서 시작됩니다. 장면으로부터의 빛 -- 얼굴에서 반사된 햇빛이든, 가로등의 빛이든 -- 은 전자기파의 형태로 센서 표면에 도달합니다.

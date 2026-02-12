@@ -20,6 +20,18 @@ A pixel is not a single "thing" — it is a stack of thin films and structures, 
 
 <StackVisualizer />
 
+#### Cross-Sections of default_bsi_1um Pixel
+
+The interactive viewer below shows precise 2D cross-sections of the default BSI 1µm pixel (from `default_bsi_1um.yaml`). Switch between XZ, YZ, and XY planes to explore every layer, sub-feature (DTI, metal grid, BARL sublayers, photodiodes), and the superellipse microlens profile.
+
+<PixelCrossSections />
+
+#### 3D Pixel Structure
+
+Drag to rotate the isometric 3D view. Toggle exploded view to separate layers, or hide individual layers to see internal structures.
+
+<Pixel3DViewer />
+
 ### 1. Air — Where Light Arrives
 
 Everything begins in open air. Light from the scene — whether it is sunlight reflecting off a face, or the glow of a streetlamp — arrives at the sensor surface as an electromagnetic wave.
