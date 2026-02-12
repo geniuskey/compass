@@ -98,27 +98,18 @@ class FlaportFdtdSolver(SolverBase):
                     wavelength_m = wavelength * 1e-6
                     n_steps = int(runtime * 1e-15 / (grid_spacing_m / 3e8 / 2))
 
-                    # --- Reference run (vacuum) ---
-                    grid_ref = self._build_grid(
-                        fdtd,
-                        nx,
-                        ny,
-                        nz,
-                        grid_spacing_m,
-                        pml_layers,
-                        wavelength_m,
-                        pol,
-                        eps_3d=None,
-                    )
-                    grid_ref.run(n_steps, progress_bar=False)
-                    E_top_ref = self._get_detector_E(grid_ref, 0, n_steps)
-                    E_bot_ref = self._get_detector_E(grid_ref, 1, n_steps)
+                    # Source near top (air side); three Poynting monitors
+                    src_z = nz - pml_layers - 3
+                    z_above = src_z + 2  # above source (upward flux)
+                    z_below = src_z - 4  # below source, above structure (downward flux)
+                    z_trans = pml_layers + 5  # below structure (transmitted flux)
+                    snap_start = n_steps - n_steps // 3
 
-                    # --- Structure run ---
+                    # --- Structure run (single pass, Poynting vector method) ---
                     eps_3d = self._pixel_stack.get_permittivity_grid(
                         wavelength, nx, ny, nz - 2 * pml_layers
                     )
-                    grid_str = self._build_grid(
+                    grid = self._build_grid(
                         fdtd,
                         nx,
                         ny,
@@ -131,19 +122,27 @@ class FlaportFdtdSolver(SolverBase):
                     )
 
                     # Store for field extraction
-                    self._last_grid = grid_str
+                    self._last_grid = grid
                     self._last_eps_3d = eps_3d
 
-                    grid_str.run(n_steps, progress_bar=False)
-                    E_top_str = self._get_detector_E(grid_str, 0, n_steps)
-                    E_bot_str = self._get_detector_E(grid_str, 1, n_steps)
+                    Sz_above, Sz_below, Sz_trans = self._run_and_poynting(
+                        grid, n_steps, snap_start, z_above, z_below, z_trans
+                    )
 
-                    # --- Compute R, T, A via reference normalization ---
-                    P_inc = self._time_avg_intensity(E_bot_ref)
+                    # --- Compute R, T, A from three-monitor Poynting fluxes ---
+                    # P_up = upward flux above source
+                    # P_down = net downward flux below source
+                    # Symmetric source: P_inc = (P_up + P_down) / 2
+                    P_up = Sz_above  # positive = upward
+                    P_down = abs(Sz_below)  # magnitude of downward flux
+                    P_trans_power = abs(Sz_trans)
+                    P_source = P_up + P_down
+                    P_inc = P_source / 2.0
+
                     if P_inc > 0:
-                        E_scattered = E_top_str - E_top_ref
-                        R = self._time_avg_intensity(E_scattered) / P_inc
-                        T = self._time_avg_intensity(E_bot_str) / P_inc
+                        P_refl = (P_up - P_down) / 2.0
+                        R = float(np.clip(P_refl / P_inc, 0.0, 1.0))
+                        T = float(np.clip(P_trans_power / P_inc, 0.0, 1.0))
                     else:
                         R, T = 0.0, 0.0
                     A = float(np.clip(1.0 - R - T, 0.0, 1.0))
@@ -232,35 +231,81 @@ class FlaportFdtdSolver(SolverBase):
         grid[:, :, 0:pml_layers] = fdtd.PML(name="z_pml_low")
         grid[:, :, -pml_layers:] = fdtd.PML(name="z_pml_high")
 
-        # Set permittivity if structure run
+        # Set permittivity if structure run — inverse_permittivity is 4D torch tensor (nx,ny,nz,3)
         if eps_3d is not None:
-            eps_real = np.real(eps_3d).transpose(1, 0, 2)
-            eps_real_safe = np.where(np.abs(eps_real) > 1e-30, eps_real, 1.0)
-            grid.inverse_permittivity[:, :, pml_layers:-pml_layers] = 1.0 / eps_real_safe
+            import torch
 
-        # Source — placed just inside PML boundary
-        grid[:, :, pml_layers + 2] = fdtd.PlaneSource(
+            eps_real = np.real(eps_3d)
+            eps_real_safe = np.where(np.abs(eps_real) > 1e-30, eps_real, 1.0)
+            inv_eps = torch.tensor(1.0 / eps_real_safe, dtype=torch.float64).unsqueeze(-1)
+            grid.inverse_permittivity[:, :, pml_layers:-pml_layers] = inv_eps
+
+        # Source — placed in air region near top PML (light propagates -z: air→silicon)
+        grid[:, :, nz - pml_layers - 3] = fdtd.PlaneSource(
             period=wavelength_m / 3e8,
             polarization="x" if pol == "TE" else "y",
             name="source",
         )
 
-        # Detectors: top (reflection side) and bottom (transmission side)
-        grid[:, :, pml_layers + 5] = fdtd.BlockDetector(name="detector_top")
-        grid[:, :, -pml_layers - 5] = fdtd.BlockDetector(name="detector_bot")
-
         return grid
 
     @staticmethod
-    def _get_detector_E(grid, detector_idx: int, n_steps: int) -> np.ndarray:
-        """Extract E-field time series from a BlockDetector.
+    def _run_and_poynting(
+        grid,
+        n_steps: int,
+        snap_start: int,
+        z_above: int,
+        z_below: int,
+        z_trans: int,
+    ) -> tuple[float, float, float]:
+        """Step the grid and compute time-averaged Poynting flux at three z-planes.
+
+        Uses Sz = Ex*Hy - Ey*Hx for power flux. Collects from snap_start
+        onward to capture steady-state behavior.
+
+        Args:
+            grid: The fdtd.Grid to step.
+            n_steps: Total number of timesteps.
+            snap_start: Timestep to start collecting.
+            z_above: Z-index above source (measures upward flux).
+            z_below: Z-index below source, above structure (measures downward flux).
+            z_trans: Z-index below structure (measures transmitted flux).
 
         Returns:
-            Array of shape (n_timesteps, nx, ny, 3) or similar detector output.
+            Tuple of (Sz_above, Sz_below, Sz_trans) time-and-space-averaged values.
         """
-        det = grid.detectors[detector_idx]
-        E = det.detector_values()["E"]
-        return np.array(E)
+        Sz_above_snaps: list[float] = []
+        Sz_below_snaps: list[float] = []
+        Sz_trans_snaps: list[float] = []
+
+        for step in range(n_steps):
+            grid.step()
+            if step >= snap_start:
+                E = grid.E
+                H = grid.H
+                if hasattr(E, "detach"):
+                    E_np = E.detach().cpu().numpy()
+                    H_np = H.detach().cpu().numpy()
+                else:
+                    E_np = np.array(E)
+                    H_np = np.array(H)
+
+                for z, snaps in [
+                    (z_above, Sz_above_snaps),
+                    (z_below, Sz_below_snaps),
+                    (z_trans, Sz_trans_snaps),
+                ]:
+                    Sz = (
+                        E_np[:, :, z, 0] * H_np[:, :, z, 1]
+                        - E_np[:, :, z, 1] * H_np[:, :, z, 0]
+                    )
+                    snaps.append(float(np.mean(Sz)))
+
+        return (
+            float(np.mean(Sz_above_snaps)) if Sz_above_snaps else 0.0,
+            float(np.mean(Sz_below_snaps)) if Sz_below_snaps else 0.0,
+            float(np.mean(Sz_trans_snaps)) if Sz_trans_snaps else 0.0,
+        )
 
     @staticmethod
     def _time_avg_intensity(E: np.ndarray) -> float:

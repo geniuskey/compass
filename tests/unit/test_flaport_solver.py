@@ -36,26 +36,14 @@ def _make_fdtd_mock():
     """Build a comprehensive fdtd module mock for solver tests."""
     fdtd = MagicMock()
 
-    # Grid mock — supports item assignment for boundaries/source/detectors
+    # Grid mock — supports item assignment for boundaries/source
     # inverse_permittivity is a MagicMock to avoid shape mismatch errors
     grid = MagicMock()
-
-    # Detector mocks
-    det_top = MagicMock()
-    det_bot = MagicMock()
-    # Detector values: E shape (n_timesteps, nx, ny, 3)
-    n_t, nx, ny = 100, 51, 51
-    E_top = np.random.rand(n_t, nx, ny, 3) * 0.01
-    E_bot = np.random.rand(n_t, nx, ny, 3) * 0.5
-    det_top.detector_values.return_value = {"E": E_top}
-    det_bot.detector_values.return_value = {"E": E_bot}
-    grid.detectors = [det_top, det_bot]
 
     fdtd.Grid.return_value = grid
     fdtd.PeriodicBoundary.return_value = MagicMock()
     fdtd.PML.return_value = MagicMock()
     fdtd.PlaneSource.return_value = MagicMock()
-    fdtd.BlockDetector.return_value = MagicMock()
 
     return fdtd, grid
 
@@ -130,17 +118,14 @@ class TestFlaportVacuumEnergyConservation:
     """Vacuum run should give T~1, R~0, A~0."""
 
     def test_vacuum_energy_conservation(self):
-        """With identical reference and structure (vacuum), T~1, R~0, A~0."""
-        fdtd_mod, grid = _make_fdtd_mock()
+        """With vacuum (no absorption), R~0, T~1, A~0."""
+        fdtd_mod, _grid = _make_fdtd_mock()
 
-        # Make top and bottom detectors return identical fields (vacuum — no scattering)
-        n_t, nx, ny = 100, 51, 51
-        E_uniform = np.ones((n_t, nx, ny, 3)) * 0.5
-        grid.detectors[0].detector_values.return_value = {"E": E_uniform}
-        grid.detectors[1].detector_values.return_value = {"E": E_uniform}
-
-        # Two calls to Grid — reference run and structure run return same grid
-        fdtd_mod.Grid.return_value = grid
+        # Poynting fluxes for vacuum: symmetric source, all power transmitted
+        # Sz_above = +0.5 (upward), Sz_below = -0.5 (downward), Sz_trans = -0.5 (downward)
+        # P_up=0.5, P_down=0.5, P_source=1.0, P_inc=0.5
+        # P_refl=(0.5-0.5)/2=0, R=0, T=0.5/0.5=1.0, A=0
+        poynting_vacuum = (0.5, -0.5, -0.5)
 
         with patch.dict("sys.modules", {"fdtd": fdtd_mod}):
             from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
@@ -150,16 +135,20 @@ class TestFlaportVacuumEnergyConservation:
                 device="cpu",
             )
             ps = _make_pixel_stack_mock()
-            # Vacuum: return eps=1 everywhere
             ps.get_permittivity_grid.return_value = np.ones((26, 26, 26), dtype=complex)
 
             solver.setup_geometry(ps)
             solver.setup_source(_make_source_config())
 
-            result = solver.run()
+            with patch.object(
+                FlaportFdtdSolver, "_build_grid", return_value=MagicMock()
+            ), patch.object(
+                FlaportFdtdSolver,
+                "_run_and_poynting",
+                return_value=poynting_vacuum,
+            ):
+                result = solver.run()
 
-        # Vacuum: scattered field = structure_top - ref_top = 0, so R=0
-        # T = |E_bot_str|²/|E_bot_ref|² = 1
         assert result.reflection is not None
         assert result.transmission is not None
         assert result.absorption is not None
@@ -175,34 +164,13 @@ class TestFlaportEnergyBalance:
         """R + T + A should be within 2% of 1.0."""
         fdtd_mod, _grid = _make_fdtd_mock()
 
-        n_t, nx, ny = 100, 51, 51
-        # Reference: uniform field
-        E_ref = np.ones((n_t, nx, ny, 3)) * 1.0
-
-        # Structure: top has slightly different field, bottom has attenuated
-        E_str_top = np.ones((n_t, nx, ny, 3)) * 1.05  # Slightly increased → some reflection
-        E_str_bot = np.ones((n_t, nx, ny, 3)) * 0.7  # Attenuated → some absorption
-
-        call_count = [0]
-
-        def make_grid_side_effect(*args, **kwargs):
-            call_count[0] += 1
-            new_grid = MagicMock()
-            if call_count[0] % 2 == 1:  # Reference run
-                det_top = MagicMock()
-                det_bot = MagicMock()
-                det_top.detector_values.return_value = {"E": E_ref.copy()}
-                det_bot.detector_values.return_value = {"E": E_ref.copy()}
-                new_grid.detectors = [det_top, det_bot]
-            else:  # Structure run
-                det_top = MagicMock()
-                det_bot = MagicMock()
-                det_top.detector_values.return_value = {"E": E_str_top.copy()}
-                det_bot.detector_values.return_value = {"E": E_str_bot.copy()}
-                new_grid.detectors = [det_top, det_bot]
-            return new_grid
-
-        fdtd_mod.Grid.side_effect = make_grid_side_effect
+        # Poynting fluxes for structure with ~5% reflection, ~50% transmission
+        # Sz_above = +0.55 (upward), Sz_below = -0.45 (downward), Sz_trans = -0.22 (transmitted)
+        # P_up=0.55, P_down=0.45, P_source=1.0, P_inc=0.5
+        # P_refl=(0.55-0.45)/2=0.05, R=0.05/0.5=0.10
+        # T=0.22/0.5=0.44
+        # A=1-0.10-0.44=0.46
+        poynting_structure = (0.55, -0.45, -0.22)
 
         with patch.dict("sys.modules", {"fdtd": fdtd_mod}):
             from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
@@ -214,7 +182,15 @@ class TestFlaportEnergyBalance:
             ps = _make_pixel_stack_mock()
             solver.setup_geometry(ps)
             solver.setup_source(_make_source_config())
-            result = solver.run()
+
+            with patch.object(
+                FlaportFdtdSolver, "_build_grid", return_value=MagicMock()
+            ), patch.object(
+                FlaportFdtdSolver,
+                "_run_and_poynting",
+                return_value=poynting_structure,
+            ):
+                result = solver.run()
 
         R = result.reflection[0]
         T = result.transmission[0]
