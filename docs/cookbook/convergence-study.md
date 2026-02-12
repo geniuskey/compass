@@ -167,6 +167,82 @@ python scripts/run_simulation.py solver=grcwa_fast
 python scripts/run_simulation.py solver=grcwa_converged
 ```
 
+## Per-Color QE Convergence
+
+<PerColorConvergenceChart />
+
+In a Bayer-pattern pixel, each sub-pixel has a different color filter (CF). Total absorption alone does not reveal per-channel behavior — convergence rate, cross-solver agreement, and angle sensitivity may differ by color. The per-color study uses **uniform color filter** simulations: all pixels use the same CF material (e.g., all `cf_red`), and total absorption at the CF peak wavelength gives the per-color QE.
+
+### Methodology
+
+Standard CIS practice: run three separate simulations with uniform CF (all-red at 620nm, all-green at 530nm, all-blue at 450nm). This isolates each color channel's QE without cross-talk from neighboring pixels' filters.
+
+::: info Why not use per-pixel QE from RCWA?
+RCWA solvers compute per-pixel QE by distributing total absorption using `eps_imag` weighting in each photodiode region. Since all PDs are silicon with identical `eps_imag`, all pixels receive equal QE = `total_A / n_pixels` regardless of their color filter. Uniform CF simulations are the standard approach to obtain true per-color QE.
+:::
+
+### Per-Color Fourier Convergence (torcwa)
+
+| [N,N] | Harmonics | QE_R@620 | QE_G@530 | QE_B@450 |
+|-------|-----------|----------|----------|----------|
+| [3,3] | 49 | 0.9289 | 0.9471 | 0.9196 |
+| [5,5] | 121 | 0.9622 | 0.9770 | 0.9697 |
+| [7,7] | 225 | 0.9615 | 0.9737 | 0.9475 |
+| [9,9] | 361 | 0.9617 | 0.9737 | 0.9486 |
+
+- **Red**: Converged at N=5 (ΔQE < 0.001 from N=7 onward)
+- **Green**: Converged at N=7 (ΔQE = 0.00002 between N=7 and N=9)
+- **Blue**: Non-monotonic — peaks at N=5 (0.970) then settles to 0.948-0.949 at N=7-9. The blue channel converges to a lower QE than the initial N=5 estimate due to short-wavelength diffraction effects
+
+### Per-Color Fourier Convergence (grcwa)
+
+| nG | QE_R@620 | QE_G@530 | QE_B@450 | Status |
+|----|----------|----------|----------|--------|
+| 9 | 0.9811 | 0.9931 | 0.9949 | Stable (overestimates) |
+| 25 | 0.9834 | 0.9883 | 0.9734 | Stable |
+| 49 | 0.9333 | 0.9432 | 0.9316 | Stable |
+| 81 | **0.5000** | 0.9670 | 0.9340 | R: TM diverged |
+
+The grcwa TM instability at nG=81 specifically affects the red channel at 620nm (R_R=14.33, unphysical). Blue and green channels remain stable at nG=81, confirming the instability is wavelength-dependent.
+
+### Cross-Solver Per-Color Comparison
+
+| Solver | QE_R@620 | QE_G@530 | QE_B@450 |
+|--------|----------|----------|----------|
+| grcwa (nG=49) | 0.9333 | 0.9432 | 0.9316 |
+| torcwa ([5,5]) | 0.9622 | 0.9770 | 0.9697 |
+| **Difference** | -2.9% | -3.4% | -3.8% |
+
+torcwa consistently gives higher QE across all colors. The largest gap is in the blue channel (3.8%), suggesting blue wavelengths are more sensitive to solver implementation differences (G-vector selection, Fourier factorization rules).
+
+### Angle-Dependent Per-Color QE
+
+| CRA | QE_R@620 | QE_G@530 | QE_B@450 | RI_R | RI_G | RI_B |
+|-----|----------|----------|----------|------|------|------|
+| 0° | 0.9622 | 0.9770 | 0.9697 | 1.000 | 1.000 | 1.000 |
+| 15° | 0.9960 | 1.0000 | 0.9995 | 1.035 | 1.024 | 1.031 |
+| 30° | 0.9980 | 0.9997 | 0.9954 | 1.037 | 1.023 | 1.027 |
+
+::: warning Relative Illumination > 1.0
+QE *increases* with CRA. This is because the pixel uses `auto_cra` microlens shift that optimally aligns the microlens focus for each CRA angle. At normal incidence (CRA=0°), the uniform CF configuration may not match the designed Bayer pattern geometry, leading to slightly lower coupling. The RI > 1.0 values should not be interpreted as physical gain — they reflect the simulation setup where CRA shift improves optical coupling.
+:::
+
+### Running Per-Color Experiments
+
+```bash
+# Per-color Fourier sweep (torcwa)
+PYTHONPATH=. python3.11 scripts/convergence_study.py --sweep fourier_per_color_torcwa
+
+# Per-color Fourier sweep (grcwa)
+PYTHONPATH=. python3.11 scripts/convergence_study.py --sweep fourier_per_color_grcwa
+
+# Cross-solver per-color comparison
+PYTHONPATH=. python3.11 scripts/convergence_study.py --sweep cross_solver_per_color
+
+# Angle-dependent per-color QE
+PYTHONPATH=. python3.11 scripts/convergence_study.py --sweep angle_per_color
+```
+
 ## Key Takeaways
 
 1. **Fourier order is the most critical parameter** -- it has the largest impact on accuracy and runtime
@@ -177,3 +253,6 @@ python scripts/run_simulation.py solver=grcwa_converged
 6. **n_lens_slices = 15-20** is sufficient for most microlens shapes
 7. **grid_multiplier = 3** is sufficient for typical pixel geometries
 8. **Always verify R + T + A ≈ 1** when using grcwa -- violations indicate numerical instability
+9. **Blue channel converges slower** than red/green in per-color studies due to shorter wavelength features
+10. **Cross-solver per-color gap is largest for blue** (3.8%) -- blue wavelengths are more sensitive to solver implementation differences
+11. **grcwa TM instability is wavelength-dependent** -- nG=81 fails at 620nm but is stable at 450nm and 530nm

@@ -36,6 +36,7 @@ import ConeIlluminationTopView from './components/ConeIlluminationTopView.vue'
 import CrossSolverValidation from './components/CrossSolverValidation.vue'
 import RcwaFdtdValidation from './components/RcwaFdtdValidation.vue'
 import ConvergenceStudyChart from './components/ConvergenceStudyChart.vue'
+import PerColorConvergenceChart from './components/PerColorConvergenceChart.vue'
 
 export default {
   extends: DefaultTheme,
@@ -75,5 +76,6 @@ export default {
     app.component('CrossSolverValidation', CrossSolverValidation)
     app.component('RcwaFdtdValidation', RcwaFdtdValidation)
     app.component('ConvergenceStudyChart', ConvergenceStudyChart)
+    app.component('PerColorConvergenceChart', PerColorConvergenceChart)
   },
 }
