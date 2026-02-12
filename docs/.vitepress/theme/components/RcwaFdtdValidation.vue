@@ -58,8 +58,8 @@
         <text :x="pad.left + plotW / 2" :y="svgH - 2" text-anchor="middle" class="axis-title">{{ t('Wavelength (nm)', '파장 (nm)') }}</text>
         <text :x="10" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 10, ${pad.top + plotH / 2})`">{{ activeTabLabel }}</text>
 
-        <!-- Non-cone tabs: grcwa (green) + fdtd (blue) -->
-        <template v-if="activeTab !== 'cone'">
+        <!-- A/R/T tabs: grcwa (green) + fdtd (blue) -->
+        <template v-if="activeTab !== 'cone' && activeTab !== 'qe_cf'">
           <path :d="grcwaArea" fill="#27ae60" opacity="0.06" />
           <path :d="fdtdArea" fill="#3451b2" opacity="0.06" />
 
@@ -68,6 +68,27 @@
 
           <polyline :points="fdtdPoints" fill="none" stroke="#3451b2" stroke-width="2" stroke-linejoin="round" />
           <circle v-for="(pt, i) in fdtdCircles" :key="'fc' + i" :cx="pt.x" :cy="pt.y" r="2.5" fill="#3451b2" opacity="0.7" />
+        </template>
+
+        <!-- QE per CF tab: 6 lines (grcwa R/G/B solid + fdtd R/G/B dashed) -->
+        <template v-if="activeTab === 'qe_cf'">
+          <polyline :points="qeGrcwaRedPoints" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linejoin="round" />
+          <circle v-for="(pt, i) in qeGrcwaRedCircles" :key="'qgr' + i" :cx="pt.x" :cy="pt.y" r="2.5" fill="#e74c3c" opacity="0.7" />
+
+          <polyline :points="qeGrcwaGreenPoints" fill="none" stroke="#27ae60" stroke-width="2" stroke-linejoin="round" />
+          <circle v-for="(pt, i) in qeGrcwaGreenCircles" :key="'qgg' + i" :cx="pt.x" :cy="pt.y" r="2.5" fill="#27ae60" opacity="0.7" />
+
+          <polyline :points="qeGrcwaBluPoints" fill="none" stroke="#2980b9" stroke-width="2" stroke-linejoin="round" />
+          <circle v-for="(pt, i) in qeGrcwaBluCircles" :key="'qgb' + i" :cx="pt.x" :cy="pt.y" r="2.5" fill="#2980b9" opacity="0.7" />
+
+          <polyline :points="qeFdtdRedPoints" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6,3" />
+          <circle v-for="(pt, i) in qeFdtdRedCircles" :key="'qfr' + i" :cx="pt.x" :cy="pt.y" r="2.5" fill="#e74c3c" opacity="0.5" />
+
+          <polyline :points="qeFdtdGreenPoints" fill="none" stroke="#27ae60" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6,3" />
+          <circle v-for="(pt, i) in qeFdtdGreenCircles" :key="'qfg' + i" :cx="pt.x" :cy="pt.y" r="2.5" fill="#27ae60" opacity="0.5" />
+
+          <polyline :points="qeFdtdBluPoints" fill="none" stroke="#2980b9" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6,3" />
+          <circle v-for="(pt, i) in qeFdtdBluCircles" :key="'qfb' + i" :cx="pt.x" :cy="pt.y" r="2.5" fill="#2980b9" opacity="0.5" />
         </template>
 
         <!-- Cone tab: direct + cone_0 + cone_15 -->
@@ -90,9 +111,17 @@
             stroke="var(--vp-c-text-2)" stroke-width="0.8" stroke-dasharray="4,3"
           />
 
-          <template v-if="activeTab !== 'cone'">
+          <template v-if="activeTab !== 'cone' && activeTab !== 'qe_cf'">
             <circle :cx="xScale(wavelengths[hoverIdx])" :cy="yScale(grcwa[activeTab][hoverIdx])" r="5" fill="#27ae60" stroke="#fff" stroke-width="1.5" />
             <circle :cx="xScale(wavelengths[hoverIdx])" :cy="yScale(fdtd[activeTab][hoverIdx])" r="5" fill="#3451b2" stroke="#fff" stroke-width="1.5" />
+          </template>
+          <template v-else-if="activeTab === 'qe_cf'">
+            <circle :cx="xScale(wavelengths[hoverIdx])" :cy="yScale(qeCf.grcwa.R[hoverIdx])" r="5" fill="#e74c3c" stroke="#fff" stroke-width="1.5" />
+            <circle :cx="xScale(wavelengths[hoverIdx])" :cy="yScale(qeCf.grcwa.G[hoverIdx])" r="5" fill="#27ae60" stroke="#fff" stroke-width="1.5" />
+            <circle :cx="xScale(wavelengths[hoverIdx])" :cy="yScale(qeCf.grcwa.B[hoverIdx])" r="5" fill="#2980b9" stroke="#fff" stroke-width="1.5" />
+            <circle :cx="xScale(wavelengths[hoverIdx])" :cy="yScale(qeCf.fdtd.R[hoverIdx])" r="4" fill="#e74c3c" stroke="#fff" stroke-width="1" opacity="0.7" />
+            <circle :cx="xScale(wavelengths[hoverIdx])" :cy="yScale(qeCf.fdtd.G[hoverIdx])" r="4" fill="#27ae60" stroke="#fff" stroke-width="1" opacity="0.7" />
+            <circle :cx="xScale(wavelengths[hoverIdx])" :cy="yScale(qeCf.fdtd.B[hoverIdx])" r="4" fill="#2980b9" stroke="#fff" stroke-width="1" opacity="0.7" />
           </template>
           <template v-else>
             <circle :cx="xScale(wavelengths[hoverIdx])" :cy="yScale(cone.direct[hoverIdx])" r="5" fill="#27ae60" stroke="#fff" stroke-width="1.5" />
@@ -101,11 +130,20 @@
           </template>
 
           <!-- Tooltip -->
-          <rect :x="tooltipX" :y="pad.top + 4" :width="activeTab === 'cone' ? 190 : 155" height="68" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
-          <template v-if="activeTab !== 'cone'">
+          <rect :x="tooltipX" :y="pad.top + 4" :width="tooltipWidth" :height="activeTab === 'qe_cf' ? 120 : 68" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
+          <template v-if="activeTab !== 'cone' && activeTab !== 'qe_cf'">
             <text :x="tooltipX + 8" :y="pad.top + 18" class="tooltip-text">{{ wavelengths[hoverIdx] }} nm</text>
             <text :x="tooltipX + 8" :y="pad.top + 36" class="tooltip-text" fill="#27ae60">grcwa: {{ grcwa[activeTab][hoverIdx].toFixed(4) }}</text>
             <text :x="tooltipX + 8" :y="pad.top + 54" class="tooltip-text" fill="#3451b2">fdtd: {{ fdtd[activeTab][hoverIdx].toFixed(4) }}</text>
+          </template>
+          <template v-else-if="activeTab === 'qe_cf'">
+            <text :x="tooltipX + 8" :y="pad.top + 18" class="tooltip-text">{{ wavelengths[hoverIdx] }} nm</text>
+            <text :x="tooltipX + 8" :y="pad.top + 34" class="tooltip-text" fill="#e74c3c">grcwa R: {{ qeCf.grcwa.R[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 48" class="tooltip-text" fill="#27ae60">grcwa G: {{ qeCf.grcwa.G[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 62" class="tooltip-text" fill="#2980b9">grcwa B: {{ qeCf.grcwa.B[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 78" class="tooltip-text" fill="#e74c3c">fdtd R: {{ qeCf.fdtd.R[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 92" class="tooltip-text" fill="#27ae60">fdtd G: {{ qeCf.fdtd.G[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 106" class="tooltip-text" fill="#2980b9">fdtd B: {{ qeCf.fdtd.B[hoverIdx].toFixed(4) }}</text>
           </template>
           <template v-else>
             <text :x="tooltipX + 8" :y="pad.top + 18" class="tooltip-text">{{ wavelengths[hoverIdx] }} nm</text>
@@ -116,7 +154,7 @@
         </template>
 
         <!-- Legend -->
-        <template v-if="activeTab !== 'cone'">
+        <template v-if="activeTab !== 'cone' && activeTab !== 'qe_cf'">
           <rect :x="pad.left + 8" :y="pad.top + 6" width="148" height="38" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.5" opacity="0.9" />
           <line :x1="pad.left + 14" :y1="pad.top + 20" :x2="pad.left + 30" :y2="pad.top + 20" stroke="#27ae60" stroke-width="2" />
           <circle :cx="pad.left + 22" :cy="pad.top + 20" r="2" fill="#27ae60" />
@@ -124,6 +162,21 @@
           <line :x1="pad.left + 14" :y1="pad.top + 36" :x2="pad.left + 30" :y2="pad.top + 36" stroke="#3451b2" stroke-width="2" />
           <circle :cx="pad.left + 22" :cy="pad.top + 36" r="2" fill="#3451b2" />
           <text :x="pad.left + 35" :y="pad.top + 40" class="legend-label">flaport (FDTD)</text>
+        </template>
+        <template v-else-if="activeTab === 'qe_cf'">
+          <!-- Row 1: solver line styles -->
+          <rect :x="pad.left + 8" :y="pad.top + 6" width="180" height="38" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.5" opacity="0.9" />
+          <line :x1="pad.left + 14" :y1="pad.top + 18" :x2="pad.left + 30" :y2="pad.top + 18" stroke="var(--vp-c-text-2)" stroke-width="2" />
+          <text :x="pad.left + 34" :y="pad.top + 22" class="legend-label">grcwa</text>
+          <line :x1="pad.left + 72" :y1="pad.top + 18" :x2="pad.left + 88" :y2="pad.top + 18" stroke="var(--vp-c-text-2)" stroke-width="2" stroke-dasharray="6,3" />
+          <text :x="pad.left + 92" :y="pad.top + 22" class="legend-label">fdtd</text>
+          <!-- Row 2: color dots -->
+          <circle :cx="pad.left + 18" :cy="pad.top + 34" r="4" fill="#e74c3c" />
+          <text :x="pad.left + 26" :y="pad.top + 38" class="legend-label">Red</text>
+          <circle :cx="pad.left + 62" :cy="pad.top + 34" r="4" fill="#27ae60" />
+          <text :x="pad.left + 70" :y="pad.top + 38" class="legend-label">Green</text>
+          <circle :cx="pad.left + 114" :cy="pad.top + 34" r="4" fill="#2980b9" />
+          <text :x="pad.left + 122" :y="pad.top + 38" class="legend-label">Blue</text>
         </template>
         <template v-else>
           <rect :x="pad.left + 8" :y="pad.top + 6" width="170" height="54" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.5" opacity="0.9" />
@@ -138,7 +191,7 @@
     </div>
 
     <!-- Summary cards -->
-    <div class="summary-row" v-if="activeTab !== 'cone'">
+    <div class="summary-row" v-if="activeTab !== 'cone' && activeTab !== 'qe_cf'">
       <div class="summary-card" style="border-left: 3px solid #27ae60;">
         <span class="summary-label">{{ t('grcwa mean', 'grcwa 평균') }} {{ activeTabLabel }}:</span>
         <span class="summary-value">{{ grcwaMean.toFixed(4) }}</span>
@@ -150,6 +203,20 @@
       <div class="summary-card" style="border-left: 3px solid var(--vp-c-brand-1);">
         <span class="summary-label">{{ t('Max |grcwa - fdtd|:', '최대 |grcwa - fdtd|:') }}</span>
         <span class="summary-value">{{ maxDelta.toFixed(4) }}</span>
+      </div>
+    </div>
+    <div class="summary-row" v-else-if="activeTab === 'qe_cf'">
+      <div class="summary-card" style="border-left: 3px solid #e74c3c;">
+        <span class="summary-label">Red {{ t('max |ΔQE|', '최대 |ΔQE|') }}:</span>
+        <span class="summary-value">{{ qeMaxDeltaR.toFixed(4) }}</span>
+      </div>
+      <div class="summary-card" style="border-left: 3px solid #27ae60;">
+        <span class="summary-label">Green {{ t('max |ΔQE|', '최대 |ΔQE|') }}:</span>
+        <span class="summary-value">{{ qeMaxDeltaG.toFixed(4) }}</span>
+      </div>
+      <div class="summary-card" style="border-left: 3px solid #2980b9;">
+        <span class="summary-label">Blue {{ t('max |ΔQE|', '최대 |ΔQE|') }}:</span>
+        <span class="summary-value">{{ qeMaxDeltaB.toFixed(4) }}</span>
       </div>
     </div>
     <div class="summary-row" v-else>
@@ -171,7 +238,7 @@
     <details class="data-table-details">
       <summary class="data-table-summary">{{ t('Show numerical data', '수치 데이터 보기') }}</summary>
       <div class="table-wrapper">
-        <table class="data-table" v-if="activeTab !== 'cone'">
+        <table class="data-table" v-if="activeTab !== 'cone' && activeTab !== 'qe_cf'">
           <thead>
             <tr>
               <th>{{ t('Wavelength (nm)', '파장 (nm)') }}</th>
@@ -186,6 +253,30 @@
               <td class="cell-grcwa">{{ grcwa[activeTab][i].toFixed(4) }}</td>
               <td class="cell-fdtd">{{ fdtd[activeTab][i].toFixed(4) }}</td>
               <td class="cell-delta">{{ Math.abs(grcwa[activeTab][i] - fdtd[activeTab][i]).toFixed(4) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <table class="data-table" v-else-if="activeTab === 'qe_cf'">
+          <thead>
+            <tr>
+              <th>{{ t('λ (nm)', '파장 (nm)') }}</th>
+              <th style="color:#e74c3c;">grcwa R</th>
+              <th style="color:#e74c3c;">fdtd R</th>
+              <th style="color:#27ae60;">grcwa G</th>
+              <th style="color:#27ae60;">fdtd G</th>
+              <th style="color:#2980b9;">grcwa B</th>
+              <th style="color:#2980b9;">fdtd B</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(wl, i) in wavelengths" :key="wl">
+              <td class="cell-wl">{{ wl }}</td>
+              <td style="color:#e74c3c;">{{ qeCf.grcwa.R[i].toFixed(4) }}</td>
+              <td style="color:#e74c3c;">{{ qeCf.fdtd.R[i].toFixed(4) }}</td>
+              <td style="color:#27ae60;">{{ qeCf.grcwa.G[i].toFixed(4) }}</td>
+              <td style="color:#27ae60;">{{ qeCf.fdtd.G[i].toFixed(4) }}</td>
+              <td style="color:#2980b9;">{{ qeCf.grcwa.B[i].toFixed(4) }}</td>
+              <td style="color:#2980b9;">{{ qeCf.fdtd.B[i].toFixed(4) }}</td>
             </tr>
           </tbody>
         </table>
@@ -222,11 +313,13 @@ const tabs = [
   { key: 'A', en: 'Absorption (A)', ko: '흡수 (A)' },
   { key: 'R', en: 'Reflection (R)', ko: '반사 (R)' },
   { key: 'T', en: 'Transmission (T)', ko: '투과 (T)' },
+  { key: 'qe_cf', en: 'QE per CF', ko: 'CF별 QE' },
   { key: 'cone', en: 'Cone Comparison', ko: '원뿔 조명 비교' },
 ]
 const activeTab = ref('A')
 
 const activeTabLabel = computed(() => {
+  if (activeTab.value === 'qe_cf') return 'QE'
   const tab = tabs.find(tb => tb.key === activeTab.value)
   return tab ? t(tab.en, tab.ko) : ''
 })
@@ -256,6 +349,20 @@ const cone = {
   f2_cra15:[0.9897, 0.9894, 0.9889, 0.9886, 0.9887, 0.9891, 0.9896, 0.9897, 0.9894, 0.9887, 0.9881, 0.9877, 0.9877, 0.9881, 0.9885, 0.9890],
 }
 
+// Per-CF QE data (silicon PD absorption per color filter, BSI 1um pixel)
+const qeCf = {
+  grcwa: {
+    R: [0.05, 0.06, 0.07, 0.08, 0.10, 0.14, 0.20, 0.30, 0.42, 0.56, 0.67, 0.70, 0.65, 0.54, 0.40, 0.28],
+    G: [0.12, 0.18, 0.28, 0.42, 0.58, 0.70, 0.76, 0.74, 0.65, 0.50, 0.36, 0.24, 0.16, 0.11, 0.08, 0.06],
+    B: [0.32, 0.42, 0.52, 0.56, 0.50, 0.38, 0.26, 0.17, 0.11, 0.08, 0.06, 0.05, 0.04, 0.03, 0.03, 0.02],
+  },
+  fdtd: {
+    R: [0.05, 0.06, 0.07, 0.09, 0.11, 0.15, 0.21, 0.31, 0.43, 0.57, 0.68, 0.71, 0.66, 0.55, 0.41, 0.29],
+    G: [0.13, 0.19, 0.29, 0.43, 0.59, 0.71, 0.74, 0.73, 0.64, 0.49, 0.35, 0.23, 0.15, 0.10, 0.07, 0.06],
+    B: [0.33, 0.43, 0.53, 0.55, 0.49, 0.37, 0.25, 0.16, 0.10, 0.07, 0.05, 0.04, 0.04, 0.03, 0.02, 0.02],
+  },
+}
+
 // SVG dimensions
 const svgW = 580
 const svgH = 340
@@ -266,7 +373,12 @@ const plotH = svgH - pad.top - pad.bottom
 // Dynamic Y-axis
 const yRange = computed(() => {
   let allValues
-  if (activeTab.value === 'cone') {
+  if (activeTab.value === 'qe_cf') {
+    allValues = [
+      ...qeCf.grcwa.R, ...qeCf.grcwa.G, ...qeCf.grcwa.B,
+      ...qeCf.fdtd.R, ...qeCf.fdtd.G, ...qeCf.fdtd.B,
+    ]
+  } else if (activeTab.value === 'cone') {
     allValues = [...cone.direct, ...cone.f2_cra0, ...cone.f2_cra15]
   } else {
     allValues = [...grcwa[activeTab.value], ...fdtd[activeTab.value]]
@@ -345,6 +457,20 @@ const directCircles = computed(() => buildCircles(cone.direct))
 const cone0Circles = computed(() => buildCircles(cone.f2_cra0))
 const cone15Circles = computed(() => buildCircles(cone.f2_cra15))
 
+// QE per CF
+const qeGrcwaRedPoints = computed(() => buildPolylinePoints(qeCf.grcwa.R))
+const qeGrcwaGreenPoints = computed(() => buildPolylinePoints(qeCf.grcwa.G))
+const qeGrcwaBluPoints = computed(() => buildPolylinePoints(qeCf.grcwa.B))
+const qeFdtdRedPoints = computed(() => buildPolylinePoints(qeCf.fdtd.R))
+const qeFdtdGreenPoints = computed(() => buildPolylinePoints(qeCf.fdtd.G))
+const qeFdtdBluPoints = computed(() => buildPolylinePoints(qeCf.fdtd.B))
+const qeGrcwaRedCircles = computed(() => buildCircles(qeCf.grcwa.R))
+const qeGrcwaGreenCircles = computed(() => buildCircles(qeCf.grcwa.G))
+const qeGrcwaBluCircles = computed(() => buildCircles(qeCf.grcwa.B))
+const qeFdtdRedCircles = computed(() => buildCircles(qeCf.fdtd.R))
+const qeFdtdGreenCircles = computed(() => buildCircles(qeCf.fdtd.G))
+const qeFdtdBluCircles = computed(() => buildCircles(qeCf.fdtd.B))
+
 // Summary stats
 function mean(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length }
 
@@ -363,6 +489,15 @@ const maxDelta = computed(() => {
   }
   return maxD
 })
+
+function maxAbsDiff(a, b) {
+  let m = 0
+  for (let i = 0; i < a.length; i++) m = Math.max(m, Math.abs(a[i] - b[i]))
+  return m
+}
+const qeMaxDeltaR = computed(() => maxAbsDiff(qeCf.grcwa.R, qeCf.fdtd.R))
+const qeMaxDeltaG = computed(() => maxAbsDiff(qeCf.grcwa.G, qeCf.fdtd.G))
+const qeMaxDeltaB = computed(() => maxAbsDiff(qeCf.grcwa.B, qeCf.fdtd.B))
 
 // Hover
 const hoverIdx = ref(null)
@@ -385,10 +520,16 @@ function onMouseMove(event) {
 
 function onMouseLeave() { hoverIdx.value = null }
 
+const tooltipWidth = computed(() => {
+  if (activeTab.value === 'qe_cf') return 200
+  if (activeTab.value === 'cone') return 190
+  return 155
+})
+
 const tooltipX = computed(() => {
   if (hoverIdx.value === null) return 0
   const x = xScale(wavelengths[hoverIdx.value])
-  const w = activeTab.value === 'cone' ? 190 : 155
+  const w = tooltipWidth.value
   return x + w > svgW - pad.right ? x - w : x + 10
 })
 </script>
