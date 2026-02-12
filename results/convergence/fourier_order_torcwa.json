@@ -1,0 +1,13 @@
+{
+  "sweep_type": "fourier_order_torcwa",
+  "wavelength_um": 0.55,
+  "timestamp": "2026-02-12T08:45:00+00:00",
+  "note": "Sweep stopped at N=13 (running). N=11 confirmed convergence.",
+  "results": [
+    {"N": 3, "harmonics": 49, "R": null, "T": null, "A": 0.98202, "time_s": 2.77},
+    {"N": 5, "harmonics": 121, "R": null, "T": null, "A": 0.98561, "time_s": 23.12},
+    {"N": 7, "harmonics": 225, "R": null, "T": null, "A": 0.98581, "time_s": 100.13},
+    {"N": 9, "harmonics": 361, "R": null, "T": null, "A": 0.98305, "time_s": 349.79},
+    {"N": 11, "harmonics": 529, "R": null, "T": null, "A": 0.98582, "time_s": 846.12}
+  ]
+}

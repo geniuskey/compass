@@ -257,5 +257,5 @@ To reduce runtime, use fewer image height points for initial exploration and inc
 ## Next steps
 
 - [Cone Illumination](./cone-illumination.md) -- angular sampling for realistic illumination
-- [CRA Shift Analysis cookbook](../cookbook/cra-shift-analysis.md) -- detailed CRA vs QE study
+- [Microlens & CRA Optimization cookbook](../cookbook/microlens-optimization.md) -- detailed CRA vs QE study
 - [Visualization](./visualization.md) -- plotting tools for sweep results

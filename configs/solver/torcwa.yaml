@@ -4,7 +4,7 @@ solver:
   type: "rcwa"
 
   params:
-    fourier_order: [9, 9]
+    fourier_order: [5, 5]
     dtype: "complex64"
     n_lens_slices: 30
     grid_multiplier: 3

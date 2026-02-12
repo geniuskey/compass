@@ -375,5 +375,5 @@ source:
 ## Next steps
 
 - [ROI Sweep](./roi-sweep.md) -- sweep cone illumination across the sensor
-- [CRA Shift Analysis cookbook](../cookbook/cra-shift-analysis.md) -- CRA vs QE study
+- [Microlens & CRA Optimization cookbook](../cookbook/microlens-optimization.md) -- CRA vs QE study
 - [First Simulation](./first-simulation.md) -- basic planewave setup

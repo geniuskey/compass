@@ -124,6 +124,13 @@ class GrcwaSolver(SolverBase):
                     T = float(np.real(T))
                     A = max(0.0, 1.0 - R - T)
 
+                    if R > 1.0 or R < 0.0:
+                        logger.warning(
+                            f"grcwa: unphysical R={R:.4f} at λ={wavelength:.4f}um, "
+                            f"pol={pol}, nG={nG}. TM polarization S-matrix may be "
+                            f"numerically unstable at this nG. Try adjusting nG ±10."
+                        )
+
                 except Exception as e:
                     logger.error(f"grcwa failed at λ={wavelength:.4f}um: {e}")
                     R, T, A = 0.0, 0.0, 0.0

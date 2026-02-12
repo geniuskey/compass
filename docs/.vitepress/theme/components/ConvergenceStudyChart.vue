@@ -367,7 +367,7 @@
         </div>
         <div class="summary-card" style="border-left: 3px solid #FF9800;">
           <span class="summary-label">{{ t('torcwa converged at', 'torcwa 수렴 지점') }}:</span>
-          <span class="summary-value">[9,9] = 361 (A = 0.970)</span>
+          <span class="summary-value">[5,5] = 121 (A = 0.986)</span>
         </div>
         <div class="summary-card" style="border-left: 3px solid var(--vp-c-brand-1);">
           <span class="summary-label">{{ t('Converged value', '수렴 값') }}:</span>
@@ -401,7 +401,7 @@
         </div>
         <div class="summary-card" style="border-left: 3px solid #FF9800;">
           <span class="summary-label">{{ t('torcwa fastest converged', 'torcwa 최소 수렴 시간') }}:</span>
-          <span class="summary-value">55.0s ([9,9])</span>
+          <span class="summary-value">23.12s ([5,5])</span>
         </div>
       </template>
     </div>
@@ -528,10 +528,11 @@ const grcwaData = [
 ]
 
 const torcwaData = [
-  { N: 3, harmonics: 49, A: 0.97, time: 2.0 },
-  { N: 5, harmonics: 121, A: 0.97, time: 8.0 },
-  { N: 7, harmonics: 225, A: 0.97, time: 25.0 },
-  { N: 9, harmonics: 361, A: 0.97, time: 55.0 },
+  { N: 3, harmonics: 49, A: 0.98202, time: 2.77 },
+  { N: 5, harmonics: 121, A: 0.98561, time: 23.12 },
+  { N: 7, harmonics: 225, A: 0.98581, time: 100.13 },
+  { N: 9, harmonics: 361, A: 0.98305, time: 349.79 },
+  { N: 11, harmonics: 529, A: 0.98582, time: 846.12 },
 ]
 
 const lensSlicesData = [

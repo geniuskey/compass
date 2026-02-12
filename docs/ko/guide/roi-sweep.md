@@ -257,5 +257,5 @@ for key, result in results.items():
 ## 다음 단계
 
 - [원뿔 조명](./cone-illumination.md) -- 현실적 조명을 위한 각도 샘플링
-- [CRA 시프트 분석 쿡북](../cookbook/cra-shift-analysis.md) -- 상세 CRA vs QE 연구
+- [마이크로렌즈 & CRA 최적화 쿡북](../cookbook/microlens-optimization.md) -- 상세 CRA vs QE 연구
 - [시각화](./visualization.md) -- 스위프 결과를 위한 플롯 도구

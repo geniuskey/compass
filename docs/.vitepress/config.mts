@@ -78,16 +78,13 @@ const cookbookSidebar = [
   { text: 'Recipes', items: [
     { text: 'BSI 2x2 Basic', link: '/cookbook/bsi-2x2-basic' },
     { text: 'Metal Grid Effect', link: '/cookbook/metal-grid-effect' },
-    { text: 'Microlens Optimization', link: '/cookbook/microlens-optimization' },
+    { text: 'Microlens & CRA', link: '/cookbook/microlens-optimization' },
     { text: 'Wavelength Sweep', link: '/cookbook/wavelength-sweep' },
-    { text: 'Solver Benchmark', link: '/cookbook/solver-benchmark' },
-    { text: 'CRA Shift Analysis', link: '/cookbook/cra-shift-analysis' },
+    { text: 'Solver Comparison', link: '/cookbook/solver-benchmark' },
     { text: 'BARL Design', link: '/cookbook/barl-design' },
     { text: 'DTI Crosstalk', link: '/cookbook/dti-crosstalk' },
     { text: 'Signal Chain Color Accuracy', link: '/cookbook/signal-chain-color-accuracy' },
     { text: 'TMM Validation Results', link: '/cookbook/tmm-validation-results' },
-    { text: 'Cross-Solver Validation', link: '/cookbook/cross-solver-validation' },
-    { text: 'RCWA vs FDTD Validation', link: '/cookbook/rcwa-vs-fdtd-validation' },
     { text: 'Convergence Study', link: '/cookbook/convergence-study' },
   ]}
 ]
@@ -172,16 +169,13 @@ const cookbookSidebarKo = [
   { text: '레시피', items: [
     { text: 'BSI 2x2 기본', link: '/ko/cookbook/bsi-2x2-basic' },
     { text: '메탈 그리드 효과', link: '/ko/cookbook/metal-grid-effect' },
-    { text: '마이크로렌즈 최적화', link: '/ko/cookbook/microlens-optimization' },
+    { text: '마이크로렌즈 & CRA', link: '/ko/cookbook/microlens-optimization' },
     { text: '파장 스윕', link: '/ko/cookbook/wavelength-sweep' },
-    { text: '솔버 벤치마크', link: '/ko/cookbook/solver-benchmark' },
-    { text: 'CRA 시프트 분석', link: '/ko/cookbook/cra-shift-analysis' },
+    { text: '솔버 비교 가이드', link: '/ko/cookbook/solver-benchmark' },
     { text: 'BARL 설계', link: '/ko/cookbook/barl-design' },
     { text: 'DTI 크로스토크', link: '/ko/cookbook/dti-crosstalk' },
     { text: '신호 체인 색 정확도', link: '/ko/cookbook/signal-chain-color-accuracy' },
     { text: 'TMM 검증 결과', link: '/ko/cookbook/tmm-validation-results' },
-    { text: '크로스 솔버 검증', link: '/ko/cookbook/cross-solver-validation' },
-    { text: 'RCWA vs FDTD 검증', link: '/ko/cookbook/rcwa-vs-fdtd-validation' },
     { text: '수렴 연구', link: '/ko/cookbook/convergence-study' },
   ]}
 ]

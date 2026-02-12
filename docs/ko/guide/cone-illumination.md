@@ -375,5 +375,5 @@ source:
 ## 다음 단계
 
 - [ROI 스위프](./roi-sweep.md) -- 센서 전체에 걸친 원뿔 조명 스위프
-- [CRA 시프트 분석 쿡북](../cookbook/cra-shift-analysis.md) -- CRA vs QE 연구
+- [마이크로렌즈 & CRA 최적화 쿡북](../cookbook/microlens-optimization.md) -- CRA vs QE 연구
 - [첫 번째 시뮬레이션](./first-simulation.md) -- 기본 평면파 설정

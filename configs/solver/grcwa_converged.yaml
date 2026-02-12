@@ -1,18 +1,20 @@
 # @package _global_
 # High-accuracy grcwa preset with converged parameters.
-# Use for final results and validation. Slower but numerically accurate.
+# Use for final results and validation.
 #
-# Convergence study results (550nm, BSI 1um pixel):
-#   nG=49:  A=0.9699, 0.95s   (converged within 0.2% of final)
-#   nG=121: A=0.9712, 5.4s    (stable, recommended for high accuracy)
+# Convergence study results (BSI 1um pixel, full visible spectrum):
+#   nG=49:  A=0.9699 at 550nm, stable across 400-700nm (R+T+A=1.000)
+#   nG=121: Stable at 550nm but "Singular matrix" at 400nm, 500nm — avoid
 #   n_lens_slices converges at 15, fully stable by 30
 #   grid_multiplier=3 is optimal (even values cause grcwa instability)
+#
+# For higher accuracy, use torcwa with [7,7] or higher.
 solver:
   name: "grcwa"
   type: "rcwa"
 
   params:
-    fourier_order: [121, 121]
+    fourier_order: [49, 49]
     dtype: "complex128"
     n_lens_slices: 50
     grid_multiplier: 3
