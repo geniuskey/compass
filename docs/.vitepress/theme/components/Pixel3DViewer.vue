@@ -250,12 +250,12 @@ const sortedPolys = computed(() => {
         break
       }
       case 'barl': {
-        // Render 4 BARL sublayers as separate boxes
+        // Render 4 BARL sublayers — each material gets a distinct color
         const subs = [
-          { dz: 0, t: 0.01, col: '#b3cde0' },
-          { dz: 0.01, t: 0.025, col: '#6c71c4' },
-          { dz: 0.035, t: 0.015, col: '#b3cde0' },
-          { dz: 0.05, t: 0.030, col: '#2aa198' },
+          { dz: 0, t: 0.01, col: '#7fb3d8' },      // SiO2
+          { dz: 0.01, t: 0.025, col: '#6c71c4' },   // HfO2
+          { dz: 0.035, t: 0.015, col: '#e8d44d' },   // SiO2
+          { dz: 0.05, t: 0.030, col: '#2aa198' },    // Si3N4
         ]
         for (const s of subs) {
           addBox(polys, 0, 0, zb + s.dz, 2, 2, zb + s.dz + s.t, s.col, 0.85, 0.75, 0.65)

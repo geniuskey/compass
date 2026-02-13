@@ -628,16 +628,24 @@
           />
         </template>
 
-        <!-- BARL zone -->
+        <!-- BARL zone — show active sublayer material -->
         <template v-if="xyZ >= 3.0 && xyZ < 3.08">
           <rect
             :x="xyPad"
             :y="xyPad"
             :width="xyPlot"
             :height="xyPlot"
-            fill="#8e44ad"
-            opacity="0.5"
+            :fill="xyBarlColor"
+            opacity="0.6"
           />
+          <text
+            :x="xyPad + xyPlot / 2"
+            :y="xyPad + xyPlot / 2 + 5"
+            text-anchor="middle"
+            class="bayer-label"
+            fill="var(--vp-c-text-1)"
+            font-size="14"
+          >{{ xyBarlMaterial }}</text>
         </template>
 
         <!-- CF zone: Bayer + metal grid -->
@@ -845,11 +853,11 @@ const mlH = 0.6
 const mlR = 0.48
 const mlN = 2.5
 
-// BARL sublayers
+// BARL sublayers — each material gets a distinct color
 const barlSublayers = [
-  { color: '#b3cde0', zBot: 3.0, zTop: 3.01, material: 'SiO2' },
+  { color: '#7fb3d8', zBot: 3.0, zTop: 3.01, material: 'SiO2' },
   { color: '#6c71c4', zBot: 3.01, zTop: 3.035, material: 'HfO2' },
-  { color: '#b3cde0', zBot: 3.035, zTop: 3.05, material: 'SiO2' },
+  { color: '#e8d44d', zBot: 3.035, zTop: 3.05, material: 'SiO2' },
   { color: '#2aa198', zBot: 3.05, zTop: 3.08, material: 'Si3N4' },
 ]
 
@@ -1015,10 +1023,17 @@ const xyScale = xyPlot / 2.0
 function xyX(x: number) { return xyPad + (x / 2.0) * xyPlot }
 function xyY(y: number) { return xyPad + (y / 2.0) * xyPlot }
 
+function findBarlSublayer(z: number) {
+  for (const sub of barlSublayers) {
+    if (z >= sub.zBot && z < sub.zTop) return sub
+  }
+  return barlSublayers[0]
+}
+
 const xyLayerName = computed(() => {
   const z = xyZ.value
   if (z < 3.0) return 'Silicon'
-  if (z < 3.08) return 'BARL'
+  if (z < 3.08) { const sub = findBarlSublayer(z); return `BARL (${sub.material})` }
   if (z < 3.68) return 'Color Filter'
   if (z < 3.98) return 'Planarization'
   if (z < 4.58) return 'Microlens'
@@ -1028,12 +1043,15 @@ const xyLayerName = computed(() => {
 const xyBgColor = computed(() => {
   const z = xyZ.value
   if (z < 3.0) return '#5d6d7e'
-  if (z < 3.08) return '#8e44ad'
+  if (z < 3.08) return findBarlSublayer(z).color
   if (z < 3.68) return '#27ae60'
   if (z < 3.98) return '#d5dbdb'
   if (z < 4.58) return '#dda0dd'
   return '#d6eaf8'
 })
+
+const xyBarlColor = computed(() => findBarlSublayer(xyZ.value).color)
+const xyBarlMaterial = computed(() => findBarlSublayer(xyZ.value).material)
 
 const xyPhotodiodes = [
   { cx: 0.5, cy: 0.5 },
@@ -1065,7 +1083,10 @@ const xyMicrolenses = computed(() => {
 // Legend
 const legendItems = [
   { label: 'Silicon', color: '#5d6d7e' },
-  { label: 'BARL', color: '#8e44ad' },
+  { label: 'SiO2 (BARL)', color: '#7fb3d8' },
+  { label: 'HfO2 (BARL)', color: '#6c71c4' },
+  { label: 'SiO2 (BARL)', color: '#e8d44d' },
+  { label: 'Si3N4 (BARL)', color: '#2aa198' },
   { label: 'Color Filter', color: '#27ae60' },
   { label: 'CF Red', color: '#c0392b' },
   { label: 'CF Blue', color: '#2980b9' },
