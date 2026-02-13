@@ -39,10 +39,48 @@ import ConvergenceStudyChart from './components/ConvergenceStudyChart.vue'
 import PerColorConvergenceChart from './components/PerColorConvergenceChart.vue'
 import PixelCrossSections from './components/PixelCrossSections.vue'
 import Pixel3DViewer from './components/Pixel3DViewer.vue'
+import TmmQeCalculator from './components/TmmQeCalculator.vue'
+import BarlOptimizer from './components/BarlOptimizer.vue'
+import EnergyBudgetAnalyzer from './components/EnergyBudgetAnalyzer.vue'
+import AngularResponseSimulator from './components/AngularResponseSimulator.vue'
+import SnrCalculator from './components/SnrCalculator.vue'
+import ColorFilterDesigner from './components/ColorFilterDesigner.vue'
+import PixelDesignPlayground from './components/PixelDesignPlayground.vue'
+
+function isLocaleSwitch(from: string, to: string): boolean {
+  const stripKo = (p: string) => p.replace(/^\/ko\//, '/')
+  return stripKo(from) === stripKo(to) && from !== to
+}
 
 export default {
   extends: DefaultTheme,
-  enhanceApp({ app }) {
+  enhanceApp({ app, router }) {
+    if (typeof window !== 'undefined') {
+      let savedScrollY = 0
+      let pendingRestore = false
+
+      router.onBeforeRouteChange = (to: string) => {
+        const from = router.route.path
+        if (isLocaleSwitch(from, to)) {
+          savedScrollY = window.scrollY
+          pendingRestore = true
+        }
+        return true
+      }
+
+      router.onAfterRouteChanged = () => {
+        if (pendingRestore) {
+          pendingRestore = false
+          const y = savedScrollY
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              window.scrollTo(0, y)
+            })
+          })
+        }
+      }
+    }
+
     app.component('WavelengthSlider', WavelengthSlider)
     app.component('FresnelCalculator', FresnelCalculator)
     app.component('FourierOrderDemo', FourierOrderDemo)
@@ -81,5 +119,12 @@ export default {
     app.component('PerColorConvergenceChart', PerColorConvergenceChart)
     app.component('PixelCrossSections', PixelCrossSections)
     app.component('Pixel3DViewer', Pixel3DViewer)
+    app.component('TmmQeCalculator', TmmQeCalculator)
+    app.component('BarlOptimizer', BarlOptimizer)
+    app.component('EnergyBudgetAnalyzer', EnergyBudgetAnalyzer)
+    app.component('AngularResponseSimulator', AngularResponseSimulator)
+    app.component('SnrCalculator', SnrCalculator)
+    app.component('ColorFilterDesigner', ColorFilterDesigner)
+    app.component('PixelDesignPlayground', PixelDesignPlayground)
   },
 }

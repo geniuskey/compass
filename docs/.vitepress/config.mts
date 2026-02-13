@@ -11,7 +11,7 @@ const introSidebar = [
 ]
 
 const introSidebarKo = [
-  { text: '입문', items: [
+  { text: '소개', items: [
     { text: 'CMOS 이미지 센서란?', link: '/ko/introduction/what-is-cmos-sensor' },
     { text: '광학 기초 입문', link: '/ko/introduction/optics-primer' },
     { text: '픽셀 해부학', link: '/ko/introduction/pixel-anatomy' },
@@ -200,6 +200,32 @@ const aboutSidebarKo = [
   ]}
 ]
 
+const simulatorSidebar = [
+  { text: 'Simulator', items: [
+    { text: 'Overview', link: '/simulator/' },
+    { text: 'TMM QE Calculator', link: '/simulator/tmm-qe' },
+    { text: 'BARL Optimizer', link: '/simulator/barl-optimizer' },
+    { text: 'Energy Budget', link: '/simulator/energy-budget' },
+    { text: 'Angular Response', link: '/simulator/angular-response' },
+    { text: 'SNR Calculator', link: '/simulator/snr-calculator' },
+    { text: 'Color Filter Designer', link: '/simulator/color-filter' },
+    { text: 'Pixel Design Playground', link: '/simulator/pixel-playground' },
+  ]}
+]
+
+const simulatorSidebarKo = [
+  { text: '시뮬레이터', items: [
+    { text: '개요', link: '/ko/simulator/' },
+    { text: 'TMM QE 계산기', link: '/ko/simulator/tmm-qe' },
+    { text: 'BARL 최적화', link: '/ko/simulator/barl-optimizer' },
+    { text: '에너지 버짓', link: '/ko/simulator/energy-budget' },
+    { text: '각도 응답', link: '/ko/simulator/angular-response' },
+    { text: 'SNR 계산기', link: '/ko/simulator/snr-calculator' },
+    { text: '컬러 필터 설계', link: '/ko/simulator/color-filter' },
+    { text: '픽셀 설계 놀이터', link: '/ko/simulator/pixel-playground' },
+  ]}
+]
+
 export default withMermaid(defineConfig({
   base: '/compass/',
   title: 'COMPASS',
@@ -224,12 +250,20 @@ export default withMermaid(defineConfig({
       lang: 'en',
       themeConfig: {
         nav: [
-          { text: 'Introduction', link: '/introduction/what-is-cmos-sensor' },
-          { text: 'Guide', link: '/guide/installation' },
-          { text: 'Theory', link: '/theory/light-basics' },
-          { text: 'Reference', link: '/reference/api-overview' },
-          { text: 'Cookbook', link: '/cookbook/bsi-2x2-basic' },
-          { text: 'Research', link: '/research/open-source-em-solvers-survey' },
+          { text: 'Learn', items: [
+            { text: 'Introduction', link: '/introduction/what-is-cmos-sensor' },
+            { text: 'Theory', link: '/theory/light-basics' },
+          ]},
+          { text: 'Guide', items: [
+            { text: 'Getting Started', link: '/guide/installation' },
+            { text: 'Cookbook', link: '/cookbook/bsi-2x2-basic' },
+          ]},
+          { text: 'Simulator', link: '/simulator/' },
+          { text: 'Reference', items: [
+            { text: 'API Reference', link: '/reference/api-overview' },
+            { text: 'Research', link: '/research/open-source-em-solvers-survey' },
+            { text: 'About', link: '/about/references' },
+          ]},
         ],
         sidebar: {
           '/introduction/': introSidebar,
@@ -239,6 +273,7 @@ export default withMermaid(defineConfig({
           '/cookbook/': cookbookSidebar,
           '/research/': researchSidebar,
           '/about/': aboutSidebar,
+          '/simulator/': simulatorSidebar,
         },
       },
     },
@@ -247,12 +282,20 @@ export default withMermaid(defineConfig({
       lang: 'ko',
       themeConfig: {
         nav: [
-          { text: '입문', link: '/ko/introduction/what-is-cmos-sensor' },
-          { text: '가이드', link: '/ko/guide/installation' },
-          { text: '이론', link: '/ko/theory/light-basics' },
-          { text: '레퍼런스', link: '/ko/reference/api-overview' },
-          { text: '레시피', link: '/ko/cookbook/bsi-2x2-basic' },
-          { text: '리서치', link: '/ko/research/open-source-em-solvers-survey' },
+          { text: '학습', items: [
+            { text: '소개', link: '/ko/introduction/what-is-cmos-sensor' },
+            { text: '이론', link: '/ko/theory/light-basics' },
+          ]},
+          { text: '가이드', items: [
+            { text: '시작하기', link: '/ko/guide/installation' },
+            { text: '레시피', link: '/ko/cookbook/bsi-2x2-basic' },
+          ]},
+          { text: '시뮬레이터', link: '/ko/simulator/' },
+          { text: '레퍼런스', items: [
+            { text: 'API 레퍼런스', link: '/ko/reference/api-overview' },
+            { text: '리서치', link: '/ko/research/open-source-em-solvers-survey' },
+            { text: '정보', link: '/ko/about/references' },
+          ]},
         ],
         sidebar: {
           '/ko/introduction/': introSidebarKo,
@@ -262,6 +305,7 @@ export default withMermaid(defineConfig({
           '/ko/cookbook/': cookbookSidebarKo,
           '/ko/research/': researchSidebarKo,
           '/ko/about/': aboutSidebarKo,
+          '/ko/simulator/': simulatorSidebarKo,
         },
         docFooter: { prev: '이전', next: '다음' },
         outline: { label: '목차' },
