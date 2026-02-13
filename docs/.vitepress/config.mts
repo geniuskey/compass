@@ -210,6 +210,14 @@ const simulatorSidebar = [
     { text: 'SNR Calculator', link: '/simulator/snr-calculator' },
     { text: 'Color Filter Designer', link: '/simulator/color-filter' },
     { text: 'Pixel Design Playground', link: '/simulator/pixel-playground' },
+    { text: 'Si Absorption Depth', link: '/simulator/si-absorption' },
+    { text: 'Microlens Ray Trace', link: '/simulator/microlens-raytrace' },
+    { text: 'MTF Analyzer', link: '/simulator/mtf-analyzer' },
+    { text: 'Pixel Scaling Trends', link: '/simulator/pixel-scaling' },
+    { text: 'Fabry-Pérot Visualizer', link: '/simulator/fabry-perot' },
+    { text: 'Color Accuracy (ΔE)', link: '/simulator/color-accuracy' },
+    { text: 'Dark Current & Temp', link: '/simulator/dark-current' },
+    { text: 'Diffraction PSF', link: '/simulator/diffraction-psf' },
   ]}
 ]
 
@@ -223,6 +231,14 @@ const simulatorSidebarKo = [
     { text: 'SNR 계산기', link: '/ko/simulator/snr-calculator' },
     { text: '컬러 필터 설계', link: '/ko/simulator/color-filter' },
     { text: '픽셀 설계 놀이터', link: '/ko/simulator/pixel-playground' },
+    { text: 'Si 흡수 깊이', link: '/ko/simulator/si-absorption' },
+    { text: '마이크로렌즈 광선추적', link: '/ko/simulator/microlens-raytrace' },
+    { text: 'MTF 분석기', link: '/ko/simulator/mtf-analyzer' },
+    { text: '픽셀 스케일링', link: '/ko/simulator/pixel-scaling' },
+    { text: '파브리-페로 시각화', link: '/ko/simulator/fabry-perot' },
+    { text: '색 정확도 (ΔE)', link: '/ko/simulator/color-accuracy' },
+    { text: '암전류 & 온도', link: '/ko/simulator/dark-current' },
+    { text: '회절 PSF', link: '/ko/simulator/diffraction-psf' },
   ]}
 ]
 

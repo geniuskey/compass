@@ -46,6 +46,14 @@ import AngularResponseSimulator from './components/AngularResponseSimulator.vue'
 import SnrCalculator from './components/SnrCalculator.vue'
 import ColorFilterDesigner from './components/ColorFilterDesigner.vue'
 import PixelDesignPlayground from './components/PixelDesignPlayground.vue'
+import SiliconAbsorptionDepth from './components/SiliconAbsorptionDepth.vue'
+import FabryPerotVisualizer from './components/FabryPerotVisualizer.vue'
+import MicrolensRayTrace from './components/MicrolensRayTrace.vue'
+import DiffractionPsfViewer from './components/DiffractionPsfViewer.vue'
+import MtfAnalyzer from './components/MtfAnalyzer.vue'
+import PixelScalingTrends from './components/PixelScalingTrends.vue'
+import ColorAccuracyAnalyzer from './components/ColorAccuracyAnalyzer.vue'
+import DarkCurrentSimulator from './components/DarkCurrentSimulator.vue'
 
 function isLocaleSwitch(from: string, to: string): boolean {
   const stripKo = (p: string) => p.replace(/^\/ko\//, '/')
@@ -126,5 +134,13 @@ export default {
     app.component('SnrCalculator', SnrCalculator)
     app.component('ColorFilterDesigner', ColorFilterDesigner)
     app.component('PixelDesignPlayground', PixelDesignPlayground)
+    app.component('SiliconAbsorptionDepth', SiliconAbsorptionDepth)
+    app.component('FabryPerotVisualizer', FabryPerotVisualizer)
+    app.component('MicrolensRayTrace', MicrolensRayTrace)
+    app.component('DiffractionPsfViewer', DiffractionPsfViewer)
+    app.component('MtfAnalyzer', MtfAnalyzer)
+    app.component('PixelScalingTrends', PixelScalingTrends)
+    app.component('ColorAccuracyAnalyzer', ColorAccuracyAnalyzer)
+    app.component('DarkCurrentSimulator', DarkCurrentSimulator)
   },
 }

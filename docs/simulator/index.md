@@ -21,6 +21,18 @@ Explore CMOS image sensor pixel optics through browser-based simulators. All cal
 - **[Color Filter Designer](./color-filter)** — Design RGB filter spectra and visualize CIE chromaticity gamut
 - **[Pixel Design Playground](./pixel-playground)** — Comprehensive pixel designer combining all parameters with multi-panel results
 
+### Optics & Wave Physics
+- **[Si Absorption Depth](./si-absorption)** — Visualize Beer-Lambert absorption in silicon and understand wavelength-dependent penetration depth
+- **[Microlens Ray Trace](./microlens-raytrace)** — Trace rays through superellipse microlens geometry with Snell's law refraction and CRA effects
+- **[Fabry-P&eacute;rot Visualizer](./fabry-perot)** — Explore thin film interference with phasor diagrams and quarter-wave anti-reflection conditions
+- **[Diffraction PSF Viewer](./diffraction-psf)** — View Airy patterns, encircled energy, and pixel grid overlay for collection efficiency analysis
+
+### System Analysis
+- **[MTF Analyzer](./mtf-analyzer)** — Compute pixel aperture, diffraction, and combined system MTF with Nyquist frequency analysis
+- **[Pixel Scaling Trends](./pixel-scaling)** — Explore how FWC, SNR, and diffraction limits scale with pixel pitch
+- **[Color Accuracy Analyzer](./color-accuracy)** — Evaluate color reproduction with CCM computation and Delta E analysis on ColorChecker patches
+- **[Dark Current & Temperature](./dark-current)** — Simulate Arrhenius dark current model and visualize thermal noise impact on image quality
+
 ::: tip
 These simulators use a 1D TMM approximation. For full 3D simulations with RCWA or FDTD, see the [Guide](/guide/installation).
 :::
