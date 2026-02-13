@@ -22,9 +22,9 @@
       <div class="select-group">
         <label>{{ t('Color Filter:', '컬러 필터:') }}</label>
         <select v-model="cfColor" class="ctrl-select">
-          <option value="red">Red</option>
-          <option value="green">Green</option>
-          <option value="blue">Blue</option>
+          <option value="red">{{ t('Red', '빨강') }}</option>
+          <option value="green">{{ t('Green', '초록') }}</option>
+          <option value="blue">{{ t('Blue', '파랑') }}</option>
         </select>
       </div>
     </div>

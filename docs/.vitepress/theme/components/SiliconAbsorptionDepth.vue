@@ -365,7 +365,8 @@ const chartPlotH = chartH - chartPadT - chartPadB
 const alphaUm = computed(() => {
   const wl_um = wavelength.value / 1000
   const [, k] = getN(MATERIALS['silicon'], wl_um)
-  return (4 * Math.PI * k) / wl_um
+  const kSafe = Math.max(k, 0)
+  return (4 * Math.PI * kSafe) / wl_um
 })
 
 const alphaCm = computed(() => alphaUm.value * 1e4)
@@ -510,7 +511,7 @@ const alphaPath = computed(() => {
   for (let wl = 380; wl <= 1000; wl += 5) {
     const wl_um = wl / 1000
     const [, k] = getN(MATERIALS['silicon'], wl_um)
-    const alphaPerUm = (4 * Math.PI * k) / wl_um
+    const alphaPerUm = (4 * Math.PI * Math.max(k, 0)) / wl_um
     const alphaPerCm = alphaPerUm * 1e4
     const x = wlToChartX(wl)
     const y = alphaToY(alphaPerCm)

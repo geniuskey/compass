@@ -68,6 +68,14 @@
             <label>{{ t('CF thickness:', 'CF 두께:') }} <strong>{{ cfThickness.toFixed(2) }} um</strong></label>
             <input type="range" min="0.2" max="1.0" step="0.05" v-model.number="cfThickness" class="ctrl-range" @input="markCustom" />
           </div>
+          <div class="slider-group">
+            <label>{{ t('Channel:', '채널:') }}</label>
+            <div class="pol-btns">
+              <button :class="['pol-btn', { active: cfChannel === 'red' }]" @click="cfChannel = 'red'" style="color:#e74c3c">R</button>
+              <button :class="['pol-btn', { active: cfChannel === 'green' }]" @click="cfChannel = 'green'" style="color:#27ae60">G</button>
+              <button :class="['pol-btn', { active: cfChannel === 'blue' }]" @click="cfChannel = 'blue'" style="color:#3498db">B</button>
+            </div>
+          </div>
         </div>
 
         <!-- Top Layers (collapsible) -->
@@ -165,11 +173,11 @@
             </template>
             <!-- Legend -->
             <line :x1="qePad.left+qePlotW-90" :y1="qePad.top+12" :x2="qePad.left+qePlotW-72" :y2="qePad.top+12" stroke="#3498db" stroke-width="2" />
-            <text :x="qePad.left+qePlotW-68" :y="qePad.top+16" class="legend-label">Blue</text>
+            <text :x="qePad.left+qePlotW-68" :y="qePad.top+16" class="legend-label">{{ t('Blue', '파랑') }}</text>
             <line :x1="qePad.left+qePlotW-90" :y1="qePad.top+26" :x2="qePad.left+qePlotW-72" :y2="qePad.top+26" stroke="#27ae60" stroke-width="2" />
-            <text :x="qePad.left+qePlotW-68" :y="qePad.top+30" class="legend-label">Green</text>
+            <text :x="qePad.left+qePlotW-68" :y="qePad.top+30" class="legend-label">{{ t('Green', '초록') }}</text>
             <line :x1="qePad.left+qePlotW-90" :y1="qePad.top+40" :x2="qePad.left+qePlotW-72" :y2="qePad.top+40" stroke="#e74c3c" stroke-width="2" />
-            <text :x="qePad.left+qePlotW-68" :y="qePad.top+44" class="legend-label">Red</text>
+            <text :x="qePad.left+qePlotW-68" :y="qePad.top+44" class="legend-label">{{ t('Red', '빨강') }}</text>
           </svg>
         </div>
 
@@ -279,6 +287,7 @@ const barl4 = ref(30)   // Si3N4 (nm)
 const cfThickness = ref(0.6)
 const planThickness = ref(0.3)
 const mlThickness = ref(0.6)
+const cfChannel = ref<'red' | 'green' | 'blue'>('green')
 const angle = ref(0)
 const pol = ref<'s' | 'p' | 'avg'>('avg')
 const barlOpen = ref(false)
@@ -310,6 +319,8 @@ function applyPreset() {
 function markCustom() {
   preset.value = 'custom'
 }
+
+const cfMatKey = computed(() => 'cf_' + cfChannel.value)
 
 // ── Stack builder ────────────────────────────────────────────────────────────
 function buildStack(cfMat: string): TmmLayer[] {
@@ -449,19 +460,21 @@ interface StackLayerVis {
 const layerColors: Record<string, { fill: string; border: string }> = {
   polymer: { fill: '#dda0dd', border: '#b370b3' },
   sio2:    { fill: '#7fb3d8', border: '#5a9bc5' },
+  cf_red:  { fill: '#e74c3c', border: '#c0392b' },
   cf_green:{ fill: '#27ae60', border: '#1e8449' },
+  cf_blue: { fill: '#3498db', border: '#2980b9' },
   hfo2:    { fill: '#6c71c4', border: '#585cb0' },
   si3n4:   { fill: '#2aa198', border: '#1e7b73' },
   silicon: { fill: '#5d6d7e', border: '#4a5a6a' },
 }
 
 const totalStackThickness = computed(() => {
-  const stack = buildStack('cf_green')
+  const stack = buildStack(cfMatKey.value)
   return stack.reduce((sum, l) => sum + l.thickness, 0)
 })
 
 const stackVis = computed((): StackLayerVis[] => {
-  const stack = buildStack('cf_green')
+  const stack = buildStack(cfMatKey.value)
   const totalUm = totalStackThickness.value
   if (totalUm <= 0) return []
   const availH = stackH - 60
@@ -474,9 +487,16 @@ const stackVis = computed((): StackLayerVis[] => {
   const scale = bigSum > 0 ? Math.max(0, 1 - smallSum / bigSum) : 1
   const heights = rawH.map(h => h < minPx ? minPx : h * scale)
 
+  const cfDisplayNames: Record<string, string[]> = {
+    red: ['Red', '빨강'],
+    green: ['Green', '초록'],
+    blue: ['Blue', '파랑'],
+  }
+  const cfDisplay = cfDisplayNames[cfChannel.value] || ['Green', '초록']
+
   const nameMap: Record<string, string[]> = {
     polymer: ['Microlens (Polymer)', '마이크로렌즈 (Polymer)'],
-    cf_green: ['Color Filter (Green)', '컬러 필터 (Green)'],
+    [cfMatKey.value]: [`Color Filter (${cfDisplay[0]})`, `컬러 필터 (${cfDisplay[1]})`],
     si3n4: ['Si\u2083N\u2084 (BARL)', 'Si\u2083N\u2084 (BARL)'],
     hfo2: ['HfO\u2082 (BARL)', 'HfO\u2082 (BARL)'],
     silicon: ['Silicon', '실리콘'],
@@ -531,9 +551,9 @@ const energyBars = computed((): EnergyBar[] => {
   const barH = Math.min(40, (ebPlotH - 20) / 3)
   const gap = (ebPlotH - barH * 3) / 2
   const channels: { name: string; color: string; wl: number; cfMat: string }[] = [
-    { name: 'Red',   color: '#e74c3c', wl: 0.62, cfMat: 'cf_red' },
-    { name: 'Green', color: '#27ae60', wl: 0.53, cfMat: 'cf_green' },
-    { name: 'Blue',  color: '#3498db', wl: 0.45, cfMat: 'cf_blue' },
+    { name: t('Red', '빨강'),   color: '#e74c3c', wl: 0.62, cfMat: 'cf_red' },
+    { name: t('Green', '초록'), color: '#27ae60', wl: 0.53, cfMat: 'cf_green' },
+    { name: t('Blue', '파랑'),  color: '#3498db', wl: 0.45, cfMat: 'cf_blue' },
   ]
 
   return channels.map((ch, idx) => {

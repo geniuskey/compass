@@ -39,6 +39,14 @@
         </label>
         <input type="range" min="380" max="780" step="5" v-model.number="singleWl" class="ctrl-range" />
       </div>
+      <div class="slider-group" v-if="displayMode === 'single'">
+        <label>{{ t('Color Filter:', '컬러 필터:') }}</label>
+        <select v-model="singleCf" class="cf-select">
+          <option value="red">{{ t('Red', '빨강') }}</option>
+          <option value="green">{{ t('Green', '초록') }}</option>
+          <option value="blue">{{ t('Blue', '파랑') }}</option>
+        </select>
+      </div>
       <div class="slider-group">
         <label>
           {{ t('Silicon thickness:', '\uC2E4\uB9AC\uCF58 \uB450\uAED8:') }} <strong>{{ siThickness.toFixed(1) }} um</strong>
@@ -75,15 +83,15 @@
       </template>
       <template v-else>
         <div class="info-card" style="border-left: 3px solid #e74c3c;">
-          <span class="info-label">Red @ 0\u00B0</span>
+          <span class="info-label">{{ t('Red', '\uBE68\uAC15') }} @ 0\u00B0</span>
           <span class="info-value">{{ infoRgb.red0.toFixed(1) }}%</span>
         </div>
         <div class="info-card" style="border-left: 3px solid #27ae60;">
-          <span class="info-label">Green @ 0\u00B0</span>
+          <span class="info-label">{{ t('Green', '\uCD08\uB85D') }} @ 0\u00B0</span>
           <span class="info-value">{{ infoRgb.green0.toFixed(1) }}%</span>
         </div>
         <div class="info-card" style="border-left: 3px solid #3498db;">
-          <span class="info-label">Blue @ 0\u00B0</span>
+          <span class="info-label">{{ t('Blue', '\uD30C\uB791') }} @ 0\u00B0</span>
           <span class="info-value">{{ infoRgb.blue0.toFixed(1) }}%</span>
         </div>
         <div class="info-card">
@@ -159,8 +167,8 @@
 
         <!-- Curves -->
         <template v-if="displayMode === 'single'">
-          <path :d="singleAreaPath" fill="#6c5ce7" opacity="0.08" />
-          <path :d="singleLinePath" fill="none" stroke="#6c5ce7" stroke-width="2.5" />
+          <path :d="singleAreaPath" :fill="singleColor" opacity="0.08" />
+          <path :d="singleLinePath" fill="none" :stroke="singleColor" stroke-width="2.5" />
         </template>
         <template v-else>
           <path :d="redAreaPath" fill="#e74c3c" opacity="0.06" />
@@ -183,7 +191,7 @@
             stroke-dasharray="4,3"
           />
           <template v-if="displayMode === 'single'">
-            <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeSingle)" r="4" fill="#6c5ce7" stroke="#fff" stroke-width="1" />
+            <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeSingle)" r="4" :fill="singleColor" stroke="#fff" stroke-width="1" />
           </template>
           <template v-else>
             <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeRgb.red)" r="4" fill="#e74c3c" stroke="#fff" stroke-width="1" />
@@ -206,7 +214,7 @@
             {{ hoverAngle }}\u00B0
           </text>
           <template v-if="displayMode === 'single'">
-            <text :x="ttX + 6" :y="pad.top + 32" class="tooltip-text" fill="#6c5ce7">
+            <text :x="ttX + 6" :y="pad.top + 32" class="tooltip-text" :fill="singleColor">
               QE: {{ hoverQeSingle.toFixed(1) }}%
             </text>
           </template>
@@ -225,16 +233,16 @@
 
         <!-- Legend -->
         <template v-if="displayMode === 'single'">
-          <line :x1="pad.left + plotW - 80" :y1="pad.top + 14" :x2="pad.left + plotW - 62" :y2="pad.top + 14" stroke="#6c5ce7" stroke-width="2" />
+          <line :x1="pad.left + plotW - 80" :y1="pad.top + 14" :x2="pad.left + plotW - 62" :y2="pad.top + 14" :stroke="singleColor" stroke-width="2" />
           <text :x="pad.left + plotW - 58" :y="pad.top + 18" class="legend-label">{{ singleWl }} nm</text>
         </template>
         <template v-else>
           <line :x1="pad.left + plotW - 66" :y1="pad.top + 12" :x2="pad.left + plotW - 48" :y2="pad.top + 12" stroke="#e74c3c" stroke-width="2" />
-          <text :x="pad.left + plotW - 44" :y="pad.top + 16" class="legend-label">Red</text>
+          <text :x="pad.left + plotW - 44" :y="pad.top + 16" class="legend-label">{{ t('Red', '빨강') }}</text>
           <line :x1="pad.left + plotW - 66" :y1="pad.top + 26" :x2="pad.left + plotW - 48" :y2="pad.top + 26" stroke="#27ae60" stroke-width="2" />
-          <text :x="pad.left + plotW - 44" :y="pad.top + 30" class="legend-label">Green</text>
+          <text :x="pad.left + plotW - 44" :y="pad.top + 30" class="legend-label">{{ t('Green', '초록') }}</text>
           <line :x1="pad.left + plotW - 66" :y1="pad.top + 40" :x2="pad.left + plotW - 48" :y2="pad.top + 40" stroke="#3498db" stroke-width="2" />
-          <text :x="pad.left + plotW - 44" :y="pad.top + 44" class="legend-label">Blue</text>
+          <text :x="pad.left + plotW - 44" :y="pad.top + 44" class="legend-label">{{ t('Blue', '파랑') }}</text>
         </template>
       </svg>
     </div>
@@ -253,9 +261,13 @@ const { t } = useLocale()
 // --- Controls ---
 const displayMode = ref<'single' | 'rgb'>('single')
 const singleWl = ref(550)
+const singleCf = ref<'red' | 'green' | 'blue'>('green')
 const polarization = ref<'s' | 'p' | 'avg'>('avg')
 const siThickness = ref(3.0)
 const maxAngle = ref(60)
+
+const cfColorMap: Record<string, string> = { red: '#e74c3c', green: '#27ae60', blue: '#3498db' }
+const singleColor = computed(() => cfColorMap[singleCf.value])
 
 // --- SVG Layout ---
 const svgW = 600
@@ -312,7 +324,7 @@ function computeAngularQe(cfColor: 'red' | 'green' | 'blue', wlNm: number): Angl
 // Typical wavelengths for R/G/B channels
 const rgbWavelengths = { red: 620, green: 530, blue: 450 }
 
-const singleData = computed(() => computeAngularQe('green', singleWl.value))
+const singleData = computed(() => computeAngularQe(singleCf.value, singleWl.value))
 
 const rgbData = computed(() => ({
   red: computeAngularQe('red', rgbWavelengths.red),
@@ -521,6 +533,16 @@ function onMouseMove(event: MouseEvent) {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.cf-select {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  font-size: 0.85em;
+  margin-top: 4px;
 }
 .info-row {
   display: flex;

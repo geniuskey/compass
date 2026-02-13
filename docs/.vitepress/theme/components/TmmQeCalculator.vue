@@ -240,11 +240,11 @@
         <!-- Legend -->
         <template v-if="viewMode === 'qe'">
           <line :x1="pad.left + plotW - 90" :y1="pad.top + 12" :x2="pad.left + plotW - 72" :y2="pad.top + 12" stroke="#3498db" stroke-width="2" />
-          <text :x="pad.left + plotW - 68" :y="pad.top + 16" class="legend-label">Blue</text>
+          <text :x="pad.left + plotW - 68" :y="pad.top + 16" class="legend-label">{{ t('Blue', '파랑') }}</text>
           <line :x1="pad.left + plotW - 90" :y1="pad.top + 26" :x2="pad.left + plotW - 72" :y2="pad.top + 26" stroke="#27ae60" stroke-width="2" />
-          <text :x="pad.left + plotW - 68" :y="pad.top + 30" class="legend-label">Green</text>
+          <text :x="pad.left + plotW - 68" :y="pad.top + 30" class="legend-label">{{ t('Green', '초록') }}</text>
           <line :x1="pad.left + plotW - 90" :y1="pad.top + 40" :x2="pad.left + plotW - 72" :y2="pad.top + 40" stroke="#e74c3c" stroke-width="2" />
-          <text :x="pad.left + plotW - 68" :y="pad.top + 44" class="legend-label">Red</text>
+          <text :x="pad.left + plotW - 68" :y="pad.top + 44" class="legend-label">{{ t('Red', '빨강') }}</text>
         </template>
         <template v-if="viewMode === 'rta'">
           <line :x1="pad.left + plotW - 80" :y1="pad.top + 12" :x2="pad.left + plotW - 62" :y2="pad.top + 12" stroke="#3498db" stroke-width="2" />
@@ -278,11 +278,11 @@ const polarization = ref<'s' | 'p' | 'avg'>('avg')
 const viewMode = ref<'qe' | 'rta'>('qe')
 const rtaCfColor = ref<'red' | 'green' | 'blue'>('green')
 
-const cfOptions = [
-  { value: 'red' as const, label: 'Red', color: '#e74c3c' },
-  { value: 'green' as const, label: 'Green', color: '#27ae60' },
-  { value: 'blue' as const, label: 'Blue', color: '#3498db' },
-]
+const cfOptions = computed(() => [
+  { value: 'red' as const, label: t('Red', '빨강'), color: '#e74c3c' },
+  { value: 'green' as const, label: t('Green', '초록'), color: '#27ae60' },
+  { value: 'blue' as const, label: t('Blue', '파랑'), color: '#3498db' },
+])
 
 // Sync preset -> silicon thickness
 watch(preset, (v) => {
