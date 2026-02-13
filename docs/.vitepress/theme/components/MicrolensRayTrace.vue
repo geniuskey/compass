@@ -38,6 +38,21 @@
       </div>
       <div class="slider-group">
         <label>
+          {{ t('Planarization', '평탄화층') }}: <strong>{{ planThickness.toFixed(2) }} um</strong>
+        </label>
+        <input type="range" min="0.05" max="0.8" step="0.01" v-model.number="planThickness" class="ctrl-range" />
+      </div>
+      <div class="slider-group">
+        <label>
+          {{ t('Color filter', '컬러 필터') }}: <strong>{{ cfThickness.toFixed(2) }} um</strong>
+        </label>
+        <input type="range" min="0.1" max="1.5" step="0.01" v-model.number="cfThickness" class="ctrl-range" />
+      </div>
+    </div>
+
+    <div class="controls-row">
+      <div class="slider-group">
+        <label>
           {{ t('CRA angle', 'CRA 각도') }}: <strong>{{ cra }}&deg;</strong>
         </label>
         <input type="range" min="0" max="30" step="1" v-model.number="cra" class="ctrl-range" />
@@ -243,13 +258,13 @@ const numRays = ref(15)
 // Layer thicknesses (um)
 const siThickness = 3.0
 const barlThickness = 0.15
-const cfThickness = 0.8
-const planThickness = 0.3
+const cfThickness = ref(0.8)
+const planThickness = ref(0.3)
 
-const planTop = siThickness + barlThickness + cfThickness + planThickness
+const planTop = computed(() => siThickness + barlThickness + cfThickness.value + planThickness.value)
 
 // Total height includes lens and some air above
-const totalHeight = computed(() => planTop + lensHeight.value + 1.5)
+const totalHeight = computed(() => planTop.value + lensHeight.value + 1.5)
 
 // SVG dimensions
 const svgW = 560
@@ -294,7 +309,7 @@ const lensDomes = computed(() => {
   const h = lensHeight.value
   const R = lensRadius.value
   const n = shapeN.value
-  const lensBase = planTop
+  const lensBase = planTop.value
 
   const domes: string[] = []
   for (let lensIdx = 0; lensIdx < 2; lensIdx++) {
@@ -351,7 +366,7 @@ const tracedRays = computed((): TracedRay[] => {
   const h = lensHeight.value
   const R = lensRadius.value
   const n = shapeN.value
-  const lensBase = planTop
+  const lensBase = planTop.value
   const craRad = (cra.value * Math.PI) / 180
   const nLens = 1.56
   const nAir = 1.0
