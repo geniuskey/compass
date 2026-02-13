@@ -82,6 +82,32 @@ export const MATERIALS: Record<string, MaterialData> = {
   si3n4: { name:'Si₃N₄', type:'sellmeier',
     sellmeierB:[2.8939], sellmeierC:[0.13967] },
   hfo2: { name:'HfO₂', type:'cauchy', cauchyA:1.88, cauchyB:0.0236 },
+  tio2: { name:'TiO₂', type:'cauchy', cauchyA:2.2, cauchyB:0.06 },
+  al2o3: { name:'Al₂O₃', type:'sellmeier',
+    sellmeierB:[1.4313493,0.6505455,5.3414021],
+    sellmeierC:[0.0726631,0.1193242,18.028251] },
+  mgf2: { name:'MgF₂', type:'sellmeier',
+    sellmeierB:[0.48755108,0.39875031,2.3120353],
+    sellmeierC:[0.04338408,0.09461442,23.793604] },
+  ta2o5: { name:'Ta₂O₅', type:'cauchy', cauchyA:2.06, cauchyB:0.045 },
+  zro2: { name:'ZrO₂', type:'cauchy', cauchyA:2.12, cauchyB:0.042 },
+  nb2o5: { name:'Nb₂O₅', type:'cauchy', cauchyA:2.23, cauchyB:0.055 },
+  zns: { name:'ZnS', type:'cauchy', cauchyA:2.29, cauchyB:0.048 },
+  znse: { name:'ZnSe', type:'cauchy', cauchyA:2.50, cauchyB:0.07 },
+  caf2: { name:'CaF₂', type:'sellmeier',
+    sellmeierB:[0.5675888,0.4710914,3.8484723],
+    sellmeierC:[0.050263605,0.1003909,34.649040] },
+  ito: { name:'ITO', type:'tabulated', table:[
+    [.38,2.05,.028],[.40,2.02,.024],[.45,1.96,.016],[.50,1.92,.010],
+    [.55,1.89,.007],[.60,1.87,.005],[.65,1.86,.004],[.70,1.85,.003],[.78,1.84,.002],
+  ]},
+  aln: { name:'AlN', type:'cauchy', cauchyA:2.02, cauchyB:0.030 },
+  sic: { name:'SiC', type:'cauchy', cauchyA:2.55, cauchyB:0.05 },
+  ge: { name:'Ge', type:'tabulated', table:[
+    [.38,4.70,2.40],[.40,4.80,2.24],[.45,5.09,1.86],[.50,4.87,1.44],
+    [.55,4.65,1.00],[.60,4.50,.711],[.65,4.39,.518],[.70,4.31,.385],
+    [.78,4.21,.245],[.85,4.15,.171],[.90,4.11,.130],[1.0,4.05,.070],
+  ]},
   silicon: { name:'Silicon', type:'tabulated', table:[
     [.35,5.565,3.004],[.36,5.827,2.989],[.37,6.044,2.823],[.38,5.976,2.459],
     [.39,5.587,2.025],[.40,5.381,.340],[.41,5.253,.296],[.42,5.103,.267],
@@ -122,6 +148,20 @@ export const MATERIALS: Record<string, MaterialData> = {
 }
 
 export const MATERIAL_KEYS = Object.keys(MATERIALS)
+
+/** Coating material keys suitable for thin film layer design (excludes air, substrates, color filters) */
+export const COATING_MATERIALS = [
+  'sio2','si3n4','hfo2','tio2','al2o3','mgf2','ta2o5','zro2',
+  'nb2o5','zns','znse','caf2','ito','aln','sic','ge','polymer','tungsten',
+] as const
+
+/** Substrate material keys suitable as incident/exit media */
+export const SUBSTRATE_MATERIALS = ['air','sio2','silicon','ge','polymer','glass'] as const
+
+// Add glass as a simple constant material
+MATERIALS['glass'] = { name:'Glass (BK7)', type:'sellmeier',
+  sellmeierB:[1.03961212,0.231792344,1.01046945],
+  sellmeierC:[0.00600069867,0.0200179144,103.560653] }
 
 // TMM engine
 export interface TmmLayer { material: string; thickness: number }

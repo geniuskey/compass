@@ -1,24 +1,31 @@
 ---
-title: BARL Optimizer
+title: Thin Film Stack Designer
 ---
 
-# BARL Optimizer
+# Thin Film Stack Designer
 
-The Bottom Anti-Reflection Layer (BARL) is a critical multilayer coating between the color filter and silicon. Its purpose is to minimize reflection at the silicon interface, maximizing the light that reaches the photodiode.
+Design arbitrary multilayer thin film coatings with full control over layer count, order, materials, and thickness. Visualize both reflectance and transmittance spectra in real time.
 
 <BarlOptimizer />
 
-## Design Principles
+## Supported Materials (20+)
 
-A well-designed BARL uses quarter-wave interference to cancel reflections. The default BSI pixel uses a 4-layer stack:
+| Category | Materials |
+|----------|-----------|
+| Low-n dielectrics | SiO₂, MgF₂, CaF₂, Al₂O₃ |
+| High-n dielectrics | Si₃N₄, HfO₂, TiO₂, Ta₂O₅, ZrO₂, Nb₂O₅, AlN |
+| Semiconductors | Silicon, Ge, SiC, ZnS, ZnSe |
+| Conductors / TCO | Tungsten, ITO |
+| Polymers / Glass | Polymer (n=1.56), BK7 Glass |
 
-| Layer | Material | Default | Role |
-|-------|----------|---------|------|
-| 1 | SiO₂ | 10 nm | Low-n spacer |
-| 2 | HfO₂ | 25 nm | High-n matching |
-| 3 | SiO₂ | 15 nm | Phase tuning |
-| 4 | Si₃N₄ | 30 nm | Index gradient to CF |
+## Built-in Presets
+
+- **BARL 4-layer**: Default BSI pixel anti-reflection stack (SiO₂/HfO₂/SiO₂/Si₃N₄)
+- **2-layer AR**: Simple MgF₂/TiO₂ anti-reflection coating
+- **Broadband AR**: 4-layer design for wide spectral coverage
+- **HR Blue mirror**: 6-layer high-reflectance stack for blue wavelengths
+- **NIR-cut filter**: 5-layer near-infrared rejection filter on glass
 
 ::: tip
-Use the "Auto Optimize" button to find the thickness combination that minimizes average reflectance in your target wavelength band.
+Use the "Auto Optimize" button to find thickness combinations that minimize average reflectance in your target wavelength band. You can freely add, remove, and reorder layers before optimizing.
 :::

@@ -204,7 +204,7 @@ const simulatorSidebar = [
   { text: 'Simulator', items: [
     { text: 'Overview', link: '/simulator/' },
     { text: 'TMM QE Calculator', link: '/simulator/tmm-qe' },
-    { text: 'BARL Optimizer', link: '/simulator/barl-optimizer' },
+    { text: 'Thin Film Stack Designer', link: '/simulator/barl-optimizer' },
     { text: 'Energy Budget', link: '/simulator/energy-budget' },
     { text: 'Angular Response', link: '/simulator/angular-response' },
     { text: 'SNR Calculator', link: '/simulator/snr-calculator' },
@@ -217,7 +217,7 @@ const simulatorSidebarKo = [
   { text: '시뮬레이터', items: [
     { text: '개요', link: '/ko/simulator/' },
     { text: 'TMM QE 계산기', link: '/ko/simulator/tmm-qe' },
-    { text: 'BARL 최적화', link: '/ko/simulator/barl-optimizer' },
+    { text: '박막 스택 설계기', link: '/ko/simulator/barl-optimizer' },
     { text: '에너지 버짓', link: '/ko/simulator/energy-budget' },
     { text: '각도 응답', link: '/ko/simulator/angular-response' },
     { text: 'SNR 계산기', link: '/ko/simulator/snr-calculator' },
