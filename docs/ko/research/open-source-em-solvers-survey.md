@@ -8,21 +8,21 @@
 
 ### 1.1 COMPASS에 이미 통합된 솔버
 
-| 솔버 | 언어 | GPU | AD | 라이선스 | ⭐ | 상태 | 비고 |
-|------|------|-----|-----|---------|-----|------|------|
-| **torcwa** | Python/PyTorch | CUDA | ✅ PyTorch | LGPL | ~171 | ⚠️ 저활성 (2023~) | S-matrix, 메타서피스 역설계에 적합. 개발 정체 |
-| **grcwa** | Python/autograd | ❌ | ✅ autograd | GPL | ~94 | ❌ 중단 (2020~) | CPU 전용. 토폴로지 최적화. 사실상 방치 |
-| **meent** | Python (NumPy/JAX/PyTorch) | JAX/PyTorch | ✅ JAX/PyTorch | **MIT** | ~112 | ✅ 활발 | 3개 백엔드 지원, ML 통합 최적. 한국 기업(KC-ML2) 개발 |
+| 솔버 | 언어 | GPU / AD | 라이선스 | ⭐ / 상태 | 비고 |
+|------|------|----------|---------|----------|------|
+| **torcwa** | Python/PyTorch | CUDA / ✅ PyTorch | LGPL | ~171 ⚠️ 저활성 | S-matrix, 메타서피스 역설계에 적합. 개발 정체 |
+| **grcwa** | Python/autograd | ❌ / ✅ autograd | GPL | ~94 ❌ 중단 | CPU 전용. 토폴로지 최적화. 사실상 방치 |
+| **meent** | Python (NumPy/JAX/PyTorch) | JAX·PyTorch / ✅ | **MIT** | ~112 ✅ 활발 | 3개 백엔드 지원, ML 통합 최적. 한국 기업(KC-ML2) 개발 |
 
 **평가:** meent가 라이선스(MIT), 유지보수, 유연성 면에서 가장 우수. grcwa는 장기적으로 통합 유지 재고 필요.
 
 ### 1.2 통합 후보 (높은 우선순위)
 
-| 솔버 | 언어 | GPU | AD | 라이선스 | ⭐ | 상태 | 핵심 강점 |
-|------|------|-----|-----|---------|-----|------|----------|
-| **fmmax** | Python/JAX | JAX | ✅ | **MIT** | ~137 | ✅ 활발 (Meta) | **최고 수준 벡터 FMM** (Li 역규칙 확장), Brillouin zone 적분, 배칭 지원. AR/VR 광학 |
-| **torchrdit** | Python/PyTorch | CUDA | ✅ | GPL-3.0 | ~11 | ✅ 활발 | **고유값분해 불필요** (R-DIT), 기존 RCWA 대비 16.2× 속도향상, GDS import/export |
-| **S4** (phoebe-p fork) | C++/Lua/Python | ❌ | ❌ | GPL-2.0 | ~166 | ⚠️ Fork 활발 | **RCWA 레퍼런스 구현**, Li 역규칙, Solcore/RayFlare 통합. 25년 역사 |
+| 솔버 | 언어 | GPU / AD | 라이선스 | ⭐ / 상태 | 핵심 강점 |
+|------|------|----------|---------|----------|----------|
+| **fmmax** | Python/JAX | JAX / ✅ | **MIT** | ~137 ✅ 활발 | **최고 수준 벡터 FMM** (Li 역규칙 확장), Brillouin zone 적분, 배칭 지원. AR/VR 광학 |
+| **torchrdit** | Python/PyTorch | CUDA / ✅ | GPL-3.0 | ~11 ✅ 활발 | **고유값분해 불필요** (R-DIT), 기존 RCWA 대비 16.2× 속도향상, GDS import/export |
+| **S4** (phoebe-p fork) | C++/Lua/Python | ❌ / ❌ | GPL-2.0 | ~166 ⚠️ Fork | **RCWA 레퍼런스 구현**, Li 역규칙, Solcore/RayFlare 통합. 25년 역사 |
 
 **fmmax 상세:**
 - Meta Reality Labs에서 AR/VR 회절광학 설계용으로 개발
@@ -57,21 +57,21 @@
 
 ### 2.1 COMPASS에 이미 통합된 솔버
 
-| 솔버 | 언어 | GPU | AD | 라이선스 | ⭐ | 상태 | 비고 |
-|------|------|-----|-----|---------|-----|------|------|
-| **Meep** | C++/Python | ❌ | ✅ (adjoint) | GPL-2.0+ | ~1,500 | ✅ 활발 | 가장 성숙한 오픈소스 FDTD. MPI 병렬화. GPU 미지원이 단점 |
-| **flaport/fdtd** | Python/PyTorch | CUDA | ✅ PyTorch | **MIT** | ~650 | ⚠️ 저활성 | 교육/프로토타이핑용. 단순한 API. 고급 재료모델 부재 |
-| **fdtdz** | C++/CUDA/JAX | CUDA | ✅ JAX | **MIT** | ~146 | ✅ 활발 (Google) | Meep 대비 ~100× 속도. 2.5D 한정. 단순 유전체만 지원 |
+| 솔버 | 언어 | GPU / AD | 라이선스 | ⭐ / 상태 | 비고 |
+|------|------|----------|---------|----------|------|
+| **Meep** | C++/Python | ❌ / ✅ adjoint | GPL-2.0+ | ~1,500 ✅ 활발 | 가장 성숙한 오픈소스 FDTD. MPI 병렬화. GPU 미지원이 단점 |
+| **flaport/fdtd** | Python/PyTorch | CUDA / ✅ PyTorch | **MIT** | ~650 ⚠️ 저활성 | 교육/프로토타이핑용. 단순한 API. 고급 재료모델 부재 |
+| **fdtdz** | C++/CUDA/JAX | CUDA / ✅ JAX | **MIT** | ~146 ✅ 활발 | Meep 대비 ~100× 속도. 2.5D 한정. 단순 유전체만 지원 |
 
 **평가:** Meep = 범용 레퍼런스, fdtdz = 속도 특화(2.5D), flaport = 교육용. 범용 3D GPU FDTD가 부족.
 
 ### 2.2 통합 후보 (높은 우선순위)
 
-| 솔버 | 언어 | GPU | AD | 라이선스 | ⭐ | 상태 | 핵심 강점 |
-|------|------|-----|-----|---------|-----|------|----------|
-| **FDTDX** | Python/JAX | JAX (멀티GPU) | ✅ | **MIT** | ~203 | ✅ 매우 활발 | **대규모 3D 역설계 최적**. 멀티GPU. Maxwell 시간역행 활용 메모리 효율적 그래디언트. JOSS 출판 |
-| **Khronos.jl** | Julia | CUDA/ROCm/Metal/OneAPI | ✅ | **MIT** | ~66 | ✅ 활발 (Meta) | **멀티벤더 GPU** (NVIDIA+AMD+Apple+Intel). 순수 Julia. 미분가능 |
-| **ceviche** | Python/autograd | ❌ | ✅ | **MIT** | ~390 | ⚠️ 저활성 | 미분가능 EM의 선구자. 2D FDFD+FDTD. Stanford Fan Group |
+| 솔버 | 언어 | GPU / AD | 라이선스 | ⭐ / 상태 | 핵심 강점 |
+|------|------|----------|---------|----------|----------|
+| **FDTDX** | Python/JAX | JAX 멀티GPU / ✅ | **MIT** | ~203 ✅ 매우 활발 | **대규모 3D 역설계 최적**. 멀티GPU. Maxwell 시간역행 활용 메모리 효율적 그래디언트. JOSS 출판 |
+| **Khronos.jl** | Julia | CUDA/ROCm/Metal/OneAPI / ✅ | **MIT** | ~66 ✅ 활발 | **멀티벤더 GPU** (NVIDIA+AMD+Apple+Intel). 순수 Julia. 미분가능 |
+| **ceviche** | Python/autograd | ❌ / ✅ | **MIT** | ~390 ⚠️ 저활성 | 미분가능 EM의 선구자. 2D FDFD+FDTD. Stanford Fan Group |
 
 **FDTDX 상세:**
 - JAX 기반 완전 미분가능 3D FDTD
@@ -182,48 +182,48 @@
 
 ### RCWA (20개)
 
-| # | 솔버 | 언어 | GPU | AD | 라이선스 | ⭐ | 상태 |
-|---|------|------|-----|-----|---------|-----|------|
-| 1 | **meent** | Py (NumPy/JAX/PyTorch) | ✅ | ✅ | MIT | 112 | ✅ 활발 |
-| 2 | **fmmax** | Py/JAX | ✅ | ✅ | MIT | 137 | ✅ 활발 |
-| 3 | **torcwa** | Py/PyTorch | ✅ | ✅ | LGPL | 171 | ⚠️ |
-| 4 | **S4** | C++/Lua/Py | ❌ | ❌ | GPL-2.0 | 166 | ⚠️ Fork |
-| 5 | **EMpy** | Py | ❌ | ❌ | MIT | 219 | ✅ |
-| 6 | **rcwa (edmundsj)** | Py | ❌ | ❌ | MIT | 134 | ⚠️ |
-| 7 | **grcwa** | Py/autograd | ❌ | ✅ | GPL | 94 | ❌ 중단 |
-| 8 | **inkstone** | Py/NumPy | ❌ | ❌ | AGPL | 63 | ⚠️ |
-| 9 | **rcwa_tf** | Py/TF | ✅ | ✅ | BSD-3 | 51 | ⚠️ |
-| 10 | **RCWA.jl** | Julia | ✅ | ❌ | GPL-3.0 | 46 | ✅ |
-| 11 | **rcwa4d** | Py | ❌ | ❌ | MIT | 40 | ⚠️ |
-| 12 | **MESH** | C++ | ❌ | ❌ | GPL-3.0 | 33 | ⚠️ |
-| 13 | **EMUstack** | Fortran/Py | ❌ | ❌ | GPL-3.0 | 28 | ⚠️ |
-| 14 | **nannos** | Py | ✅ | ✅ | GPL-3.0 | 20 | ⚠️ |
-| 15 | **torchrdit** | Py/PyTorch | ✅ | ✅ | GPL-3.0 | 11 | ✅ |
-| 16 | **RETICOLO** | MATLAB | ❌ | ❌ | Freeware | N/A | ✅ |
-| 17 | **PPML** | MATLAB | ❌ | ❌ | Free | N/A | ⚠️ |
-| 18-20 | 교육용 3종 | Py | ❌ | ❌ | Various | <10 | ⚠️ |
+| # | 솔버 | 언어 | GPU / AD | 라이선스 | ⭐ / 상태 |
+|---|------|------|----------|---------|----------|
+| 1 | **meent** | Py (NumPy/JAX/PyTorch) | ✅ / ✅ | MIT | 112 ✅ 활발 |
+| 2 | **fmmax** | Py/JAX | ✅ / ✅ | MIT | 137 ✅ 활발 |
+| 3 | **torcwa** | Py/PyTorch | ✅ / ✅ | LGPL | 171 ⚠️ |
+| 4 | **S4** | C++/Lua/Py | ❌ / ❌ | GPL-2.0 | 166 ⚠️ Fork |
+| 5 | **EMpy** | Py | ❌ / ❌ | MIT | 219 ✅ |
+| 6 | **rcwa (edmundsj)** | Py | ❌ / ❌ | MIT | 134 ⚠️ |
+| 7 | **grcwa** | Py/autograd | ❌ / ✅ | GPL | 94 ❌ 중단 |
+| 8 | **inkstone** | Py/NumPy | ❌ / ❌ | AGPL | 63 ⚠️ |
+| 9 | **rcwa_tf** | Py/TF | ✅ / ✅ | BSD-3 | 51 ⚠️ |
+| 10 | **RCWA.jl** | Julia | ✅ / ❌ | GPL-3.0 | 46 ✅ |
+| 11 | **rcwa4d** | Py | ❌ / ❌ | MIT | 40 ⚠️ |
+| 12 | **MESH** | C++ | ❌ / ❌ | GPL-3.0 | 33 ⚠️ |
+| 13 | **EMUstack** | Fortran/Py | ❌ / ❌ | GPL-3.0 | 28 ⚠️ |
+| 14 | **nannos** | Py | ✅ / ✅ | GPL-3.0 | 20 ⚠️ |
+| 15 | **torchrdit** | Py/PyTorch | ✅ / ✅ | GPL-3.0 | 11 ✅ |
+| 16 | **RETICOLO** | MATLAB | ❌ / ❌ | Freeware | N/A ✅ |
+| 17 | **PPML** | MATLAB | ❌ / ❌ | Free | N/A ⚠️ |
+| 18-20 | 교육용 3종 | Py | ❌ / ❌ | Various | <10 ⚠️ |
 
 ### FDTD (17개)
 
-| # | 솔버 | 언어 | GPU | AD | 라이선스 | ⭐ | 상태 |
-|---|------|------|-----|-----|---------|-----|------|
-| 1 | **Meep** | C++/Py | ❌ | ✅ adj | GPL-2.0+ | 1,500 | ✅ 활발 |
-| 2 | **gprMax** | Py/Cython | CUDA | ❌ | GPL-3.0 | 788 | ✅ |
-| 3 | **flaport/fdtd** | Py/PyTorch | ✅ | ✅ | MIT | 650 | ⚠️ |
-| 4 | **openEMS** | C++ | ❌ | ❌ | GPL-3.0 | 628 | ✅ |
-| 5 | **ceviche** | Py | ❌ | ✅ | MIT | 390 | ⚠️ |
-| 6 | **FDTDX** | Py/JAX | ✅ 멀티 | ✅ | MIT | 203 | ✅ 매우 활발 |
-| 7 | **Tidy3D** | Py | ☁️ 클라우드 | ✅ | LGPL/상용 | 164 | ✅ (비오픈소스) |
-| 8 | **fdtd3d** | C++ | CUDA/MPI | ❌ | GPL-3.0 | 150 | ✅ |
-| 9 | **fdtdz** | C++/CUDA/JAX | ✅ | ✅ | MIT | 146 | ✅ |
-| 10 | **EMOPT** | Py/C | ❌ | ✅ adj | BSD-3 | 110 | ⚠️ |
-| 11 | **PhotonTorch** | Py/PyTorch | ✅ | ✅ | MIT | 81 | ⚠️ (회로 시뮬) |
-| 12 | **Khronos.jl** | Julia | ✅ 멀티벤더 | ✅ | MIT | 66 | ✅ |
-| 13 | **Luminescent.jl** | Julia | ✅ | ✅ | MIT | 60 | ✅ |
-| 14 | **GSvit** | C/C++ | CUDA | ❌ | GPL-2.0 | N/A | ✅ |
-| 15 | **Angora** | C++ | ❌ | ❌ | GPL | Small | ⚠️ |
-| 16 | **MaxwellFDTD.jl** | Julia | ❌ | ❌ | N/A | Small | ⚠️ |
-| 17 | **REMS** | Rust | ❌ | ❌ | N/A | Tiny | ❌ (1D PoC) |
+| # | 솔버 | 언어 | GPU / AD | 라이선스 | ⭐ / 상태 |
+|---|------|------|----------|---------|----------|
+| 1 | **Meep** | C++/Py | ❌ / ✅ adj | GPL-2.0+ | 1,500 ✅ 활발 |
+| 2 | **gprMax** | Py/Cython | CUDA / ❌ | GPL-3.0 | 788 ✅ |
+| 3 | **flaport/fdtd** | Py/PyTorch | ✅ / ✅ | MIT | 650 ⚠️ |
+| 4 | **openEMS** | C++ | ❌ / ❌ | GPL-3.0 | 628 ✅ |
+| 5 | **ceviche** | Py | ❌ / ✅ | MIT | 390 ⚠️ |
+| 6 | **FDTDX** | Py/JAX | ✅ 멀티 / ✅ | MIT | 203 ✅ 매우 활발 |
+| 7 | **Tidy3D** | Py | ☁️ / ✅ | LGPL/상용 | 164 ✅ (비오픈소스) |
+| 8 | **fdtd3d** | C++ | CUDA·MPI / ❌ | GPL-3.0 | 150 ✅ |
+| 9 | **fdtdz** | C++/CUDA/JAX | ✅ / ✅ | MIT | 146 ✅ |
+| 10 | **EMOPT** | Py/C | ❌ / ✅ adj | BSD-3 | 110 ⚠️ |
+| 11 | **PhotonTorch** | Py/PyTorch | ✅ / ✅ | MIT | 81 ⚠️ (회로 시뮬) |
+| 12 | **Khronos.jl** | Julia | ✅ 멀티벤더 / ✅ | MIT | 66 ✅ |
+| 13 | **Luminescent.jl** | Julia | ✅ / ✅ | MIT | 60 ✅ |
+| 14 | **GSvit** | C/C++ | CUDA / ❌ | GPL-2.0 | N/A ✅ |
+| 15 | **Angora** | C++ | ❌ / ❌ | GPL | Small ⚠️ |
+| 16 | **MaxwellFDTD.jl** | Julia | ❌ / ❌ | N/A | Small ⚠️ |
+| 17 | **REMS** | Rust | ❌ / ❌ | N/A | Tiny ❌ (1D PoC) |
 
 ---
 
