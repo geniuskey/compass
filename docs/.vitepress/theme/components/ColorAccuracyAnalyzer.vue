@@ -32,6 +32,13 @@
           @click="chartType = 'sg'"
         >SG 140</button>
       </div>
+      <div class="chart-toggle">
+        <button
+          v-for="m in DE_METHODS" :key="m.key"
+          :class="['toggle-btn', { active: deMethod === m.key }]"
+          @click="deMethod = m.key"
+        >{{ m.label }}</button>
+      </div>
     </div>
 
     <!-- Summary bar -->
@@ -139,7 +146,7 @@
           </template>
 
           <!-- Axis title -->
-          <text :x="10" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 10, ${pad.top + plotH / 2})`">&Delta;E*ab</text>
+          <text :x="10" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 10, ${pad.top + plotH / 2})`">{{ deAxisLabel }}</text>
 
           <!-- Hover tooltip -->
           <template v-if="chartHover">
@@ -168,6 +175,14 @@ const { t } = useLocale()
 const siThickness = ref(3.0)
 const cfBandwidth = ref(100)
 const chartType = ref<'classic' | 'sg'>('classic')
+
+type DEMethod = 'cie76' | 'cie94' | 'ciede2000'
+const deMethod = ref<DEMethod>('ciede2000')
+const DE_METHODS = [
+  { key: 'cie76' as DEMethod, label: 'CIE76' },
+  { key: 'cie94' as DEMethod, label: 'CIE94' },
+  { key: 'ciede2000' as DEMethod, label: 'CIEDE2000' },
+]
 
 // ---- ColorChecker Classic 24 data (standard 24 patches, 7 wavelengths 400-700nm @ 50nm) ----
 const CLASSIC_PATCHES: { name: string; srgb: number[]; refl: number[] }[] = [
@@ -355,13 +370,112 @@ function xyzToLab(xyz: number[]): number[] {
   ]
 }
 
-function deltaE(lab1: number[], lab2: number[]): number {
+// ---- deltaE methods ----
+function deltaE76(lab1: number[], lab2: number[]): number {
   return Math.sqrt(
     (lab1[0] - lab2[0]) ** 2 +
     (lab1[1] - lab2[1]) ** 2 +
     (lab1[2] - lab2[2]) ** 2
   )
 }
+
+function deltaE94(lab1: number[], lab2: number[]): number {
+  const dL = lab1[0] - lab2[0]
+  const da = lab1[1] - lab2[1]
+  const db = lab1[2] - lab2[2]
+  const C1 = Math.sqrt(lab1[1] ** 2 + lab1[2] ** 2)
+  const C2 = Math.sqrt(lab2[1] ** 2 + lab2[2] ** 2)
+  const dC = C1 - C2
+  const dH2 = da ** 2 + db ** 2 - dC ** 2
+  const dH = dH2 > 0 ? Math.sqrt(dH2) : 0
+  // Graphic arts constants: kL=1, K1=0.045, K2=0.015
+  const SC = 1 + 0.045 * C1
+  const SH = 1 + 0.015 * C1
+  return Math.sqrt((dL / 1) ** 2 + (dC / SC) ** 2 + (dH / SH) ** 2)
+}
+
+function deltaE2000(lab1: number[], lab2: number[]): number {
+  const L1 = lab1[0], a1 = lab1[1], b1 = lab1[2]
+  const L2 = lab2[0], a2 = lab2[1], b2 = lab2[2]
+  const deg = Math.PI / 180, r360 = 360 * deg
+
+  const Cab1 = Math.sqrt(a1 ** 2 + b1 ** 2)
+  const Cab2 = Math.sqrt(a2 ** 2 + b2 ** 2)
+  const CabAvg = (Cab1 + Cab2) / 2
+  const CabAvg7 = CabAvg ** 7
+  const G = 0.5 * (1 - Math.sqrt(CabAvg7 / (CabAvg7 + 25 ** 7)))
+  const a1p = a1 * (1 + G)
+  const a2p = a2 * (1 + G)
+  const C1p = Math.sqrt(a1p ** 2 + b1 ** 2)
+  const C2p = Math.sqrt(a2p ** 2 + b2 ** 2)
+
+  let h1p = Math.atan2(b1, a1p)
+  if (h1p < 0) h1p += 2 * Math.PI
+  let h2p = Math.atan2(b2, a2p)
+  if (h2p < 0) h2p += 2 * Math.PI
+
+  const dLp = L2 - L1
+  const dCp = C2p - C1p
+
+  let dhp: number
+  if (C1p * C2p === 0) {
+    dhp = 0
+  } else if (Math.abs(h2p - h1p) <= Math.PI) {
+    dhp = h2p - h1p
+  } else if (h2p - h1p > Math.PI) {
+    dhp = h2p - h1p - 2 * Math.PI
+  } else {
+    dhp = h2p - h1p + 2 * Math.PI
+  }
+  const dHp = 2 * Math.sqrt(C1p * C2p) * Math.sin(dhp / 2)
+
+  const Lpm = (L1 + L2) / 2
+  const Cpm = (C1p + C2p) / 2
+  let hpm: number
+  if (C1p * C2p === 0) {
+    hpm = h1p + h2p
+  } else if (Math.abs(h1p - h2p) <= Math.PI) {
+    hpm = (h1p + h2p) / 2
+  } else if (h1p + h2p < 2 * Math.PI) {
+    hpm = (h1p + h2p + 2 * Math.PI) / 2
+  } else {
+    hpm = (h1p + h2p - 2 * Math.PI) / 2
+  }
+
+  const T = 1
+    - 0.17 * Math.cos(hpm - 30 * deg)
+    + 0.24 * Math.cos(2 * hpm)
+    + 0.32 * Math.cos(3 * hpm + 6 * deg)
+    - 0.20 * Math.cos(4 * hpm - 63 * deg)
+
+  const SL = 1 + 0.015 * (Lpm - 50) ** 2 / Math.sqrt(20 + (Lpm - 50) ** 2)
+  const SC = 1 + 0.045 * Cpm
+  const SH = 1 + 0.015 * Cpm * T
+  const Cpm7 = Cpm ** 7
+  const RC = 2 * Math.sqrt(Cpm7 / (Cpm7 + 25 ** 7))
+  const dTheta = 30 * deg * Math.exp(-(((hpm / deg - 275) / 25) ** 2))
+  const RT = -Math.sin(2 * dTheta) * RC
+
+  return Math.sqrt(
+    (dLp / SL) ** 2 + (dCp / SC) ** 2 + (dHp / SH) ** 2 + RT * (dCp / SC) * (dHp / SH)
+  )
+}
+
+function calcDeltaE(lab1: number[], lab2: number[]): number {
+  switch (deMethod.value) {
+    case 'cie94': return deltaE94(lab1, lab2)
+    case 'ciede2000': return deltaE2000(lab1, lab2)
+    default: return deltaE76(lab1, lab2)
+  }
+}
+
+const deAxisLabel = computed(() => {
+  switch (deMethod.value) {
+    case 'cie94': return '\u0394E*94'
+    case 'ciede2000': return '\u0394E00'
+    default: return '\u0394E*ab'
+  }
+})
 
 // ---- Lab (D50) → sRGB (D65) via Bradford chromatic adaptation ----
 const D50_WP = { Xn: 0.9642, Yn: 1.0, Zn: 0.8251 }
@@ -607,7 +721,7 @@ const patchResults = computed<PatchResult[]>(() => {
       name: patch.name,
       refSrgb: patch.srgb,
       corrSrgb,
-      deltaE: deltaE(refLab, corrLab),
+      deltaE: calcDeltaE(refLab, corrLab),
     }
   })
 })
