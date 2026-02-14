@@ -698,14 +698,15 @@ async function render3D() {
     colorbar: { title: 'Z (um)', thickness: 15, len: 0.7 },
   }
 
-  const maxZ = h.value * 2
+  const maxDim = Math.max(physW, physH)
   const layout = {
     margin: { l: 0, r: 0, t: 30, b: 0 },
     scene: {
       xaxis: { title: 'X (um)' },
       yaxis: { title: 'Y (um)' },
-      zaxis: { title: 'Z (um)', range: [0, maxZ] },
-      aspectmode: 'cube' as const,
+      zaxis: { title: 'Z (um)', range: [0, h.value * 1.5] },
+      aspectmode: 'manual' as const,
+      aspectratio: { x: physW / maxDim, y: physH / maxDim, z: (h.value * 1.5) / maxDim },
     },
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
