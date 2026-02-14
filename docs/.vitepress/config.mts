@@ -218,6 +218,7 @@ const simulatorSidebar = [
     { text: 'Color Accuracy (ΔE)', link: '/simulator/color-accuracy' },
     { text: 'Dark Current & Temp', link: '/simulator/dark-current' },
     { text: 'Diffraction PSF', link: '/simulator/diffraction-psf' },
+    { text: 'MLA Array Visualizer', link: '/simulator/mla-array' },
   ]}
 ]
 
@@ -239,6 +240,7 @@ const simulatorSidebarKo = [
     { text: '색 정확도 (ΔE)', link: '/ko/simulator/color-accuracy' },
     { text: '암전류 & 온도', link: '/ko/simulator/dark-current' },
     { text: '회절 PSF', link: '/ko/simulator/diffraction-psf' },
+    { text: 'MLA 어레이 시각화', link: '/ko/simulator/mla-array' },
   ]}
 ]
 

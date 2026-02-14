@@ -54,6 +54,7 @@ import MtfAnalyzer from './components/MtfAnalyzer.vue'
 import PixelScalingTrends from './components/PixelScalingTrends.vue'
 import ColorAccuracyAnalyzer from './components/ColorAccuracyAnalyzer.vue'
 import DarkCurrentSimulator from './components/DarkCurrentSimulator.vue'
+import MlaArrayVisualizer from './components/MlaArrayVisualizer.vue'
 
 function isLocaleSwitch(from: string, to: string): boolean {
   const stripKo = (p: string) => p.replace(/^\/ko\//, '/')
@@ -142,5 +143,6 @@ export default {
     app.component('PixelScalingTrends', PixelScalingTrends)
     app.component('ColorAccuracyAnalyzer', ColorAccuracyAnalyzer)
     app.component('DarkCurrentSimulator', DarkCurrentSimulator)
+    app.component('MlaArrayVisualizer', MlaArrayVisualizer)
   },
 }
