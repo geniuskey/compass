@@ -22,6 +22,16 @@
         </label>
         <input type="range" min="50" max="150" step="5" v-model.number="cfBandwidth" class="ctrl-range" />
       </div>
+      <div class="chart-toggle">
+        <button
+          :class="['toggle-btn', { active: chartType === 'classic' }]"
+          @click="chartType = 'classic'"
+        >Classic 24</button>
+        <button
+          :class="['toggle-btn', { active: chartType === 'sg' }]"
+          @click="chartType = 'sg'"
+        >SG 140</button>
+      </div>
     </div>
 
     <!-- Summary bar -->
@@ -42,18 +52,21 @@
 
     <!-- Patch grid -->
     <div class="patch-section">
-      <h5>{{ t('ColorChecker Patches', 'ColorChecker 패치') }}</h5>
-      <div class="patch-grid">
+      <h5>{{ t('ColorChecker Patches', 'ColorChecker 패치') }}
+        <span class="patch-count">({{ activePatches.length }})</span>
+      </h5>
+      <div :class="['patch-grid', chartType === 'sg' ? 'patch-grid-sg' : 'patch-grid-classic']">
         <div v-for="(patch, idx) in patchResults" :key="idx" class="patch-cell">
           <div class="patch-swatch">
             <div class="patch-ref" :style="{ background: rgbStr(patch.refSrgb) }"></div>
             <div class="patch-sensor" :style="{ background: rgbStr(patch.corrSrgb) }"></div>
           </div>
-          <div class="patch-name">{{ patch.name }}</div>
+          <div v-if="chartType === 'classic'" class="patch-name">{{ patch.name }}</div>
           <div
             class="patch-de"
+            :class="{ 'patch-de-sg': chartType === 'sg' }"
             :style="{ color: deColor(patch.deltaE) }"
-          >{{ patch.deltaE.toFixed(1) }}</div>
+          >{{ patch.deltaE.toFixed(chartType === 'sg' ? 0 : 1) }}</div>
         </div>
       </div>
     </div>
@@ -110,18 +123,20 @@
             :height="Math.max(0, pad.top + plotH - yScale(patch.deltaE))"
             :fill="deColor(patch.deltaE)"
             opacity="0.8"
-            rx="2"
+            rx="1"
           />
 
-          <!-- X axis labels (rotated) -->
-          <text
-            v-for="(patch, idx) in patchResults" :key="'xl'+idx"
-            :x="barX(idx) + barWidth / 2"
-            :y="pad.top + plotH + 10"
-            text-anchor="end"
-            class="tick-label"
-            :transform="`rotate(-45, ${barX(idx) + barWidth / 2}, ${pad.top + plotH + 10})`"
-          >{{ patch.name.substring(0, 8) }}</text>
+          <!-- X axis labels (Classic only) -->
+          <template v-if="chartType === 'classic'">
+            <text
+              v-for="(patch, idx) in patchResults" :key="'xl'+idx"
+              :x="barX(idx) + barWidth / 2"
+              :y="pad.top + plotH + 10"
+              text-anchor="end"
+              class="tick-label"
+              :transform="`rotate(-45, ${barX(idx) + barWidth / 2}, ${pad.top + plotH + 10})`"
+            >{{ patch.name.substring(0, 8) }}</text>
+          </template>
 
           <!-- Axis title -->
           <text :x="10" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 10, ${pad.top + plotH / 2})`">&Delta;E*ab</text>
@@ -152,30 +167,103 @@ const { t } = useLocale()
 // ---- Controls ----
 const siThickness = ref(3.0)
 const cfBandwidth = ref(100)
+const chartType = ref<'classic' | 'sg'>('classic')
 
-// ---- ColorChecker patch data (8 wavelength samples 400-700nm @ 50nm) ----
-const PATCHES = [
-  { name: 'Dark Skin', srgb: [115,82,68], refl: [0.05,0.06,0.07,0.10,0.13,0.14,0.15] },
-  { name: 'Blue Sky', srgb: [194,150,130], refl: [0.23,0.20,0.18,0.17,0.19,0.20,0.18] },
-  { name: 'Foliage', srgb: [87,108,67], refl: [0.04,0.05,0.09,0.13,0.10,0.07,0.06] },
-  { name: 'Blue Flower', srgb: [130,128,176], refl: [0.14,0.10,0.07,0.06,0.12,0.19,0.23] },
-  { name: 'Moderate Red', srgb: [157,122,98], refl: [0.06,0.06,0.06,0.10,0.22,0.24,0.16] },
-  { name: 'Purple', srgb: [122,91,165], refl: [0.12,0.07,0.04,0.04,0.06,0.16,0.24] },
-  { name: 'Orange Yellow', srgb: [222,118,32], refl: [0.03,0.04,0.05,0.28,0.50,0.40,0.15] },
-  { name: 'Purplish Blue', srgb: [72,91,165], refl: [0.15,0.15,0.08,0.04,0.03,0.05,0.16] },
-  { name: 'Cyan', srgb: [0,135,166], refl: [0.06,0.14,0.20,0.16,0.08,0.05,0.06] },
-  { name: 'Magenta', srgb: [200,82,97], refl: [0.08,0.05,0.04,0.06,0.15,0.25,0.20] },
-  { name: 'Yellow', srgb: [227,198,52], refl: [0.03,0.04,0.10,0.35,0.55,0.48,0.25] },
-  { name: 'Yellow Green', srgb: [162,163,55], refl: [0.03,0.05,0.14,0.30,0.25,0.15,0.08] },
-  { name: 'Orange', srgb: [232,153,44], refl: [0.04,0.04,0.06,0.18,0.45,0.48,0.22] },
-  { name: 'Green', srgb: [67,109,62], refl: [0.03,0.06,0.14,0.18,0.10,0.06,0.04] },
-  { name: 'Red', srgb: [174,48,39], refl: [0.04,0.04,0.04,0.05,0.20,0.35,0.22] },
-  { name: 'White', srgb: [243,243,242], refl: [0.85,0.86,0.87,0.88,0.88,0.87,0.86] },
-  { name: 'Neutral 6.5', srgb: [161,157,154], refl: [0.35,0.36,0.36,0.36,0.36,0.35,0.35] },
-  { name: 'Neutral 3.5', srgb: [52,52,52], refl: [0.03,0.03,0.03,0.03,0.03,0.03,0.03] },
+// ---- ColorChecker Classic 24 data (standard 24 patches, 7 wavelengths 400-700nm @ 50nm) ----
+const CLASSIC_PATCHES: { name: string; srgb: number[]; refl: number[] }[] = [
+  // Row 1: Dark Skin → Bluish Green
+  { name: 'Dark Skin',     srgb: [115,82,68],   refl: [0.055,0.058,0.069,0.099,0.132,0.143,0.146] },
+  { name: 'Light Skin',    srgb: [194,150,130],  refl: [0.092,0.107,0.152,0.191,0.260,0.286,0.275] },
+  { name: 'Blue Sky',      srgb: [98,122,157],   refl: [0.117,0.143,0.178,0.193,0.149,0.115,0.108] },
+  { name: 'Foliage',       srgb: [87,108,67],    refl: [0.042,0.051,0.085,0.131,0.099,0.068,0.060] },
+  { name: 'Blue Flower',   srgb: [133,128,177],  refl: [0.137,0.132,0.128,0.120,0.133,0.154,0.228] },
+  { name: 'Bluish Green',  srgb: [103,189,170],  refl: [0.131,0.226,0.318,0.341,0.301,0.232,0.218] },
+
+  // Row 2: Orange → Orange Yellow
+  { name: 'Orange',        srgb: [214,126,44],   refl: [0.050,0.054,0.063,0.170,0.395,0.413,0.266] },
+  { name: 'Purplish Blue', srgb: [80,91,166],    refl: [0.153,0.128,0.091,0.058,0.042,0.060,0.157] },
+  { name: 'Moderate Red',  srgb: [193,90,99],    refl: [0.065,0.053,0.058,0.078,0.200,0.305,0.231] },
+  { name: 'Purple',        srgb: [94,60,108],    refl: [0.065,0.052,0.040,0.038,0.043,0.065,0.100] },
+  { name: 'Yellow Green',  srgb: [157,188,64],   refl: [0.047,0.065,0.172,0.331,0.350,0.237,0.120] },
+  { name: 'Orange Yellow', srgb: [224,163,46],   refl: [0.050,0.058,0.093,0.284,0.481,0.465,0.287] },
+
+  // Row 3: Blue → Cyan
+  { name: 'Blue',          srgb: [56,61,150],    refl: [0.142,0.103,0.056,0.033,0.026,0.032,0.088] },
+  { name: 'Green',         srgb: [70,148,73],    refl: [0.035,0.060,0.140,0.175,0.099,0.058,0.044] },
+  { name: 'Red',           srgb: [175,54,60],    refl: [0.043,0.036,0.035,0.047,0.153,0.331,0.271] },
+  { name: 'Yellow',        srgb: [231,199,31],   refl: [0.042,0.054,0.124,0.397,0.559,0.504,0.316] },
+  { name: 'Magenta',       srgb: [187,86,149],   refl: [0.094,0.065,0.067,0.073,0.127,0.219,0.276] },
+  { name: 'Cyan',          srgb: [8,133,161],    refl: [0.073,0.139,0.210,0.219,0.137,0.083,0.076] },
+
+  // Row 4: White → Black (neutrals)
+  { name: 'White',         srgb: [243,243,242],  refl: [0.875,0.886,0.892,0.894,0.892,0.882,0.870] },
+  { name: 'Neutral 8',     srgb: [200,200,200],  refl: [0.570,0.578,0.584,0.586,0.585,0.578,0.572] },
+  { name: 'Neutral 6.5',   srgb: [160,160,160],  refl: [0.354,0.362,0.366,0.368,0.366,0.361,0.356] },
+  { name: 'Neutral 5',     srgb: [122,122,121],  refl: [0.195,0.200,0.204,0.206,0.205,0.201,0.197] },
+  { name: 'Neutral 3.5',   srgb: [85,85,85],     refl: [0.091,0.094,0.096,0.097,0.096,0.094,0.092] },
+  { name: 'Black',         srgb: [52,52,52],      refl: [0.032,0.033,0.034,0.034,0.034,0.033,0.032] },
 ]
 
-// D65 illuminant (normalized, 7 wavelengths 400-700nm @ 50nm)
+// ---- ColorChecker SG 140 data ----
+// L*a*b* (D50/2°) values for 140 patches, 14 rows (A-N) × 10 cols (1-10)
+// Compact: [L, a, b] per patch, row-major order
+const SG_LAB: number[][] = [
+  // Row A (1-10)
+  [96.04,-0.12,0.31],[53.35,-36.85,15.22],[70.48,-32.43,0.55],[48.52,-28.76,-8.49],[39.43,-16.58,-26.34],
+  [55.28,9.35,-34.09],[53.34,14.25,-13.53],[80.57,3.73,-7.71],[50.72,51.66,-14.77],[96.04,-0.12,0.31],
+  // Row B (1-10)
+  [81.02,-0.17,0.23],[46.47,52.54,19.94],[50.76,50.96,27.64],[66.47,35.85,60.44],[62.27,33.28,57.71],
+  [72.70,-0.97,69.36],[53.61,10.59,53.90],[44.19,-14.25,38.96],[35.17,-13.17,22.74],[81.02,-0.17,0.23],
+  // Row C (1-10)
+  [65.73,-0.09,0.22],[35.75,60.42,34.16],[40.06,48.08,27.44],[30.87,23.44,22.47],[25.53,13.84,15.33],
+  [52.91,-1.37,55.42],[39.77,17.41,47.95],[27.38,-0.63,30.60],[20.17,-0.67,13.69],[65.73,-0.09,0.22],
+  // Row D (1-10)
+  [50.87,-0.06,0.11],[42.35,12.63,-44.77],[52.17,2.07,-30.04],[51.20,49.36,-16.78],[60.21,25.51,2.46],
+  [53.13,12.31,17.49],[71.82,-23.83,57.10],[60.94,-29.79,41.53],[49.48,-29.99,22.66],[50.87,-0.06,0.11],
+  // Row E (1-10)
+  [96.04,-0.12,0.31],[38.63,12.21,-45.58],[62.86,36.15,57.33],[71.93,-23.53,57.21],[55.76,-38.34,31.73],
+  [40.02,10.05,-44.52],[30.36,22.89,-20.64],[72.39,-27.57,1.35],[49.06,30.18,-4.58],[96.04,-0.12,0.31],
+  // Row F (1-10)
+  [81.02,-0.17,0.23],[42.53,52.21,28.87],[63.85,18.23,18.15],[71.15,11.26,17.58],[78.36,0.41,0.10],
+  [64.16,-18.45,-17.62],[60.06,26.25,-19.86],[61.77,0.63,0.51],[50.50,-31.76,-27.86],[81.02,-0.17,0.23],
+  // Row G (1-10)
+  [65.73,-0.09,0.22],[83.68,3.73,79.79],[55.09,-38.56,32.12],[31.77,1.29,-23.25],[81.68,1.02,79.96],
+  [52.00,48.63,-14.84],[32.79,18.35,21.36],[72.91,0.69,0.10],[79.66,-1.02,75.21],[65.73,-0.09,0.22],
+  // Row H (1-10)
+  [50.87,-0.06,0.11],[62.67,37.32,68.03],[39.46,49.57,31.76],[72.67,-23.21,58.12],[51.69,-28.81,49.32],
+  [51.51,54.10,25.56],[81.22,2.51,80.51],[40.02,50.40,27.55],[30.25,26.53,-22.62],[50.87,-0.06,0.11],
+  // Row I (1-10)
+  [96.04,-0.12,0.31],[43.25,15.29,24.73],[61.50,10.04,17.26],[68.80,12.52,15.81],[78.36,0.41,0.10],
+  [57.44,-8.73,-10.74],[50.62,-28.32,-1.05],[48.97,-1.02,-0.31],[23.53,2.10,-2.48],[96.04,-0.12,0.31],
+  // Row J (1-10)
+  [81.02,-0.17,0.23],[53.72,7.22,-25.45],[59.75,-28.34,-26.83],[49.30,-1.96,44.83],[34.95,14.40,24.37],
+  [38.93,55.97,29.59],[67.52,-30.41,-0.67],[92.71,0.06,1.45],[32.65,-23.41,0.65],[81.02,-0.17,0.23],
+  // Row K (1-10)
+  [65.73,-0.09,0.22],[44.44,23.12,31.85],[38.52,11.43,-45.87],[32.97,16.78,-30.95],[53.53,-41.67,34.15],
+  [42.68,15.63,-44.01],[31.50,24.37,19.33],[68.48,0.37,0.37],[60.58,37.49,67.63],[65.73,-0.09,0.22],
+  // Row L (1-10)
+  [50.87,-0.06,0.11],[66.84,17.81,-21.56],[42.15,53.06,28.98],[43.26,48.54,-5.29],[42.83,54.65,26.66],
+  [62.32,-5.55,63.37],[50.45,50.81,-14.56],[34.63,10.14,27.26],[26.47,15.39,12.83],[50.87,-0.06,0.11],
+  // Row M (1-10)
+  [96.04,-0.12,0.31],[49.81,-3.25,49.37],[38.73,-16.30,30.58],[28.61,-10.42,20.02],[21.17,-7.13,10.92],
+  [52.72,47.41,56.15],[40.22,42.73,28.43],[30.49,28.63,16.00],[24.54,15.14,6.43],[96.04,-0.12,0.31],
+  // Row N (1-10)
+  [96.04,-0.12,0.31],[81.02,-0.17,0.23],[65.73,-0.09,0.22],[50.87,-0.06,0.11],[96.04,-0.12,0.31],
+  [81.02,-0.17,0.23],[65.73,-0.09,0.22],[50.87,-0.06,0.11],[96.04,-0.12,0.31],[96.04,-0.12,0.31],
+]
+
+const SG_NAMES: string[] = (() => {
+  const rows = 'ABCDEFGHIJKLMN'
+  const names: string[] = []
+  for (let r = 0; r < 14; r++) {
+    for (let c = 1; c <= 10; c++) {
+      names.push(`${rows[r]}${c}`)
+    }
+  }
+  return names
+})()
+
+// ---- D65 illuminant (normalized, 7 wavelengths 400-700nm @ 50nm) ----
 const D65 = [82.75, 109.35, 117.01, 114.86, 100.0, 90.01, 71.61]
 
 // Wavelengths in um for TMM
@@ -194,14 +282,11 @@ const CF_CENTERS = { red: 0.620, green: 0.530, blue: 0.450 }
 
 // ---- TMM-based QE computation ----
 function computeQE(color: 'red' | 'green' | 'blue', wlUm: number): number {
-  // Use default BSI stack but adjust Si thickness
   const stack = defaultBsiStack(color, siThickness.value)
   const result = tmmCalc(stack, 'air', 'sio2', wlUm, 0, 'avg')
-  // QE = silicon absorption = layerA[SI_LAYER_IDX]
   return result.layerA[SI_LAYER_IDX]
 }
 
-// Compute QE with bandwidth-adjusted CF transmittance overlay
 function sensorResponse(color: 'red' | 'green' | 'blue', wlUm: number): number {
   const qe = computeQE(color, wlUm)
   const cfCenter = CF_CENTERS[color]
@@ -221,8 +306,6 @@ function linearToSrgb(c: number): number {
   return Math.round(Math.max(0, Math.min(255, s * 255)))
 }
 
-// sRGB to linear RGB matrix to XYZ (D65)
-// Standard sRGB to XYZ matrix
 const SRGB_TO_XYZ = [
   [0.4124564, 0.3575761, 0.1804375],
   [0.2126729, 0.7151522, 0.0721750],
@@ -240,7 +323,6 @@ function srgbToXYZ(srgb: number[]): number[] {
   ]
 }
 
-// XYZ to sRGB (inverse of above)
 const XYZ_TO_SRGB = [
   [ 3.2404542, -1.5371385, -0.4985314],
   [-0.9692660,  1.8760108,  0.0415560],
@@ -255,7 +337,7 @@ function xyzToLinearRgb(xyz: number[]): number[] {
   ]
 }
 
-// ---- XYZ to Lab ----
+// ---- XYZ to Lab (D65) ----
 const D65_WP = { Xn: 0.9505, Yn: 1.0, Zn: 1.089 }
 
 function labF(t: number): number {
@@ -280,6 +362,116 @@ function deltaE(lab1: number[], lab2: number[]): number {
     (lab1[2] - lab2[2]) ** 2
   )
 }
+
+// ---- Lab (D50) → sRGB (D65) via Bradford chromatic adaptation ----
+const D50_WP = { Xn: 0.9642, Yn: 1.0, Zn: 0.8251 }
+
+// Bradford M matrix and its inverse
+const BRAD_M = [
+  [ 0.8951,  0.2664, -0.1614],
+  [-0.7502,  1.7135,  0.0367],
+  [ 0.0389, -0.0685,  1.0296],
+]
+const BRAD_MI = [
+  [ 0.9870, -0.1471,  0.1600],
+  [ 0.4323,  0.5184,  0.0493],
+  [-0.0085,  0.0400,  0.9685],
+]
+
+// D50 white point XYZ
+const D50_XYZ = [0.9642, 1.0, 0.8251]
+// D65 white point XYZ
+const D65_XYZ = [0.9505, 1.0, 1.089]
+
+// Precompute Bradford adaptation matrix D50→D65
+const bradAdapt: number[][] = (() => {
+  // cone responses for source (D50) and destination (D65)
+  const coneS = [
+    BRAD_M[0][0] * D50_XYZ[0] + BRAD_M[0][1] * D50_XYZ[1] + BRAD_M[0][2] * D50_XYZ[2],
+    BRAD_M[1][0] * D50_XYZ[0] + BRAD_M[1][1] * D50_XYZ[1] + BRAD_M[1][2] * D50_XYZ[2],
+    BRAD_M[2][0] * D50_XYZ[0] + BRAD_M[2][1] * D50_XYZ[1] + BRAD_M[2][2] * D50_XYZ[2],
+  ]
+  const coneD = [
+    BRAD_M[0][0] * D65_XYZ[0] + BRAD_M[0][1] * D65_XYZ[1] + BRAD_M[0][2] * D65_XYZ[2],
+    BRAD_M[1][0] * D65_XYZ[0] + BRAD_M[1][1] * D65_XYZ[1] + BRAD_M[1][2] * D65_XYZ[2],
+    BRAD_M[2][0] * D65_XYZ[0] + BRAD_M[2][1] * D65_XYZ[1] + BRAD_M[2][2] * D65_XYZ[2],
+  ]
+  // diagonal scale
+  const scale = [[coneD[0]/coneS[0],0,0],[0,coneD[1]/coneS[1],0],[0,0,coneD[2]/coneS[2]]]
+  // M^-1 * scale * M
+  const tmp: number[][] = [[0,0,0],[0,0,0],[0,0,0]]
+  for (let i = 0; i < 3; i++)
+    for (let j = 0; j < 3; j++)
+      for (let k = 0; k < 3; k++)
+        tmp[i][j] += scale[i][k] * BRAD_M[k][j]
+  const result: number[][] = [[0,0,0],[0,0,0],[0,0,0]]
+  for (let i = 0; i < 3; i++)
+    for (let j = 0; j < 3; j++)
+      for (let k = 0; k < 3; k++)
+        result[i][j] += BRAD_MI[i][k] * tmp[k][j]
+  return result
+})()
+
+function labFInv(t: number): number {
+  return t > 0.206893 ? t * t * t : (t - 16 / 116) / 7.787
+}
+
+function labToSrgb(lab: number[]): number[] {
+  // Lab → XYZ (D50)
+  const fy = (lab[0] + 16) / 116
+  const fx = lab[1] / 500 + fy
+  const fz = fy - lab[2] / 200
+  const xyzD50 = [
+    D50_WP.Xn * labFInv(fx),
+    D50_WP.Yn * labFInv(fy),
+    D50_WP.Zn * labFInv(fz),
+  ]
+  // Bradford D50→D65
+  const xyzD65 = [
+    bradAdapt[0][0] * xyzD50[0] + bradAdapt[0][1] * xyzD50[1] + bradAdapt[0][2] * xyzD50[2],
+    bradAdapt[1][0] * xyzD50[0] + bradAdapt[1][1] * xyzD50[1] + bradAdapt[1][2] * xyzD50[2],
+    bradAdapt[2][0] * xyzD50[0] + bradAdapt[2][1] * xyzD50[1] + bradAdapt[2][2] * xyzD50[2],
+  ]
+  // XYZ(D65) → linear sRGB → gamma sRGB
+  const lin = xyzToLinearRgb(xyzD65)
+  return [linearToSrgb(lin[0]), linearToSrgb(lin[1]), linearToSrgb(lin[2])]
+}
+
+// ---- Gaussian basis spectral reconstruction from sRGB ----
+function reconstructRefl(srgb: number[]): number[] {
+  const r = srgbToLinear(srgb[0])
+  const g = srgbToLinear(srgb[1])
+  const b = srgbToLinear(srgb[2])
+  // Basis functions: R 610nm/σ55nm, G 535nm/σ50nm, B 445nm/σ35nm
+  const wlNm = [400, 450, 500, 550, 600, 650, 700]
+  const refl: number[] = []
+  for (const wl of wlNm) {
+    const bR = Math.exp(-0.5 * ((wl - 610) / 55) ** 2)
+    const bG = Math.exp(-0.5 * ((wl - 535) / 50) ** 2)
+    const bB = Math.exp(-0.5 * ((wl - 445) / 35) ** 2)
+    refl.push(Math.max(0.01, Math.min(1, r * bR + g * bG + b * bB)))
+  }
+  return refl
+}
+
+// ---- Active patches computed ----
+interface PatchData {
+  name: string
+  srgb: number[]
+  refl: number[]
+}
+
+const activePatches = computed<PatchData[]>(() => {
+  if (chartType.value === 'classic') {
+    return CLASSIC_PATCHES
+  }
+  // SG 140: convert Lab→sRGB, reconstruct reflectance
+  return SG_LAB.map((lab, idx) => {
+    const srgb = labToSrgb(lab)
+    const refl = reconstructRefl(srgb)
+    return { name: SG_NAMES[idx], srgb, refl }
+  })
+})
 
 // ---- 3x3 matrix operations for CCM ----
 function mat3x3Inverse(m: number[][]): number[][] | null {
@@ -308,20 +500,6 @@ function matMul3x3(a: number[][], b: number[][]): number[][] {
   return result
 }
 
-function matTranspose(m: number[][]): number[][] {
-  const rows = m.length
-  const cols = m[0].length
-  const result: number[][] = []
-  for (let j = 0; j < cols; j++) {
-    result[j] = []
-    for (let i = 0; i < rows; i++) {
-      result[j][i] = m[i][j]
-    }
-  }
-  return result
-}
-
-// Multiply Nx3 transposed (3xN) by Nx3 → 3x3
 function matTransposeMulNx3(s: number[][]): number[][] {
   const n = s.length
   const result: number[][] = [[0,0,0],[0,0,0],[0,0,0]]
@@ -335,7 +513,6 @@ function matTransposeMulNx3(s: number[][]): number[][] {
   return result
 }
 
-// Multiply S^T (3xN) by T (Nx3) → 3x3
 function matSTmulT(s: number[][], tgt: number[][]): number[][] {
   const n = s.length
   const result: number[][] = [[0,0,0],[0,0,0],[0,0,0]]
@@ -349,7 +526,6 @@ function matSTmulT(s: number[][], tgt: number[][]): number[][] {
   return result
 }
 
-// Apply 3x3 matrix to a 3-vector
 function mat3Vec(m: number[][], v: number[]): number[] {
   return [
     m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2],
@@ -367,13 +543,15 @@ interface PatchResult {
 }
 
 const patchResults = computed<PatchResult[]>(() => {
+  const patches = activePatches.value
+
   // Step 1: Compute sensor R/G/B response for each wavelength
   const sensorR: number[] = WL_UM.map(wl => sensorResponse('red', wl))
   const sensorG: number[] = WL_UM.map(wl => sensorResponse('green', wl))
   const sensorB: number[] = WL_UM.map(wl => sensorResponse('blue', wl))
 
   // Step 2: For each patch, integrate reflectance * D65 * sensor
-  const sensorRGB: number[][] = PATCHES.map(patch => {
+  const sensorRGB: number[][] = patches.map(patch => {
     let rSum = 0, gSum = 0, bSum = 0
     for (let i = 0; i < 7; i++) {
       const w = patch.refl[i] * D65[i]
@@ -385,7 +563,7 @@ const patchResults = computed<PatchResult[]>(() => {
   })
 
   // Step 3: Target linear RGB from sRGB values
-  const targetLinear: number[][] = PATCHES.map(patch => [
+  const targetLinear: number[][] = patches.map(patch => [
     srgbToLinear(patch.srgb[0]),
     srgbToLinear(patch.srgb[1]),
     srgbToLinear(patch.srgb[2]),
@@ -395,8 +573,7 @@ const patchResults = computed<PatchResult[]>(() => {
   const STS = matTransposeMulNx3(sensorRGB)
   const STSinv = mat3x3Inverse(STS)
   if (!STSinv) {
-    // Fallback: identity CCM if singular
-    return PATCHES.map(patch => ({
+    return patches.map(patch => ({
       name: patch.name,
       refSrgb: patch.srgb,
       corrSrgb: [128, 128, 128],
@@ -407,7 +584,7 @@ const patchResults = computed<PatchResult[]>(() => {
   const CCM = matMul3x3(STSinv, STT)
 
   // Step 5: Apply CCM, convert to sRGB, compute deltaE
-  return PATCHES.map((patch, idx) => {
+  return patches.map((patch, idx) => {
     const corrLinear = mat3Vec(CCM, sensorRGB[idx])
     const corrSrgb = [
       linearToSrgb(corrLinear[0]),
@@ -415,11 +592,9 @@ const patchResults = computed<PatchResult[]>(() => {
       linearToSrgb(corrLinear[2]),
     ]
 
-    // Reference Lab
     const refXYZ = srgbToXYZ(patch.srgb)
     const refLab = xyzToLab(refXYZ)
 
-    // Corrected: linear → XYZ → Lab
     const corrClamp = corrLinear.map(v => Math.max(0, Math.min(1, v)))
     const corrXYZ = [
       SRGB_TO_XYZ[0][0] * corrClamp[0] + SRGB_TO_XYZ[0][1] * corrClamp[1] + SRGB_TO_XYZ[0][2] * corrClamp[2],
@@ -486,13 +661,15 @@ function yScale(v: number): number {
   return pad.top + plotH - (v / yMax.value) * plotH
 }
 
-const barGap = 2
+const barGap = computed(() => chartType.value === 'sg' ? 0.5 : 2)
+
 const barWidth = computed(() => {
-  return Math.max(4, (plotW - barGap * (PATCHES.length - 1)) / PATCHES.length)
+  const n = activePatches.value.length
+  return Math.max(2, (plotW - barGap.value * (n - 1)) / n)
 })
 
 function barX(idx: number): number {
-  return pad.left + idx * (barWidth.value + barGap)
+  return pad.left + idx * (barWidth.value + barGap.value)
 }
 
 // Chart hover
@@ -503,7 +680,7 @@ function onChartMouseMove(event: MouseEvent) {
   const rect = svg.getBoundingClientRect()
   const scaleX = chartW / rect.width
   const mouseX = (event.clientX - rect.left) * scaleX
-  const idx = Math.floor((mouseX - pad.left) / (barWidth.value + barGap))
+  const idx = Math.floor((mouseX - pad.left) / (barWidth.value + barGap.value))
   if (idx >= 0 && idx < patchResults.value.length) {
     const patch = patchResults.value[idx]
     const bx = barX(idx) + barWidth.value / 2
@@ -533,6 +710,11 @@ function onChartMouseMove(event: MouseEvent) {
   font-size: 0.95em;
   color: var(--vp-c-text-1);
 }
+.patch-count {
+  font-weight: 400;
+  color: var(--vp-c-text-3);
+  font-size: 0.85em;
+}
 .component-description {
   margin: 0 0 16px 0;
   color: var(--vp-c-text-2);
@@ -543,6 +725,7 @@ function onChartMouseMove(event: MouseEvent) {
   flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 16px;
+  align-items: flex-end;
 }
 .slider-group {
   flex: 1;
@@ -580,6 +763,33 @@ function onChartMouseMove(event: MouseEvent) {
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
+
+/* Chart type toggle */
+.chart-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.toggle-btn {
+  padding: 6px 14px;
+  font-size: 0.82em;
+  font-weight: 500;
+  border: none;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.toggle-btn.active {
+  background: var(--vp-c-brand-1);
+  color: #fff;
+}
+.toggle-btn:not(.active):hover {
+  background: var(--vp-c-bg-soft);
+}
+
 .results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -611,14 +821,23 @@ function onChartMouseMove(event: MouseEvent) {
 .patch-section {
   margin-bottom: 20px;
 }
-.patch-grid {
+.patch-grid-classic {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 6px;
 }
+.patch-grid-sg {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+}
 @media (max-width: 640px) {
-  .patch-grid {
-    grid-template-columns: repeat(6, 1fr);
+  .patch-grid-classic {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .patch-grid-sg {
+    grid-template-columns: repeat(10, 1fr);
+    gap: 2px;
   }
 }
 .patch-cell {
@@ -632,6 +851,9 @@ function onChartMouseMove(event: MouseEvent) {
   border: 1px solid var(--vp-c-divider);
   display: flex;
   flex-direction: column;
+}
+.patch-grid-sg .patch-swatch {
+  border-radius: 3px;
 }
 .patch-ref {
   flex: 1;
@@ -651,6 +873,9 @@ function onChartMouseMove(event: MouseEvent) {
   font-size: 0.75em;
   font-weight: 600;
   font-family: var(--vp-font-family-mono);
+}
+.patch-de-sg {
+  font-size: 0.55em;
 }
 
 /* Chart */
