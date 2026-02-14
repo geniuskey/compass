@@ -179,6 +179,7 @@
       <!-- 3D View (Plotly) -->
       <div v-show="viewMode === '3d'" ref="plotly3dDiv" class="plotly-wrapper"></div>
       <p v-if="viewMode === '3d' && plotlyLoading" class="loading-text">{{ t('Loading 3D engine...', '3D 엔진 로딩 중...') }}</p>
+      <p v-if="viewMode === '3d' && plotlyFailed" class="loading-text" style="color: var(--vp-c-danger-1)">{{ t('Failed to load 3D library. Check network or ad-blocker.', '3D 라이브러리 로드 실패. 네트워크 또는 광고 차단기를 확인하세요.') }}</p>
 
       <!-- 2D Ray Trace View -->
       <svg v-if="viewMode === 'ray'" :viewBox="`0 0 ${svgW} ${svgH}`" class="mla-svg">
@@ -607,28 +608,42 @@ const sectionHoverYZ = computed(() => {
 // ===== 3D Plotly View =====
 const plotly3dDiv = ref<HTMLElement | null>(null)
 const plotlyLoading = ref(false)
+const plotlyFailed = ref(false)
 let plotlyLib: any = null
 
-function loadPlotly(): Promise<any> {
-  if (typeof window === 'undefined') return Promise.resolve(null)
-  if ((window as any).Plotly) return Promise.resolve((window as any).Plotly)
-  if (plotlyLib) return Promise.resolve(plotlyLib)
+const PLOTLY_CDNS = [
+  'https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.32.0/plotly.min.js',
+  'https://cdn.plot.ly/plotly-2.32.0.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js',
+]
 
-  return new Promise((resolve, reject) => {
-    plotlyLoading.value = true
+function tryLoadScript(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
     const script = document.createElement('script')
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js'
-    script.onload = () => {
-      plotlyLib = (window as any).Plotly
-      plotlyLoading.value = false
-      resolve(plotlyLib)
-    }
-    script.onerror = () => {
-      plotlyLoading.value = false
-      reject(new Error('Failed to load Plotly'))
-    }
+    script.src = url
+    script.onload = () => resolve(true)
+    script.onerror = () => { script.remove(); resolve(false) }
     document.head.appendChild(script)
   })
+}
+
+async function loadPlotly(): Promise<any> {
+  if (typeof window === 'undefined') return null
+  if ((window as any).Plotly) return (window as any).Plotly
+  if (plotlyLib) return plotlyLib
+
+  plotlyLoading.value = true
+  for (const url of PLOTLY_CDNS) {
+    const ok = await tryLoadScript(url)
+    if (ok && (window as any).Plotly) {
+      plotlyLib = (window as any).Plotly
+      plotlyLoading.value = false
+      return plotlyLib
+    }
+  }
+  plotlyLoading.value = false
+  plotlyFailed.value = true
+  return null
 }
 
 async function render3D() {
