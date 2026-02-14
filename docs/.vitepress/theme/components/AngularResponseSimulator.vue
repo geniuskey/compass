@@ -29,6 +29,9 @@
         <label class="radio-label">
           <input type="radio" value="p" v-model="polarization" /> p-pol
         </label>
+        <label class="radio-label">
+          <input type="radio" value="sp" v-model="polarization" /> s + p
+        </label>
       </div>
     </div>
 
@@ -166,17 +169,31 @@
         >QE (%)</text>
 
         <!-- Curves -->
-        <template v-if="displayMode === 'single'">
+        <template v-if="displayMode === 'single' && polarization !== 'sp'">
           <path :d="singleAreaPath" :fill="singleColor" opacity="0.08" />
           <path :d="singleLinePath" fill="none" :stroke="singleColor" stroke-width="2.5" />
         </template>
-        <template v-else>
+        <template v-else-if="displayMode === 'single' && polarization === 'sp'">
+          <path :d="singleSAreaPath" :fill="singleColor" opacity="0.06" />
+          <path :d="singlePAreaPath" :fill="singleColor" opacity="0.04" />
+          <path :d="singleSLinePath" fill="none" :stroke="singleColor" stroke-width="2.5" />
+          <path :d="singlePLinePath" fill="none" :stroke="singleColor" stroke-width="2" stroke-dasharray="6,3" />
+        </template>
+        <template v-else-if="displayMode === 'rgb' && polarization !== 'sp'">
           <path :d="redAreaPath" fill="#e74c3c" opacity="0.06" />
           <path :d="greenAreaPath" fill="#27ae60" opacity="0.06" />
           <path :d="blueAreaPath" fill="#3498db" opacity="0.06" />
           <path :d="redLinePath" fill="none" stroke="#e74c3c" stroke-width="2" />
           <path :d="greenLinePath" fill="none" stroke="#27ae60" stroke-width="2" />
           <path :d="blueLinePath" fill="none" stroke="#3498db" stroke-width="2" />
+        </template>
+        <template v-else>
+          <path :d="redSLinePath" fill="none" stroke="#e74c3c" stroke-width="2" />
+          <path :d="redPLinePath" fill="none" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="6,3" />
+          <path :d="greenSLinePath" fill="none" stroke="#27ae60" stroke-width="2" />
+          <path :d="greenPLinePath" fill="none" stroke="#27ae60" stroke-width="1.5" stroke-dasharray="6,3" />
+          <path :d="blueSLinePath" fill="none" stroke="#3498db" stroke-width="2" />
+          <path :d="bluePLinePath" fill="none" stroke="#3498db" stroke-width="1.5" stroke-dasharray="6,3" />
         </template>
 
         <!-- Hover crosshair -->
@@ -190,20 +207,32 @@
             stroke-width="0.8"
             stroke-dasharray="4,3"
           />
-          <template v-if="displayMode === 'single'">
+          <template v-if="displayMode === 'single' && polarization !== 'sp'">
             <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeSingle)" r="4" :fill="singleColor" stroke="#fff" stroke-width="1" />
           </template>
-          <template v-else>
+          <template v-else-if="displayMode === 'single' && polarization === 'sp'">
+            <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeSP.s)" r="4" :fill="singleColor" stroke="#fff" stroke-width="1" />
+            <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeSP.p)" r="3.5" :fill="singleColor" stroke="#fff" stroke-width="1" opacity="0.7" />
+          </template>
+          <template v-else-if="displayMode === 'rgb' && polarization !== 'sp'">
             <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeRgb.red)" r="4" fill="#e74c3c" stroke="#fff" stroke-width="1" />
             <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeRgb.green)" r="4" fill="#27ae60" stroke="#fff" stroke-width="1" />
             <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeRgb.blue)" r="4" fill="#3498db" stroke="#fff" stroke-width="1" />
+          </template>
+          <template v-else>
+            <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeRgbSP.redS)" r="4" fill="#e74c3c" stroke="#fff" stroke-width="1" />
+            <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeRgbSP.redP)" r="3" fill="#e74c3c" stroke="#fff" stroke-width="1" opacity="0.7" />
+            <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeRgbSP.greenS)" r="4" fill="#27ae60" stroke="#fff" stroke-width="1" />
+            <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeRgbSP.greenP)" r="3" fill="#27ae60" stroke="#fff" stroke-width="1" opacity="0.7" />
+            <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeRgbSP.blueS)" r="4" fill="#3498db" stroke="#fff" stroke-width="1" />
+            <circle :cx="xScale(hoverAngle)" :cy="yScale(hoverQeRgbSP.blueP)" r="3" fill="#3498db" stroke="#fff" stroke-width="1" opacity="0.7" />
           </template>
           <!-- Tooltip -->
           <rect
             :x="ttX"
             :y="pad.top + 4"
-            :width="displayMode === 'single' ? 110 : 120"
-            :height="displayMode === 'single' ? 36 : 62"
+            :width="ttWidth"
+            :height="ttHeight"
             rx="4"
             fill="var(--vp-c-bg)"
             stroke="var(--vp-c-divider)"
@@ -213,12 +242,20 @@
           <text :x="ttX + 6" :y="pad.top + 18" class="tooltip-text" font-weight="600">
             {{ hoverAngle }}°
           </text>
-          <template v-if="displayMode === 'single'">
+          <template v-if="displayMode === 'single' && polarization !== 'sp'">
             <text :x="ttX + 6" :y="pad.top + 32" class="tooltip-text" :fill="singleColor">
               QE: {{ hoverQeSingle.toFixed(1) }}%
             </text>
           </template>
-          <template v-else>
+          <template v-else-if="displayMode === 'single' && polarization === 'sp'">
+            <text :x="ttX + 6" :y="pad.top + 32" class="tooltip-text" :fill="singleColor">
+              s: {{ hoverQeSP.s.toFixed(1) }}%
+            </text>
+            <text :x="ttX + 6" :y="pad.top + 44" class="tooltip-text" :fill="singleColor" opacity="0.7">
+              p: {{ hoverQeSP.p.toFixed(1) }}%
+            </text>
+          </template>
+          <template v-else-if="displayMode === 'rgb' && polarization !== 'sp'">
             <text :x="ttX + 6" :y="pad.top + 32" class="tooltip-text" fill="#e74c3c">
               R: {{ hoverQeRgb.red.toFixed(1) }}%
             </text>
@@ -229,20 +266,43 @@
               B: {{ hoverQeRgb.blue.toFixed(1) }}%
             </text>
           </template>
+          <template v-else>
+            <text :x="ttX + 6" :y="pad.top + 32" class="tooltip-text" fill="#e74c3c">
+              R: s={{ hoverQeRgbSP.redS.toFixed(1) }}  p={{ hoverQeRgbSP.redP.toFixed(1) }}%
+            </text>
+            <text :x="ttX + 6" :y="pad.top + 44" class="tooltip-text" fill="#27ae60">
+              G: s={{ hoverQeRgbSP.greenS.toFixed(1) }}  p={{ hoverQeRgbSP.greenP.toFixed(1) }}%
+            </text>
+            <text :x="ttX + 6" :y="pad.top + 56" class="tooltip-text" fill="#3498db">
+              B: s={{ hoverQeRgbSP.blueS.toFixed(1) }}  p={{ hoverQeRgbSP.blueP.toFixed(1) }}%
+            </text>
+          </template>
         </template>
 
         <!-- Legend -->
-        <template v-if="displayMode === 'single'">
+        <template v-if="displayMode === 'single' && polarization !== 'sp'">
           <line :x1="pad.left + plotW - 80" :y1="pad.top + 14" :x2="pad.left + plotW - 62" :y2="pad.top + 14" :stroke="singleColor" stroke-width="2" />
           <text :x="pad.left + plotW - 58" :y="pad.top + 18" class="legend-label">{{ singleWl }} nm</text>
         </template>
-        <template v-else>
+        <template v-else-if="displayMode === 'single' && polarization === 'sp'">
+          <line :x1="pad.left + plotW - 80" :y1="pad.top + 12" :x2="pad.left + plotW - 62" :y2="pad.top + 12" :stroke="singleColor" stroke-width="2" />
+          <text :x="pad.left + plotW - 58" :y="pad.top + 16" class="legend-label">s-pol</text>
+          <line :x1="pad.left + plotW - 80" :y1="pad.top + 26" :x2="pad.left + plotW - 62" :y2="pad.top + 26" :stroke="singleColor" stroke-width="2" stroke-dasharray="6,3" />
+          <text :x="pad.left + plotW - 58" :y="pad.top + 30" class="legend-label">p-pol</text>
+        </template>
+        <template v-else-if="displayMode === 'rgb' && polarization !== 'sp'">
           <line :x1="pad.left + plotW - 66" :y1="pad.top + 12" :x2="pad.left + plotW - 48" :y2="pad.top + 12" stroke="#e74c3c" stroke-width="2" />
           <text :x="pad.left + plotW - 44" :y="pad.top + 16" class="legend-label">{{ t('Red', '빨강') }}</text>
           <line :x1="pad.left + plotW - 66" :y1="pad.top + 26" :x2="pad.left + plotW - 48" :y2="pad.top + 26" stroke="#27ae60" stroke-width="2" />
           <text :x="pad.left + plotW - 44" :y="pad.top + 30" class="legend-label">{{ t('Green', '초록') }}</text>
           <line :x1="pad.left + plotW - 66" :y1="pad.top + 40" :x2="pad.left + plotW - 48" :y2="pad.top + 40" stroke="#3498db" stroke-width="2" />
           <text :x="pad.left + plotW - 44" :y="pad.top + 44" class="legend-label">{{ t('Blue', '파랑') }}</text>
+        </template>
+        <template v-else>
+          <line :x1="pad.left + plotW - 90" :y1="pad.top + 12" :x2="pad.left + plotW - 72" :y2="pad.top + 12" stroke="var(--vp-c-text-1)" stroke-width="2" />
+          <text :x="pad.left + plotW - 68" :y="pad.top + 16" class="legend-label">s-pol</text>
+          <line :x1="pad.left + plotW - 90" :y1="pad.top + 26" :x2="pad.left + plotW - 72" :y2="pad.top + 26" stroke="var(--vp-c-text-1)" stroke-width="2" stroke-dasharray="6,3" />
+          <text :x="pad.left + plotW - 68" :y="pad.top + 30" class="legend-label">p-pol</text>
         </template>
       </svg>
     </div>
@@ -262,7 +322,7 @@ const { t } = useLocale()
 const displayMode = ref<'single' | 'rgb'>('single')
 const singleWl = ref(550)
 const singleCf = ref<'red' | 'green' | 'blue'>('green')
-const polarization = ref<'s' | 'p' | 'avg'>('avg')
+const polarization = ref<'s' | 'p' | 'avg' | 'sp'>('avg')
 const siThickness = ref(3.0)
 const maxAngle = ref(60)
 
@@ -309,10 +369,10 @@ const xTicks = computed(() => {
 // --- TMM computation ---
 type AngleQe = { angle: number; qe: number }
 
-function computeAngularQe(cfColor: 'red' | 'green' | 'blue', wlNm: number): AngleQe[] {
+function computeAngularQe(cfColor: 'red' | 'green' | 'blue', wlNm: number, polOverride?: 's' | 'p' | 'avg'): AngleQe[] {
   const stack = defaultBsiStack(cfColor, siThickness.value)
   const wl = wlNm / 1000 // nm to um
-  const pol = polarization.value
+  const pol = polOverride ?? (polarization.value === 'sp' ? 'avg' : polarization.value)
   const data: AngleQe[] = []
   for (let ang = 0; ang <= maxAngle.value; ang += 1) {
     const result = tmmCalc(stack, 'air', 'sio2', wl, ang, pol)
@@ -354,6 +414,31 @@ const blueLinePath = computed(() => linePath(rgbData.value.blue))
 const redAreaPath = computed(() => areaPath(rgbData.value.red))
 const greenAreaPath = computed(() => areaPath(rgbData.value.green))
 const blueAreaPath = computed(() => areaPath(rgbData.value.blue))
+
+// s+p mode data
+const singleDataS = computed(() => polarization.value === 'sp' ? computeAngularQe(singleCf.value, singleWl.value, 's') : [])
+const singleDataP = computed(() => polarization.value === 'sp' ? computeAngularQe(singleCf.value, singleWl.value, 'p') : [])
+const singleSLinePath = computed(() => linePath(singleDataS.value))
+const singlePLinePath = computed(() => linePath(singleDataP.value))
+const singleSAreaPath = computed(() => areaPath(singleDataS.value))
+const singlePAreaPath = computed(() => areaPath(singleDataP.value))
+
+const rgbDataS = computed(() => polarization.value !== 'sp' ? null : ({
+  red: computeAngularQe('red', rgbWavelengths.red, 's'),
+  green: computeAngularQe('green', rgbWavelengths.green, 's'),
+  blue: computeAngularQe('blue', rgbWavelengths.blue, 's'),
+}))
+const rgbDataP = computed(() => polarization.value !== 'sp' ? null : ({
+  red: computeAngularQe('red', rgbWavelengths.red, 'p'),
+  green: computeAngularQe('green', rgbWavelengths.green, 'p'),
+  blue: computeAngularQe('blue', rgbWavelengths.blue, 'p'),
+}))
+const redSLinePath = computed(() => rgbDataS.value ? linePath(rgbDataS.value.red) : '')
+const redPLinePath = computed(() => rgbDataP.value ? linePath(rgbDataP.value.red) : '')
+const greenSLinePath = computed(() => rgbDataS.value ? linePath(rgbDataS.value.green) : '')
+const greenPLinePath = computed(() => rgbDataP.value ? linePath(rgbDataP.value.green) : '')
+const blueSLinePath = computed(() => rgbDataS.value ? linePath(rgbDataS.value.blue) : '')
+const bluePLinePath = computed(() => rgbDataP.value ? linePath(rgbDataP.value.blue) : '')
 
 // --- Info cards ---
 function findQeAtAngle(data: AngleQe[], angle: number): number {
@@ -413,10 +498,41 @@ const hoverQeRgb = computed(() => {
   }
 })
 
+const hoverQeSP = computed(() => {
+  if (hoverAngle.value === null) return { s: 0, p: 0 }
+  return {
+    s: interpolateQe(singleDataS.value, hoverAngle.value),
+    p: interpolateQe(singleDataP.value, hoverAngle.value),
+  }
+})
+
+const hoverQeRgbSP = computed(() => {
+  if (hoverAngle.value === null || !rgbDataS.value || !rgbDataP.value) return { redS: 0, redP: 0, greenS: 0, greenP: 0, blueS: 0, blueP: 0 }
+  return {
+    redS: interpolateQe(rgbDataS.value.red, hoverAngle.value),
+    redP: interpolateQe(rgbDataP.value.red, hoverAngle.value),
+    greenS: interpolateQe(rgbDataS.value.green, hoverAngle.value),
+    greenP: interpolateQe(rgbDataP.value.green, hoverAngle.value),
+    blueS: interpolateQe(rgbDataS.value.blue, hoverAngle.value),
+    blueP: interpolateQe(rgbDataP.value.blue, hoverAngle.value),
+  }
+})
+
+const ttWidth = computed(() => {
+  if (polarization.value === 'sp' && displayMode.value === 'rgb') return 180
+  if (polarization.value === 'sp') return 110
+  return displayMode.value === 'single' ? 110 : 120
+})
+
+const ttHeight = computed(() => {
+  if (polarization.value === 'sp' && displayMode.value === 'single') return 48
+  return displayMode.value === 'single' ? 36 : 62
+})
+
 const ttX = computed(() => {
   if (hoverAngle.value === null) return 0
   const x = xScale(hoverAngle.value)
-  const w = displayMode.value === 'single' ? 110 : 120
+  const w = ttWidth.value
   return x + w + 10 > svgW - pad.right ? x - w - 6 : x + 10
 })
 
