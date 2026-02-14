@@ -41,7 +41,7 @@
       <div class="result-card">
         <div class="result-label">&theta;<sub>r</sub> ({{ t('refracted', '굴절') }})</div>
         <div class="result-value" :class="{ tir: isTIR }">
-          {{ isTIR ? 'TIR' : thetaR.toFixed(1) + '\u00B0' }}
+          {{ isTIR ? 'TIR' : thetaR.toFixed(1) + '°' }}
         </div>
       </div>
       <div class="result-card" v-if="hasCritical">

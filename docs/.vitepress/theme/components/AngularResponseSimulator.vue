@@ -55,7 +55,7 @@
       </div>
       <div class="slider-group">
         <label>
-          {{ t('Max angle:', '\uCD5C\uB300 \uAC01\uB3C4:') }} <strong>{{ maxAngle }}\u00B0</strong>
+          {{ t('Max angle:', '\uCD5C\uB300 \uAC01\uB3C4:') }} <strong>{{ maxAngle }}°</strong>
         </label>
         <input type="range" min="30" max="80" step="5" v-model.number="maxAngle" class="ctrl-range" />
       </div>
@@ -65,38 +65,38 @@
     <div class="info-row">
       <template v-if="displayMode === 'single'">
         <div class="info-card">
-          <span class="info-label">QE @ 0\u00B0</span>
+          <span class="info-label">QE @ 0°</span>
           <span class="info-value">{{ infoSingle.qe0.toFixed(1) }}%</span>
         </div>
         <div class="info-card">
-          <span class="info-label">QE @ 15\u00B0</span>
+          <span class="info-label">QE @ 15°</span>
           <span class="info-value">{{ infoSingle.qe15.toFixed(1) }}%</span>
         </div>
         <div class="info-card">
-          <span class="info-label">QE @ 30\u00B0</span>
+          <span class="info-label">QE @ 30°</span>
           <span class="info-value">{{ infoSingle.qe30.toFixed(1) }}%</span>
         </div>
         <div class="info-card">
           <span class="info-label">{{ t('Half-power angle', '\uBC18\uAC10 \uAC01\uB3C4') }}</span>
-          <span class="info-value">{{ infoSingle.halfPower }}\u00B0</span>
+          <span class="info-value">{{ infoSingle.halfPower }}°</span>
         </div>
       </template>
       <template v-else>
         <div class="info-card" style="border-left: 3px solid #e74c3c;">
-          <span class="info-label">{{ t('Red', '\uBE68\uAC15') }} @ 0\u00B0</span>
+          <span class="info-label">{{ t('Red', '\uBE68\uAC15') }} @ 0°</span>
           <span class="info-value">{{ infoRgb.red0.toFixed(1) }}%</span>
         </div>
         <div class="info-card" style="border-left: 3px solid #27ae60;">
-          <span class="info-label">{{ t('Green', '\uCD08\uB85D') }} @ 0\u00B0</span>
+          <span class="info-label">{{ t('Green', '\uCD08\uB85D') }} @ 0°</span>
           <span class="info-value">{{ infoRgb.green0.toFixed(1) }}%</span>
         </div>
         <div class="info-card" style="border-left: 3px solid #3498db;">
-          <span class="info-label">{{ t('Blue', '\uD30C\uB791') }} @ 0\u00B0</span>
+          <span class="info-label">{{ t('Blue', '\uD30C\uB791') }} @ 0°</span>
           <span class="info-value">{{ infoRgb.blue0.toFixed(1) }}%</span>
         </div>
         <div class="info-card">
           <span class="info-label">{{ t('Worst half-power', '\uCD5C\uC800 \uBC18\uAC10') }}</span>
-          <span class="info-value">{{ infoRgb.worstHalf }}\u00B0</span>
+          <span class="info-value">{{ infoRgb.worstHalf }}°</span>
         </div>
       </template>
     </div>
@@ -155,11 +155,11 @@
           :y="pad.top + plotH + 20"
           text-anchor="middle"
           class="axis-label"
-        >{{ tick }}\u00B0</text>
+        >{{ tick }}°</text>
 
         <!-- Axis titles -->
         <text :x="pad.left + plotW / 2" :y="svgH - 2" text-anchor="middle" class="axis-title">
-          {{ t('Angle of Incidence (\u00B0)', '\uC785\uC0AC\uAC01 (\u00B0)') }}
+          {{ t('Angle of Incidence (°)', '\uC785\uC0AC\uAC01 (°)') }}
         </text>
         <text :x="12" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title"
           :transform="`rotate(-90, 12, ${pad.top + plotH / 2})`"
@@ -211,7 +211,7 @@
             opacity="0.95"
           />
           <text :x="ttX + 6" :y="pad.top + 18" class="tooltip-text" font-weight="600">
-            {{ hoverAngle }}\u00B0
+            {{ hoverAngle }}°
           </text>
           <template v-if="displayMode === 'single'">
             <text :x="ttX + 6" :y="pad.top + 32" class="tooltip-text" :fill="singleColor">

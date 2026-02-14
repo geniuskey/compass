@@ -368,7 +368,7 @@
         <div class="result-value" style="color: #8e44ad;">{{ myDiffQe.toFixed(1) }}%</div>
       </div>
       <div class="result-card">
-        <div class="result-label">{{ t('Dark Current @60\u00B0C', '\uC554\uC804\uB958 @60\u00B0C') }}</div>
+        <div class="result-label">{{ t('Dark Current @60°C', '\uC554\uC804\uB958 @60°C') }}</div>
         <div class="result-value">{{ myDarkCurrent.toFixed(1) }} e⁻/s</div>
       </div>
     </div>
