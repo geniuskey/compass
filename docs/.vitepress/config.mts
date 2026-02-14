@@ -201,47 +201,63 @@ const aboutSidebarKo = [
 ]
 
 const simulatorSidebar = [
-  { text: 'Simulator', items: [
-    { text: 'Overview', link: '/simulator/' },
+  { text: 'Overview', link: '/simulator/' },
+  { text: 'Optical Stack Analysis', collapsed: false, items: [
     { text: 'TMM QE Calculator', link: '/simulator/tmm-qe' },
     { text: 'Thin Film Stack Designer', link: '/simulator/barl-optimizer' },
     { text: 'Energy Budget', link: '/simulator/energy-budget' },
+  ]},
+  { text: 'Performance Analysis', collapsed: false, items: [
     { text: 'Angular Response', link: '/simulator/angular-response' },
     { text: 'SNR Calculator', link: '/simulator/snr-calculator' },
+  ]},
+  { text: 'Design Tools', collapsed: false, items: [
     { text: 'Color Filter Designer', link: '/simulator/color-filter' },
     { text: 'Pixel Design Playground', link: '/simulator/pixel-playground' },
+  ]},
+  { text: 'Optics & Wave Physics', collapsed: false, items: [
     { text: 'Si Absorption Depth', link: '/simulator/si-absorption' },
     { text: 'Microlens Ray Trace', link: '/simulator/microlens-raytrace' },
+    { text: 'MLA Array Visualizer', link: '/simulator/mla-array' },
+    { text: 'Fabry-Pérot Visualizer', link: '/simulator/fabry-perot' },
+    { text: 'Diffraction PSF', link: '/simulator/diffraction-psf' },
+  ]},
+  { text: 'System Analysis', collapsed: false, items: [
     { text: 'MTF Analyzer', link: '/simulator/mtf-analyzer' },
     { text: 'Pixel Scaling Trends', link: '/simulator/pixel-scaling' },
-    { text: 'Fabry-Pérot Visualizer', link: '/simulator/fabry-perot' },
     { text: 'Color Accuracy (ΔE)', link: '/simulator/color-accuracy' },
     { text: 'Dark Current & Temp', link: '/simulator/dark-current' },
-    { text: 'Diffraction PSF', link: '/simulator/diffraction-psf' },
-    { text: 'MLA Array Visualizer', link: '/simulator/mla-array' },
-  ]}
+  ]},
 ]
 
 const simulatorSidebarKo = [
-  { text: '시뮬레이터', items: [
-    { text: '개요', link: '/ko/simulator/' },
+  { text: '개요', link: '/ko/simulator/' },
+  { text: '광학 스택 분석', collapsed: false, items: [
     { text: 'TMM QE 계산기', link: '/ko/simulator/tmm-qe' },
     { text: '박막 스택 설계기', link: '/ko/simulator/barl-optimizer' },
     { text: '에너지 버짓', link: '/ko/simulator/energy-budget' },
+  ]},
+  { text: '성능 분석', collapsed: false, items: [
     { text: '각도 응답', link: '/ko/simulator/angular-response' },
     { text: 'SNR 계산기', link: '/ko/simulator/snr-calculator' },
+  ]},
+  { text: '설계 도구', collapsed: false, items: [
     { text: '컬러 필터 설계', link: '/ko/simulator/color-filter' },
     { text: '픽셀 설계 놀이터', link: '/ko/simulator/pixel-playground' },
+  ]},
+  { text: '광학 & 파동 물리', collapsed: false, items: [
     { text: 'Si 흡수 깊이', link: '/ko/simulator/si-absorption' },
     { text: '마이크로렌즈 광선추적', link: '/ko/simulator/microlens-raytrace' },
+    { text: 'MLA 어레이 시각화', link: '/ko/simulator/mla-array' },
+    { text: '파브리-페로 시각화', link: '/ko/simulator/fabry-perot' },
+    { text: '회절 PSF', link: '/ko/simulator/diffraction-psf' },
+  ]},
+  { text: '시스템 분석', collapsed: false, items: [
     { text: 'MTF 분석기', link: '/ko/simulator/mtf-analyzer' },
     { text: '픽셀 스케일링', link: '/ko/simulator/pixel-scaling' },
-    { text: '파브리-페로 시각화', link: '/ko/simulator/fabry-perot' },
     { text: '색 정확도 (ΔE)', link: '/ko/simulator/color-accuracy' },
     { text: '암전류 & 온도', link: '/ko/simulator/dark-current' },
-    { text: '회절 PSF', link: '/ko/simulator/diffraction-psf' },
-    { text: 'MLA 어레이 시각화', link: '/ko/simulator/mla-array' },
-  ]}
+  ]},
 ]
 
 export default withMermaid(defineConfig({
