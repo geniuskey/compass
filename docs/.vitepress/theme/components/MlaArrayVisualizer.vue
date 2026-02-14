@@ -100,7 +100,8 @@
 
     <div class="svg-wrapper">
       <!-- Contour View -->
-      <svg v-if="viewMode === 'contour'" :viewBox="`0 0 ${svgW} ${svgH}`" class="mla-svg">
+      <svg v-if="viewMode === 'contour'" :viewBox="`0 0 ${svgW} ${svgH}`" class="mla-svg"
+        @mousemove="onContourHover" @mouseleave="contourHoverVisible = false">
         <rect x="0" y="0" :width="svgW" :height="svgH" fill="var(--vp-c-bg)" />
         <!-- Contour lines for each lens -->
         <path
@@ -129,6 +130,16 @@
           :stroke="lv.color" stroke-width="1.5" />
         <text v-for="(lv, li) in contourLegend" :key="'clt-' + li"
           :x="svgW - 48" :y="cPad.top + 12 + li * 14" class="legend-label">{{ lv.label }}</text>
+        <!-- Hover tooltip -->
+        <template v-if="contourHoverVisible">
+          <line :x1="contourHoverSvgX" :y1="cPad.top" :x2="contourHoverSvgX" :y2="svgH - cPad.bottom" stroke="var(--vp-c-text-2)" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.5" />
+          <line :x1="cPad.left" :y1="contourHoverSvgY" :x2="svgW - cPad.right" :y2="contourHoverSvgY" stroke="var(--vp-c-text-2)" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.5" />
+          <circle :cx="contourHoverSvgX" :cy="contourHoverSvgY" r="3" fill="var(--vp-c-brand-1)" />
+          <rect :x="Math.min(contourHoverSvgX + 8, svgW - 130)" :y="Math.max(contourHoverSvgY - 48, cPad.top)" width="122" height="42" rx="4" fill="var(--vp-c-bg-soft)" stroke="var(--vp-c-divider)" />
+          <text :x="Math.min(contourHoverSvgX + 13, svgW - 125)" :y="Math.max(contourHoverSvgY - 33, cPad.top + 15)" class="tooltip-text">x={{ contourHoverPhysX.toFixed(3) }} um</text>
+          <text :x="Math.min(contourHoverSvgX + 13, svgW - 125)" :y="Math.max(contourHoverSvgY - 20, cPad.top + 28)" class="tooltip-text">y={{ contourHoverPhysY.toFixed(3) }} um</text>
+          <text :x="Math.min(contourHoverSvgX + 13, svgW - 125)" :y="Math.max(contourHoverSvgY - 7, cPad.top + 41)" class="tooltip-text" fill="var(--vp-c-brand-1)">z={{ contourHoverZ.toFixed(4) }} um</text>
+        </template>
         <text :x="(cPad.left + svgW - cPad.right) / 2" :y="svgH - 2" text-anchor="middle" class="axis-label">X (um)</text>
         <text x="10" :y="(cPad.top + svgH - cPad.bottom) / 2" text-anchor="middle" class="axis-label" :transform="`rotate(-90, 10, ${(cPad.top + svgH - cPad.bottom) / 2})`">Y (um)</text>
       </svg>
@@ -239,6 +250,24 @@
       <div class="info-card">
         <span class="info-label">{{ t('Fill factor', '충전률') }}</span>
         <span class="info-value">{{ fillFactor.toFixed(1) }}%</span>
+      </div>
+    </div>
+    <div v-if="viewMode === 'ray'" class="info-row">
+      <div class="info-card">
+        <span class="info-label">{{ t('Focal point X', '집속점 X') }}</span>
+        <span class="info-value">{{ focalPoint2D ? focalPoint2D.x.toFixed(3) + ' um' : '—' }}</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">{{ t('Focal point Z', '집속점 Z') }}</span>
+        <span class="info-value">{{ focalPoint2D ? focalPoint2D.z.toFixed(3) + ' um' : '—' }}</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">{{ t('Back focal dist.', '후면 초점 거리') }}</span>
+        <span class="info-value">{{ focalPoint2D ? Math.abs(focalPoint2D.z).toFixed(3) + ' um' : '—' }}</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">{{ t('Focus efficiency', '집속 효율') }}</span>
+        <span class="info-value">{{ focusEfficiency.toFixed(1) }}%</span>
       </div>
     </div>
 
@@ -454,6 +483,44 @@ const contourLegend = computed(() =>
     label: `${(lv * 100).toFixed(0)}%`,
   }))
 )
+
+// ===== Contour Hover =====
+const contourHoverVisible = ref(false)
+const contourHoverSvgX = ref(0)
+const contourHoverSvgY = ref(0)
+const contourHoverPhysX = ref(0)
+const contourHoverPhysY = ref(0)
+const contourHoverZ = ref(0)
+
+function onContourHover(e: MouseEvent) {
+  const svg = e.currentTarget as SVGSVGElement
+  const rect = svg.getBoundingClientRect()
+  const scaleFactorX = svgW / rect.width
+  const scaleFactorY = svgH / rect.height
+  const mx = (e.clientX - rect.left) * scaleFactorX
+  const my = (e.clientY - rect.top) * scaleFactorY
+  if (mx < cPad.left || mx > svgW - cPad.right || my < cPad.top || my > svgH - cPad.bottom) {
+    contourHoverVisible.value = false
+    return
+  }
+  contourHoverSvgX.value = mx
+  contourHoverSvgY.value = my
+
+  const ext = contourExtent.value
+  const physW = ext.xMax - ext.xMin
+  const physH = ext.yMax - ext.yMin
+  const usedW = physW * contourScale.value
+  const usedH = physH * contourScale.value
+  const offsetX = (contourDrawW.value - usedW) / 2
+  const offsetY = (contourDrawH.value - usedH) / 2
+  const px = ext.xMin + (mx - cPad.left - offsetX) / contourScale.value
+  const py = ext.yMax - (my - cPad.top - offsetY) / contourScale.value
+
+  contourHoverPhysX.value = px
+  contourHoverPhysY.value = py
+  contourHoverZ.value = arrayZ(px, py)
+  contourHoverVisible.value = true
+}
 
 // ===== Cross-Section View (equal aspect ratio) =====
 const secPad = { top: 24, right: 20, bottom: 36, left: 48 }
@@ -874,6 +941,14 @@ const focalPoint2D = computed(() => {
   for (const r of focused) { sumX += r.endPhysX; sumZ += r.endPhysZ }
   const fpx = sumX / focused.length, fpz = sumZ / focused.length
   return { svgX: rayXScale(fpx), svgY: rayYScale(fpz), x: fpx, z: fpz }
+})
+
+// ===== Focus Efficiency =====
+const focusEfficiency = computed(() => {
+  const all = rays2D.value.filter(r => r.hitSurface)
+  if (all.length === 0) return 0
+  const focused = all.filter(r => r.color === '#3498db')
+  return (focused.length / all.length) * 100
 })
 
 // ===== Info Metrics =====

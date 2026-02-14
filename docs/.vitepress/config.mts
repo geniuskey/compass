@@ -343,6 +343,12 @@ export default withMermaid(defineConfig({
     search: { provider: 'local' },
   },
 
+  vite: {
+    build: {
+      chunkSizeWarningLimit: 1000,
+    },
+  },
+
   markdown: {
     math: true
   },
