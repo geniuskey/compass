@@ -4,7 +4,7 @@ title: MLA Array Visualizer
 
 # MLA Array Visualizer
 
-Visualize micro lens array (MLA) geometry with configurable array patterns, asymmetric lens radii, and curvature parameters. Switch between a top-down height map, cross-section profiles, and 2D ray tracing views.
+Visualize micro lens array (MLA) geometry with configurable array patterns, asymmetric lens radii, and curvature parameters. Switch between contour maps, equal-aspect cross-sections, 3D wireframe surface, and 2D ray tracing views.
 
 <MlaArrayVisualizer />
 
@@ -27,8 +27,9 @@ where the normalized radial distance r is computed from the superellipse equatio
 
 ### Views
 
-- **Height Map** — Top-down color map showing the z-height distribution across the entire array
-- **Cross-Section** — XZ, YZ, and diagonal profiles through the center of a single lens, useful for comparing asymmetric shapes
+- **Contour** — Top-down iso-height contour lines showing the lens footprint shape across the array
+- **Cross-Section** — XZ, YZ, and diagonal profiles with equal x/y scaling, useful for comparing asymmetric shapes
+- **3D Surface** — Interactive wireframe rendering with adjustable elevation and azimuth angles
 - **Ray Trace** — 2D geometric ray tracing through the XZ plane with Snell's law refraction at the lens surface
 
 ::: info
