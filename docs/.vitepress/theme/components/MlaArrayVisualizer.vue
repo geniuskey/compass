@@ -3,8 +3,8 @@
     <h4>{{ t('Micro Lens Array Visualizer', '마이크로 렌즈 어레이 시각화') }}</h4>
     <p class="component-description">
       {{ t(
-        'Visualize superellipse microlens array geometry with contour maps, equal-aspect cross-sections, 3D wireframe, and 2D ray tracing.',
-        '등고선, 등비율 단면, 3D 와이어프레임, 2D 광선 추적으로 초타원 마이크로렌즈 어레이를 시각화합니다.'
+        'Visualize superellipse microlens array geometry with contour maps, equal-aspect cross-sections, interactive 3D surface, and 2D ray tracing.',
+        '등고선, 등비율 단면, 인터랙티브 3D 표면, 2D 광선 추적으로 초타원 마이크로렌즈 어레이를 시각화합니다.'
       ) }}
     </p>
 
@@ -74,12 +74,19 @@
 
     <div v-if="viewMode === '3d'" class="controls-row">
       <div class="slider-group">
-        <label>{{ t('Elevation', '앙각') }}: <strong>{{ elevation }}°</strong></label>
-        <input type="range" min="10" max="80" step="1" v-model.number="elevation" class="ctrl-range" />
+        <label>{{ t('Resolution', '해상도') }}: <strong>{{ meshRes3d }}</strong></label>
+        <input type="range" min="30" max="120" step="10" v-model.number="meshRes3d" class="ctrl-range" />
       </div>
       <div class="slider-group">
-        <label>{{ t('Azimuth', '방위각') }}: <strong>{{ azimuth }}°</strong></label>
-        <input type="range" min="-180" max="180" step="1" v-model.number="azimuth" class="ctrl-range" />
+        <label>{{ t('Colormap', '색상맵') }}:
+          <select v-model="colormap3d" class="ctrl-select">
+            <option value="Viridis">Viridis</option>
+            <option value="Plasma">Plasma</option>
+            <option value="Inferno">Inferno</option>
+            <option value="Jet">Jet</option>
+            <option value="Hot">Hot</option>
+          </select>
+        </label>
       </div>
     </div>
 
@@ -169,10 +176,9 @@
         <text x="10" :y="(secPad.top + secSvgH - secPad.bottom) / 2" text-anchor="middle" class="axis-label" :transform="`rotate(-90, 10, ${(secPad.top + secSvgH - secPad.bottom) / 2})`">Z (um)</text>
       </svg>
 
-      <!-- 3D View (Canvas) -->
-      <div v-if="viewMode === '3d'" class="canvas-wrapper">
-        <canvas ref="canvas3d" :width="canvasW" :height="canvasH" class="mla-canvas"></canvas>
-      </div>
+      <!-- 3D View (Plotly) -->
+      <div v-show="viewMode === '3d'" ref="plotly3dDiv" class="plotly-wrapper"></div>
+      <p v-if="viewMode === '3d' && plotlyLoading" class="loading-text">{{ t('Loading 3D engine...', '3D 엔진 로딩 중...') }}</p>
 
       <!-- 2D Ray Trace View -->
       <svg v-if="viewMode === 'ray'" :viewBox="`0 0 ${svgW} ${svgH}`" class="mla-svg">
@@ -269,8 +275,8 @@ const spacingY = ref(1.0)
 const numRays = ref(15)
 const refIdx = ref(1.56)
 const propDist = ref(8.0)
-const elevation = ref(35)
-const azimuth = ref(-45)
+const meshRes3d = ref(60)
+const colormap3d = ref('Viridis')
 
 const svgW = 560
 const svgH = 400
@@ -598,34 +604,42 @@ const sectionHoverYZ = computed(() => {
   return lensZ(superDist(0, v, Rx.value, Ry.value, n.value), h.value, alpha.value).toFixed(4)
 })
 
-// ===== 3D Canvas View =====
-const canvas3d = ref<HTMLCanvasElement | null>(null)
-const canvasW = 580
-const canvasH = 420
-const meshRes = 50
+// ===== 3D Plotly View =====
+const plotly3dDiv = ref<HTMLElement | null>(null)
+const plotlyLoading = ref(false)
+let plotlyLib: any = null
 
-function draw3D() {
-  const cvs = canvas3d.value
-  if (!cvs) return
-  const ctx = cvs.getContext('2d')
-  if (!ctx) return
+function loadPlotly(): Promise<any> {
+  if (typeof window === 'undefined') return Promise.resolve(null)
+  if ((window as any).Plotly) return Promise.resolve((window as any).Plotly)
+  if (plotlyLib) return Promise.resolve(plotlyLib)
 
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
-  cvs.width = canvasW * dpr
-  cvs.height = canvasH * dpr
-  cvs.style.width = canvasW + 'px'
-  cvs.style.height = canvasH + 'px'
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  return new Promise((resolve, reject) => {
+    plotlyLoading.value = true
+    const script = document.createElement('script')
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js'
+    script.onload = () => {
+      plotlyLib = (window as any).Plotly
+      plotlyLoading.value = false
+      resolve(plotlyLib)
+    }
+    script.onerror = () => {
+      plotlyLoading.value = false
+      reject(new Error('Failed to load Plotly'))
+    }
+    document.head.appendChild(script)
+  })
+}
 
-  // Resolve current CSS vars for background and text color
-  const style = typeof window !== 'undefined' ? getComputedStyle(cvs) : null
-  const bgColor = style?.getPropertyValue('--vp-c-bg')?.trim() || '#fff'
-  const textColor = style?.getPropertyValue('--vp-c-text-2')?.trim() || '#666'
+async function render3D() {
+  const div = plotly3dDiv.value
+  if (!div) return
 
-  ctx.fillStyle = bgColor
-  ctx.fillRect(0, 0, canvasW, canvasH)
+  const Plotly = await loadPlotly()
+  if (!Plotly) return
 
   const rows = arrRows.value, cols = arrCols.value
+  const res = meshRes3d.value
   const ext = (() => {
     if (arrayConfig.value === '1x1') {
       const e = Math.max(Rx.value, Ry.value) * 1.4
@@ -638,145 +652,67 @@ function draw3D() {
 
   const physW = ext.xMax - ext.xMin
   const physH = ext.yMax - ext.yMin
-  const physZ = h.value * 1.5
 
-  // Camera rotation
-  const elRad = (elevation.value * Math.PI) / 180
-  const azRad = (azimuth.value * Math.PI) / 180
-  const cosEl = Math.cos(elRad), sinEl = Math.sin(elRad)
-  const cosAz = Math.cos(azRad), sinAz = Math.sin(azRad)
+  const xArr: number[] = []
+  const yArr: number[] = []
+  const zArr: number[][] = []
 
-  // Normalize to [-1,1] range then project
-  const maxDim = Math.max(physW, physH, physZ)
-
-  function project(x: number, y: number, z: number): { px: number; py: number; depth: number } {
-    const nx = (x - (ext.xMin + ext.xMax) / 2) / maxDim
-    const ny = (y - (ext.yMin + ext.yMax) / 2) / maxDim
-    const nz = z / maxDim
-
-    // Rotate around Z then tilt
-    const rx = nx * cosAz - ny * sinAz
-    const ry = nx * sinAz + ny * cosAz
-    const rz = nz
-
-    const fx = rx
-    const fy = -ry * sinEl + rz * cosEl
-    const depth = ry * cosEl + rz * sinEl
-
-    const scale = 320
-    return {
-      px: canvasW / 2 + fx * scale,
-      py: canvasH / 2 - fy * scale,
-      depth,
+  for (let i = 0; i <= res; i++) {
+    const px = ext.xMin + (physW * i) / res
+    xArr.push(px)
+  }
+  for (let j = 0; j <= res; j++) {
+    const py = ext.yMin + (physH * j) / res
+    yArr.push(py)
+  }
+  for (let i = 0; i <= res; i++) {
+    const row: number[] = []
+    for (let j = 0; j <= res; j++) {
+      row.push(arrayZ(xArr[i], yArr[j]))
     }
+    zArr.push(row)
   }
 
-  // Generate mesh grid
-  const grid: Array<Array<{ x: number; y: number; z: number }>> = []
-  for (let i = 0; i <= meshRes; i++) {
-    const row: Array<{ x: number; y: number; z: number }> = []
-    const px = ext.xMin + (physW * i) / meshRes
-    for (let j = 0; j <= meshRes; j++) {
-      const py = ext.yMin + (physH * j) / meshRes
-      const z = arrayZ(px, py)
-      row.push({ x: px, y: py, z })
-    }
-    grid.push(row)
+  const trace = {
+    x: xArr,
+    y: yArr,
+    z: zArr,
+    type: 'surface',
+    colorscale: colormap3d.value,
+    showscale: true,
+    colorbar: { title: 'Z (um)', thickness: 15, len: 0.7 },
   }
 
-  // Draw wireframe (back-to-front not strictly needed for wireframe but still draw all)
-  ctx.strokeStyle = viridisColor(0.5)
-  ctx.lineWidth = 0.6
-  ctx.globalAlpha = 0.6
-
-  // Row lines (along Y)
-  for (let i = 0; i <= meshRes; i += 2) {
-    ctx.beginPath()
-    for (let j = 0; j <= meshRes; j++) {
-      const p = project(grid[i][j].x, grid[i][j].y, grid[i][j].z)
-      if (j === 0) ctx.moveTo(p.px, p.py)
-      else ctx.lineTo(p.px, p.py)
-    }
-    ctx.stroke()
+  const maxZ = h.value * 2
+  const layout = {
+    margin: { l: 0, r: 0, t: 30, b: 0 },
+    scene: {
+      xaxis: { title: 'X (um)' },
+      yaxis: { title: 'Y (um)' },
+      zaxis: { title: 'Z (um)', range: [0, maxZ] },
+      aspectmode: 'cube' as const,
+    },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    height: 480,
   }
 
-  // Column lines (along X)
-  for (let j = 0; j <= meshRes; j += 2) {
-    ctx.beginPath()
-    for (let i = 0; i <= meshRes; i++) {
-      const p = project(grid[i][j].x, grid[i][j].y, grid[i][j].z)
-      if (i === 0) ctx.moveTo(p.px, p.py)
-      else ctx.lineTo(p.px, p.py)
-    }
-    ctx.stroke()
-  }
+  Plotly.react(div, [trace], layout, { responsive: true })
+}
 
-  // Color-coded height lines over the wireframe
-  ctx.globalAlpha = 0.9
-  ctx.lineWidth = 1.0
-  for (let i = 0; i <= meshRes; i += 2) {
-    for (let j = 0; j < meshRes; j++) {
-      const p1 = project(grid[i][j].x, grid[i][j].y, grid[i][j].z)
-      const p2 = project(grid[i][j + 1].x, grid[i][j + 1].y, grid[i][j + 1].z)
-      const zRatio = (grid[i][j].z + grid[i][j + 1].z) / (2 * h.value)
-      ctx.strokeStyle = viridisColor(Math.min(1, zRatio))
-      ctx.beginPath()
-      ctx.moveTo(p1.px, p1.py)
-      ctx.lineTo(p2.px, p2.py)
-      ctx.stroke()
-    }
-  }
-  for (let j = 0; j <= meshRes; j += 2) {
-    for (let i = 0; i < meshRes; i++) {
-      const p1 = project(grid[i][j].x, grid[i][j].y, grid[i][j].z)
-      const p2 = project(grid[i + 1][j].x, grid[i + 1][j].y, grid[i + 1][j].z)
-      const zRatio = (grid[i][j].z + grid[i + 1][j].z) / (2 * h.value)
-      ctx.strokeStyle = viridisColor(Math.min(1, zRatio))
-      ctx.beginPath()
-      ctx.moveTo(p1.px, p1.py)
-      ctx.lineTo(p2.px, p2.py)
-      ctx.stroke()
-    }
-  }
+let render3dTimer: ReturnType<typeof setTimeout> | null = null
 
-  ctx.globalAlpha = 1.0
-
-  // Draw axes
-  const axLen = 0.35
-  const axes = [
-    { dir: [axLen, 0, 0] as const, label: 'X' },
-    { dir: [0, axLen, 0] as const, label: 'Y' },
-    { dir: [0, 0, axLen * h.value / maxDim * 3] as const, label: 'Z' },
-  ]
-  const origin = project(ext.xMin, ext.yMin, 0)
-
-  ctx.lineWidth = 1.5
-  ctx.font = '11px sans-serif'
-  ctx.fillStyle = textColor
-  for (const ax of axes) {
-    const end = project(
-      ext.xMin + ax.dir[0] * maxDim,
-      ext.yMin + ax.dir[1] * maxDim,
-      ax.dir[2] * maxDim,
-    )
-    ctx.strokeStyle = textColor
-    ctx.beginPath()
-    ctx.moveTo(origin.px, origin.py)
-    ctx.lineTo(end.px, end.py)
-    ctx.stroke()
-    ctx.fillText(ax.label, end.px + 4, end.py - 4)
-  }
+function debouncedRender3D() {
+  if (render3dTimer) clearTimeout(render3dTimer)
+  render3dTimer = setTimeout(render3D, 80)
 }
 
 watch(
-  [arrayConfig, Rx, Ry, h, n, alpha, spacingX, spacingY, elevation, azimuth, viewMode],
-  () => { if (viewMode.value === '3d') nextTick(draw3D) },
+  [arrayConfig, Rx, Ry, h, n, alpha, spacingX, spacingY, meshRes3d, colormap3d],
+  () => { if (viewMode.value === '3d') debouncedRender3D() },
 )
 
-onMounted(() => { if (viewMode.value === '3d') nextTick(draw3D) })
-
-// Also draw when switching to 3D tab
-watch(viewMode, (nv) => { if (nv === '3d') nextTick(() => nextTick(draw3D)) })
+watch(viewMode, (nv) => { if (nv === '3d') nextTick(render3D) })
 
 // ===== 2D Ray Trace View =====
 const rPad = { top: 24, right: 20, bottom: 36, left: 48 }
@@ -1047,15 +983,19 @@ const fillFactor = computed(() => {
   width: 100%;
   max-width: 580px;
 }
-.canvas-wrapper {
-  display: flex;
-  justify-content: center;
-}
-.mla-canvas {
-  max-width: 100%;
+.plotly-wrapper {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
   border-radius: 6px;
   border: 1px solid var(--vp-c-divider);
-  background: var(--vp-c-bg);
+  overflow: hidden;
+}
+.loading-text {
+  text-align: center;
+  color: var(--vp-c-text-2);
+  font-size: 0.85em;
+  margin: 8px 0 0;
 }
 .axis-label {
   font-size: 9px;
