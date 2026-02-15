@@ -55,6 +55,14 @@ import PixelScalingTrends from './components/PixelScalingTrends.vue'
 import ColorAccuracyAnalyzer from './components/ColorAccuracyAnalyzer.vue'
 import DarkCurrentSimulator from './components/DarkCurrentSimulator.vue'
 import MlaArrayVisualizer from './components/MlaArrayVisualizer.vue'
+import PhotonTransferCurve from './components/PhotonTransferCurve.vue'
+import DynamicRangeCalculator from './components/DynamicRangeCalculator.vue'
+import EMVA1288Dashboard from './components/EMVA1288Dashboard.vue'
+import LensShadingSimulator from './components/LensShadingSimulator.vue'
+import PRNUVisualizer from './components/PRNUVisualizer.vue'
+import PixelSNRvsIlluminance from './components/PixelSNRvsIlluminance.vue'
+import ResponsivityCalculator from './components/ResponsivityCalculator.vue'
+import LinearityAnalyzer from './components/LinearityAnalyzer.vue'
 
 function isLocaleSwitch(from: string, to: string): boolean {
   const stripKo = (p: string) => p.replace(/^\/ko\//, '/')
@@ -144,5 +152,13 @@ export default {
     app.component('ColorAccuracyAnalyzer', ColorAccuracyAnalyzer)
     app.component('DarkCurrentSimulator', DarkCurrentSimulator)
     app.component('MlaArrayVisualizer', MlaArrayVisualizer)
+    app.component('PhotonTransferCurve', PhotonTransferCurve)
+    app.component('DynamicRangeCalculator', DynamicRangeCalculator)
+    app.component('EMVA1288Dashboard', EMVA1288Dashboard)
+    app.component('LensShadingSimulator', LensShadingSimulator)
+    app.component('PRNUVisualizer', PRNUVisualizer)
+    app.component('PixelSNRvsIlluminance', PixelSNRvsIlluminance)
+    app.component('ResponsivityCalculator', ResponsivityCalculator)
+    app.component('LinearityAnalyzer', LinearityAnalyzer)
   },
 }
