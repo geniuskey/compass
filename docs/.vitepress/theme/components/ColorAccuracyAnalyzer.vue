@@ -39,6 +39,37 @@
           @click="deMethod = m.key"
         >{{ m.label }}</button>
       </div>
+      <div class="select-group">
+        <label class="select-label">{{ t('Illuminant', '광원') }}</label>
+        <select v-model="illuminant" class="ctrl-select">
+          <option v-for="(ill, key) in ILLUMINANTS" :key="key" :value="key">{{ ill.label }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Action row -->
+    <div class="action-row">
+      <button class="action-btn" @click="runOptimization" :disabled="optimizing">
+        {{ optimizing ? t('Optimizing...', '최적화 중...') : t('Auto Optimize', '자동 최적화') }}
+      </button>
+      <button class="action-btn" @click="takeSnapshot">{{ t('Snapshot', '스냅샷') }}</button>
+      <button class="action-btn" v-if="snapshot" @click="snapshot = null">{{ t('Clear', '삭제') }}</button>
+      <button class="action-btn" @click="exportCsv">CSV</button>
+      <button class="action-btn" @click="exportPng">PNG</button>
+    </div>
+
+    <!-- Optimization result -->
+    <div class="opt-result" v-if="optResult">
+      {{ t('Optimal', '최적') }}: Si={{ optResult.si.toFixed(1) }}&mu;m, BW={{ optResult.bw }}nm &rarr; {{ deAxisLabel }}={{ optResult.avgDE.toFixed(2) }}
+    </div>
+
+    <!-- Snapshot comparison -->
+    <div class="snapshot-bar" v-if="snapshot">
+      <span class="snap-label">{{ t('Snapshot', '스냅샷') }}: {{ snapshot.label }}</span>
+      <span class="snap-stat">Avg={{ snapshot.avgDE.toFixed(2) }}</span>
+      <span class="snap-delta" :style="{ color: avgDeltaE - snapshot.avgDE < 0 ? '#27ae60' : '#e74c3c' }">
+        ({{ avgDeltaE - snapshot.avgDE > 0 ? '+' : '' }}{{ (avgDeltaE - snapshot.avgDE).toFixed(2) }})
+      </span>
     </div>
 
     <!-- Summary bar -->
@@ -191,6 +222,21 @@
             :x="pad.left - 6" :y="yScale(tick) + 3"
             text-anchor="end" class="tick-label"
           >{{ tick }}</text>
+          <!-- Snapshot ghost bars -->
+          <template v-if="snapshot && snapshot.patchDEs.length === patchResults.length">
+            <rect
+              v-for="(de, idx) in snapshot.patchDEs" :key="'snap'+idx"
+              :x="barX(idx)"
+              :y="yScale(de)"
+              :width="barWidth"
+              :height="Math.max(0, pad.top + plotH - yScale(de))"
+              fill="none"
+              stroke="var(--vp-c-text-3)"
+              stroke-width="1"
+              stroke-dasharray="2,2"
+              opacity="0.4"
+            />
+          </template>
           <rect
             v-for="(patch, idx) in patchResults" :key="'bar'+idx"
             :x="barX(idx)"
@@ -225,14 +271,68 @@
       </div>
     </div>
 
-    <!-- Export -->
-    <div class="export-row">
-      <button class="export-btn" @click="exportCsv">
-        {{ t('Export CSV', 'CSV 내보내기') }}
-      </button>
-      <button class="export-btn" @click="exportPng">
-        {{ t('Export PNG', 'PNG 내보내기') }}
-      </button>
+    <!-- a*b* Chromaticity Diagram -->
+    <div class="chart-section">
+      <h5>{{ t('a*b* Chromaticity Diagram', 'a*b* 색도 다이어그램') }}</h5>
+      <div class="svg-wrapper">
+        <svg :viewBox="`0 0 ${abW} ${abH}`" class="ab-svg">
+          <!-- Grid -->
+          <line
+            v-for="tick in abTicks" :key="'abxg'+tick"
+            :x1="abXScale(tick)" :y1="abPad.top"
+            :x2="abXScale(tick)" :y2="abPad.top + abPlotS"
+            stroke="var(--vp-c-divider)" :stroke-width="tick === 0 ? 1 : 0.5"
+            :stroke-dasharray="tick === 0 ? 'none' : '3,3'"
+          />
+          <line
+            v-for="tick in abTicks" :key="'abyg'+tick"
+            :x1="abPad.left" :y1="abYScale(tick)"
+            :x2="abPad.left + abPlotS" :y2="abYScale(tick)"
+            stroke="var(--vp-c-divider)" :stroke-width="tick === 0 ? 1 : 0.5"
+            :stroke-dasharray="tick === 0 ? 'none' : '3,3'"
+          />
+          <!-- Tick labels -->
+          <text
+            v-for="tick in abTicks" :key="'abxl'+tick"
+            :x="abXScale(tick)" :y="abPad.top + abPlotS + 14"
+            text-anchor="middle" class="tick-label"
+          >{{ tick }}</text>
+          <text
+            v-for="tick in abTicks" :key="'abyl'+tick"
+            :x="abPad.left - 6" :y="abYScale(tick) + 3"
+            text-anchor="end" class="tick-label"
+          >{{ tick }}</text>
+          <!-- Axis titles -->
+          <text :x="abPad.left + abPlotS / 2" :y="abPad.top + abPlotS + 26" text-anchor="middle" class="axis-title">a*</text>
+          <text :x="6" :y="abPad.top + abPlotS / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 6, ${abPad.top + abPlotS / 2})`">b*</text>
+          <!-- Error lines -->
+          <line
+            v-for="(p, idx) in patchResults" :key="'aberr'+idx"
+            :x1="abXScale(p.refLab[1])" :y1="abYScale(p.refLab[2])"
+            :x2="abXScale(p.corrLab[1])" :y2="abYScale(p.corrLab[2])"
+            stroke="var(--vp-c-text-3)" :stroke-width="chartType === 'sg' ? 0.5 : 1" :opacity="chartType === 'sg' ? 0.3 : 0.5"
+          />
+          <!-- Reference points -->
+          <circle
+            v-for="(p, idx) in patchResults" :key="'abref'+idx"
+            :cx="abXScale(p.refLab[1])" :cy="abYScale(p.refLab[2])"
+            :r="chartType === 'sg' ? 2 : 4"
+            :fill="rgbStr(p.refSrgb)" stroke="var(--vp-c-text-3)" :stroke-width="chartType === 'sg' ? 0.3 : 0.5"
+          />
+          <!-- Corrected points -->
+          <circle
+            v-for="(p, idx) in patchResults" :key="'abcorr'+idx"
+            :cx="abXScale(p.corrLab[1])" :cy="abYScale(p.corrLab[2])"
+            :r="chartType === 'sg' ? 1.5 : 3"
+            fill="none" :stroke="rgbStr(p.corrSrgb)" :stroke-width="chartType === 'sg' ? 0.8 : 1.5"
+          />
+          <!-- Legend -->
+          <circle :cx="abPad.left + abPlotS - 50" :cy="abPad.top + 8" r="4" fill="#888" stroke="var(--vp-c-text-3)" stroke-width="0.5" />
+          <text :x="abPad.left + abPlotS - 42" :y="abPad.top + 11" class="tick-label">{{ t('Reference', '기준') }}</text>
+          <circle :cx="abPad.left + abPlotS - 50" :cy="abPad.top + 20" r="3" fill="none" stroke="#888" stroke-width="1.5" />
+          <text :x="abPad.left + abPlotS - 42" :y="abPad.top + 23" class="tick-label">{{ t('Corrected', '보정') }}</text>
+        </svg>
+      </div>
     </div>
   </div>
 </template>
@@ -249,6 +349,12 @@ const siThickness = ref(3.0)
 const cfBandwidth = ref(100)
 const chartType = ref<'classic' | 'sg'>('classic')
 const patchView = ref<'swatch' | 'heatmap'>('swatch')
+const illuminant = ref('D65')
+const optimizing = ref(false)
+const optResult = ref<{ si: number; bw: number; avgDE: number } | null>(null)
+
+interface Snapshot { label: string; avgDE: number; maxDE: number; patchDEs: number[] }
+const snapshot = ref<Snapshot | null>(null)
 
 type DEMethod = 'cie76' | 'cie94' | 'ciede2000'
 const deMethod = ref<DEMethod>('ciede2000')
@@ -327,8 +433,17 @@ const SG_NAMES: string[] = (() => {
   return names
 })()
 
+// ---- Illuminant data (7 wavelengths 400-700nm @ 50nm) ----
+const ILLUMINANTS: Record<string, { spd: number[]; label: string }> = {
+  D65: { spd: [82.75, 109.35, 117.01, 114.86, 100.0, 90.01, 71.61], label: 'D65 (Daylight)' },
+  D50: { spd: [54.65, 100.27, 122.97, 112.59, 100.0, 78.66, 55.78], label: 'D50 (Warm)' },
+  A:   { spd: [11.46, 25.62, 51.12, 72.17, 100.0, 125.75, 145.11], label: 'A (Tungsten)' },
+  F2:  { spd: [24.82, 65.85, 80.03, 95.72, 100.0, 64.89, 17.22], label: 'F2 (Fluorescent)' },
+}
+
+const activeIlluminant = computed(() => ILLUMINANTS[illuminant.value].spd)
+
 // ---- Constants ----
-const D65 = [82.75, 109.35, 117.01, 114.86, 100.0, 90.01, 71.61]
 const WL_UM = [0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70]
 const LN2 = Math.log(2)
 const CF_CENTERS = { red: 0.620, green: 0.530, blue: 0.450 }
@@ -343,16 +458,18 @@ function cfTransmittance(wlUm: number, centerUm: number, fwhmNm: number): number
   return Math.exp(-4 * LN2 * ((wlUm - centerUm) / fwhmUm) ** 2)
 }
 
-function computeQE(color: 'red' | 'green' | 'blue', wlUm: number): number {
-  const stack = defaultBsiStack(color, siThickness.value)
+function computeQEAt(color: 'red' | 'green' | 'blue', wlUm: number, siThick: number): number {
+  const stack = defaultBsiStack(color, siThick)
   const result = tmmCalc(stack, 'air', 'sio2', wlUm, 0, 'avg')
   return result.layerA[SI_LAYER_IDX]
 }
 
+function sensorResponseAt(color: 'red' | 'green' | 'blue', wlUm: number, siThick: number, cfBw: number): number {
+  return computeQEAt(color, wlUm, siThick) * cfTransmittance(wlUm, CF_CENTERS[color], cfBw)
+}
+
 function sensorResponse(color: 'red' | 'green' | 'blue', wlUm: number): number {
-  const qe = computeQE(color, wlUm)
-  const cfT = cfTransmittance(wlUm, CF_CENTERS[color], cfBandwidth.value)
-  return qe * cfT
+  return sensorResponseAt(color, wlUm, siThickness.value, cfBandwidth.value)
 }
 
 // ---- QE Spectra computed ----
@@ -613,12 +730,13 @@ function mat3Vec(m: number[][], v: number[]): number[] {
 // ---- Pipeline: compute CCM + sensor data once ----
 const pipeline = computed(() => {
   const patches = activePatches.value
+  const illum = activeIlluminant.value
   const sensorR = WL_UM.map(wl => sensorResponse('red', wl))
   const sensorG = WL_UM.map(wl => sensorResponse('green', wl))
   const sensorB = WL_UM.map(wl => sensorResponse('blue', wl))
   const sensorRGB = patches.map(patch => {
     let rS = 0, gS = 0, bS = 0
-    for (let i = 0; i < 7; i++) { const w = patch.refl[i] * D65[i]; rS += w * sensorR[i]; gS += w * sensorG[i]; bS += w * sensorB[i] }
+    for (let i = 0; i < 7; i++) { const w = patch.refl[i] * illum[i]; rS += w * sensorR[i]; gS += w * sensorG[i]; bS += w * sensorB[i] }
     return [rS, gS, bS]
   })
   const targetLinear = patches.map(patch => [srgbToLinear(patch.srgb[0]), srgbToLinear(patch.srgb[1]), srgbToLinear(patch.srgb[2])])
@@ -632,12 +750,12 @@ const pipeline = computed(() => {
 const ccmMatrix = computed(() => pipeline.value.ccm)
 
 // ---- Main patch results ----
-interface PatchResult { name: string; refSrgb: number[]; corrSrgb: number[]; deltaE: number }
+interface PatchResult { name: string; refSrgb: number[]; corrSrgb: number[]; refLab: number[]; corrLab: number[]; deltaE: number }
 
 const patchResults = computed<PatchResult[]>(() => {
   const patches = activePatches.value
   const { ccm, sensorRGB } = pipeline.value
-  if (!ccm) return patches.map(p => ({ name: p.name, refSrgb: p.srgb, corrSrgb: [128,128,128], deltaE: 99 }))
+  if (!ccm) return patches.map(p => ({ name: p.name, refSrgb: p.srgb, corrSrgb: [128,128,128], refLab: [50,0,0], corrLab: [50,0,0], deltaE: 99 }))
   return patches.map((patch, idx) => {
     const corrLinear = mat3Vec(ccm, sensorRGB[idx])
     const corrSrgb = [linearToSrgb(corrLinear[0]), linearToSrgb(corrLinear[1]), linearToSrgb(corrLinear[2])]
@@ -645,7 +763,7 @@ const patchResults = computed<PatchResult[]>(() => {
     const cc = corrLinear.map(v => Math.max(0, Math.min(1, v)))
     const corrXYZ = [0, 1, 2].map(r => SRGB_TO_XYZ[r][0]*cc[0] + SRGB_TO_XYZ[r][1]*cc[1] + SRGB_TO_XYZ[r][2]*cc[2])
     const corrLab = xyzToLab(corrXYZ)
-    return { name: patch.name, refSrgb: patch.srgb, corrSrgb, deltaE: calcDeltaE(refLab, corrLab) }
+    return { name: patch.name, refSrgb: patch.srgb, corrSrgb, refLab, corrLab, deltaE: calcDeltaE(refLab, corrLab) }
   })
 })
 
@@ -819,6 +937,103 @@ function exportPng() {
     a.click()
     URL.revokeObjectURL(url)
   })
+}
+
+// ---- Snapshot ----
+function takeSnapshot() {
+  snapshot.value = {
+    label: `Si=${siThickness.value}μm, BW=${cfBandwidth.value}nm, ${illuminant.value}`,
+    avgDE: avgDeltaE.value,
+    maxDE: maxDeltaE.value,
+    patchDEs: patchResults.value.map(p => p.deltaE),
+  }
+}
+
+// ---- Auto Optimization ----
+function computeAvgDE(patches: PatchData[], illum: number[], siThick: number, cfBw: number): number {
+  const sR = WL_UM.map(wl => sensorResponseAt('red', wl, siThick, cfBw))
+  const sG = WL_UM.map(wl => sensorResponseAt('green', wl, siThick, cfBw))
+  const sB = WL_UM.map(wl => sensorResponseAt('blue', wl, siThick, cfBw))
+  const sensorRGB = patches.map(p => {
+    let r = 0, g = 0, b = 0
+    for (let i = 0; i < 7; i++) { const w = p.refl[i] * illum[i]; r += w * sR[i]; g += w * sG[i]; b += w * sB[i] }
+    return [r, g, b]
+  })
+  const targetLinear = patches.map(p => [srgbToLinear(p.srgb[0]), srgbToLinear(p.srgb[1]), srgbToLinear(p.srgb[2])])
+  const STSinv = mat3x3Inverse(matTransposeMulNx3(sensorRGB))
+  if (!STSinv) return 99
+  const CCM = matMul3x3(STSinv, matSTmulT(sensorRGB, targetLinear))
+  let total = 0
+  for (let idx = 0; idx < patches.length; idx++) {
+    const corrLinear = mat3Vec(CCM, sensorRGB[idx])
+    const refLab = xyzToLab(srgbToXYZ(patches[idx].srgb))
+    const cc = corrLinear.map(v => Math.max(0, Math.min(1, v)))
+    const corrXYZ = [0, 1, 2].map(r => SRGB_TO_XYZ[r][0] * cc[0] + SRGB_TO_XYZ[r][1] * cc[1] + SRGB_TO_XYZ[r][2] * cc[2])
+    total += calcDeltaE(refLab, xyzToLab(corrXYZ))
+  }
+  return total / patches.length
+}
+
+function runOptimization() {
+  optimizing.value = true
+  optResult.value = null
+  requestAnimationFrame(() => {
+    const patches = activePatches.value
+    const illum = activeIlluminant.value
+    let bestAvg = Infinity, bestSi = 3.0, bestBw = 100
+    for (let si = 10; si <= 50; si += 2) {
+      for (let bw = 50; bw <= 150; bw += 5) {
+        const avg = computeAvgDE(patches, illum, si / 10, bw)
+        if (avg < bestAvg) { bestAvg = avg; bestSi = si / 10; bestBw = bw }
+      }
+    }
+    // Fine pass
+    const siMin = Math.max(10, Math.round(bestSi * 10) - 2)
+    const siMax = Math.min(50, Math.round(bestSi * 10) + 2)
+    const bwMin = Math.max(50, bestBw - 5)
+    const bwMax = Math.min(150, bestBw + 5)
+    for (let si = siMin; si <= siMax; si++) {
+      for (let bw = bwMin; bw <= bwMax; bw += 5) {
+        const avg = computeAvgDE(patches, illum, si / 10, bw)
+        if (avg < bestAvg) { bestAvg = avg; bestSi = si / 10; bestBw = bw }
+      }
+    }
+    siThickness.value = bestSi
+    cfBandwidth.value = bestBw
+    optResult.value = { si: bestSi, bw: bestBw, avgDE: bestAvg }
+    optimizing.value = false
+  })
+}
+
+// ---- a*b* Chromaticity Diagram ----
+const abW = 360
+const abH = 360
+const abPad = { top: 12, right: 12, bottom: 32, left: 36 }
+const abPlotS = Math.min(abW - abPad.left - abPad.right, abH - abPad.top - abPad.bottom)
+
+const abRange = computed(() => {
+  const results = patchResults.value
+  let m = 40
+  for (const p of results) {
+    m = Math.max(m, Math.abs(p.refLab[1]), Math.abs(p.refLab[2]), Math.abs(p.corrLab[1]), Math.abs(p.corrLab[2]))
+  }
+  return Math.ceil(m / 20) * 20 + 10
+})
+
+const abTicks = computed(() => {
+  const r = abRange.value
+  const step = r <= 60 ? 20 : 40
+  const ticks: number[] = []
+  for (let v = -r; v <= r; v += step) ticks.push(v)
+  return ticks
+})
+
+function abXScale(a: number): number {
+  return abPad.left + ((a + abRange.value) / (2 * abRange.value)) * abPlotS
+}
+
+function abYScale(b: number): number {
+  return abPad.top + abPlotS - ((b + abRange.value) / (2 * abRange.value)) * abPlotS
 }
 </script>
 
@@ -1103,13 +1318,35 @@ function exportPng() {
   font-family: var(--vp-font-family-mono);
 }
 
-/* Export */
-.export-row {
+/* Illuminant select */
+.select-group {
   display: flex;
+  align-items: center;
   gap: 8px;
-  justify-content: flex-end;
 }
-.export-btn {
+.select-label {
+  font-size: 0.85em;
+  color: var(--vp-c-text-2);
+  white-space: nowrap;
+}
+.ctrl-select {
+  padding: 5px 10px;
+  font-size: 0.82em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  cursor: pointer;
+}
+
+/* Action row */
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.action-btn {
   padding: 6px 16px;
   font-size: 0.82em;
   font-weight: 500;
@@ -1120,9 +1357,63 @@ function exportPng() {
   cursor: pointer;
   transition: all 0.2s;
 }
-.export-btn:hover {
+.action-btn:hover {
   background: var(--vp-c-brand-1);
   color: #fff;
   border-color: var(--vp-c-brand-1);
+}
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.action-btn:disabled:hover {
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  border-color: var(--vp-c-divider);
+}
+
+/* Optimization result */
+.opt-result {
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  background: var(--vp-c-brand-soft);
+  border-radius: 8px;
+  font-size: 0.85em;
+  font-family: var(--vp-font-family-mono);
+  color: var(--vp-c-brand-1);
+}
+
+/* Snapshot bar */
+.snapshot-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  font-size: 0.85em;
+}
+.snap-label {
+  color: var(--vp-c-text-2);
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.9em;
+}
+.snap-stat {
+  font-weight: 600;
+  font-family: var(--vp-font-family-mono);
+}
+.snap-delta {
+  font-weight: 700;
+  font-family: var(--vp-font-family-mono);
+}
+
+/* a*b* diagram */
+.ab-svg {
+  width: 100%;
+  max-width: 400px;
+  display: block;
+  margin: 0 auto;
 }
 </style>
