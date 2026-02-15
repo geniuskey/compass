@@ -210,6 +210,10 @@ const simulatorSidebar = [
   { text: 'Performance Analysis', collapsed: false, items: [
     { text: 'Angular Response', link: '/simulator/angular-response' },
     { text: 'SNR Calculator', link: '/simulator/snr-calculator' },
+    { text: 'Photon Transfer Curve', link: '/simulator/photon-transfer-curve' },
+    { text: 'SNR vs Illuminance', link: '/simulator/pixel-snr-vs-illuminance' },
+    { text: 'Dynamic Range', link: '/simulator/dynamic-range' },
+    { text: 'Responsivity', link: '/simulator/responsivity-calculator' },
   ]},
   { text: 'Design Tools', collapsed: false, items: [
     { text: 'Color Filter Designer', link: '/simulator/color-filter' },
@@ -221,12 +225,16 @@ const simulatorSidebar = [
     { text: 'MLA Array Visualizer', link: '/simulator/mla-array' },
     { text: 'Fabry-Pérot Visualizer', link: '/simulator/fabry-perot' },
     { text: 'Diffraction PSF', link: '/simulator/diffraction-psf' },
+    { text: 'Lens Shading', link: '/simulator/lens-shading' },
   ]},
   { text: 'System Analysis', collapsed: false, items: [
     { text: 'MTF Analyzer', link: '/simulator/mtf-analyzer' },
     { text: 'Pixel Scaling Trends', link: '/simulator/pixel-scaling' },
     { text: 'Color Accuracy (ΔE)', link: '/simulator/color-accuracy' },
     { text: 'Dark Current & Temp', link: '/simulator/dark-current' },
+    { text: 'Linearity Analyzer', link: '/simulator/linearity-analyzer' },
+    { text: 'EMVA 1288 Dashboard', link: '/simulator/emva1288' },
+    { text: 'PRNU / DSNU', link: '/simulator/prnu-visualizer' },
   ]},
 ]
 
@@ -240,6 +248,10 @@ const simulatorSidebarKo = [
   { text: '성능 분석', collapsed: false, items: [
     { text: '각도 응답', link: '/ko/simulator/angular-response' },
     { text: 'SNR 계산기', link: '/ko/simulator/snr-calculator' },
+    { text: '광자 전달 곡선', link: '/ko/simulator/photon-transfer-curve' },
+    { text: 'SNR vs 조도', link: '/ko/simulator/pixel-snr-vs-illuminance' },
+    { text: '다이나믹 레인지', link: '/ko/simulator/dynamic-range' },
+    { text: '응답도 계산기', link: '/ko/simulator/responsivity-calculator' },
   ]},
   { text: '설계 도구', collapsed: false, items: [
     { text: '컬러 필터 설계', link: '/ko/simulator/color-filter' },
@@ -251,12 +263,16 @@ const simulatorSidebarKo = [
     { text: 'MLA 어레이 시각화', link: '/ko/simulator/mla-array' },
     { text: '파브리-페로 시각화', link: '/ko/simulator/fabry-perot' },
     { text: '회절 PSF', link: '/ko/simulator/diffraction-psf' },
+    { text: '렌즈 쉐이딩', link: '/ko/simulator/lens-shading' },
   ]},
   { text: '시스템 분석', collapsed: false, items: [
     { text: 'MTF 분석기', link: '/ko/simulator/mtf-analyzer' },
     { text: '픽셀 스케일링', link: '/ko/simulator/pixel-scaling' },
     { text: '색 정확도 (ΔE)', link: '/ko/simulator/color-accuracy' },
     { text: '암전류 & 온도', link: '/ko/simulator/dark-current' },
+    { text: '선형성 분석기', link: '/ko/simulator/linearity-analyzer' },
+    { text: 'EMVA 1288 대시보드', link: '/ko/simulator/emva1288' },
+    { text: 'PRNU / DSNU', link: '/ko/simulator/prnu-visualizer' },
   ]},
 ]
 
