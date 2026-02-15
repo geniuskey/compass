@@ -45,6 +45,28 @@
           <option v-for="(ill, key) in ILLUMINANTS" :key="key" :value="key">{{ ill.label }}</option>
         </select>
       </div>
+      <div class="chart-toggle">
+        <button v-for="m in WB_METHODS" :key="m.key"
+          :class="['toggle-btn', { active: wbMethod === m.key }]"
+          @click="wbMethod = m.key"
+        >{{ m.label }}</button>
+      </div>
+    </div>
+
+    <!-- Noise controls -->
+    <div class="controls-row">
+      <div class="slider-group">
+        <label>
+          {{ t('Shot Noise', '샷 노이즈') }}: <strong>{{ shotNoise }} e&minus;</strong>
+        </label>
+        <input type="range" min="0" max="100" step="5" v-model.number="shotNoise" class="ctrl-range" />
+      </div>
+      <div class="slider-group">
+        <label>
+          {{ t('Read Noise', '리드 노이즈') }}: <strong>{{ readNoise }} e&minus;</strong>
+        </label>
+        <input type="range" min="0" max="50" step="1" v-model.number="readNoise" class="ctrl-range" />
+      </div>
     </div>
 
     <!-- Action row -->
@@ -56,6 +78,7 @@
       <button class="action-btn" v-if="snapshot" @click="snapshot = null">{{ t('Clear', '삭제') }}</button>
       <button class="action-btn" @click="exportCsv">CSV</button>
       <button class="action-btn" @click="exportPng">PNG</button>
+      <button class="action-btn" @click="saveCondition">{{ t('Save Config', '설정 저장') }}</button>
     </div>
 
     <!-- Optimization result -->
@@ -334,6 +357,86 @@
         </svg>
       </div>
     </div>
+
+    <!-- CIE xy Chromaticity Diagram -->
+    <div class="chart-section">
+      <h5>{{ t('CIE xy Gamut Coverage', 'CIE xy 색역 커버리지') }}</h5>
+      <div class="gamut-stats">
+        <span v-for="g in gamutStats" :key="g.name" class="gamut-tag" :style="{ borderColor: g.color }">
+          {{ g.name }}: {{ g.pct.toFixed(0) }}%
+        </span>
+      </div>
+      <div class="svg-wrapper">
+        <svg :viewBox="`0 0 ${xyW} ${xyH}`" class="ab-svg">
+          <path :d="spectralLocusPath" fill="none" stroke="var(--vp-c-text-3)" stroke-width="1" />
+          <polygon :points="gamutTriangle(SRGB_PRIM)" fill="none" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.7" />
+          <polygon :points="gamutTriangle(P3_PRIM)" fill="none" stroke="#8e44ad" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.7" />
+          <polygon :points="gamutTriangle(BT2020_PRIM)" fill="none" stroke="#2980b9" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.7" />
+          <line :x1="xyPad.left" :y1="xyPad.top" :x2="xyPad.left" :y2="xyPad.top + xyPlotS" stroke="var(--vp-c-text-2)" stroke-width="1" />
+          <line :x1="xyPad.left" :y1="xyPad.top + xyPlotS" :x2="xyPad.left + xyPlotS" :y2="xyPad.top + xyPlotS" stroke="var(--vp-c-text-2)" stroke-width="1" />
+          <template v-for="tick in xyTicks" :key="'xyt'+tick">
+            <text :x="xyXScale(tick)" :y="xyPad.top + xyPlotS + 14" text-anchor="middle" class="tick-label">{{ tick.toFixed(1) }}</text>
+            <text :x="xyPad.left - 6" :y="xyYScale(tick) + 3" text-anchor="end" class="tick-label">{{ tick.toFixed(1) }}</text>
+          </template>
+          <text :x="xyPad.left + xyPlotS / 2" :y="xyPad.top + xyPlotS + 26" text-anchor="middle" class="axis-title">x</text>
+          <text :x="6" :y="xyPad.top + xyPlotS / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 6, ${xyPad.top + xyPlotS / 2})`">y</text>
+          <circle v-for="(p, idx) in xyRefPoints" :key="'xyref'+idx"
+            :cx="xyXScale(p.x)" :cy="xyYScale(p.y)"
+            :r="chartType === 'sg' ? 2 : 4"
+            :fill="rgbStr(p.rgb)" stroke="var(--vp-c-text-3)" :stroke-width="chartType === 'sg' ? 0.3 : 0.5"
+          />
+          <circle v-for="(p, idx) in xyCorrPoints" :key="'xycorr'+idx"
+            :cx="xyXScale(p.x)" :cy="xyYScale(p.y)"
+            :r="chartType === 'sg' ? 1.5 : 3"
+            fill="none" :stroke="rgbStr(p.rgb)" :stroke-width="chartType === 'sg' ? 0.8 : 1.5"
+          />
+          <line :x1="xyPad.left + 4" :y1="xyPad.top + 8" :x2="xyPad.left + 16" :y2="xyPad.top + 8" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="4,2" />
+          <text :x="xyPad.left + 20" :y="xyPad.top + 11" class="tick-label">sRGB</text>
+          <line :x1="xyPad.left + 4" :y1="xyPad.top + 20" :x2="xyPad.left + 16" :y2="xyPad.top + 20" stroke="#8e44ad" stroke-width="1.5" stroke-dasharray="4,2" />
+          <text :x="xyPad.left + 20" :y="xyPad.top + 23" class="tick-label">DCI-P3</text>
+          <line :x1="xyPad.left + 4" :y1="xyPad.top + 32" :x2="xyPad.left + 16" :y2="xyPad.top + 32" stroke="#2980b9" stroke-width="1.5" stroke-dasharray="4,2" />
+          <text :x="xyPad.left + 20" :y="xyPad.top + 35" class="tick-label">BT.2020</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Multi-condition comparison -->
+    <div class="compare-section" v-if="savedConditions.length > 0">
+      <h5>{{ t('Condition Comparison', '조건 비교') }}</h5>
+      <div class="compare-table-wrapper">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Si (&mu;m)</th>
+              <th>BW (nm)</th>
+              <th>{{ t('Illuminant', '광원') }}</th>
+              <th>WB</th>
+              <th>{{ t('Noise', '노이즈') }}</th>
+              <th>Avg {{ deAxisLabel }}</th>
+              <th>Max {{ deAxisLabel }}</th>
+              <th>&lt;3</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(cond, idx) in savedConditions" :key="idx"
+              :class="{ 'best-row': cond.avgDE === bestSavedAvgDE }">
+              <td>{{ idx + 1 }}</td>
+              <td>{{ cond.si.toFixed(1) }}</td>
+              <td>{{ cond.bw }}</td>
+              <td>{{ cond.illuminant }}</td>
+              <td>{{ cond.wb }}</td>
+              <td>{{ cond.noiseLabel }}</td>
+              <td class="mono-val">{{ cond.avgDE.toFixed(2) }}</td>
+              <td class="mono-val">{{ cond.maxDE.toFixed(2) }}</td>
+              <td class="mono-val">{{ cond.excellentPct.toFixed(0) }}%</td>
+              <td><button class="del-btn" @click="savedConditions.splice(idx, 1)">&times;</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -350,11 +453,25 @@ const cfBandwidth = ref(100)
 const chartType = ref<'classic' | 'sg'>('classic')
 const patchView = ref<'swatch' | 'heatmap'>('swatch')
 const illuminant = ref('D65')
+const wbMethod = ref<'none' | 'grayworld' | 'patch'>('none')
+const WB_METHODS = [
+  { key: 'none' as const, label: 'No WB' },
+  { key: 'grayworld' as const, label: 'Gray World' },
+  { key: 'patch' as const, label: 'Neutral Patch' },
+]
+const shotNoise = ref(0)
+const readNoise = ref(0)
 const optimizing = ref(false)
 const optResult = ref<{ si: number; bw: number; avgDE: number } | null>(null)
 
 interface Snapshot { label: string; avgDE: number; maxDE: number; patchDEs: number[] }
 const snapshot = ref<Snapshot | null>(null)
+
+interface SavedCondition {
+  si: number; bw: number; illuminant: string; wb: string; noiseLabel: string
+  avgDE: number; maxDE: number; excellentPct: number
+}
+const savedConditions = ref<SavedCondition[]>([])
 
 type DEMethod = 'cie76' | 'cie94' | 'ciede2000'
 const deMethod = ref<DEMethod>('ciede2000')
@@ -681,6 +798,45 @@ function reconstructRefl(srgb: number[]): number[] {
   })
 }
 
+// ---- Seeded PRNG for noise ----
+function mulberry32(seed: number): () => number {
+  let a = seed | 0
+  return () => {
+    a = a + 0x6D2B79F5 | 0
+    let t = Math.imul(a ^ a >>> 15, 1 | a)
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t
+    return ((t ^ t >>> 14) >>> 0) / 4294967296
+  }
+}
+
+function gaussRng(rng: () => number): number {
+  return Math.sqrt(-2 * Math.log(rng() + 1e-10)) * Math.cos(2 * Math.PI * rng())
+}
+
+// ---- White Balance ----
+function applyWB(sensorRGB: number[][], patches: PatchData[]): number[][] {
+  if (wbMethod.value === 'none') return sensorRGB
+  if (wbMethod.value === 'grayworld') {
+    const n = sensorRGB.length
+    const avg = [0, 1, 2].map(ch => sensorRGB.reduce((s, v) => s + v[ch], 0) / n)
+    const mean = (avg[0] + avg[1] + avg[2]) / 3
+    const gains = avg.map(a => a > 0 ? mean / a : 1)
+    return sensorRGB.map(v => [v[0] * gains[0], v[1] * gains[1], v[2] * gains[2]])
+  }
+  // Neutral patch: find patches where R≈G≈B in reference
+  const neutralIdxs: number[] = []
+  for (let i = 0; i < patches.length; i++) {
+    const s = patches[i].srgb
+    if (Math.max(Math.abs(s[0] - s[1]), Math.abs(s[1] - s[2]), Math.abs(s[0] - s[2])) < 10)
+      neutralIdxs.push(i)
+  }
+  if (neutralIdxs.length === 0) return sensorRGB
+  const avg = [0, 1, 2].map(ch => neutralIdxs.reduce((s, i) => s + sensorRGB[i][ch], 0) / neutralIdxs.length)
+  const mean = (avg[0] + avg[1] + avg[2]) / 3
+  const gains = avg.map(a => a > 0 ? mean / a : 1)
+  return sensorRGB.map(v => [v[0] * gains[0], v[1] * gains[1], v[2] * gains[2]])
+}
+
 // ---- Active patches ----
 interface PatchData { name: string; srgb: number[]; refl: number[] }
 
@@ -731,14 +887,27 @@ function mat3Vec(m: number[][], v: number[]): number[] {
 const pipeline = computed(() => {
   const patches = activePatches.value
   const illum = activeIlluminant.value
-  const sensorR = WL_UM.map(wl => sensorResponse('red', wl))
-  const sensorG = WL_UM.map(wl => sensorResponse('green', wl))
-  const sensorB = WL_UM.map(wl => sensorResponse('blue', wl))
-  const sensorRGB = patches.map(patch => {
-    let rS = 0, gS = 0, bS = 0
-    for (let i = 0; i < 7; i++) { const w = patch.refl[i] * illum[i]; rS += w * sensorR[i]; gS += w * sensorG[i]; bS += w * sensorB[i] }
-    return [rS, gS, bS]
+  const sR = WL_UM.map(wl => sensorResponse('red', wl))
+  const sG = WL_UM.map(wl => sensorResponse('green', wl))
+  const sB = WL_UM.map(wl => sensorResponse('blue', wl))
+  let sensorRGB = patches.map(patch => {
+    let r = 0, g = 0, b = 0
+    for (let i = 0; i < 7; i++) { const w = patch.refl[i] * illum[i]; r += w * sR[i]; g += w * sG[i]; b += w * sB[i] }
+    return [r, g, b]
   })
+  // Apply noise
+  if (shotNoise.value > 0 || readNoise.value > 0) {
+    const rng = mulberry32(42)
+    const fullWell = 10000
+    sensorRGB = sensorRGB.map(rgb => rgb.map(v => {
+      const signal = v * fullWell
+      const shotSigma = Math.sqrt(Math.max(0, signal)) * (shotNoise.value / 100)
+      const totalSigma = Math.sqrt(shotSigma ** 2 + readNoise.value ** 2)
+      return Math.max(0, (signal + totalSigma * gaussRng(rng)) / fullWell)
+    }))
+  }
+  // Apply WB
+  sensorRGB = applyWB(sensorRGB, patches)
   const targetLinear = patches.map(patch => [srgbToLinear(patch.srgb[0]), srgbToLinear(patch.srgb[1]), srgbToLinear(patch.srgb[2])])
   const STS = matTransposeMulNx3(sensorRGB)
   const STSinv = mat3x3Inverse(STS)
@@ -1035,6 +1204,95 @@ function abXScale(a: number): number {
 function abYScale(b: number): number {
   return abPad.top + abPlotS - ((b + abRange.value) / (2 * abRange.value)) * abPlotS
 }
+
+// ---- CIE xy Chromaticity Diagram ----
+const xyW = 400, xyH = 400
+const xyPad = { top: 12, right: 12, bottom: 32, left: 36 }
+const xyPlotS = Math.min(xyW - xyPad.left - xyPad.right, xyH - xyPad.top - xyPad.bottom)
+const xyTicks = [0, 0.2, 0.4, 0.6, 0.8]
+
+function xyXScale(x: number): number { return xyPad.left + (x / 0.85) * xyPlotS }
+function xyYScale(y: number): number { return xyPad.top + xyPlotS - (y / 0.85) * xyPlotS }
+
+function xyzToXy(xyz: number[]): { x: number; y: number } {
+  const sum = xyz[0] + xyz[1] + xyz[2]
+  return sum > 0 ? { x: xyz[0] / sum, y: xyz[1] / sum } : { x: 0.3127, y: 0.3290 }
+}
+
+const SRGB_PRIM = [[0.6400,0.3300],[0.3000,0.6000],[0.1500,0.0600]]
+const P3_PRIM = [[0.6800,0.3200],[0.2650,0.6900],[0.1500,0.0600]]
+const BT2020_PRIM = [[0.7080,0.2920],[0.1700,0.7970],[0.1310,0.0460]]
+
+const SPECTRAL_LOCUS: [number,number][] = [
+  [0.1741,0.0050],[0.1740,0.0050],[0.1733,0.0048],[0.1726,0.0048],
+  [0.1714,0.0051],[0.1689,0.0069],[0.1644,0.0109],[0.1566,0.0177],
+  [0.1440,0.0297],[0.1241,0.0578],[0.0913,0.1327],[0.0454,0.2950],
+  [0.0082,0.5384],[0.0139,0.7502],[0.0743,0.8338],[0.1547,0.8059],
+  [0.2296,0.7543],[0.3016,0.6923],[0.3731,0.6245],[0.4441,0.5547],
+  [0.5125,0.4866],[0.5752,0.4242],[0.6270,0.3725],[0.6658,0.3340],
+  [0.6915,0.3083],[0.7079,0.2920],[0.7190,0.2809],[0.7260,0.2740],
+  [0.7300,0.2700],[0.7320,0.2680],[0.7334,0.2666],[0.7347,0.2653],
+]
+
+const spectralLocusPath = computed(() => {
+  const pts = SPECTRAL_LOCUS.map(([x, y]) => `${xyXScale(x).toFixed(1)},${xyYScale(y).toFixed(1)}`)
+  return `M${pts.join('L')}Z`
+})
+
+function gamutTriangle(prim: number[][]): string {
+  return prim.map(([x, y]) => `${xyXScale(x).toFixed(1)},${xyYScale(y).toFixed(1)}`).join(' ')
+}
+
+const xyRefPoints = computed(() => patchResults.value.map(p => {
+  const { x, y } = xyzToXy(srgbToXYZ(p.refSrgb))
+  return { x, y, rgb: p.refSrgb }
+}))
+
+const xyCorrPoints = computed(() => patchResults.value.map(p => {
+  const { x, y } = xyzToXy(srgbToXYZ(p.corrSrgb))
+  return { x, y, rgb: p.corrSrgb }
+}))
+
+function pointInTriangle(px: number, py: number, v0: number[], v1: number[], v2: number[]): boolean {
+  const d1 = (px - v1[0]) * (v0[1] - v1[1]) - (v0[0] - v1[0]) * (py - v1[1])
+  const d2 = (px - v2[0]) * (v1[1] - v2[1]) - (v1[0] - v2[0]) * (py - v2[1])
+  const d3 = (px - v0[0]) * (v2[1] - v0[1]) - (v2[0] - v0[0]) * (py - v0[1])
+  return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0))
+}
+
+const gamutStats = computed(() => {
+  const pts = xyRefPoints.value
+  if (pts.length === 0) return [
+    { name: 'sRGB', color: '#e74c3c', pct: 0 },
+    { name: 'DCI-P3', color: '#8e44ad', pct: 0 },
+    { name: 'BT.2020', color: '#2980b9', pct: 0 },
+  ]
+  const coverage = (prim: number[][]) => (pts.filter(p => pointInTriangle(p.x, p.y, prim[0], prim[1], prim[2])).length / pts.length) * 100
+  return [
+    { name: 'sRGB', color: '#e74c3c', pct: coverage(SRGB_PRIM) },
+    { name: 'DCI-P3', color: '#8e44ad', pct: coverage(P3_PRIM) },
+    { name: 'BT.2020', color: '#2980b9', pct: coverage(BT2020_PRIM) },
+  ]
+})
+
+// ---- Save Condition ----
+function saveCondition() {
+  savedConditions.value.push({
+    si: siThickness.value,
+    bw: cfBandwidth.value,
+    illuminant: illuminant.value,
+    wb: wbMethod.value,
+    noiseLabel: shotNoise.value > 0 || readNoise.value > 0 ? `S${shotNoise.value}/R${readNoise.value}` : 'Off',
+    avgDE: avgDeltaE.value,
+    maxDE: maxDeltaE.value,
+    excellentPct: excellentPct.value,
+  })
+}
+
+const bestSavedAvgDE = computed(() => {
+  if (savedConditions.value.length === 0) return Infinity
+  return Math.min(...savedConditions.value.map(c => c.avgDE))
+})
 </script>
 
 <style scoped>
@@ -1415,5 +1673,70 @@ function abYScale(b: number): number {
   max-width: 400px;
   display: block;
   margin: 0 auto;
+}
+
+/* Gamut stats */
+.gamut-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.gamut-tag {
+  padding: 4px 10px;
+  font-size: 0.82em;
+  font-weight: 600;
+  font-family: var(--vp-font-family-mono);
+  border: 2px solid;
+  border-radius: 6px;
+  color: var(--vp-c-text-1);
+}
+
+/* Comparison table */
+.compare-section {
+  margin-top: 20px;
+}
+.compare-table-wrapper {
+  overflow-x: auto;
+}
+.compare-table {
+  border-collapse: collapse;
+  font-size: 0.82em;
+  width: 100%;
+  min-width: 600px;
+}
+.compare-table th, .compare-table td {
+  border: 1px solid var(--vp-c-divider);
+  padding: 6px 10px;
+  text-align: center;
+  white-space: nowrap;
+}
+.compare-table th {
+  background: var(--vp-c-bg);
+  font-weight: 600;
+  color: var(--vp-c-text-2);
+}
+.compare-table td {
+  background: var(--vp-c-bg-soft);
+}
+.mono-val {
+  font-family: var(--vp-font-family-mono);
+  font-weight: 600;
+}
+.best-row td {
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+  font-weight: 600;
+}
+.del-btn {
+  border: none;
+  background: none;
+  color: var(--vp-c-text-3);
+  font-size: 1.1em;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.del-btn:hover {
+  color: #e74c3c;
 }
 </style>
