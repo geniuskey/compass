@@ -491,19 +491,17 @@ function exportConfig() {
 .cf-fullscreen .top-controls .slider-row label { font-size:0.75em; }
 .cf-fullscreen .top-controls .ctrl-label { font-size:0.75em; margin-bottom:4px; }
 .cf-fullscreen .top-controls .toggle-btn { font-size:0.72em; padding:3px 8px; }
-.cf-fullscreen .cf-body { display:grid; grid-template-columns:260px 1fr 360px; grid-template-rows:3fr 2fr; gap:10px; flex:1; min-height:0; }
-.cf-fullscreen .cf-sidebar { display:flex; flex-direction:column; gap:6px; grid-column:1; grid-row:1/-1; overflow-y:auto; min-height:0; }
-.cf-fullscreen .chart-spectrum { grid-column:2; grid-row:1; display:flex; flex-direction:column; min-height:0; margin:0; }
-.cf-fullscreen .results-grid { grid-column:3; grid-row:1; grid-template-columns:repeat(2,1fr); gap:4px; margin:0; overflow-y:auto; align-content:start; }
-.cf-fullscreen .chart-cie { grid-column:2; grid-row:2; display:flex; flex-direction:column; min-height:0; margin:0; }
-.cf-fullscreen .analysis-row { grid-column:3; grid-row:2; flex-direction:column; gap:8px; margin:0; overflow-y:auto; }
-/* Fullscreen: chart scaling */
-.cf-fullscreen .chart-spectrum h5 { flex-shrink:0; margin:0 0 4px 0; font-size:0.85em; }
-.cf-fullscreen .chart-spectrum .svg-wrapper { flex:1; min-height:0; }
-.cf-fullscreen .chart-spectrum .spec-svg { width:100%; height:100%; max-width:none; }
-.cf-fullscreen .chart-cie h5 { flex-shrink:0; margin:0 0 4px 0; font-size:0.85em; }
-.cf-fullscreen .chart-cie .svg-wrapper { flex:1; min-height:0; }
-.cf-fullscreen .chart-cie .cie-svg { width:100%; height:100%; max-width:none; }
+.cf-fullscreen .cf-body { display:grid; grid-template-columns:260px 1fr 360px; grid-template-rows:auto auto; gap:10px; flex:1; min-height:0; align-content:start; }
+.cf-fullscreen .cf-sidebar { display:flex; flex-direction:column; gap:6px; grid-column:1; grid-row:1/-1; overflow-y:auto; min-height:0; max-height:100%; }
+.cf-fullscreen .chart-spectrum { grid-column:2; grid-row:1; margin:0; }
+.cf-fullscreen .results-grid { grid-column:3; grid-row:1; grid-template-columns:repeat(2,1fr); gap:4px; margin:0; overflow-y:auto; align-content:start; max-height:100%; }
+.cf-fullscreen .chart-cie { grid-column:2; grid-row:2; margin:0; }
+.cf-fullscreen .analysis-row { grid-column:3; grid-row:2; flex-direction:column; gap:8px; margin:0; overflow-y:auto; max-height:100%; }
+/* Fullscreen: chart sizing — content-driven, capped */
+.cf-fullscreen .chart-spectrum h5 { margin:0 0 4px 0; font-size:0.85em; }
+.cf-fullscreen .chart-spectrum .spec-svg { width:100%; max-width:none; max-height:45vh; }
+.cf-fullscreen .chart-cie h5 { margin:0 0 4px 0; font-size:0.85em; }
+.cf-fullscreen .chart-cie .cie-svg { width:100%; max-width:none; max-height:40vh; }
 /* Fullscreen: compact sidebar */
 .cf-fullscreen .filter-controls { display:flex; flex-direction:column; gap:6px; margin:0; }
 .cf-fullscreen .filter-group { padding:6px 8px; }
