@@ -58,30 +58,6 @@
           </div>
         </div>
 
-        <!-- Analysis: Crosstalk + WB -->
-        <div class="analysis-row">
-          <div class="analysis-box">
-            <h5>{{ t('Spectral Crosstalk Matrix','분광 크로스토크 매트릭스') }}</h5>
-            <table class="xtalk-table">
-              <tr><th></th><th>B</th><th>G</th><th>R</th></tr>
-              <tr v-for="(f,i) in filters" :key="'xt-'+f.id">
-                <td :style="{color:f.color,fontWeight:600}">{{ f.id.toUpperCase() }}</td>
-                <td v-for="(v,j) in crosstalkMatrix[i]" :key="j" :class="{'xt-diag':(i===0&&j===2)||(i===1&&j===1)||(i===2&&j===0)}">{{ (v*100).toFixed(1) }}%</td>
-              </tr>
-            </table>
-          </div>
-          <div class="analysis-box">
-            <h5>{{ t('WB Coefficients','화이트 밸런스 계수') }}</h5>
-            <table class="wb-table">
-              <tr><th>{{ t('Illum','광원') }}</th><th style="color:#e74c3c">R</th><th style="color:#27ae60">G</th><th style="color:#3498db">B</th></tr>
-              <tr v-for="wb in wbCoeffs" :key="wb.key">
-                <td class="wb-illum">{{ wb.label }}</td>
-                <td v-for="(g,i) in wb.gains" :key="i" :style="{color:filters[i].color}">{{ g.toFixed(2) }}</td>
-              </tr>
-            </table>
-          </div>
-        </div>
-
         <div class="export-row"><button class="export-btn" @click="exportConfig">{{ t('Export Design (JSON)','설계 내보내기 (JSON)') }}</button></div>
       </div>
 
@@ -152,6 +128,30 @@
             <line :x1="cieXScale(0.3127)" :y1="cieYScale(0.329)-5" :x2="cieXScale(0.3127)" :y2="cieYScale(0.329)+5" stroke="#555" stroke-width="1.5" />
             <text :x="cieXScale(0.3127)+7" :y="cieYScale(0.329)-4" class="d65-label">D65</text>
           </svg>
+        </div>
+      </div>
+
+      <!-- Analysis: Crosstalk + WB -->
+      <div class="analysis-row">
+        <div class="analysis-box">
+          <h5>{{ t('Spectral Crosstalk Matrix','분광 크로스토크 매트릭스') }}</h5>
+          <table class="xtalk-table">
+            <tr><th></th><th>B</th><th>G</th><th>R</th></tr>
+            <tr v-for="(f,i) in filters" :key="'xt-'+f.id">
+              <td :style="{color:f.color,fontWeight:600}">{{ f.id.toUpperCase() }}</td>
+              <td v-for="(v,j) in crosstalkMatrix[i]" :key="j" :class="{'xt-diag':(i===0&&j===2)||(i===1&&j===1)||(i===2&&j===0)}">{{ (v*100).toFixed(1) }}%</td>
+            </tr>
+          </table>
+        </div>
+        <div class="analysis-box">
+          <h5>{{ t('WB Coefficients','화이트 밸런스 계수') }}</h5>
+          <table class="wb-table">
+            <tr><th>{{ t('Illum','광원') }}</th><th style="color:#e74c3c">R</th><th style="color:#27ae60">G</th><th style="color:#3498db">B</th></tr>
+            <tr v-for="wb in wbCoeffs" :key="wb.key">
+              <td class="wb-illum">{{ wb.label }}</td>
+              <td v-for="(g,i) in wb.gains" :key="i" :style="{color:filters[i].color}">{{ g.toFixed(2) }}</td>
+            </tr>
+          </table>
         </div>
       </div>
     </div>
@@ -459,7 +459,8 @@ function exportConfig() {
 </script>
 
 <style scoped>
-.cf-container { border:1px solid var(--vp-c-divider); border-radius:12px; padding:24px; margin:24px 0; background:var(--vp-c-bg-soft); position:relative; }
+/* ── Base ── */
+.cf-container { display:flex; flex-direction:column; border:1px solid var(--vp-c-divider); border-radius:12px; padding:24px; margin:24px 0; background:var(--vp-c-bg-soft); }
 .cf-container h4 { margin:0 0 4px 0; font-size:1.1em; color:var(--vp-c-brand-1); }
 .cf-container h5 { margin:0 0 8px 0; font-size:0.95em; color:var(--vp-c-text-1); }
 .component-description { margin:0 0 16px 0; color:var(--vp-c-text-2); font-size:0.9em; }
@@ -468,44 +469,60 @@ function exportConfig() {
 .cf-header h4, .cf-header .component-description { margin-bottom:4px; }
 .fs-btn { width:36px; height:36px; border:1px solid var(--vp-c-divider); border-radius:8px; background:var(--vp-c-bg); cursor:pointer; font-size:1.2em; color:var(--vp-c-text-2); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s; }
 .fs-btn:hover { border-color:var(--vp-c-brand-1); color:var(--vp-c-brand-1); background:var(--vp-c-bg-soft); }
-/* Normal mode: wrappers are transparent */
+/* Normal mode: wrappers transparent, order controls visual sequence */
 .cf-body { display:contents; }
 .cf-sidebar { display:contents; }
-/* Fullscreen: 3-column dashboard */
-.cf-fullscreen { position:fixed; inset:0; z-index:9999; overflow:hidden; background:var(--vp-c-bg); padding:12px 16px; margin:0; border:none; border-radius:0; display:flex; flex-direction:column; }
-.cf-fullscreen .cf-header { flex-shrink:0; margin-bottom:8px; align-items:center; }
+.cf-header { order:0; }
+.top-controls { order:1; }
+.filter-controls { order:2; }
+.results-grid { order:3; }
+.chart-spectrum { order:4; }
+.analysis-row { order:5; }
+.chart-cie { order:6; }
+.export-row { order:7; }
+/* ── Fullscreen: 3-col × 2-row dashboard ── */
+.cf-fullscreen { position:fixed; inset:0; z-index:9999; overflow:hidden; background:var(--vp-c-bg); padding:12px 16px; margin:0; border:none; border-radius:0; }
+.cf-fullscreen .cf-header { flex-shrink:0; margin-bottom:6px; align-items:center; }
 .cf-fullscreen .cf-header > div { flex:0 1 auto; }
 .cf-fullscreen .cf-header h4 { margin:0; font-size:1em; }
-.cf-fullscreen .fs-btn { width:36px; height:36px; font-size:1.4em; }
-.cf-fullscreen .top-controls { flex-shrink:0; margin-bottom:8px; gap:8px; }
-.cf-fullscreen .top-controls .ctrl-group { padding:6px 10px; min-width:auto; }
-.cf-fullscreen .cf-body { display:grid; grid-template-columns:280px 1fr 1fr; gap:12px; flex:1; min-height:0; }
-.cf-fullscreen .cf-sidebar { display:flex; flex-direction:column; gap:8px; overflow-y:auto; min-height:0; }
-.cf-fullscreen .chart-spectrum { display:flex; flex-direction:column; min-height:0; margin:0; }
+.cf-fullscreen .fs-btn { font-size:1.4em; }
+.cf-fullscreen .top-controls { flex-shrink:0; margin-bottom:6px; gap:6px; }
+.cf-fullscreen .top-controls .ctrl-group { padding:5px 8px; min-width:auto; }
+.cf-fullscreen .top-controls .slider-row label { font-size:0.75em; }
+.cf-fullscreen .top-controls .ctrl-label { font-size:0.75em; margin-bottom:4px; }
+.cf-fullscreen .top-controls .toggle-btn { font-size:0.72em; padding:3px 8px; }
+.cf-fullscreen .cf-body { display:grid; grid-template-columns:260px 1fr 1fr; grid-template-rows:3fr 2fr; gap:10px; flex:1; min-height:0; }
+.cf-fullscreen .cf-sidebar { display:flex; flex-direction:column; gap:6px; grid-column:1; grid-row:1/-1; overflow-y:auto; min-height:0; }
+.cf-fullscreen .chart-spectrum { grid-column:2/-1; grid-row:1; display:flex; flex-direction:column; min-height:0; margin:0; }
+.cf-fullscreen .chart-cie { grid-column:2; grid-row:2; display:flex; flex-direction:column; min-height:0; margin:0; }
+.cf-fullscreen .analysis-row { grid-column:3; grid-row:2; flex-direction:column; gap:8px; margin:0; overflow-y:auto; }
+/* Fullscreen: chart scaling */
 .cf-fullscreen .chart-spectrum h5 { flex-shrink:0; margin:0 0 4px 0; font-size:0.85em; }
-.cf-fullscreen .chart-spectrum .svg-wrapper { flex:1; min-height:0; display:flex; align-items:flex-start; }
+.cf-fullscreen .chart-spectrum .svg-wrapper { flex:1; min-height:0; }
 .cf-fullscreen .chart-spectrum .spec-svg { width:100%; height:100%; max-width:none; }
-.cf-fullscreen .chart-cie { display:flex; flex-direction:column; min-height:0; margin:0; }
 .cf-fullscreen .chart-cie h5 { flex-shrink:0; margin:0 0 4px 0; font-size:0.85em; }
-.cf-fullscreen .chart-cie .svg-wrapper { flex:1; min-height:0; display:flex; justify-content:center; align-items:flex-start; }
+.cf-fullscreen .chart-cie .svg-wrapper { flex:1; min-height:0; }
 .cf-fullscreen .chart-cie .cie-svg { width:100%; height:100%; max-width:none; }
+/* Fullscreen: compact sidebar */
 .cf-fullscreen .filter-controls { display:flex; flex-direction:column; gap:6px; margin:0; }
-.cf-fullscreen .filter-group { padding:8px; }
-.cf-fullscreen .filter-header { margin-bottom:4px; font-size:0.82em; }
-.cf-fullscreen .filter-sliders { gap:4px; }
-.cf-fullscreen .filter-sliders .slider-row label { font-size:0.75em; margin-bottom:0; }
-.cf-fullscreen .results-grid { grid-template-columns:repeat(2,1fr); gap:6px; margin:0; }
-.cf-fullscreen .result-card { padding:6px 4px; }
-.cf-fullscreen .result-label { font-size:0.7em; margin-bottom:1px; }
-.cf-fullscreen .result-value { font-size:0.82em; }
-.cf-fullscreen .result-sub { font-size:0.65em; }
-.cf-fullscreen .analysis-row { flex-direction:column; gap:6px; margin:0; }
+.cf-fullscreen .filter-group { padding:6px 8px; }
+.cf-fullscreen .filter-header { margin-bottom:3px; font-size:0.8em; }
+.cf-fullscreen .filter-sliders { gap:3px; }
+.cf-fullscreen .filter-sliders .slider-row label { font-size:0.72em; margin-bottom:0; }
+.cf-fullscreen .results-grid { grid-template-columns:repeat(2,1fr); gap:4px; margin:0; }
+.cf-fullscreen .result-card { padding:5px 4px; border-radius:6px; }
+.cf-fullscreen .result-label { font-size:0.68em; margin-bottom:1px; }
+.cf-fullscreen .result-value { font-size:0.8em; }
+.cf-fullscreen .result-sub { font-size:0.62em; }
+.cf-fullscreen .export-row { margin:0; text-align:center; }
+.cf-fullscreen .export-btn { font-size:0.75em; padding:4px 12px; }
+/* Fullscreen: compact analysis tables */
 .cf-fullscreen .analysis-box { min-width:auto; padding:8px; }
 .cf-fullscreen .analysis-box h5 { font-size:0.78em; margin:0 0 4px 0; }
 .cf-fullscreen .xtalk-table, .cf-fullscreen .wb-table { font-size:0.75em; }
 .cf-fullscreen .xtalk-table th, .cf-fullscreen .wb-table th { padding:2px 4px; font-size:0.7em; }
 .cf-fullscreen .xtalk-table td, .cf-fullscreen .wb-table td { padding:2px 4px; }
-.cf-fullscreen .export-row { margin:0; text-align:center; }
+/* ── Shared component styles ── */
 .top-controls { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; align-items:flex-start; }
 .ctrl-group { background:var(--vp-c-bg); border:1px solid var(--vp-c-divider); border-radius:8px; padding:10px 12px; min-width:140px; flex:1; }
 .ctrl-label { font-size:0.8em; color:var(--vp-c-text-2); margin-bottom:6px; display:block; }
