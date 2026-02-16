@@ -46,18 +46,6 @@
           </div>
         </div>
 
-        <!-- Metrics -->
-        <div class="results-grid">
-          <div class="result-card gamut-card"><div class="result-label">{{ t('Gamut','색역') }}</div><div class="result-value highlight">{{ gamutAreaPct.srgb.toFixed(1) }}% sRGB</div><div class="result-sub">{{ gamutAreaPct.ntsc.toFixed(1) }}% NTSC</div></div>
-          <div class="result-card" style="border-top:3px solid #2ecc71"><div class="result-label">{{ t('Peak QE','피크 QE') }}</div><div class="result-value">{{ (Math.max(peakQE.r,peakQE.g,peakQE.b)*100).toFixed(1) }}%</div><div class="result-sub">R:{{ (peakQE.r*100).toFixed(0) }} G:{{ (peakQE.g*100).toFixed(0) }} B:{{ (peakQE.b*100).toFixed(0) }}</div></div>
-          <div class="result-card" style="border-top:3px solid #e67e22"><div class="result-label">{{ t('Crosstalk','크로스토크') }}</div><div class="result-value">{{ (avgCrosstalk*100).toFixed(1) }}%</div><div class="result-sub">{{ t('avg off-diag','평균 비대각') }}</div></div>
-          <div class="result-card" style="border-top:3px solid #9b59b6"><div class="result-label">CCM κ</div><div class="result-value" :style="{color:ccmCond<5?'#2ecc71':ccmCond<10?'#e67e22':'#e74c3c'}">{{ ccmCond.toFixed(1) }}</div><div class="result-sub">{{ t('condition #','조건수') }}</div></div>
-          <div class="result-card" style="border-top:3px solid #1abc9c"><div class="result-label">Vora-Value</div><div class="result-value" :style="{color:voraVal>0.95?'#2ecc71':voraVal>0.9?'#e67e22':'#e74c3c'}">{{ voraVal.toFixed(3) }}</div><div class="result-sub">{{ t('colorimetric quality','색계측 품질') }}</div></div>
-          <div v-for="f in filters" :key="'info-'+f.id" class="result-card" :style="{borderTop:`3px solid ${f.color}`}">
-            <div class="result-label">{{ t(f.nameEn,f.nameKo) }}</div><div class="result-value">{{ filterChroma[f.id].domWl }} nm</div><div class="result-sub">{{ t('Purity','순도') }}: {{ (filterChroma[f.id].purity*100).toFixed(1) }}%</div>
-          </div>
-        </div>
-
         <div class="export-row"><button class="export-btn" @click="exportConfig">{{ t('Export Design (JSON)','설계 내보내기 (JSON)') }}</button></div>
       </div>
 
@@ -94,6 +82,18 @@
               </template>
             </template>
           </svg>
+        </div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="results-grid">
+        <div class="result-card gamut-card"><div class="result-label">{{ t('Gamut','색역') }}</div><div class="result-value highlight">{{ gamutAreaPct.srgb.toFixed(1) }}% sRGB</div><div class="result-sub">{{ gamutAreaPct.ntsc.toFixed(1) }}% NTSC</div></div>
+        <div class="result-card" style="border-top:3px solid #2ecc71"><div class="result-label">{{ t('Peak QE','피크 QE') }}</div><div class="result-value">{{ (Math.max(peakQE.r,peakQE.g,peakQE.b)*100).toFixed(1) }}%</div><div class="result-sub">R:{{ (peakQE.r*100).toFixed(0) }} G:{{ (peakQE.g*100).toFixed(0) }} B:{{ (peakQE.b*100).toFixed(0) }}</div></div>
+        <div class="result-card" style="border-top:3px solid #e67e22"><div class="result-label">{{ t('Crosstalk','크로스토크') }}</div><div class="result-value">{{ (avgCrosstalk*100).toFixed(1) }}%</div><div class="result-sub">{{ t('avg off-diag','평균 비대각') }}</div></div>
+        <div class="result-card" style="border-top:3px solid #9b59b6"><div class="result-label">CCM κ</div><div class="result-value" :style="{color:ccmCond<5?'#2ecc71':ccmCond<10?'#e67e22':'#e74c3c'}">{{ ccmCond.toFixed(1) }}</div><div class="result-sub">{{ t('condition #','조건수') }}</div></div>
+        <div class="result-card" style="border-top:3px solid #1abc9c"><div class="result-label">Vora-Value</div><div class="result-value" :style="{color:voraVal>0.95?'#2ecc71':voraVal>0.9?'#e67e22':'#e74c3c'}">{{ voraVal.toFixed(3) }}</div><div class="result-sub">{{ t('colorimetric quality','색계측 품질') }}</div></div>
+        <div v-for="f in filters" :key="'info-'+f.id" class="result-card" :style="{borderTop:`3px solid ${f.color}`}">
+          <div class="result-label">{{ t(f.nameEn,f.nameKo) }}</div><div class="result-value">{{ filterChroma[f.id].domWl }} nm</div><div class="result-sub">{{ t('Purity','순도') }}: {{ (filterChroma[f.id].purity*100).toFixed(1) }}%</div>
         </div>
       </div>
 
@@ -491,9 +491,10 @@ function exportConfig() {
 .cf-fullscreen .top-controls .slider-row label { font-size:0.75em; }
 .cf-fullscreen .top-controls .ctrl-label { font-size:0.75em; margin-bottom:4px; }
 .cf-fullscreen .top-controls .toggle-btn { font-size:0.72em; padding:3px 8px; }
-.cf-fullscreen .cf-body { display:grid; grid-template-columns:260px 1fr 1fr; grid-template-rows:3fr 2fr; gap:10px; flex:1; min-height:0; }
+.cf-fullscreen .cf-body { display:grid; grid-template-columns:260px 1fr 240px; grid-template-rows:3fr 2fr; gap:10px; flex:1; min-height:0; }
 .cf-fullscreen .cf-sidebar { display:flex; flex-direction:column; gap:6px; grid-column:1; grid-row:1/-1; overflow-y:auto; min-height:0; }
-.cf-fullscreen .chart-spectrum { grid-column:2/-1; grid-row:1; display:flex; flex-direction:column; min-height:0; margin:0; }
+.cf-fullscreen .chart-spectrum { grid-column:2; grid-row:1; display:flex; flex-direction:column; min-height:0; margin:0; }
+.cf-fullscreen .results-grid { grid-column:3; grid-row:1; grid-template-columns:1fr; gap:4px; margin:0; overflow-y:auto; align-content:start; }
 .cf-fullscreen .chart-cie { grid-column:2; grid-row:2; display:flex; flex-direction:column; min-height:0; margin:0; }
 .cf-fullscreen .analysis-row { grid-column:3; grid-row:2; flex-direction:column; gap:8px; margin:0; overflow-y:auto; }
 /* Fullscreen: chart scaling */
@@ -509,11 +510,10 @@ function exportConfig() {
 .cf-fullscreen .filter-header { margin-bottom:3px; font-size:0.8em; }
 .cf-fullscreen .filter-sliders { gap:3px; }
 .cf-fullscreen .filter-sliders .slider-row label { font-size:0.72em; margin-bottom:0; }
-.cf-fullscreen .results-grid { grid-template-columns:repeat(2,1fr); gap:4px; margin:0; }
-.cf-fullscreen .result-card { padding:5px 4px; border-radius:6px; }
-.cf-fullscreen .result-label { font-size:0.68em; margin-bottom:1px; }
-.cf-fullscreen .result-value { font-size:0.8em; }
-.cf-fullscreen .result-sub { font-size:0.62em; }
+.cf-fullscreen .result-card { padding:5px 8px; border-radius:6px; }
+.cf-fullscreen .result-label { font-size:0.7em; margin-bottom:1px; }
+.cf-fullscreen .result-value { font-size:0.85em; }
+.cf-fullscreen .result-sub { font-size:0.65em; }
 .cf-fullscreen .export-row { margin:0; text-align:center; }
 .cf-fullscreen .export-btn { font-size:0.75em; padding:4px 12px; }
 /* Fullscreen: compact analysis tables */
