@@ -1,7 +1,12 @@
 <template>
-  <div class="cf-container">
-    <h4>{{ t('Color Filter Designer & Gamut Viewer', '컬러 필터 설계 및 색역 뷰어') }}</h4>
-    <p class="component-description">{{ t('Design color filter spectral responses with multiple models, IR cut filter, and evaluate gamut, crosstalk, CCM quality, and Vora-Value.','다양한 모델로 컬러 필터 분광 응답을 설계하고, IR 차단 필터, 색역, 크로스토크, CCM 품질, Vora-Value를 평가합니다.') }}</p>
+  <div :class="['cf-container',{'cf-fullscreen':isFullscreen}]">
+    <div class="cf-header">
+      <div>
+        <h4>{{ t('Color Filter Designer & Gamut Viewer', '컬러 필터 설계 및 색역 뷰어') }}</h4>
+        <p class="component-description">{{ t('Design color filter spectral responses with multiple models, IR cut filter, and evaluate gamut, crosstalk, CCM quality, and Vora-Value.','다양한 모델로 컬러 필터 분광 응답을 설계하고, IR 차단 필터, 색역, 크로스토크, CCM 품질, Vora-Value를 평가합니다.') }}</p>
+      </div>
+      <button class="fs-btn" @click="toggleFullscreen" :title="t('Toggle fullscreen','전체화면 전환')">{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
+    </div>
 
     <!-- Top controls -->
     <div class="top-controls">
@@ -51,7 +56,7 @@
     </div>
 
     <!-- Spectrum chart -->
-    <div class="chart-section">
+    <div class="chart-section chart-spectrum">
       <h5>{{ t('Filter Spectra','필터 스펙트럼') }} <label class="qe-toggle"><input type="checkbox" v-model="showQE" /> {{ t('QE overlay','QE 오버레이') }}</label></h5>
       <div class="svg-wrapper">
         <svg :viewBox="`0 0 ${specW} ${specH}`" class="spec-svg" @mousemove="onSpecMouseMove" @mouseleave="specHover=null">
@@ -111,7 +116,7 @@
     </div>
 
     <!-- CIE 1931 -->
-    <div class="chart-section">
+    <div class="chart-section chart-cie">
       <h5>{{ t('CIE 1931 Chromaticity Diagram','CIE 1931 색도도') }}</h5>
       <div class="svg-wrapper cie-wrapper">
         <svg :viewBox="`0 0 ${cieW} ${cieH}`" class="cie-svg">
@@ -153,8 +158,10 @@ import { ref, computed, type Ref } from 'vue'
 import { useLocale } from '../composables/useLocale'
 import { CIE_WL, CIE_X, CIE_Y, CIE_Z, spectrumToXYZ, xyzToXy, getN, MATERIALS, tmmCalc, defaultBsiStack, SI_LAYER_IDX } from '../composables/tmm'
 import type { TmmLayer } from '../composables/tmm'
+import { useFullscreen } from '../composables/useFullscreen'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 // ---- State ----
 type ModelType = 'gaussian' | 'lorentzian' | 'realDye'
@@ -447,10 +454,24 @@ function exportConfig() {
 </script>
 
 <style scoped>
-.cf-container { border:1px solid var(--vp-c-divider); border-radius:12px; padding:24px; margin:24px 0; background:var(--vp-c-bg-soft); }
+.cf-container { border:1px solid var(--vp-c-divider); border-radius:12px; padding:24px; margin:24px 0; background:var(--vp-c-bg-soft); position:relative; }
 .cf-container h4 { margin:0 0 4px 0; font-size:1.1em; color:var(--vp-c-brand-1); }
 .cf-container h5 { margin:0 0 8px 0; font-size:0.95em; color:var(--vp-c-text-1); }
 .component-description { margin:0 0 16px 0; color:var(--vp-c-text-2); font-size:0.9em; }
+.cf-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:16px; }
+.cf-header > div { flex:1; }
+.cf-header h4, .cf-header .component-description { margin-bottom:4px; }
+.fs-btn { width:36px; height:36px; border:1px solid var(--vp-c-divider); border-radius:8px; background:var(--vp-c-bg); cursor:pointer; font-size:1.2em; color:var(--vp-c-text-2); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s; }
+.fs-btn:hover { border-color:var(--vp-c-brand-1); color:var(--vp-c-brand-1); background:var(--vp-c-bg-soft); }
+.cf-fullscreen { position:fixed; inset:0; z-index:9999; overflow-y:auto; background:var(--vp-c-bg); padding:24px 32px; margin:0; border:none; border-radius:0; display:grid; grid-template-columns:minmax(300px,420px) 1fr; grid-auto-flow:dense; gap:16px 24px; align-items:start; align-content:start; }
+.cf-fullscreen .cf-header { grid-column:1/-1; margin-bottom:0; }
+.cf-fullscreen .fs-btn { width:40px; height:40px; font-size:1.5em; }
+.cf-fullscreen .chart-spectrum { grid-column:2; grid-row:2/span 3; }
+.cf-fullscreen .chart-cie { grid-column:2; }
+.cf-fullscreen .spec-svg { max-width:none; }
+.cf-fullscreen .cie-svg { max-width:500px; }
+.cf-fullscreen .results-grid { grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); }
+.cf-fullscreen .analysis-row { flex-direction:column; }
 .top-controls { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; align-items:flex-start; }
 .ctrl-group { background:var(--vp-c-bg); border:1px solid var(--vp-c-divider); border-radius:8px; padding:10px 12px; min-width:140px; flex:1; }
 .ctrl-label { font-size:0.8em; color:var(--vp-c-text-2); margin-bottom:6px; display:block; }
