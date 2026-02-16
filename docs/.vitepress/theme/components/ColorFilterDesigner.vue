@@ -3,7 +3,7 @@
     <div class="cf-header">
       <div>
         <h4>{{ t('Color Filter Designer & Gamut Viewer', '컬러 필터 설계 및 색역 뷰어') }}</h4>
-        <p class="component-description">{{ t('Design color filter spectral responses with multiple models, IR cut filter, and evaluate gamut, crosstalk, CCM quality, and Vora-Value.','다양한 모델로 컬러 필터 분광 응답을 설계하고, IR 차단 필터, 색역, 크로스토크, CCM 품질, Vora-Value를 평가합니다.') }}</p>
+        <p v-if="!isFullscreen" class="component-description">{{ t('Design color filter spectral responses with multiple models, IR cut filter, and evaluate gamut, crosstalk, CCM quality, and Vora-Value.','다양한 모델로 컬러 필터 분광 응답을 설계하고, IR 차단 필터, 색역, 크로스토크, CCM 품질, Vora-Value를 평가합니다.') }}</p>
       </div>
       <button class="fs-btn" @click="toggleFullscreen" :title="t('Toggle fullscreen','전체화면 전환')">{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     </div>
@@ -31,125 +31,130 @@
       </div>
     </div>
 
-    <!-- Filter controls -->
-    <div v-if="filterModel!=='realDye'" class="filter-controls">
-      <div v-for="f in filters" :key="f.id" class="filter-group" :style="{borderLeftColor:f.color}">
-        <div class="filter-header"><span class="filter-dot" :style="{background:f.color}"></span><strong>{{ t(f.nameEn,f.nameKo) }}</strong></div>
-        <div class="filter-sliders">
-          <div class="slider-row"><label>{{ t('Center','중심') }}: <strong>{{ f.center.value }} nm</strong></label><input type="range" :min="f.centerMin" :max="f.centerMax" step="1" v-model.number="f.center.value" class="ctrl-range" /></div>
-          <div class="slider-row"><label>{{ t('FWHM','반치폭') }}: <strong>{{ f.fwhm.value }} nm</strong></label><input type="range" min="20" max="120" step="2" v-model.number="f.fwhm.value" class="ctrl-range" /></div>
-          <div class="slider-row"><label>{{ t('Peak','피크') }}: <strong>{{ f.peak.value }}%</strong></label><input type="range" min="50" max="100" step="1" v-model.number="f.peak.value" class="ctrl-range" /></div>
+    <!-- Main body: sidebar + charts -->
+    <div class="cf-body">
+      <div class="cf-sidebar">
+        <!-- Filter controls -->
+        <div v-if="filterModel!=='realDye'" class="filter-controls">
+          <div v-for="f in filters" :key="f.id" class="filter-group" :style="{borderLeftColor:f.color}">
+            <div class="filter-header"><span class="filter-dot" :style="{background:f.color}"></span><strong>{{ t(f.nameEn,f.nameKo) }}</strong></div>
+            <div class="filter-sliders">
+              <div class="slider-row"><label>{{ t('Center','중심') }}: <strong>{{ f.center.value }} nm</strong></label><input type="range" :min="f.centerMin" :max="f.centerMax" step="1" v-model.number="f.center.value" class="ctrl-range" /></div>
+              <div class="slider-row"><label>{{ t('FWHM','반치폭') }}: <strong>{{ f.fwhm.value }} nm</strong></label><input type="range" min="20" max="120" step="2" v-model.number="f.fwhm.value" class="ctrl-range" /></div>
+              <div class="slider-row"><label>{{ t('Peak','피크') }}: <strong>{{ f.peak.value }}%</strong></label><input type="range" min="50" max="100" step="1" v-model.number="f.peak.value" class="ctrl-range" /></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics -->
+        <div class="results-grid">
+          <div class="result-card gamut-card"><div class="result-label">{{ t('Gamut','색역') }}</div><div class="result-value highlight">{{ gamutAreaPct.srgb.toFixed(1) }}% sRGB</div><div class="result-sub">{{ gamutAreaPct.ntsc.toFixed(1) }}% NTSC</div></div>
+          <div class="result-card" style="border-top:3px solid #2ecc71"><div class="result-label">{{ t('Peak QE','피크 QE') }}</div><div class="result-value">{{ (Math.max(peakQE.r,peakQE.g,peakQE.b)*100).toFixed(1) }}%</div><div class="result-sub">R:{{ (peakQE.r*100).toFixed(0) }} G:{{ (peakQE.g*100).toFixed(0) }} B:{{ (peakQE.b*100).toFixed(0) }}</div></div>
+          <div class="result-card" style="border-top:3px solid #e67e22"><div class="result-label">{{ t('Crosstalk','크로스토크') }}</div><div class="result-value">{{ (avgCrosstalk*100).toFixed(1) }}%</div><div class="result-sub">{{ t('avg off-diag','평균 비대각') }}</div></div>
+          <div class="result-card" style="border-top:3px solid #9b59b6"><div class="result-label">CCM κ</div><div class="result-value" :style="{color:ccmCond<5?'#2ecc71':ccmCond<10?'#e67e22':'#e74c3c'}">{{ ccmCond.toFixed(1) }}</div><div class="result-sub">{{ t('condition #','조건수') }}</div></div>
+          <div class="result-card" style="border-top:3px solid #1abc9c"><div class="result-label">Vora-Value</div><div class="result-value" :style="{color:voraVal>0.95?'#2ecc71':voraVal>0.9?'#e67e22':'#e74c3c'}">{{ voraVal.toFixed(3) }}</div><div class="result-sub">{{ t('colorimetric quality','색계측 품질') }}</div></div>
+          <div v-for="f in filters" :key="'info-'+f.id" class="result-card" :style="{borderTop:`3px solid ${f.color}`}">
+            <div class="result-label">{{ t(f.nameEn,f.nameKo) }}</div><div class="result-value">{{ filterChroma[f.id].domWl }} nm</div><div class="result-sub">{{ t('Purity','순도') }}: {{ (filterChroma[f.id].purity*100).toFixed(1) }}%</div>
+          </div>
+        </div>
+
+        <!-- Analysis: Crosstalk + WB -->
+        <div class="analysis-row">
+          <div class="analysis-box">
+            <h5>{{ t('Spectral Crosstalk Matrix','분광 크로스토크 매트릭스') }}</h5>
+            <table class="xtalk-table">
+              <tr><th></th><th>B</th><th>G</th><th>R</th></tr>
+              <tr v-for="(f,i) in filters" :key="'xt-'+f.id">
+                <td :style="{color:f.color,fontWeight:600}">{{ f.id.toUpperCase() }}</td>
+                <td v-for="(v,j) in crosstalkMatrix[i]" :key="j" :class="{'xt-diag':(i===0&&j===2)||(i===1&&j===1)||(i===2&&j===0)}">{{ (v*100).toFixed(1) }}%</td>
+              </tr>
+            </table>
+          </div>
+          <div class="analysis-box">
+            <h5>{{ t('WB Coefficients','화이트 밸런스 계수') }}</h5>
+            <table class="wb-table">
+              <tr><th>{{ t('Illum','광원') }}</th><th style="color:#e74c3c">R</th><th style="color:#27ae60">G</th><th style="color:#3498db">B</th></tr>
+              <tr v-for="wb in wbCoeffs" :key="wb.key">
+                <td class="wb-illum">{{ wb.label }}</td>
+                <td v-for="(g,i) in wb.gains" :key="i" :style="{color:filters[i].color}">{{ g.toFixed(2) }}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="export-row"><button class="export-btn" @click="exportConfig">{{ t('Export Design (JSON)','설계 내보내기 (JSON)') }}</button></div>
+      </div>
+
+      <!-- Spectrum chart -->
+      <div class="chart-section chart-spectrum">
+        <h5>{{ t('Filter Spectra','필터 스펙트럼') }} <label class="qe-toggle"><input type="checkbox" v-model="showQE" /> {{ t('QE overlay','QE 오버레이') }}</label></h5>
+        <div class="svg-wrapper">
+          <svg :viewBox="`0 0 ${specW} ${specH}`" class="spec-svg" @mousemove="onSpecMouseMove" @mouseleave="specHover=null">
+            <defs><linearGradient id="cfVisSpectrum" x1="0" y1="0" x2="1" y2="0"><stop v-for="s in spectrumStops" :key="s.offset" :offset="s.offset" :stop-color="s.color" /></linearGradient></defs>
+            <rect :x="specXScale(380)" :y="specPad.top+specPlotH+2" :width="specXScale(780)-specXScale(380)" height="6" fill="url(#cfVisSpectrum)" rx="2" />
+            <line v-for="tick in specXTicks" :key="'xg'+tick" :x1="specXScale(tick)" :y1="specPad.top" :x2="specXScale(tick)" :y2="specPad.top+specPlotH" stroke="var(--vp-c-divider)" stroke-width="0.5" stroke-dasharray="3,3" />
+            <line v-for="tick in specYTicks" :key="'yg'+tick" :x1="specPad.left" :y1="specYScale(tick)" :x2="specPad.left+specPlotW" :y2="specYScale(tick)" stroke="var(--vp-c-divider)" stroke-width="0.5" stroke-dasharray="3,3" />
+            <line :x1="specPad.left" :y1="specPad.top" :x2="specPad.left" :y2="specPad.top+specPlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
+            <line :x1="specPad.left" :y1="specPad.top+specPlotH" :x2="specPad.left+specPlotW" :y2="specPad.top+specPlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
+            <text v-for="tick in specXTicks" :key="'xl'+tick" :x="specXScale(tick)" :y="specPad.top+specPlotH+20" text-anchor="middle" class="tick-label">{{ tick }}</text>
+            <text v-for="tick in specYTicks" :key="'yl'+tick" :x="specPad.left-6" :y="specYScale(tick)+3" text-anchor="end" class="tick-label">{{ tick }}%</text>
+            <text :x="specPad.left+specPlotW/2" :y="specH-2" text-anchor="middle" class="axis-title">{{ t('Wavelength (nm)','파장 (nm)') }}</text>
+            <text :x="12" :y="specPad.top+specPlotH/2" text-anchor="middle" class="axis-title" :transform="`rotate(-90,12,${specPad.top+specPlotH/2})`">{{ t('T / QE (%)','투과율 / QE (%)') }}</text>
+            <path v-if="irCutEnabled" :d="irCutPath" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.7" />
+            <path v-for="f in filters" :key="'fill-'+f.id" :d="filterAreaPath(f)" :fill="f.color" opacity="0.12" />
+            <path v-for="f in filters" :key="'curve-'+f.id" :d="filterCurvePath(f)" fill="none" :stroke="f.color" stroke-width="2" />
+            <template v-if="showQE"><path v-for="f in filters" :key="'qe-'+f.id" :d="qeCurvePath(f.id)" fill="none" :stroke="f.color" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8" /></template>
+            <template v-if="specHover">
+              <line :x1="specHover.sx" :y1="specPad.top" :x2="specHover.sx" :y2="specPad.top+specPlotH" stroke="var(--vp-c-text-2)" stroke-width="0.8" stroke-dasharray="4,3" />
+              <rect :x="specHover.tx" :y="specPad.top+4" width="140" :height="showQE?86:50" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
+              <text :x="specHover.tx+6" :y="specPad.top+16" class="tooltip-text">&lambda; = {{ specHover.wl }} nm</text>
+              <text :x="specHover.tx+6" :y="specPad.top+28" class="tooltip-text" fill="#e74c3c">R: {{ specHover.r.toFixed(1) }}%</text>
+              <text :x="specHover.tx+6" :y="specPad.top+40" class="tooltip-text" fill="#27ae60">G: {{ specHover.g.toFixed(1) }}%</text>
+              <text :x="specHover.tx+6" :y="specPad.top+52" class="tooltip-text" fill="#3498db">B: {{ specHover.b.toFixed(1) }}%</text>
+              <template v-if="showQE">
+                <text :x="specHover.tx+74" :y="specPad.top+28" class="tooltip-text" fill="#e74c3c">QE {{ specHover.qr.toFixed(1) }}%</text>
+                <text :x="specHover.tx+74" :y="specPad.top+40" class="tooltip-text" fill="#27ae60">QE {{ specHover.qg.toFixed(1) }}%</text>
+                <text :x="specHover.tx+74" :y="specPad.top+52" class="tooltip-text" fill="#3498db">QE {{ specHover.qb.toFixed(1) }}%</text>
+              </template>
+            </template>
+          </svg>
+        </div>
+      </div>
+
+      <!-- CIE 1931 -->
+      <div class="chart-section chart-cie">
+        <h5>{{ t('CIE 1931 Chromaticity Diagram','CIE 1931 색도도') }}</h5>
+        <div class="svg-wrapper cie-wrapper">
+          <svg :viewBox="`0 0 ${cieW} ${cieH}`" class="cie-svg">
+            <line :x1="ciePad.left" :y1="ciePad.top" :x2="ciePad.left" :y2="ciePad.top+ciePlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
+            <line :x1="ciePad.left" :y1="ciePad.top+ciePlotH" :x2="ciePad.left+ciePlotW" :y2="ciePad.top+ciePlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
+            <template v-for="tick in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]" :key="'cx'+tick">
+              <line :x1="cieXScale(tick)" :y1="ciePad.top" :x2="cieXScale(tick)" :y2="ciePad.top+ciePlotH" stroke="var(--vp-c-divider)" stroke-width="0.5" stroke-dasharray="3,3" />
+              <text :x="cieXScale(tick)" :y="ciePad.top+ciePlotH+14" text-anchor="middle" class="tick-label">{{ tick.toFixed(1) }}</text>
+            </template>
+            <template v-for="tick in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]" :key="'cy'+tick">
+              <line :x1="ciePad.left" :y1="cieYScale(tick)" :x2="ciePad.left+ciePlotW" :y2="cieYScale(tick)" stroke="var(--vp-c-divider)" stroke-width="0.5" stroke-dasharray="3,3" />
+              <text :x="ciePad.left-6" :y="cieYScale(tick)+3" text-anchor="end" class="tick-label">{{ tick.toFixed(1) }}</text>
+            </template>
+            <text :x="ciePad.left+ciePlotW/2" :y="cieH-2" text-anchor="middle" class="axis-title">x</text>
+            <text :x="10" :y="ciePad.top+ciePlotH/2" text-anchor="middle" class="axis-title" :transform="`rotate(-90,10,${ciePad.top+ciePlotH/2})`">y</text>
+            <path :d="locusPath" fill="none" stroke="var(--vp-c-text-2)" stroke-width="1.5" />
+            <line :x1="cieXScale(locusPoints[0][0])" :y1="cieYScale(locusPoints[0][1])" :x2="cieXScale(locusPoints[locusPoints.length-1][0])" :y2="cieYScale(locusPoints[locusPoints.length-1][1])" stroke="var(--vp-c-text-2)" stroke-width="1.5" stroke-dasharray="4,3" />
+            <template v-for="lbl in locusLabels" :key="'ll'+lbl.wl"><circle :cx="cieXScale(lbl.x)" :cy="cieYScale(lbl.y)" r="2" fill="var(--vp-c-text-3)" /><text :x="cieXScale(lbl.x)+lbl.dx" :y="cieYScale(lbl.y)+lbl.dy" class="locus-label">{{ lbl.wl }}</text></template>
+            <polygon :points="srgbTrianglePoints" fill="none" stroke="#888" stroke-width="1" stroke-dasharray="6,3" opacity="0.6" />
+            <text :x="cieXScale(0.64)+4" :y="cieYScale(0.33)+3" class="srgb-label">sRGB</text>
+            <polygon :points="gamutTrianglePoints" fill="var(--vp-c-brand-1)" fill-opacity="0.12" stroke="var(--vp-c-brand-1)" stroke-width="2" />
+            <template v-for="f in filters" :key="'pt-'+f.id">
+              <circle :cx="cieXScale(filterChroma[f.id].x)" :cy="cieYScale(filterChroma[f.id].y)" r="5" :fill="f.color" stroke="#fff" stroke-width="1.5" />
+              <text :x="cieXScale(filterChroma[f.id].x)+(f.id==='r'?8:f.id==='b'?-8:0)" :y="cieYScale(filterChroma[f.id].y)+(f.id==='g'?-8:12)" :text-anchor="f.id==='b'?'end':'start'" class="point-label" :fill="f.color">{{ t(f.nameEn,f.nameKo) }}</text>
+            </template>
+            <line :x1="cieXScale(0.3127)-5" :y1="cieYScale(0.329)" :x2="cieXScale(0.3127)+5" :y2="cieYScale(0.329)" stroke="#555" stroke-width="1.5" />
+            <line :x1="cieXScale(0.3127)" :y1="cieYScale(0.329)-5" :x2="cieXScale(0.3127)" :y2="cieYScale(0.329)+5" stroke="#555" stroke-width="1.5" />
+            <text :x="cieXScale(0.3127)+7" :y="cieYScale(0.329)-4" class="d65-label">D65</text>
+          </svg>
         </div>
       </div>
     </div>
-
-    <!-- Metrics -->
-    <div class="results-grid">
-      <div class="result-card gamut-card"><div class="result-label">{{ t('Gamut','색역') }}</div><div class="result-value highlight">{{ gamutAreaPct.srgb.toFixed(1) }}% sRGB</div><div class="result-sub">{{ gamutAreaPct.ntsc.toFixed(1) }}% NTSC</div></div>
-      <div class="result-card" style="border-top:3px solid #2ecc71"><div class="result-label">{{ t('Peak QE','피크 QE') }}</div><div class="result-value">{{ (Math.max(peakQE.r,peakQE.g,peakQE.b)*100).toFixed(1) }}%</div><div class="result-sub">R:{{ (peakQE.r*100).toFixed(0) }} G:{{ (peakQE.g*100).toFixed(0) }} B:{{ (peakQE.b*100).toFixed(0) }}</div></div>
-      <div class="result-card" style="border-top:3px solid #e67e22"><div class="result-label">{{ t('Crosstalk','크로스토크') }}</div><div class="result-value">{{ (avgCrosstalk*100).toFixed(1) }}%</div><div class="result-sub">{{ t('avg off-diag','평균 비대각') }}</div></div>
-      <div class="result-card" style="border-top:3px solid #9b59b6"><div class="result-label">CCM κ</div><div class="result-value" :style="{color:ccmCond<5?'#2ecc71':ccmCond<10?'#e67e22':'#e74c3c'}">{{ ccmCond.toFixed(1) }}</div><div class="result-sub">{{ t('condition #','조건수') }}</div></div>
-      <div class="result-card" style="border-top:3px solid #1abc9c"><div class="result-label">Vora-Value</div><div class="result-value" :style="{color:voraVal>0.95?'#2ecc71':voraVal>0.9?'#e67e22':'#e74c3c'}">{{ voraVal.toFixed(3) }}</div><div class="result-sub">{{ t('colorimetric quality','색계측 품질') }}</div></div>
-      <div v-for="f in filters" :key="'info-'+f.id" class="result-card" :style="{borderTop:`3px solid ${f.color}`}">
-        <div class="result-label">{{ t(f.nameEn,f.nameKo) }}</div><div class="result-value">{{ filterChroma[f.id].domWl }} nm</div><div class="result-sub">{{ t('Purity','순도') }}: {{ (filterChroma[f.id].purity*100).toFixed(1) }}%</div>
-      </div>
-    </div>
-
-    <!-- Spectrum chart -->
-    <div class="chart-section chart-spectrum">
-      <h5>{{ t('Filter Spectra','필터 스펙트럼') }} <label class="qe-toggle"><input type="checkbox" v-model="showQE" /> {{ t('QE overlay','QE 오버레이') }}</label></h5>
-      <div class="svg-wrapper">
-        <svg :viewBox="`0 0 ${specW} ${specH}`" class="spec-svg" @mousemove="onSpecMouseMove" @mouseleave="specHover=null">
-          <defs><linearGradient id="cfVisSpectrum" x1="0" y1="0" x2="1" y2="0"><stop v-for="s in spectrumStops" :key="s.offset" :offset="s.offset" :stop-color="s.color" /></linearGradient></defs>
-          <rect :x="specXScale(380)" :y="specPad.top+specPlotH+2" :width="specXScale(780)-specXScale(380)" height="6" fill="url(#cfVisSpectrum)" rx="2" />
-          <line v-for="tick in specXTicks" :key="'xg'+tick" :x1="specXScale(tick)" :y1="specPad.top" :x2="specXScale(tick)" :y2="specPad.top+specPlotH" stroke="var(--vp-c-divider)" stroke-width="0.5" stroke-dasharray="3,3" />
-          <line v-for="tick in specYTicks" :key="'yg'+tick" :x1="specPad.left" :y1="specYScale(tick)" :x2="specPad.left+specPlotW" :y2="specYScale(tick)" stroke="var(--vp-c-divider)" stroke-width="0.5" stroke-dasharray="3,3" />
-          <line :x1="specPad.left" :y1="specPad.top" :x2="specPad.left" :y2="specPad.top+specPlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
-          <line :x1="specPad.left" :y1="specPad.top+specPlotH" :x2="specPad.left+specPlotW" :y2="specPad.top+specPlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
-          <text v-for="tick in specXTicks" :key="'xl'+tick" :x="specXScale(tick)" :y="specPad.top+specPlotH+20" text-anchor="middle" class="tick-label">{{ tick }}</text>
-          <text v-for="tick in specYTicks" :key="'yl'+tick" :x="specPad.left-6" :y="specYScale(tick)+3" text-anchor="end" class="tick-label">{{ tick }}%</text>
-          <text :x="specPad.left+specPlotW/2" :y="specH-2" text-anchor="middle" class="axis-title">{{ t('Wavelength (nm)','파장 (nm)') }}</text>
-          <text :x="12" :y="specPad.top+specPlotH/2" text-anchor="middle" class="axis-title" :transform="`rotate(-90,12,${specPad.top+specPlotH/2})`">{{ t('T / QE (%)','투과율 / QE (%)') }}</text>
-          <path v-if="irCutEnabled" :d="irCutPath" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.7" />
-          <path v-for="f in filters" :key="'fill-'+f.id" :d="filterAreaPath(f)" :fill="f.color" opacity="0.12" />
-          <path v-for="f in filters" :key="'curve-'+f.id" :d="filterCurvePath(f)" fill="none" :stroke="f.color" stroke-width="2" />
-          <template v-if="showQE"><path v-for="f in filters" :key="'qe-'+f.id" :d="qeCurvePath(f.id)" fill="none" :stroke="f.color" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8" /></template>
-          <template v-if="specHover">
-            <line :x1="specHover.sx" :y1="specPad.top" :x2="specHover.sx" :y2="specPad.top+specPlotH" stroke="var(--vp-c-text-2)" stroke-width="0.8" stroke-dasharray="4,3" />
-            <rect :x="specHover.tx" :y="specPad.top+4" width="140" :height="showQE?86:50" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
-            <text :x="specHover.tx+6" :y="specPad.top+16" class="tooltip-text">&lambda; = {{ specHover.wl }} nm</text>
-            <text :x="specHover.tx+6" :y="specPad.top+28" class="tooltip-text" fill="#e74c3c">R: {{ specHover.r.toFixed(1) }}%</text>
-            <text :x="specHover.tx+6" :y="specPad.top+40" class="tooltip-text" fill="#27ae60">G: {{ specHover.g.toFixed(1) }}%</text>
-            <text :x="specHover.tx+6" :y="specPad.top+52" class="tooltip-text" fill="#3498db">B: {{ specHover.b.toFixed(1) }}%</text>
-            <template v-if="showQE">
-              <text :x="specHover.tx+74" :y="specPad.top+28" class="tooltip-text" fill="#e74c3c">QE {{ specHover.qr.toFixed(1) }}%</text>
-              <text :x="specHover.tx+74" :y="specPad.top+40" class="tooltip-text" fill="#27ae60">QE {{ specHover.qg.toFixed(1) }}%</text>
-              <text :x="specHover.tx+74" :y="specPad.top+52" class="tooltip-text" fill="#3498db">QE {{ specHover.qb.toFixed(1) }}%</text>
-            </template>
-          </template>
-        </svg>
-      </div>
-    </div>
-
-    <!-- Analysis: Crosstalk + WB -->
-    <div class="analysis-row">
-      <div class="analysis-box">
-        <h5>{{ t('Spectral Crosstalk Matrix','분광 크로스토크 매트릭스') }}</h5>
-        <table class="xtalk-table">
-          <tr><th></th><th>B</th><th>G</th><th>R</th></tr>
-          <tr v-for="(f,i) in filters" :key="'xt-'+f.id">
-            <td :style="{color:f.color,fontWeight:600}">{{ f.id.toUpperCase() }}</td>
-            <td v-for="(v,j) in crosstalkMatrix[i]" :key="j" :class="{'xt-diag':(i===0&&j===2)||(i===1&&j===1)||(i===2&&j===0)}">{{ (v*100).toFixed(1) }}%</td>
-          </tr>
-        </table>
-      </div>
-      <div class="analysis-box">
-        <h5>{{ t('WB Coefficients','화이트 밸런스 계수') }}</h5>
-        <table class="wb-table">
-          <tr><th>{{ t('Illum','광원') }}</th><th style="color:#e74c3c">R</th><th style="color:#27ae60">G</th><th style="color:#3498db">B</th></tr>
-          <tr v-for="wb in wbCoeffs" :key="wb.key">
-            <td class="wb-illum">{{ wb.label }}</td>
-            <td v-for="(g,i) in wb.gains" :key="i" :style="{color:filters[i].color}">{{ g.toFixed(2) }}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-
-    <!-- CIE 1931 -->
-    <div class="chart-section chart-cie">
-      <h5>{{ t('CIE 1931 Chromaticity Diagram','CIE 1931 색도도') }}</h5>
-      <div class="svg-wrapper cie-wrapper">
-        <svg :viewBox="`0 0 ${cieW} ${cieH}`" class="cie-svg">
-          <line :x1="ciePad.left" :y1="ciePad.top" :x2="ciePad.left" :y2="ciePad.top+ciePlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
-          <line :x1="ciePad.left" :y1="ciePad.top+ciePlotH" :x2="ciePad.left+ciePlotW" :y2="ciePad.top+ciePlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
-          <template v-for="tick in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]" :key="'cx'+tick">
-            <line :x1="cieXScale(tick)" :y1="ciePad.top" :x2="cieXScale(tick)" :y2="ciePad.top+ciePlotH" stroke="var(--vp-c-divider)" stroke-width="0.5" stroke-dasharray="3,3" />
-            <text :x="cieXScale(tick)" :y="ciePad.top+ciePlotH+14" text-anchor="middle" class="tick-label">{{ tick.toFixed(1) }}</text>
-          </template>
-          <template v-for="tick in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]" :key="'cy'+tick">
-            <line :x1="ciePad.left" :y1="cieYScale(tick)" :x2="ciePad.left+ciePlotW" :y2="cieYScale(tick)" stroke="var(--vp-c-divider)" stroke-width="0.5" stroke-dasharray="3,3" />
-            <text :x="ciePad.left-6" :y="cieYScale(tick)+3" text-anchor="end" class="tick-label">{{ tick.toFixed(1) }}</text>
-          </template>
-          <text :x="ciePad.left+ciePlotW/2" :y="cieH-2" text-anchor="middle" class="axis-title">x</text>
-          <text :x="10" :y="ciePad.top+ciePlotH/2" text-anchor="middle" class="axis-title" :transform="`rotate(-90,10,${ciePad.top+ciePlotH/2})`">y</text>
-          <path :d="locusPath" fill="none" stroke="var(--vp-c-text-2)" stroke-width="1.5" />
-          <line :x1="cieXScale(locusPoints[0][0])" :y1="cieYScale(locusPoints[0][1])" :x2="cieXScale(locusPoints[locusPoints.length-1][0])" :y2="cieYScale(locusPoints[locusPoints.length-1][1])" stroke="var(--vp-c-text-2)" stroke-width="1.5" stroke-dasharray="4,3" />
-          <template v-for="lbl in locusLabels" :key="'ll'+lbl.wl"><circle :cx="cieXScale(lbl.x)" :cy="cieYScale(lbl.y)" r="2" fill="var(--vp-c-text-3)" /><text :x="cieXScale(lbl.x)+lbl.dx" :y="cieYScale(lbl.y)+lbl.dy" class="locus-label">{{ lbl.wl }}</text></template>
-          <polygon :points="srgbTrianglePoints" fill="none" stroke="#888" stroke-width="1" stroke-dasharray="6,3" opacity="0.6" />
-          <text :x="cieXScale(0.64)+4" :y="cieYScale(0.33)+3" class="srgb-label">sRGB</text>
-          <polygon :points="gamutTrianglePoints" fill="var(--vp-c-brand-1)" fill-opacity="0.12" stroke="var(--vp-c-brand-1)" stroke-width="2" />
-          <template v-for="f in filters" :key="'pt-'+f.id">
-            <circle :cx="cieXScale(filterChroma[f.id].x)" :cy="cieYScale(filterChroma[f.id].y)" r="5" :fill="f.color" stroke="#fff" stroke-width="1.5" />
-            <text :x="cieXScale(filterChroma[f.id].x)+(f.id==='r'?8:f.id==='b'?-8:0)" :y="cieYScale(filterChroma[f.id].y)+(f.id==='g'?-8:12)" :text-anchor="f.id==='b'?'end':'start'" class="point-label" :fill="f.color">{{ t(f.nameEn,f.nameKo) }}</text>
-          </template>
-          <line :x1="cieXScale(0.3127)-5" :y1="cieYScale(0.329)" :x2="cieXScale(0.3127)+5" :y2="cieYScale(0.329)" stroke="#555" stroke-width="1.5" />
-          <line :x1="cieXScale(0.3127)" :y1="cieYScale(0.329)-5" :x2="cieXScale(0.3127)" :y2="cieYScale(0.329)+5" stroke="#555" stroke-width="1.5" />
-          <text :x="cieXScale(0.3127)+7" :y="cieYScale(0.329)-4" class="d65-label">D65</text>
-        </svg>
-      </div>
-    </div>
-
-    <div class="export-row"><button class="export-btn" @click="exportConfig">{{ t('Export Design (JSON)','설계 내보내기 (JSON)') }}</button></div>
   </div>
 </template>
 
@@ -463,15 +468,44 @@ function exportConfig() {
 .cf-header h4, .cf-header .component-description { margin-bottom:4px; }
 .fs-btn { width:36px; height:36px; border:1px solid var(--vp-c-divider); border-radius:8px; background:var(--vp-c-bg); cursor:pointer; font-size:1.2em; color:var(--vp-c-text-2); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s; }
 .fs-btn:hover { border-color:var(--vp-c-brand-1); color:var(--vp-c-brand-1); background:var(--vp-c-bg-soft); }
-.cf-fullscreen { position:fixed; inset:0; z-index:9999; overflow-y:auto; background:var(--vp-c-bg); padding:24px 32px; margin:0; border:none; border-radius:0; display:grid; grid-template-columns:minmax(300px,420px) 1fr; grid-auto-flow:dense; gap:16px 24px; align-items:start; align-content:start; }
-.cf-fullscreen .cf-header { grid-column:1/-1; margin-bottom:0; }
-.cf-fullscreen .fs-btn { width:40px; height:40px; font-size:1.5em; }
-.cf-fullscreen .chart-spectrum { grid-column:2; grid-row:2/span 3; }
-.cf-fullscreen .chart-cie { grid-column:2; }
-.cf-fullscreen .spec-svg { max-width:none; }
-.cf-fullscreen .cie-svg { max-width:500px; }
-.cf-fullscreen .results-grid { grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); }
-.cf-fullscreen .analysis-row { flex-direction:column; }
+/* Normal mode: wrappers are transparent */
+.cf-body { display:contents; }
+.cf-sidebar { display:contents; }
+/* Fullscreen: 3-column dashboard */
+.cf-fullscreen { position:fixed; inset:0; z-index:9999; overflow:hidden; background:var(--vp-c-bg); padding:12px 16px; margin:0; border:none; border-radius:0; display:flex; flex-direction:column; }
+.cf-fullscreen .cf-header { flex-shrink:0; margin-bottom:8px; align-items:center; }
+.cf-fullscreen .cf-header > div { flex:0 1 auto; }
+.cf-fullscreen .cf-header h4 { margin:0; font-size:1em; }
+.cf-fullscreen .fs-btn { width:36px; height:36px; font-size:1.4em; }
+.cf-fullscreen .top-controls { flex-shrink:0; margin-bottom:8px; gap:8px; }
+.cf-fullscreen .top-controls .ctrl-group { padding:6px 10px; min-width:auto; }
+.cf-fullscreen .cf-body { display:grid; grid-template-columns:280px 1fr 1fr; gap:12px; flex:1; min-height:0; }
+.cf-fullscreen .cf-sidebar { display:flex; flex-direction:column; gap:8px; overflow-y:auto; min-height:0; }
+.cf-fullscreen .chart-spectrum { display:flex; flex-direction:column; min-height:0; margin:0; }
+.cf-fullscreen .chart-spectrum h5 { flex-shrink:0; margin:0 0 4px 0; font-size:0.85em; }
+.cf-fullscreen .chart-spectrum .svg-wrapper { flex:1; min-height:0; display:flex; align-items:flex-start; }
+.cf-fullscreen .chart-spectrum .spec-svg { width:100%; height:100%; max-width:none; }
+.cf-fullscreen .chart-cie { display:flex; flex-direction:column; min-height:0; margin:0; }
+.cf-fullscreen .chart-cie h5 { flex-shrink:0; margin:0 0 4px 0; font-size:0.85em; }
+.cf-fullscreen .chart-cie .svg-wrapper { flex:1; min-height:0; display:flex; justify-content:center; align-items:flex-start; }
+.cf-fullscreen .chart-cie .cie-svg { width:100%; height:100%; max-width:none; }
+.cf-fullscreen .filter-controls { display:flex; flex-direction:column; gap:6px; margin:0; }
+.cf-fullscreen .filter-group { padding:8px; }
+.cf-fullscreen .filter-header { margin-bottom:4px; font-size:0.82em; }
+.cf-fullscreen .filter-sliders { gap:4px; }
+.cf-fullscreen .filter-sliders .slider-row label { font-size:0.75em; margin-bottom:0; }
+.cf-fullscreen .results-grid { grid-template-columns:repeat(2,1fr); gap:6px; margin:0; }
+.cf-fullscreen .result-card { padding:6px 4px; }
+.cf-fullscreen .result-label { font-size:0.7em; margin-bottom:1px; }
+.cf-fullscreen .result-value { font-size:0.82em; }
+.cf-fullscreen .result-sub { font-size:0.65em; }
+.cf-fullscreen .analysis-row { flex-direction:column; gap:6px; margin:0; }
+.cf-fullscreen .analysis-box { min-width:auto; padding:8px; }
+.cf-fullscreen .analysis-box h5 { font-size:0.78em; margin:0 0 4px 0; }
+.cf-fullscreen .xtalk-table, .cf-fullscreen .wb-table { font-size:0.75em; }
+.cf-fullscreen .xtalk-table th, .cf-fullscreen .wb-table th { padding:2px 4px; font-size:0.7em; }
+.cf-fullscreen .xtalk-table td, .cf-fullscreen .wb-table td { padding:2px 4px; }
+.cf-fullscreen .export-row { margin:0; text-align:center; }
 .top-controls { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; align-items:flex-start; }
 .ctrl-group { background:var(--vp-c-bg); border:1px solid var(--vp-c-divider); border-radius:8px; padding:10px 12px; min-width:140px; flex:1; }
 .ctrl-label { font-size:0.8em; color:var(--vp-c-text-2); margin-bottom:6px; display:block; }
