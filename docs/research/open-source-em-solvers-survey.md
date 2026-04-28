@@ -10,9 +10,9 @@
 
 | Solver | Language | GPU | AD | License | ⭐ | Status | Notes |
 |------|------|-----|-----|---------|-----|------|------|
-| **torcwa** | Python/PyTorch | CUDA | ✅ PyTorch | LGPL | ~171 | ⚠️ Low activity (2023~) | S-matrix, suitable for metasurface inverse design. Development stalled |
-| **grcwa** | Python/autograd | ❌ | ✅ autograd | GPL | ~94 | ❌ Discontinued (2020~) | CPU only. Topology optimization. Effectively abandoned |
-| **meent** | Python (NumPy/JAX/PyTorch) | JAX/PyTorch | ✅ JAX/PyTorch | **MIT** | ~112 | ✅ Active | 3 backends supported, best for ML integration. Developed by Korean company (KC-ML2) |
+| **[torcwa](https://github.com/kwanchestnut/torcwa)** | Python/PyTorch | CUDA | ✅ PyTorch | LGPL | ~171 | ⚠️ Low activity (2023~) | S-matrix, suitable for metasurface inverse design. Development stalled |
+| **[grcwa](https://github.com/weiliangjica/grcwa)** | Python/autograd | ❌ | ✅ autograd | GPL | ~94 | ❌ Discontinued (2020~) | CPU only. Topology optimization. Effectively abandoned |
+| **[meent](https://github.com/kc-ml2/meent)** | Python (NumPy/JAX/PyTorch) | JAX/PyTorch | ✅ JAX/PyTorch | **MIT** | ~112 | ✅ Active | 3 backends supported, best for ML integration. Developed by Korean company (KC-ML2) |
 
 **Assessment:** meent is the best in terms of licensing (MIT), maintenance, and flexibility. grcwa needs reassessment for long-term integration viability.
 
@@ -20,9 +20,9 @@
 
 | Solver | Language | GPU | AD | License | ⭐ | Status | Key Strengths |
 |------|------|-----|-----|---------|-----|------|----------|
-| **fmmax** | Python/JAX | JAX | ✅ | **MIT** | ~137 | ✅ Active (Meta) | **State-of-the-art vector FMM** (Li inverse rule extension), Brillouin zone integration, batching support. AR/VR optics |
-| **torchrdit** | Python/PyTorch | CUDA | ✅ | GPL-3.0 | ~11 | ✅ Active | **No eigenvalue decomposition required** (R-DIT), 16.2x speedup over conventional RCWA, GDS import/export |
-| **S4** (phoebe-p fork) | C++/Lua/Python | ❌ | ❌ | GPL-2.0 | ~166 | ⚠️ Fork active | **RCWA reference implementation**, Li inverse rule, Solcore/RayFlare integration. 25-year history |
+| **[fmmax](https://github.com/invrs-io/fmmax)** | Python/JAX | JAX | ✅ | **MIT** | ~137 | ✅ Active (Meta) | **State-of-the-art vector FMM** (Li inverse rule extension), Brillouin zone integration, batching support. AR/VR optics |
+| **[torchrdit](https://github.com/yi-huang-1/torchrdit)** | Python/PyTorch | CUDA | ✅ | GPL-3.0 | ~11 | ✅ Active | **No eigenvalue decomposition required** (R-DIT), 16.2x speedup over conventional RCWA, GDS import/export |
+| **[S4](https://github.com/phoebe-p/S4)** (phoebe-p fork) | C++/Lua/Python | ❌ | ❌ | GPL-2.0 | ~166 | ⚠️ Fork active | **RCWA reference implementation**, Li inverse rule, Solcore/RayFlare integration. 25-year history |
 
 **fmmax details:**
 - Developed by Meta Reality Labs for AR/VR diffractive optics design
@@ -40,16 +40,16 @@
 
 | Solver | Language | GPU | License | ⭐ | Key Features |
 |------|------|-----|---------|-----|----------|
-| **inkstone** | Python/NumPy | ❌ | AGPL-3.0 | ~63 | **Tensor permittivity/permeability** (anisotropic, magneto-optic, gyromagnetic). Partial recomputation optimization |
-| **nannos** | Python | ✅ | GPL-3.0 | ~20 | Multiple FMM formulations, AD, GPU acceleration. GitLab hosted |
-| **rcwa_tf** | Python/TensorFlow | CUDA | BSD-3 | ~51 | TF-based, Lorentzian broadening (gradient stabilization), batch optimization |
-| **rcwa (edmundsj)** | Python | ❌ | **MIT** | ~134 | **Built-in refractiveindex.info DB**, TMM+RCWA, ellipsometry |
-| **EMUstack** | Fortran/Python | ❌ | GPL-3.0 | ~28 | Hybrid 2D-FEM + scattering matrix. Strong for metallic/plasmonic structures |
-| **MESH** | C++ | ❌(MPI) | GPL-3.0 | ~33 | RCWA + thermal radiation transfer (near-field/far-field). Stanford Fan Group |
+| **[inkstone](https://github.com/ianwilliamson/inkstone)** | Python/NumPy | ❌ | AGPL-3.0 | ~63 | **Tensor permittivity/permeability** (anisotropic, magneto-optic, gyromagnetic). Partial recomputation optimization |
+| **[nannos](https://gitlab.com/nannos/nannos)** | Python | ✅ | GPL-3.0 | ~20 | Multiple FMM formulations, AD, GPU acceleration. GitLab hosted |
+| **[rcwa_tf](https://github.com/kramerlab/rcwa_tf)** | Python/TensorFlow | CUDA | BSD-3 | ~51 | TF-based, Lorentzian broadening (gradient stabilization), batch optimization |
+| **[rcwa (edmundsj)](https://github.com/edmundsj/rcwa)** | Python | ❌ | **MIT** | ~134 | **Built-in refractiveindex.info DB**, TMM+RCWA, ellipsometry |
+| **[EMUstack](https://github.com/EMUstack/EMUstack)** | Fortran/Python | ❌ | GPL-3.0 | ~28 | Hybrid 2D-FEM + scattering matrix. Strong for metallic/plasmonic structures |
+| **[MESH](https://github.com/fancompute/MESH)** | C++ | ❌(MPI) | GPL-3.0 | ~33 | RCWA + thermal radiation transfer (near-field/far-field). Stanford Fan Group |
 | **RETICOLO** | MATLAB | ❌ | Freeware | N/A | **Industry standard** (Zeiss, Intel, Apple, Samsung). V10 (2025.01) anisotropy support. 25-year history |
-| **rcwa4d** | Python | ❌ | **MIT** | ~40 | Incommensurate periodicity (twisted bilayer/moiré structures). Stanford Fan Group |
-| **RCWA.jl** | Julia | CUDA | GPL-3.0 | ~46 | S-matrix + ETM, eigenvalue-free algorithm, CUDA 5x speedup |
-| **EMpy** | Python | ❌ | **MIT** | ~219 | TMM + RCWA + mode solver. Most GitHub stars |
+| **[rcwa4d](https://github.com/fancompute/rcwa4d)** | Python | ❌ | **MIT** | ~40 | Incommensurate periodicity (twisted bilayer/moiré structures). Stanford Fan Group |
+| **[RCWA.jl](https://github.com/emmt/RCWA.jl)** | Julia | CUDA | GPL-3.0 | ~46 | S-matrix + ETM, eigenvalue-free algorithm, CUDA 5x speedup |
+| **[EMpy](https://github.com/lbolla/EMpy)** | Python | ❌ | **MIT** | ~219 | TMM + RCWA + mode solver. Most GitHub stars |
 
 ---
 
@@ -59,9 +59,9 @@
 
 | Solver | Language | GPU | AD | License | ⭐ | Status | Notes |
 |------|------|-----|-----|---------|-----|------|------|
-| **Meep** | C++/Python | ❌ | ✅ (adjoint) | GPL-2.0+ | ~1,500 | ✅ Active | Most mature open-source FDTD. MPI parallelization. Lack of GPU support is a drawback |
-| **flaport/fdtd** | Python/PyTorch | CUDA | ✅ PyTorch | **MIT** | ~650 | ⚠️ Low activity | For education/prototyping. Simple API. Lacks advanced material models |
-| **fdtdz** | C++/CUDA/JAX | CUDA | ✅ JAX | **MIT** | ~146 | ✅ Active (Google) | ~100x speed vs Meep. Limited to 2.5D. Only simple dielectrics supported |
+| **[Meep](https://github.com/NanoComp/meep)** | C++/Python | ❌ | ✅ (adjoint) | GPL-2.0+ | ~1,500 | ✅ Active | Most mature open-source FDTD. MPI parallelization. Lack of GPU support is a drawback |
+| **[flaport/fdtd](https://github.com/flaport/fdtd)** | Python/PyTorch | CUDA | ✅ PyTorch | **MIT** | ~650 | ⚠️ Low activity | For education/prototyping. Simple API. Lacks advanced material models |
+| **[fdtdz](https://github.com/spins-b/fdtdz)** | C++/CUDA/JAX | CUDA | ✅ JAX | **MIT** | ~146 | ✅ Active (Google) | ~100x speed vs Meep. Limited to 2.5D. Only simple dielectrics supported |
 
 **Assessment:** Meep = general-purpose reference, fdtdz = speed-focused (2.5D), flaport = educational. Lacking a general-purpose 3D GPU FDTD.
 
@@ -69,9 +69,9 @@
 
 | Solver | Language | GPU | AD | License | ⭐ | Status | Key Strengths |
 |------|------|-----|-----|---------|-----|------|----------|
-| **FDTDX** | Python/JAX | JAX (multi-GPU) | ✅ | **MIT** | ~203 | ✅ Very active | **Optimal for large-scale 3D inverse design**. Multi-GPU. Memory-efficient gradients using Maxwell time-reversal. JOSS published |
-| **Khronos.jl** | Julia | CUDA/ROCm/Metal/OneAPI | ✅ | **MIT** | ~66 | ✅ Active (Meta) | **Multi-vendor GPU** (NVIDIA+AMD+Apple+Intel). Pure Julia. Differentiable |
-| **ceviche** | Python/autograd | ❌ | ✅ | **MIT** | ~390 | ⚠️ Low activity | Pioneer of differentiable EM. 2D FDFD+FDTD. Stanford Fan Group |
+| **[FDTDX](https://github.com/ymahlau/fdtdx)** | Python/JAX | JAX (multi-GPU) | ✅ | **MIT** | ~203 | ✅ Very active | **Optimal for large-scale 3D inverse design**. Multi-GPU. Memory-efficient gradients using Maxwell time-reversal. JOSS published |
+| **[Khronos.jl](https://github.com/facebookresearch/Khronos.jl)** | Julia | CUDA/ROCm/Metal/OneAPI | ✅ | **MIT** | ~66 | ✅ Active (Meta) | **Multi-vendor GPU** (NVIDIA+AMD+Apple+Intel). Pure Julia. Differentiable |
+| **[ceviche](https://github.com/fancompute/ceviche)** | Python/autograd | ❌ | ✅ | **MIT** | ~390 | ⚠️ Low activity | Pioneer of differentiable EM. 2D FDFD+FDTD. Stanford Fan Group |
 
 **FDTDX details:**
 - JAX-based fully differentiable 3D FDTD
@@ -91,12 +91,12 @@
 
 | Solver | Language | GPU | License | ⭐ | Key Features |
 |------|------|-----|---------|-----|----------|
-| **openEMS** | C++/MATLAB/Python | ❌(OpenMP/MPI) | GPL-3.0 | ~628 | EC-FDTD, cylindrical coordinates, **RF/antenna/microwave specialized** |
-| **gprMax** | Python/Cython | CUDA | GPL-3.0 | ~788 | **GPR (Ground Penetrating Radar) specialized**, CUDA 30x speedup. Soil models |
-| **EMOPT** | Python/C | ❌(MPI) | BSD-3 | ~110 | FDFD (2D/3D) + CW-FDTD, **shape optimization** (boundary smoothing), adjoint method |
-| **fdtd3d** | C++ | CUDA/MPI | GPL-3.0 | ~150 | MPI+OpenMP+CUDA, **cross-architecture** (x64/ARM/RISC-V/Wasm) |
+| **[openEMS](https://github.com/thliebig/openEMS)** | C++/MATLAB/Python | ❌(OpenMP/MPI) | GPL-3.0 | ~628 | EC-FDTD, cylindrical coordinates, **RF/antenna/microwave specialized** |
+| **[gprMax](https://github.com/gprMax/gprMax)** | Python/Cython | CUDA | GPL-3.0 | ~788 | **GPR (Ground Penetrating Radar) specialized**, CUDA 30x speedup. Soil models |
+| **[EMOPT](https://github.com/anstmichaels/emopt)** | Python/C | ❌(MPI) | BSD-3 | ~110 | FDFD (2D/3D) + CW-FDTD, **shape optimization** (boundary smoothing), adjoint method |
+| **[fdtd3d](https://github.com/b-fg/fdtd3d)** | C++ | CUDA/MPI | GPL-3.0 | ~150 | MPI+OpenMP+CUDA, **cross-architecture** (x64/ARM/RISC-V/Wasm) |
 | **GSvit** | C/C++ | CUDA | GPL-2.0 | N/A | Nanoscale optics (SNOM, roughness), GPU accelerated |
-| **Luminescent.jl** | Julia | CUDA | **MIT** | ~60 | Differentiable FDTD (Zygote.jl), semiconductor photonics+acoustics+RF |
+| **[Luminescent.jl](https://github.com/paulxshen/Luminescent.jl)** | Julia | CUDA | **MIT** | ~60 | Differentiable FDTD (Zygote.jl), semiconductor photonics+acoustics+RF |
 | **Angora** | C++ | ❌ | GPL | Small | Biomedical scattering specialized |
 
 ### 2.4 Commercial / Non-Open-Source (Reference)
@@ -146,35 +146,35 @@ The biggest trend of 2024-2026. Built-in AD (automatic differentiation) is becom
 
 | Solver | Type | Rationale |
 |------|------|------|
-| **fmmax** | RCWA | MIT, Meta-backed, best convergence (vector FMM), JAX batching. Potential synergy with meent's JAX backend |
-| **FDTDX** | FDTD | MIT, multi-GPU 3D, fully differentiable, JOSS published. Complements fdtdz's 2.5D limitation |
+| **[fmmax](https://github.com/invrs-io/fmmax)** | RCWA | MIT, Meta-backed, best convergence (vector FMM), JAX batching. Potential synergy with meent's JAX backend |
+| **[FDTDX](https://github.com/ymahlau/fdtdx)** | FDTD | MIT, multi-GPU 3D, fully differentiable, JOSS published. Complements fdtdz's 2.5D limitation |
 
 ### Tier 2: Recommended for Review (Special Strengths)
 
 | Solver | Type | Rationale |
 |------|------|------|
-| **torchrdit** | RCWA (R-DIT) | Major speedup by eliminating eigenvalue decomposition. GPL is an obstacle |
-| **S4** (phoebe-p fork) | RCWA | C++ performance reference implementation. Useful for verification. GPL |
-| **ceviche** | FDTD/FDFD | 2D differentiable EM. For rapid prototyping. MIT |
+| **[torchrdit](https://github.com/yi-huang-1/torchrdit)** | RCWA (R-DIT) | Major speedup by eliminating eigenvalue decomposition. GPL is an obstacle |
+| **[S4](https://github.com/phoebe-p/S4)** (phoebe-p fork) | RCWA | C++ performance reference implementation. Useful for verification. GPL |
+| **[ceviche](https://github.com/fancompute/ceviche)** | FDTD/FDFD | 2D differentiable EM. For rapid prototyping. MIT |
 
 ### Tier 3: Long-Term Watch
 
 | Solver | Type | Rationale |
 |------|------|------|
-| **Khronos.jl** | FDTD | Multi-vendor GPU is attractive but Julia dependency |
-| **inkstone** | RCWA | Unique tensor permittivity support but AGPL |
-| **Luminescent.jl** | FDTD | Julia differentiable FDTD. Still early stage |
+| **[Khronos.jl](https://github.com/facebookresearch/Khronos.jl)** | FDTD | Multi-vendor GPU is attractive but Julia dependency |
+| **[inkstone](https://github.com/ianwilliamson/inkstone)** | RCWA | Unique tensor permittivity support but AGPL |
+| **[Luminescent.jl](https://github.com/paulxshen/Luminescent.jl)** | FDTD | Julia differentiable FDTD. Still early stage |
 
 ### Existing Integrated Solver Assessment
 
 | Solver | Retention Recommendation | Notes |
 |------|----------|------|
-| **meent** ✅ | Actively retain | MIT, active, 3 backends, best flexibility |
-| **torcwa** ⚠️ | Retain but monitor | LGPL, development stalled. Potential replacement by meent |
-| **grcwa** ❌ | Consider deprecation | GPL, discontinued since 2020. CPU only. Inferior |
-| **Meep** ✅ | Actively retain | General-purpose reference. Lack of GPU support is regrettable |
+| **[meent](https://github.com/kc-ml2/meent)** ✅ | Actively retain | MIT, active, 3 backends, best flexibility |
+| **[torcwa](https://github.com/kwanchestnut/torcwa)** ⚠️ | Retain but monitor | LGPL, development stalled. Potential replacement by meent |
+| **[grcwa](https://github.com/weiliangjica/grcwa)** ❌ | Consider deprecation | GPL, discontinued since 2020. CPU only. Inferior |
+| **[Meep](https://github.com/NanoComp/meep)** ✅ | Actively retain | General-purpose reference. Lack of GPU support is regrettable |
 | **flaport** ⚠️ | Retain but monitor | MIT, low activity. Only valuable for education/prototyping |
-| **fdtdz** ✅ | Retain | MIT, Google-backed, extreme speed. Acknowledge 2.5D limitation |
+| **[fdtdz](https://github.com/spins-b/fdtdz)** ✅ | Retain | MIT, Google-backed, extreme speed. Acknowledge 2.5D limitation |
 
 ---
 
@@ -184,21 +184,21 @@ The biggest trend of 2024-2026. Built-in AD (automatic differentiation) is becom
 
 | # | Solver | Language | GPU | AD | License | ⭐ | Status |
 |---|------|------|-----|-----|---------|-----|------|
-| 1 | **meent** | Py (NumPy/JAX/PyTorch) | ✅ | ✅ | MIT | 112 | ✅ Active |
-| 2 | **fmmax** | Py/JAX | ✅ | ✅ | MIT | 137 | ✅ Active |
-| 3 | **torcwa** | Py/PyTorch | ✅ | ✅ | LGPL | 171 | ⚠️ |
-| 4 | **S4** | C++/Lua/Py | ❌ | ❌ | GPL-2.0 | 166 | ⚠️ Fork |
-| 5 | **EMpy** | Py | ❌ | ❌ | MIT | 219 | ✅ |
-| 6 | **rcwa (edmundsj)** | Py | ❌ | ❌ | MIT | 134 | ⚠️ |
-| 7 | **grcwa** | Py/autograd | ❌ | ✅ | GPL | 94 | ❌ Discontinued |
-| 8 | **inkstone** | Py/NumPy | ❌ | ❌ | AGPL | 63 | ⚠️ |
-| 9 | **rcwa_tf** | Py/TF | ✅ | ✅ | BSD-3 | 51 | ⚠️ |
-| 10 | **RCWA.jl** | Julia | ✅ | ❌ | GPL-3.0 | 46 | ✅ |
-| 11 | **rcwa4d** | Py | ❌ | ❌ | MIT | 40 | ⚠️ |
-| 12 | **MESH** | C++ | ❌ | ❌ | GPL-3.0 | 33 | ⚠️ |
-| 13 | **EMUstack** | Fortran/Py | ❌ | ❌ | GPL-3.0 | 28 | ⚠️ |
-| 14 | **nannos** | Py | ✅ | ✅ | GPL-3.0 | 20 | ⚠️ |
-| 15 | **torchrdit** | Py/PyTorch | ✅ | ✅ | GPL-3.0 | 11 | ✅ |
+| 1 | **[meent](https://github.com/kc-ml2/meent)** | Py (NumPy/JAX/PyTorch) | ✅ | ✅ | MIT | 112 | ✅ Active |
+| 2 | **[fmmax](https://github.com/invrs-io/fmmax)** | Py/JAX | ✅ | ✅ | MIT | 137 | ✅ Active |
+| 3 | **[torcwa](https://github.com/kwanchestnut/torcwa)** | Py/PyTorch | ✅ | ✅ | LGPL | 171 | ⚠️ |
+| 4 | **[S4](https://github.com/phoebe-p/S4)** | C++/Lua/Py | ❌ | ❌ | GPL-2.0 | 166 | ⚠️ Fork |
+| 5 | **[EMpy](https://github.com/lbolla/EMpy)** | Py | ❌ | ❌ | MIT | 219 | ✅ |
+| 6 | **[rcwa (edmundsj)](https://github.com/edmundsj/rcwa)** | Py | ❌ | ❌ | MIT | 134 | ⚠️ |
+| 7 | **[grcwa](https://github.com/weiliangjica/grcwa)** | Py/autograd | ❌ | ✅ | GPL | 94 | ❌ Discontinued |
+| 8 | **[inkstone](https://github.com/ianwilliamson/inkstone)** | Py/NumPy | ❌ | ❌ | AGPL | 63 | ⚠️ |
+| 9 | **[rcwa_tf](https://github.com/kramerlab/rcwa_tf)** | Py/TF | ✅ | ✅ | BSD-3 | 51 | ⚠️ |
+| 10 | **[RCWA.jl](https://github.com/emmt/RCWA.jl)** | Julia | ✅ | ❌ | GPL-3.0 | 46 | ✅ |
+| 11 | **[rcwa4d](https://github.com/fancompute/rcwa4d)** | Py | ❌ | ❌ | MIT | 40 | ⚠️ |
+| 12 | **[MESH](https://github.com/fancompute/MESH)** | C++ | ❌ | ❌ | GPL-3.0 | 33 | ⚠️ |
+| 13 | **[EMUstack](https://github.com/EMUstack/EMUstack)** | Fortran/Py | ❌ | ❌ | GPL-3.0 | 28 | ⚠️ |
+| 14 | **[nannos](https://gitlab.com/nannos/nannos)** | Py | ✅ | ✅ | GPL-3.0 | 20 | ⚠️ |
+| 15 | **[torchrdit](https://github.com/yi-huang-1/torchrdit)** | Py/PyTorch | ✅ | ✅ | GPL-3.0 | 11 | ✅ |
 | 16 | **RETICOLO** | MATLAB | ❌ | ❌ | Freeware | N/A | ✅ |
 | 17 | **PPML** | MATLAB | ❌ | ❌ | Free | N/A | ⚠️ |
 | 18-20 | 3 educational solvers | Py | ❌ | ❌ | Various | <10 | ⚠️ |
@@ -207,19 +207,19 @@ The biggest trend of 2024-2026. Built-in AD (automatic differentiation) is becom
 
 | # | Solver | Language | GPU | AD | License | ⭐ | Status |
 |---|------|------|-----|-----|---------|-----|------|
-| 1 | **Meep** | C++/Py | ❌ | ✅ adj | GPL-2.0+ | 1,500 | ✅ Active |
-| 2 | **gprMax** | Py/Cython | CUDA | ❌ | GPL-3.0 | 788 | ✅ |
-| 3 | **flaport/fdtd** | Py/PyTorch | ✅ | ✅ | MIT | 650 | ⚠️ |
-| 4 | **openEMS** | C++ | ❌ | ❌ | GPL-3.0 | 628 | ✅ |
-| 5 | **ceviche** | Py | ❌ | ✅ | MIT | 390 | ⚠️ |
-| 6 | **FDTDX** | Py/JAX | ✅ Multi | ✅ | MIT | 203 | ✅ Very active |
+| 1 | **[Meep](https://github.com/NanoComp/meep)** | C++/Py | ❌ | ✅ adj | GPL-2.0+ | 1,500 | ✅ Active |
+| 2 | **[gprMax](https://github.com/gprMax/gprMax)** | Py/Cython | CUDA | ❌ | GPL-3.0 | 788 | ✅ |
+| 3 | **[flaport/fdtd](https://github.com/flaport/fdtd)** | Py/PyTorch | ✅ | ✅ | MIT | 650 | ⚠️ |
+| 4 | **[openEMS](https://github.com/thliebig/openEMS)** | C++ | ❌ | ❌ | GPL-3.0 | 628 | ✅ |
+| 5 | **[ceviche](https://github.com/fancompute/ceviche)** | Py | ❌ | ✅ | MIT | 390 | ⚠️ |
+| 6 | **[FDTDX](https://github.com/ymahlau/fdtdx)** | Py/JAX | ✅ Multi | ✅ | MIT | 203 | ✅ Very active |
 | 7 | **Tidy3D** | Py | ☁️ Cloud | ✅ | LGPL/Commercial | 164 | ✅ (Non-open-source) |
-| 8 | **fdtd3d** | C++ | CUDA/MPI | ❌ | GPL-3.0 | 150 | ✅ |
-| 9 | **fdtdz** | C++/CUDA/JAX | ✅ | ✅ | MIT | 146 | ✅ |
-| 10 | **EMOPT** | Py/C | ❌ | ✅ adj | BSD-3 | 110 | ⚠️ |
+| 8 | **[fdtd3d](https://github.com/b-fg/fdtd3d)** | C++ | CUDA/MPI | ❌ | GPL-3.0 | 150 | ✅ |
+| 9 | **[fdtdz](https://github.com/spins-b/fdtdz)** | C++/CUDA/JAX | ✅ | ✅ | MIT | 146 | ✅ |
+| 10 | **[EMOPT](https://github.com/anstmichaels/emopt)** | Py/C | ❌ | ✅ adj | BSD-3 | 110 | ⚠️ |
 | 11 | **PhotonTorch** | Py/PyTorch | ✅ | ✅ | MIT | 81 | ⚠️ (Circuit sim) |
-| 12 | **Khronos.jl** | Julia | ✅ Multi-vendor | ✅ | MIT | 66 | ✅ |
-| 13 | **Luminescent.jl** | Julia | ✅ | ✅ | MIT | 60 | ✅ |
+| 12 | **[Khronos.jl](https://github.com/facebookresearch/Khronos.jl)** | Julia | ✅ Multi-vendor | ✅ | MIT | 66 | ✅ |
+| 13 | **[Luminescent.jl](https://github.com/paulxshen/Luminescent.jl)** | Julia | ✅ | ✅ | MIT | 60 | ✅ |
 | 14 | **GSvit** | C/C++ | CUDA | ❌ | GPL-2.0 | N/A | ✅ |
 | 15 | **Angora** | C++ | ❌ | ❌ | GPL | Small | ⚠️ |
 | 16 | **MaxwellFDTD.jl** | Julia | ❌ | ❌ | N/A | Small | ⚠️ |
