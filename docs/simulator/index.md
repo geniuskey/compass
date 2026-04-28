@@ -25,6 +25,7 @@ Explore CMOS image sensor pixel optics through browser-based simulators. All cal
 - **[Si Absorption Depth](./si-absorption)** — Visualize Beer-Lambert absorption in silicon and understand wavelength-dependent penetration depth
 - **[Microlens Ray Trace](./microlens-raytrace)** — Trace rays through superellipse microlens geometry with Snell's law refraction and CRA effects
 - **[MLA Array Visualizer](./mla-array)** — Visualize micro lens array geometry with configurable array patterns, asymmetric radii, height maps, and 2D ray tracing
+- **[FDTI / BDTI Pixel Simulator](./fdti-pixel)** — Compare full-depth front DTI with selectable-depth back DTI and visualize optical field confinement and crosstalk
 - **[Fabry-P&eacute;rot Visualizer](./fabry-perot)** — Explore thin film interference with phasor diagrams and quarter-wave anti-reflection conditions
 - **[Diffraction PSF Viewer](./diffraction-psf)** — View Airy patterns, encircled energy, and pixel grid overlay for collection efficiency analysis
 

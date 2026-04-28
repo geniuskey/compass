@@ -50,6 +50,7 @@ import SiliconAbsorptionDepth from './components/SiliconAbsorptionDepth.vue'
 import FabryPerotVisualizer from './components/FabryPerotVisualizer.vue'
 import MicrolensRayTrace from './components/MicrolensRayTrace.vue'
 import DiffractionPsfViewer from './components/DiffractionPsfViewer.vue'
+import FdtiPixelSimulator from './components/FdtiPixelSimulator.vue'
 import MtfAnalyzer from './components/MtfAnalyzer.vue'
 import PixelScalingTrends from './components/PixelScalingTrends.vue'
 import ColorAccuracyAnalyzer from './components/ColorAccuracyAnalyzer.vue'
@@ -147,6 +148,7 @@ export default {
     app.component('FabryPerotVisualizer', FabryPerotVisualizer)
     app.component('MicrolensRayTrace', MicrolensRayTrace)
     app.component('DiffractionPsfViewer', DiffractionPsfViewer)
+    app.component('FdtiPixelSimulator', FdtiPixelSimulator)
     app.component('MtfAnalyzer', MtfAnalyzer)
     app.component('PixelScalingTrends', PixelScalingTrends)
     app.component('ColorAccuracyAnalyzer', ColorAccuracyAnalyzer)

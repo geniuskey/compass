@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/geniuskey/compass/actions/workflows/ci.yml/badge.svg)](https://github.com/geniuskey/compass/actions/workflows/ci.yml)
 [![Docs](https://github.com/geniuskey/compass/actions/workflows/docs.yml/badge.svg)](https://geniuskey.github.io/compass/)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
@@ -54,22 +54,30 @@ pip install -e ".[fdtd]"
 
 ## Quick Start
 
+Run the default pixel stack with the lightweight TMM solver:
+
+```bash
+python scripts/run_simulation.py solver=tmm compute=cpu
+```
+
+Or run the same configuration from Python:
+
 ```python
-import compass
+from pathlib import Path
 
-# Load a default BSI 2x2 Bayer pixel config
-sim = compass.load_config("configs/experiment/bsi_2x2_basic.yaml")
+from hydra import compose, initialize_config_dir
+from omegaconf import OmegaConf
 
-# Run with the torcwa RCWA solver
-result = sim.run(solver="torcwa")
+from compass.runners.single_run import SingleRunner
 
-# Plot QE curves per color channel
-result.plot_qe()
+with initialize_config_dir(config_dir=str(Path("configs").resolve()), version_base=None):
+    cfg = compose(config_name="config", overrides=["solver=tmm", "compute=cpu"])
 
-# Access raw data
-print(result.qe_per_pixel)       # dict of pixel QE arrays
-print(result.wavelengths)         # wavelength grid in um
-print(result.reflection)          # spectral reflectance
+result = SingleRunner.run(OmegaConf.to_container(cfg, resolve=True))
+
+print(result.wavelengths)     # wavelength grid in um
+print(result.qe_per_pixel)    # dict of pixel QE arrays
+print(result.reflection)      # spectral reflectance
 ```
 
 ## Solver Support
