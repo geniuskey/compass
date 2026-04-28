@@ -427,9 +427,9 @@ Key verification criteria for ensuring simulation result reliability in COMPASS:
 ## References and Sources
 
 ### Industry Reports
-- Yole Group, "Status of the CMOS Image Sensor Industry 2025"
-- Mordor Intelligence, "Image Sensors Market Size, Trends, Share Analysis 2030"
-- IDTechEx, "Quantum Dots Revolutionizing Image Sensors" (2024)
+- [Yole Group, "Status of the CMOS Image Sensor Industry 2025"](https://www.yolegroup.com/)
+- [Mordor Intelligence, "Image Sensors Market Size, Trends, Share Analysis 2030"](https://www.mordorintelligence.com/industry-reports/image-sensors-market)
+- [IDTechEx, "Quantum Dots Revolutionizing Image Sensors" (2024)](https://www.idtechex.com/)
 
 ### Corporate Technical Documents
 - Sony Semiconductor Solutions, QQBC technology and 200MP sensor announcement (2025)
@@ -438,16 +438,16 @@ Key verification criteria for ensuring simulation result reliability in COMPASS:
 - Prophesee/Sony, IMX636 Event-Based Vision Sensor specifications
 
 ### Academic Papers
-- "CMOS Image Sensor for Broad Spectral Range with >90% Quantum Efficiency" (Small, 2023)
-- "Deep Trench Isolation and Inverted Pyramid Array Structures for CMOS Image Sensor" (Sensors, 2020)
-- "Automotive 2.1um Full-Depth DTI CMOS Image Sensor with 120dB Dynamic Range" (Sensors, 2023)
-- "Adjoint-Assisted Shape Optimization of Microlenses for CMOS Image Sensors" (PMC, 2024)
-- "IR Sensitivity Enhancement of CMOS Image Sensor with Diffractive Light Trapping Pixels" (Scientific Reports, 2017)
+- ["CMOS Image Sensor for Broad Spectral Range with >90% Quantum Efficiency" (Small, 2023)](https://scholar.google.com/scholar?q=CMOS+Image+Sensor+for+Broad+Spectral+Range+with+%3E90%25+Quantum+Efficiency)
+- ["Deep Trench Isolation and Inverted Pyramid Array Structures for CMOS Image Sensor" (Sensors, 2020)](https://scholar.google.com/scholar?q=Deep+Trench+Isolation+and+Inverted+Pyramid+Array+Structures+for+CMOS+Image+Sensor)
+- ["Automotive 2.1um Full-Depth DTI CMOS Image Sensor with 120dB Dynamic Range" (Sensors, 2023)](https://scholar.google.com/scholar?q=Automotive+2.1um+Full-Depth+DTI+CMOS+Image+Sensor+with+120dB+Dynamic+Range)
+- ["Adjoint-Assisted Shape Optimization of Microlenses for CMOS Image Sensors" (PMC, 2024)](https://scholar.google.com/scholar?q=Adjoint-Assisted+Shape+Optimization+of+Microlenses+for+CMOS+Image+Sensors)
+- ["IR Sensitivity Enhancement of CMOS Image Sensor with Diffractive Light Trapping Pixels" (Scientific Reports, 2017)](https://www.nature.com/articles/s41598-017-09945-8)
 
 ### Industry Presentations and News
-- IEEE Spectrum, "Samsung and OmniVision Claim Smallest Camera Pixels" (2022)
-- SK hynix Newsroom, "Evolution of Pixel Technology in CMOS Image Sensor"
-- DPReview, "Tech Timeline: Milestones in Sensor Development"
+- [IEEE Spectrum, "Samsung and OmniVision Claim Smallest Camera Pixels" (2022)](https://spectrum.ieee.org/samsung-omnivision-smallest-camera-pixels)
+- [SK hynix Newsroom, "Evolution of Pixel Technology in CMOS Image Sensor"](https://news.skhynix.com/evolution-of-pixel-technology-in-cmos-image-sensor/)
+- [DPReview, "Tech Timeline: Milestones in Sensor Development"](https://www.dpreview.com/)
 - Image Sensors World (imagesensors.org), IISW workshop papers
 
 ---
