@@ -64,6 +64,7 @@ import PRNUVisualizer from './components/PRNUVisualizer.vue'
 import PixelSNRvsIlluminance from './components/PixelSNRvsIlluminance.vue'
 import ResponsivityCalculator from './components/ResponsivityCalculator.vue'
 import LinearityAnalyzer from './components/LinearityAnalyzer.vue'
+import ReferenceInteractiveList from './components/ReferenceInteractiveList.vue'
 
 function isLocaleSwitch(from: string, to: string): boolean {
   const stripKo = (p: string) => p.replace(/^\/ko\//, '/')
