@@ -85,4 +85,4 @@ def rad_to_deg(rad: float) -> float:
 
 def wavelength_to_k0(wavelength_um: float) -> float:
     """Convert wavelength (um) to free-space wavenumber k0 (1/um)."""
-    return 2.0 * np.pi / wavelength_um
+    return float(2.0 * np.pi / wavelength_um)

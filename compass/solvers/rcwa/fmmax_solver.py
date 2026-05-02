@@ -228,7 +228,9 @@ class FmmaxSolver(SolverBase):
         return SimulationResult(
             qe_per_pixel={k: np.array(v) for k, v in all_qe.items()},
             wavelengths=self._source.wavelengths,
-            **result_arrays,
+            reflection=result_arrays["reflection"],
+            transmission=result_arrays["transmission"],
+            absorption=result_arrays["absorption"],
             metadata={
                 "solver_name": "fmmax",
                 "fmm_formulation": self._fmm_formulation,

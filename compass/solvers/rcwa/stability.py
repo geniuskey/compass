@@ -49,7 +49,7 @@ def has_cusolver() -> bool:
     if not HAS_CUPY:
         return False
     try:
-        return cp.cuda.runtime.getDeviceCount() > 0
+        return bool(cp.cuda.runtime.getDeviceCount() > 0)
     except Exception:
         return False
 

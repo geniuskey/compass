@@ -288,7 +288,9 @@ class FdtdxSolver(SolverBase):
             qe_per_pixel={k: np.array(v) for k, v in all_qe.items()},
             wavelengths=self._source.wavelengths,
             fields=self._last_fields,
-            **result_arrays,
+            reflection=result_arrays["reflection"],
+            transmission=result_arrays["transmission"],
+            absorption=result_arrays["absorption"],
             metadata={
                 "solver_name": "fdtdx",
                 "grid_spacing": grid_spacing,
@@ -442,6 +444,8 @@ class FdtdxSolver(SolverBase):
         A = float(np.clip(1.0 - R - T, 0.0, 1.0))
 
         # Store field data (transpose back from (nz, ny, nx) to (ny, nx, nz))
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         z_coords = np.linspace(
             self._pixel_stack.z_range[0],
             self._pixel_stack.z_range[1],
