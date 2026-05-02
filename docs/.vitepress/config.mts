@@ -21,18 +21,28 @@ const introSidebarKo = [
 
 const theorySidebar = [
   { text: 'Theory', items: [
+    { text: 'Overview', link: '/theory/' },
+  ]},
+  { text: 'Optics', collapsed: false, items: [
+    { text: 'Optics Overview', link: '/theory/optics-intro' },
     { text: 'Light Basics', link: '/theory/light-basics' },
     { text: 'Electromagnetic Waves', link: '/theory/electromagnetic-waves' },
     { text: 'Thin Film Optics', link: '/theory/thin-film-optics' },
     { text: 'Diffraction', link: '/theory/diffraction' },
-    { text: 'RCWA Explained', link: '/theory/rcwa-explained' },
-    { text: 'FDTD Explained', link: '/theory/fdtd-explained' },
-    { text: 'RCWA vs FDTD', link: '/theory/rcwa-vs-fdtd' },
+  ]},
+  { text: 'Image Sensor', collapsed: false, items: [
+    { text: 'Image Sensor Overview', link: '/theory/sensor-intro' },
     { text: 'Image Sensor Optics', link: '/theory/image-sensor-optics' },
     { text: 'Quantum Efficiency', link: '/theory/quantum-efficiency' },
     { text: 'Signal Chain', link: '/theory/signal-chain' },
+  ]},
+  { text: 'Optical Simulation', collapsed: false, items: [
+    { text: 'Simulation Overview', link: '/theory/simulation-intro' },
+    { text: 'RCWA Explained', link: '/theory/rcwa-explained' },
+    { text: 'FDTD Explained', link: '/theory/fdtd-explained' },
+    { text: 'RCWA vs FDTD', link: '/theory/rcwa-vs-fdtd' },
     { text: 'Numerical Stability', link: '/theory/numerical-stability' },
-  ]}
+  ]},
 ]
 
 const guideSidebar = [
@@ -112,18 +122,28 @@ const aboutSidebar = [
 // Korean sidebar translations
 const theorySidebarKo = [
   { text: '이론', items: [
+    { text: '개요', link: '/ko/theory/' },
+  ]},
+  { text: '광학', collapsed: false, items: [
+    { text: '광학 개요', link: '/ko/theory/optics-intro' },
     { text: '빛의 기초', link: '/ko/theory/light-basics' },
     { text: '전자기파', link: '/ko/theory/electromagnetic-waves' },
     { text: '박막 광학', link: '/ko/theory/thin-film-optics' },
     { text: '회절', link: '/ko/theory/diffraction' },
-    { text: 'RCWA 설명', link: '/ko/theory/rcwa-explained' },
-    { text: 'FDTD 설명', link: '/ko/theory/fdtd-explained' },
-    { text: 'RCWA vs FDTD', link: '/ko/theory/rcwa-vs-fdtd' },
+  ]},
+  { text: '이미지 센서', collapsed: false, items: [
+    { text: '이미지 센서 개요', link: '/ko/theory/sensor-intro' },
     { text: '이미지 센서 광학', link: '/ko/theory/image-sensor-optics' },
     { text: '양자 효율', link: '/ko/theory/quantum-efficiency' },
     { text: '신호 체인', link: '/ko/theory/signal-chain' },
+  ]},
+  { text: '광학 시뮬레이션', collapsed: false, items: [
+    { text: '시뮬레이션 개요', link: '/ko/theory/simulation-intro' },
+    { text: 'RCWA 설명', link: '/ko/theory/rcwa-explained' },
+    { text: 'FDTD 설명', link: '/ko/theory/fdtd-explained' },
+    { text: 'RCWA vs FDTD', link: '/ko/theory/rcwa-vs-fdtd' },
     { text: '수치 안정성', link: '/ko/theory/numerical-stability' },
-  ]}
+  ]},
 ]
 
 const guideSidebarKo = [
@@ -304,7 +324,7 @@ export default withMermaid(defineConfig({
         nav: [
           { text: 'Learn', items: [
             { text: 'Introduction', link: '/introduction/what-is-cmos-sensor' },
-            { text: 'Theory', link: '/theory/light-basics' },
+            { text: 'Theory', link: '/theory/' },
           ]},
           { text: 'Guide', items: [
             { text: 'Getting Started', link: '/guide/installation' },
@@ -336,7 +356,7 @@ export default withMermaid(defineConfig({
         nav: [
           { text: '학습', items: [
             { text: '소개', link: '/ko/introduction/what-is-cmos-sensor' },
-            { text: '이론', link: '/ko/theory/light-basics' },
+            { text: '이론', link: '/ko/theory/' },
           ]},
           { text: '가이드', items: [
             { text: '시작하기', link: '/ko/guide/installation' },

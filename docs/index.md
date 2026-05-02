@@ -92,7 +92,7 @@ for pixel, qe in result.qe_per_pixel.items():
   <strong>Quick Start</strong>
   <span>Run your first simulation in minutes</span>
 </a>
-<a href="/theory/light-basics" class="cta-card">
+<a href="/theory/" class="cta-card">
   <strong>Theory Background</strong>
   <span>Understand the physics behind the simulation</span>
 </a>

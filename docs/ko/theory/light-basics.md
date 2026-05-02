@@ -44,7 +44,7 @@ $$\tilde{n} = n + ik$$
 
 $$\varepsilon = \tilde{n}^2 = (n + ik)^2 = (n^2 - k^2) + 2ink$$
 
-RCWA 및 FDTD 솔버는 내부적으로 유전율을 사용합니다. COMPASS는 재료 데이터를 $(n, k)$ 형식으로 저장하고, 시뮬레이션 구조를 구성할 때 $\varepsilon$로 변환합니다.
+맥스웰 방정식의 수치 해석 대부분은 굴절률이 아니라 유전율로 정식화됩니다. COMPASS는 재료 데이터를 `MaterialDB`에 $(n, k)$ 형태로 저장하며, 각 솔버 내부에서 $\varepsilon$이 어떻게 사용되는지는 [광학 시뮬레이션](./simulation-intro.md)에서 다룹니다.
 
 ### 흡수
 

@@ -92,7 +92,7 @@ for pixel, qe in result.qe_per_pixel.items():
   <strong>빠른 시작</strong>
   <span>몇 분 안에 첫 번째 시뮬레이션을 실행하세요</span>
 </a>
-<a href="/ko/theory/light-basics" class="cta-card">
+<a href="/ko/theory/" class="cta-card">
   <strong>이론 배경</strong>
   <span>시뮬레이션의 물리학을 이해하세요</span>
 </a>

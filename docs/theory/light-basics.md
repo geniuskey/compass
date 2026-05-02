@@ -45,7 +45,7 @@ The complex permittivity $\varepsilon$ is the square of the complex refractive i
 
 $$\varepsilon = \tilde{n}^2 = (n + ik)^2 = (n^2 - k^2) + 2ink$$
 
-RCWA and FDTD solvers work with permittivity internally. COMPASS stores materials in $(n, k)$ form and converts to $\varepsilon$ when building the simulation geometry.
+Most numerical methods for Maxwell's equations are formulated in terms of permittivity rather than refractive index. COMPASS stores materials in $(n, k)$ form in `MaterialDB`; how the conversion to $\varepsilon$ is used inside each solver is covered in [Optical Simulation](./simulation-intro.md).
 
 ### Absorption
 
