@@ -1,0 +1,82 @@
+# @package _global_
+#
+# Samsung ISOCELL GNJ-class 50 MP (2023–2024) — 1.0 µm pixel, 1/1.57" main sensor.
+# Reference: Samsung ISOCELL GNJ news (2024), GN3/GNJ generation.
+#
+# Distinctive features modelled here:
+# - Pitch = 1.0 µm.
+# - Quad Bayer (2x2 same-color groups, Tetracell) with per-pixel microlens.
+# - Front-side full-depth DTI (F-DTI) with SiO2 fill (GNJ upgrade vs. earlier
+#   polysilicon-filled DTI of GN3).
+# - Standard polymer microlens (n ≈ 1.56) per pixel.
+pixel:
+  pitch: 1.0
+  unit_cell: [4, 4]   # Quad Bayer -> 4x4 super-tile (2x2 per color)
+
+  layers:
+    air:
+      thickness: 1.0
+      material: "air"
+
+    microlens:
+      enabled: true
+      height: 0.55
+      sharing: 1
+      radius_x: 0.48
+      radius_y: 0.48
+      material: "polymer_n1p56"
+      profile:
+        type: "superellipse"
+        n: 2.5
+        alpha: 1.0
+      shift:
+        mode: "auto_cra"
+        cra_deg: 0.0
+      gap: 0.02
+
+    planarization:
+      thickness: 0.30
+      material: "sio2"
+
+    color_filter:
+      thickness: 0.55
+      pattern: "tetracell"   # Quad Bayer / 2x2 same-color
+      materials:
+        R: "cf_red"
+        G: "cf_green"
+        B: "cf_blue"
+      grid:
+        enabled: true
+        width: 0.06
+        height: 0.55
+        material: "tungsten"
+
+    barl:
+      layers:
+        - thickness: 0.010
+          material: "sio2"
+        - thickness: 0.025
+          material: "hfo2"
+        - thickness: 0.015
+          material: "sio2"
+        - thickness: 0.030
+          material: "si3n4"
+
+    silicon:
+      thickness: 3.0
+      material: "silicon"
+      photodiode:
+        position: [0.0, 0.0, 0.5]
+        size: [0.70, 0.70, 2.0]
+      dti:
+        enabled: true
+        width: 0.08
+        depth: 3.0
+        material: "sio2"   # F-DTI oxide fill (GNJ generation)
+
+  # Quad Bayer: 2x2 same-color groups in 4x4 super-pixel.
+  bayer_map:
+    - ["R", "R", "G", "G"]
+    - ["R", "R", "G", "G"]
+    - ["G", "G", "B", "B"]
+    - ["G", "G", "B", "B"]

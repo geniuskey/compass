@@ -1,0 +1,87 @@
+# @package _global_
+#
+# Sony LYTIA LYT-900 (2024) — 1-inch type, 50 MP, 1.6 µm pixel.
+# Reference: Sony Semiconductor Solutions (Dec 2023, Aug 2024 IEDM presentation
+# of "2-Layer Transistor pixel-stacked CMOS image sensor technology").
+#
+# Distinctive features modelled here:
+# - Pitch = 1.6 µm.
+# - 2-Layer Transistor (2LT): photodiodes and pixel transistors are placed on
+#   separate substrate layers. The transistor layer is below the PD layer.
+#   Optically, this means the silicon photodiode region is NOT shared with
+#   transistor area, so the PD lateral footprint is enlarged (~ pitch x pitch)
+#   and the saturation-equivalent z-extent ~ doubles. We model this here by
+#   maximizing PD lateral size and using a deep PD volume.
+# - Conventional Bayer pattern (50 MP, no remosaic).
+# - Standard polymer microlens, one lens per pixel.
+# - F-DTI between pixels.
+pixel:
+  pitch: 1.6
+  unit_cell: [2, 2]   # standard Bayer
+
+  layers:
+    air:
+      thickness: 1.0
+      material: "air"
+
+    microlens:
+      enabled: true
+      height: 0.85
+      sharing: 1
+      radius_x: 0.78
+      radius_y: 0.78
+      material: "polymer_n1p56"
+      profile:
+        type: "superellipse"
+        n: 2.5
+        alpha: 1.0
+      shift:
+        mode: "auto_cra"
+        cra_deg: 0.0
+      gap: 0.04
+
+    planarization:
+      thickness: 0.35
+      material: "sio2"
+
+    color_filter:
+      thickness: 0.80
+      pattern: "bayer_rggb"
+      materials:
+        R: "cf_red"
+        G: "cf_green"
+        B: "cf_blue"
+      grid:
+        enabled: true
+        width: 0.08
+        height: 0.80
+        material: "tungsten"
+
+    barl:
+      layers:
+        - thickness: 0.010
+          material: "sio2"
+        - thickness: 0.025
+          material: "hfo2"
+        - thickness: 0.015
+          material: "sio2"
+        - thickness: 0.030
+          material: "si3n4"
+
+    silicon:
+      thickness: 4.0   # 2LT enables a thicker / fuller PD volume per pixel
+      material: "silicon"
+      photodiode:
+        # Larger lateral footprint and deeper z-extent because pixel transistors
+        # have moved off this substrate layer (2-Layer Transistor pixel).
+        position: [0.0, 0.0, 0.3]
+        size: [1.40, 1.40, 3.4]
+      dti:
+        enabled: true
+        width: 0.10
+        depth: 4.0
+        material: "sio2"
+
+  bayer_map:
+    - ["R", "G"]
+    - ["G", "B"]

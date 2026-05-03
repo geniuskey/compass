@@ -115,6 +115,7 @@ microlens:
     shift_x: 0.0        # Manual x-offset (um)
     shift_y: 0.0        # Manual y-offset (um)
   gap: 0.0              # Gap between adjacent lenses (um)
+  sharing: 1            # 1 = per-pixel OCL, 2 = 2x2 OCL, 4 = 4x4 OCL
 ```
 
 | Parameter        | Type  | Default            | Description                                       |
@@ -130,6 +131,20 @@ microlens:
 | `shift.mode`    | str   | `"auto_cra"`       | `"none"`, `"manual"`, or `"auto_cra"`.            |
 | `shift.cra_deg`  | float | `0.0`              | Chief ray angle in degrees for auto shift.        |
 | `gap`           | float | `0.0`              | Inter-lens gap in um.                             |
+| `sharing`       | int   | `1`                | Multi-pixel OCL grouping (see below).             |
+
+#### Multi-pixel OCL sharing
+
+`sharing: N` places **one** microlens over each $N \times N$ block of pixels (the lens straddles a Quad/Nona/Tetra² color group). When `radius_x`/`radius_y` are not set explicitly, they default to `sharing * pitch / 2` so the lens fills the cluster.
+
+| `sharing` | Use case                                  | Lens diameter (default)   |
+|-----------|-------------------------------------------|---------------------------|
+| `1`       | Conventional per-pixel OCL                | `pitch`                    |
+| `2`       | Sony 2×2 OCL / OmniVision Quad PD         | `2 × pitch`                |
+| `3`       | Nonacell shared lens (rare)               | `3 × pitch`                |
+| `4`       | Samsung Hexadeca / Tetra² 4×4 OCL          | `4 × pitch`                |
+
+High-refractive-index microlens materials (`polymer_hri_n1p70`, `polymer_hri_n1p85`) are also registered for modelling recent flagship pixels (e.g. Samsung HP9). See the [Vendor pixel structures](./vendor-pixels.md) guide.
 
 When `shift.mode` is `"auto_cra"`, the microlens center is offset from the pixel center to accommodate off-axis chief ray angles at the image sensor edge. The shift is computed by tracing the chief ray through each layer below the microlens using Snell's law:
 
@@ -180,12 +195,15 @@ color_filter:
 
 **Supported Bayer patterns:**
 
-| Pattern         | Layout                                                |
-|----------------|-------------------------------------------------------|
-| `bayer_rggb`   | Row 0: R G, Row 1: G B                               |
-| `bayer_grbg`   | Row 0: G R, Row 1: B G                               |
-| `bayer_gbrg`   | Row 0: G B, Row 1: R G                               |
-| `bayer_bggr`   | Row 0: B G, Row 1: G R                               |
+| Pattern                   | Same-color group | Super-pixel | Used by                                          |
+|---------------------------|------------------|-------------|--------------------------------------------------|
+| `bayer_rggb`              | 1×1              | 2×2         | Standard Bayer                                   |
+| `bayer_grbg`              | 1×1              | 2×2         | Standard Bayer (GRBG variant)                    |
+| `bayer_gbrg`              | 1×1              | 2×2         | Standard Bayer (GBRG variant)                    |
+| `bayer_bggr`              | 1×1              | 2×2         | Standard Bayer (BGGR variant)                    |
+| `tetracell` / `quad_bayer` | 2×2              | 4×4         | Sony Quad Bayer, Samsung Tetracell, OV Quad PD   |
+| `nonacell`                | 3×3              | 6×6         | Samsung 108 MP HM1                               |
+| `tetra2cell` / `hexadeca` | 4×4              | 8×8         | Samsung HP9 (200 MP, Tetra²pixel)                |
 
 The `bayer_map` at the top level determines which material each pixel receives. The keys in `materials` must match the characters used in `bayer_map`. Custom patterns beyond standard Bayer (e.g., RGBW quad-pixel) can be defined by enlarging the `unit_cell` and `bayer_map`:
 

@@ -142,8 +142,15 @@ class MaterialDB:
         # Air
         self.register_constant("air", n=1.0, k=0.0)
 
-        # Polymer microlens
+        # Polymer microlens (standard acrylate, n ~ 1.56 @ 550 nm)
         self.register_cauchy("polymer_n1p56", A=1.56, B=0.004, C=0.0)
+        # High-refractive-index microlens (TiO2-doped polymer, n ~ 1.70 @ 550 nm).
+        # Used in recent flagship sensors (e.g. Samsung ISOCELL HP9 "new material"
+        # high-refractive microlens) to shorten focal length and improve light
+        # collection at sub-um pitch.
+        self.register_cauchy("polymer_hri_n1p70", A=1.70, B=0.008, C=0.0)
+        # Very-high-RI microlens (n ~ 1.85, HRI inorganic-organic hybrid).
+        self.register_cauchy("polymer_hri_n1p85", A=1.85, B=0.010, C=0.0)
 
         # SiO2 (approximate Sellmeier)
         self.register_sellmeier(

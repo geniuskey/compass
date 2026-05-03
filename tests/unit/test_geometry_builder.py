@@ -122,6 +122,34 @@ class TestBayerPattern:
         assert pattern[0][1] == "R"
         assert pattern[2][2] == "B"
 
+    def test_nonacell_6x6(self):
+        """Nonacell: 3x3 same-color groups in 6x6 super-pixel."""
+        pattern = GeometryBuilder.bayer_pattern((6, 6), "nonacell")
+        assert len(pattern) == 6 and len(pattern[0]) == 6
+        # Top-left 3x3 block should all be R, top-right G, bot-left G, bot-right B.
+        for r in range(3):
+            for c in range(3):
+                assert pattern[r][c] == "R"
+                assert pattern[r][c + 3] == "G"
+                assert pattern[r + 3][c] == "G"
+                assert pattern[r + 3][c + 3] == "B"
+        flat = [c for row in pattern for c in row]
+        assert flat.count("R") == 9
+        assert flat.count("G") == 18
+        assert flat.count("B") == 9
+
+    def test_tetra2cell_8x8(self):
+        """Tetra^2 / Hexadeca: 4x4 same-color groups in 8x8 super-pixel."""
+        pattern = GeometryBuilder.bayer_pattern((8, 8), "tetra2cell")
+        assert len(pattern) == 8 and len(pattern[0]) == 8
+        flat = [c for row in pattern for c in row]
+        assert flat.count("R") == 16
+        assert flat.count("G") == 32
+        assert flat.count("B") == 16
+        assert pattern[0][0] == "R"
+        assert pattern[0][7] == "G"
+        assert pattern[7][7] == "B"
+
     def test_unknown_pattern_raises(self):
         """Should raise for unknown pattern."""
         with pytest.raises(ValueError):

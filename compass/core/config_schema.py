@@ -30,6 +30,12 @@ class MicrolensConfig(BaseModel):
     profile: MicrolensProfileConfig = Field(default_factory=MicrolensProfileConfig)
     shift: MicrolensShiftConfig = Field(default_factory=MicrolensShiftConfig)
     gap: float = 0.0
+    # Multi-pixel lens sharing (e.g. Sony 2x2 OCL Quad Bayer, Samsung Hexadeca 4x4 OCL).
+    # `sharing` = N means one microlens covers an N x N group of pixels (which
+    # typically share the same color in Quad/Nona/Tetra2 Bayer arrangements).
+    # When sharing > 1, the lens radius is auto-scaled to ~ sharing * pitch / 2
+    # unless radius_x / radius_y are explicitly set in the config.
+    sharing: int = 1
 
 
 class GridConfig(BaseModel):
