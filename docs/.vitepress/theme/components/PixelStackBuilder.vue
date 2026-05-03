@@ -120,21 +120,39 @@
             >DTI</text>
           </template>
 
-          <!-- Metal grid (in color filter layer) -->
+          <!-- Metal grid (within color filter z-range, shorter than CF — planarization fills above grid) -->
           <template v-if="showGrid">
+            <!-- Planarization fill above grid -->
             <rect
               :x="layerX"
               :y="cfLayer.y"
               :width="5"
-              :height="cfLayer.h"
-              fill="#707070"
-              opacity="0.8"
+              :height="cfLayer.h * (1 - gridHeightFrac)"
+              fill="#add8e6"
+              opacity="0.7"
             />
             <rect
               :x="layerX + layerW - 5"
               :y="cfLayer.y"
               :width="5"
-              :height="cfLayer.h"
+              :height="cfLayer.h * (1 - gridHeightFrac)"
+              fill="#add8e6"
+              opacity="0.7"
+            />
+            <!-- Grid walls (sit at the bottom of the CF region) -->
+            <rect
+              :x="layerX"
+              :y="cfLayer.y + cfLayer.h * (1 - gridHeightFrac)"
+              :width="5"
+              :height="cfLayer.h * gridHeightFrac"
+              fill="#707070"
+              opacity="0.8"
+            />
+            <rect
+              :x="layerX + layerW - 5"
+              :y="cfLayer.y + cfLayer.h * (1 - gridHeightFrac)"
+              :width="5"
+              :height="cfLayer.h * gridHeightFrac"
               fill="#707070"
               opacity="0.8"
             />
@@ -165,6 +183,8 @@ const barl = ref(0.08)
 const silicon = ref(3.0)
 const showDTI = ref(true)
 const showGrid = ref(true)
+// Metal grid is typically shorter than the color filter; planarization fills above.
+const gridHeightFrac = 0.65
 
 const totalHeight = computed(() => microlens.value + planarization.value + colorFilter.value + barl.value + silicon.value)
 

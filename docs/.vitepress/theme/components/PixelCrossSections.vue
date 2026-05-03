@@ -61,32 +61,56 @@
         stroke-width="0.5"
       />
 
-      <!-- Metal grid in CF layer -->
+      <!-- Planarization fills the upper portion of the CF region above the (shorter) metal grid and shorter CFs -->
+      <!-- Above metal grid -->
+      <rect
+        v-for="dx in dtiXPositions"
+        :key="'mg-fill-xz-' + dx"
+        :x="xToSvg(dx) - metalHalfW"
+        :y="zToY(cfZTop)"
+        :width="metalHalfW * 2"
+        :height="zToY(cfBaseZ + cfHeights.grid) - zToY(cfZTop)"
+        fill="#d5dbdb"
+        opacity="0.7"
+        stroke="none"
+      />
+      <!-- Metal grid (shorter than tallest CF, sits at CF base) -->
       <rect
         v-for="dx in dtiXPositions"
         :key="'mg-xz-' + dx"
         :x="xToSvg(dx) - metalHalfW"
-        :y="zToY(cfZTop)"
+        :y="zToY(cfBaseZ + cfHeights.grid)"
         :width="metalHalfW * 2"
-        :height="zToY(cfZBot) - zToY(cfZTop)"
+        :height="zToY(cfZBot) - zToY(cfBaseZ + cfHeights.grid)"
         fill="#555555"
         opacity="0.85"
         stroke="#333"
         stroke-width="0.3"
       />
 
-      <!-- CF Bayer colors for XZ (y=1.0 → row1: G, B) -->
-      <rect
-        v-for="(cf, i) in xzCFSegments"
-        :key="'cf-xz-' + i"
-        :x="xToSvg(cf.x0)"
-        :y="zToY(cfZTop)"
-        :width="xToSvg(cf.x1) - xToSvg(cf.x0)"
-        :height="zToY(cfZBot) - zToY(cfZTop)"
-        :fill="cf.color"
-        opacity="0.7"
-        stroke="none"
-      />
+      <!-- CF Bayer colors for XZ (y=1.0 → row1: G, B) — each color has its own height; planarization fills above shorter CFs -->
+      <template v-for="(cf, i) in xzCFSegments" :key="'cf-xz-' + i">
+        <!-- Planarization above shorter CF -->
+        <rect
+          :x="xToSvg(cf.x0)"
+          :y="zToY(cfZTop)"
+          :width="xToSvg(cf.x1) - xToSvg(cf.x0)"
+          :height="zToY(cfBaseZ + cf.height) - zToY(cfZTop)"
+          fill="#d5dbdb"
+          opacity="0.65"
+          stroke="none"
+        />
+        <!-- The CF color itself -->
+        <rect
+          :x="xToSvg(cf.x0)"
+          :y="zToY(cfBaseZ + cf.height)"
+          :width="xToSvg(cf.x1) - xToSvg(cf.x0)"
+          :height="zToY(cfZBot) - zToY(cfBaseZ + cf.height)"
+          :fill="cf.color"
+          opacity="0.7"
+          stroke="none"
+        />
+      </template>
 
       <!-- Photodiodes (dashed) -->
       <rect
@@ -337,32 +361,53 @@
         stroke-width="0.5"
       />
 
-      <!-- Metal grid in CF layer -->
+      <!-- Planarization fills upper portion of CF region above shorter metal grid -->
+      <rect
+        v-for="dy in dtiYPositions"
+        :key="'mg-fill-yz-' + dy"
+        :x="yToSvg(dy) - metalHalfW"
+        :y="zToY(cfZTop)"
+        :width="metalHalfW * 2"
+        :height="zToY(cfBaseZ + cfHeights.grid) - zToY(cfZTop)"
+        fill="#d5dbdb"
+        opacity="0.7"
+        stroke="none"
+      />
+      <!-- Metal grid (shorter than tallest CF) -->
       <rect
         v-for="dy in dtiYPositions"
         :key="'mg-yz-' + dy"
         :x="yToSvg(dy) - metalHalfW"
-        :y="zToY(cfZTop)"
+        :y="zToY(cfBaseZ + cfHeights.grid)"
         :width="metalHalfW * 2"
-        :height="zToY(cfZBot) - zToY(cfZTop)"
+        :height="zToY(cfZBot) - zToY(cfBaseZ + cfHeights.grid)"
         fill="#555555"
         opacity="0.85"
         stroke="#333"
         stroke-width="0.3"
       />
 
-      <!-- CF Bayer colors for YZ (x=1.0 → col1: G, B) -->
-      <rect
-        v-for="(cf, i) in yzCFSegments"
-        :key="'cf-yz-' + i"
-        :x="yToSvg(cf.y0)"
-        :y="zToY(cfZTop)"
-        :width="yToSvg(cf.y1) - yToSvg(cf.y0)"
-        :height="zToY(cfZBot) - zToY(cfZTop)"
-        :fill="cf.color"
-        opacity="0.7"
-        stroke="none"
-      />
+      <!-- CF Bayer colors for YZ (x=1.0 → col1: G, B) with per-color heights and planarization fill -->
+      <template v-for="(cf, i) in yzCFSegments" :key="'cf-yz-' + i">
+        <rect
+          :x="yToSvg(cf.y0)"
+          :y="zToY(cfZTop)"
+          :width="yToSvg(cf.y1) - yToSvg(cf.y0)"
+          :height="zToY(cfBaseZ + cf.height) - zToY(cfZTop)"
+          fill="#d5dbdb"
+          opacity="0.65"
+          stroke="none"
+        />
+        <rect
+          :x="yToSvg(cf.y0)"
+          :y="zToY(cfBaseZ + cf.height)"
+          :width="yToSvg(cf.y1) - yToSvg(cf.y0)"
+          :height="zToY(cfZBot) - zToY(cfBaseZ + cf.height)"
+          :fill="cf.color"
+          opacity="0.7"
+          stroke="none"
+        />
+      </template>
 
       <!-- Photodiodes (dashed) -->
       <rect
@@ -648,47 +693,49 @@
           >{{ xyBarlMaterial }}</text>
         </template>
 
-        <!-- CF zone: Bayer + metal grid -->
-        <template v-if="xyZ >= 3.08 && xyZ < 3.68">
+        <!-- CF zone: Bayer + metal grid (height-dependent visibility; planarization fills gaps) -->
+        <template v-if="xyZ >= cfZBot && xyZ < cfZTop">
           <rect
-            v-for="(bf, i) in xyBayerCells"
+            v-for="(bf, i) in xyBayerCellsAtZ"
             :key="'xy-bayer-' + i"
             :x="xyX(bf.x0)"
             :y="xyY(bf.y0)"
             :width="xyX(bf.x1) - xyX(bf.x0)"
             :height="xyY(bf.y1) - xyY(bf.y0)"
-            :fill="bf.color"
-            opacity="0.75"
+            :fill="bf.fill"
+            :opacity="bf.opacity"
           />
           <text
-            v-for="(bf, i) in xyBayerCells"
+            v-for="(bf, i) in xyBayerCellsAtZ"
             :key="'xy-bayer-label-' + i"
             :x="(xyX(bf.x0) + xyX(bf.x1)) / 2"
             :y="(xyY(bf.y0) + xyY(bf.y1)) / 2 + 5"
             text-anchor="middle"
             class="bayer-label"
           >{{ bf.label }}</text>
-          <!-- Metal grid -->
-          <rect
-            v-for="gx in [0, 1.0, 2.0]"
-            :key="'mg-v-' + gx"
-            :x="xyX(gx) - xyScale * 0.025"
-            :y="xyPad"
-            :width="xyScale * 0.05"
-            :height="xyPlot"
-            fill="#555555"
-            opacity="0.85"
-          />
-          <rect
-            v-for="gy in [0, 1.0, 2.0]"
-            :key="'mg-h-' + gy"
-            :x="xyPad"
-            :y="xyY(gy) - xyScale * 0.025"
-            :width="xyPlot"
-            :height="xyScale * 0.05"
-            fill="#555555"
-            opacity="0.85"
-          />
+          <!-- Metal grid (only present below grid top) -->
+          <template v-if="xyZ < cfBaseZ + cfHeights.grid">
+            <rect
+              v-for="gx in [0, 1.0, 2.0]"
+              :key="'mg-v-' + gx"
+              :x="xyX(gx) - xyScale * 0.025"
+              :y="xyPad"
+              :width="xyScale * 0.05"
+              :height="xyPlot"
+              fill="#555555"
+              opacity="0.85"
+            />
+            <rect
+              v-for="gy in [0, 1.0, 2.0]"
+              :key="'mg-h-' + gy"
+              :x="xyPad"
+              :y="xyY(gy) - xyScale * 0.025"
+              :width="xyPlot"
+              :height="xyScale * 0.05"
+              fill="#555555"
+              opacity="0.85"
+            />
+          </template>
         </template>
 
         <!-- Planarization zone -->
@@ -848,6 +895,16 @@ const layers = [
 
 const cfZBot = 3.08
 const cfZTop = 3.68
+const cfBaseZ = cfZBot       // grid + all CF colors share this base z
+const cfTotalH = cfZTop - cfZBot
+// Per-color and grid heights within the CF region (um). Tallest = cfTotalH = 0.60.
+// Above shorter elements, planarization fills the gap.
+const cfHeights = {
+  G: cfTotalH * 1.00,   // 0.60 — tallest reference
+  R: cfTotalH * 0.85,   // ~0.51
+  B: cfTotalH * 0.92,   // ~0.55
+  grid: cfTotalH * 0.65, // ~0.39 (notably shorter)
+}
 const mlZBot = 3.98
 const mlH = 0.6
 const mlR = 0.48
@@ -890,14 +947,14 @@ function lensRadiusAtZ(zInLens: number): number {
 
 // XZ Bayer segments (y=1.0 → row1: G, B)
 const xzCFSegments = [
-  { x0: 0, x1: 1.0, color: '#27ae60', label: 'G' },
-  { x1: 2.0, x0: 1.0, color: '#2980b9', label: 'B' },
+  { x0: 0, x1: 1.0, color: '#27ae60', label: 'G', height: cfHeights.G },
+  { x1: 2.0, x0: 1.0, color: '#2980b9', label: 'B', height: cfHeights.B },
 ]
 
 // YZ Bayer segments (x=1.0 → col1: G, B)
 const yzCFSegments = [
-  { y0: 0, y1: 1.0, color: '#27ae60', label: 'G' },
-  { y0: 1.0, y1: 2.0, color: '#2980b9', label: 'B' },
+  { y0: 0, y1: 1.0, color: '#27ae60', label: 'G', height: cfHeights.G },
+  { y0: 1.0, y1: 2.0, color: '#2980b9', label: 'B', height: cfHeights.B },
 ]
 
 // Photodiodes
@@ -1060,13 +1117,24 @@ const xyPhotodiodes = [
   { cx: 1.5, cy: 1.5 },
 ]
 
-// Bayer: R(0,0) G(1,0) G(0,1) B(1,1)
+// Bayer: R(0,0) G(1,0) G(0,1) B(1,1) — each cell carries its color's CF height
 const xyBayerCells = [
-  { x0: 0, x1: 1.0, y0: 0, y1: 1.0, color: '#c0392b', label: 'R' },
-  { x0: 1.0, x1: 2.0, y0: 0, y1: 1.0, color: '#27ae60', label: 'G' },
-  { x0: 0, x1: 1.0, y0: 1.0, y1: 2.0, color: '#27ae60', label: 'G' },
-  { x0: 1.0, x1: 2.0, y0: 1.0, y1: 2.0, color: '#2980b9', label: 'B' },
+  { x0: 0, x1: 1.0, y0: 0, y1: 1.0, color: '#c0392b', label: 'R', height: cfHeights.R },
+  { x0: 1.0, x1: 2.0, y0: 0, y1: 1.0, color: '#27ae60', label: 'G', height: cfHeights.G },
+  { x0: 0, x1: 1.0, y0: 1.0, y1: 2.0, color: '#27ae60', label: 'G', height: cfHeights.G },
+  { x0: 1.0, x1: 2.0, y0: 1.0, y1: 2.0, color: '#2980b9', label: 'B', height: cfHeights.B },
 ]
+
+// At the current xy z-slice, cells whose CF top is below z appear as planarization.
+const xyBayerCellsAtZ = computed(() => {
+  const dz = xyZ.value - cfBaseZ
+  return xyBayerCells.map(c => {
+    if (dz < c.height) {
+      return { ...c, fill: c.color, opacity: 0.75 }
+    }
+    return { ...c, fill: '#d5dbdb', opacity: 0.6 }
+  })
+})
 
 const xyMicrolenses = computed(() => {
   const zInLens = xyZ.value - mlZBot
