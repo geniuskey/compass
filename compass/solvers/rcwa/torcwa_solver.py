@@ -162,7 +162,9 @@ class TorcwaSolver(SolverBase):
         return SimulationResult(
             qe_per_pixel=qe_per_pixel,
             wavelengths=self._source.wavelengths,
-            **result_arrays,
+            reflection=result_arrays["reflection"],
+            transmission=result_arrays["transmission"],
+            absorption=result_arrays["absorption"],
             metadata={
                 "solver_name": "torcwa",
                 "fourier_order": fourier_order,

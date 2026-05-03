@@ -5,6 +5,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from compass.analysis.solver_comparison import SolverComparison
+from compass.core.types import SimulationResult
 from compass.runners.single_run import SingleRunner
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ class ComparisonRunner:
     """Run same simulation with multiple solvers and compare."""
 
     @staticmethod
-    def _run_single_solver(config: dict, solver_config: dict) -> tuple[str, object]:
+    def _run_single_solver(config: dict, solver_config: dict) -> tuple[str, SimulationResult]:
         """Run a single solver and return (label, result)."""
         cfg = {**config, "solver": solver_config}
         name = solver_config.get("name", solver_config.get("solver", "unknown"))
@@ -40,7 +41,7 @@ class ComparisonRunner:
             max_workers = len(solver_configs)
 
         # Submit all solver runs in parallel
-        labels_results: list[tuple[int, str, object]] = []
+        labels_results: list[tuple[int, str, SimulationResult]] = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_idx = {}
             for idx, sc in enumerate(solver_configs):

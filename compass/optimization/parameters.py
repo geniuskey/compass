@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from typing import Any, cast
 
 import numpy as np
 
@@ -62,9 +63,12 @@ class MicrolensHeight(OptimizableParameter):
         self.min_val = min_val
         self.max_val = max_val
 
-    def _ml_cfg(self) -> dict:
-        return self.config.setdefault("pixel", {}).setdefault("layers", {}).setdefault(
-            "microlens", {}
+    def _ml_cfg(self) -> dict[str, Any]:
+        return cast(
+            "dict[str, Any]",
+            self.config.setdefault("pixel", {})
+            .setdefault("layers", {})
+            .setdefault("microlens", {}),
         )
 
     def get_value(self) -> np.ndarray:
@@ -101,12 +105,13 @@ class MicrolensSquareness(OptimizableParameter):
         self.min_val = min_val
         self.max_val = max_val
 
-    def _profile_cfg(self) -> dict:
-        return (
+    def _profile_cfg(self) -> dict[str, Any]:
+        return cast(
+            "dict[str, Any]",
             self.config.setdefault("pixel", {})
             .setdefault("layers", {})
             .setdefault("microlens", {})
-            .setdefault("profile", {})
+            .setdefault("profile", {}),
         )
 
     def get_value(self) -> np.ndarray:
@@ -144,12 +149,13 @@ class BARLThicknesses(OptimizableParameter):
         self.min_val = min_val
         self.max_val = max_val
 
-    def _barl_layers(self) -> list[dict]:
-        return (
+    def _barl_layers(self) -> list[dict[str, Any]]:
+        return cast(
+            "list[dict[str, Any]]",
             self.config.setdefault("pixel", {})
             .setdefault("layers", {})
             .setdefault("barl", {})
-            .setdefault("layers", [])
+            .setdefault("layers", []),
         )
 
     def get_value(self) -> np.ndarray:
@@ -193,11 +199,12 @@ class ColorFilterThickness(OptimizableParameter):
         self.min_val = min_val
         self.max_val = max_val
 
-    def _cf_cfg(self) -> dict:
-        return (
+    def _cf_cfg(self) -> dict[str, Any]:
+        return cast(
+            "dict[str, Any]",
             self.config.setdefault("pixel", {})
             .setdefault("layers", {})
-            .setdefault("color_filter", {})
+            .setdefault("color_filter", {}),
         )
 
     def get_value(self) -> np.ndarray:
@@ -237,9 +244,12 @@ class MicrolensRadii(OptimizableParameter):
         self.min_val = min_val
         self.max_val = max_val
 
-    def _ml_cfg(self) -> dict:
-        return self.config.setdefault("pixel", {}).setdefault("layers", {}).setdefault(
-            "microlens", {}
+    def _ml_cfg(self) -> dict[str, Any]:
+        return cast(
+            "dict[str, Any]",
+            self.config.setdefault("pixel", {})
+            .setdefault("layers", {})
+            .setdefault("microlens", {}),
         )
 
     def get_value(self) -> np.ndarray:

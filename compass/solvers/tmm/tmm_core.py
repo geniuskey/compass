@@ -19,6 +19,8 @@ References:
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 
 
@@ -48,7 +50,7 @@ def _snell_cos_theta(
         -cos_theta,
         cos_theta,
     )
-    return cos_theta
+    return np.asarray(cos_theta)
 
 
 def _eta(n: complex, cos_theta: complex, polarization: str) -> complex:
@@ -197,7 +199,7 @@ def transfer_matrix_1d(
 
 
 def tmm_spectrum(
-    n_layers_func: callable,
+    n_layers_func: Callable[[float], np.ndarray],
     d_layers: np.ndarray,
     wavelengths: np.ndarray,
     theta_inc: float = 0.0,

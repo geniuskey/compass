@@ -216,7 +216,7 @@ class GeometryBuilder:
 
         xx, yy, zz = np.meshgrid(x, y, z, indexing="xy")
 
-        full_mask = np.zeros((ny, nx, nz), dtype=np.float64)
+        full_mask = np.zeros((ny, nx, nz), dtype=bool)
         per_pixel = {}
 
         px, py, pz = pd_position
@@ -234,7 +234,7 @@ class GeometryBuilder:
                     & (np.abs(zz - cz) < dz / 2.0)
                 )
 
-                full_mask = np.asarray(full_mask | pixel_mask)
+                full_mask = full_mask | pixel_mask
                 color = bayer_map[r][c]
                 per_pixel[f"{color}_{r}_{c}"] = pixel_mask.astype(np.float64)
 

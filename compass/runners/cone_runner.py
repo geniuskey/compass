@@ -105,6 +105,13 @@ class ConeIlluminationRunner:
                 weighted_T = np.zeros(n_wl)
                 weighted_A = np.zeros(n_wl)
 
+            if (
+                weighted_R is None
+                or weighted_T is None
+                or weighted_A is None
+            ):
+                raise RuntimeError("Weighted accumulators not initialized")
+
             if result.reflection is not None:
                 weighted_R += weight * result.reflection
             if result.transmission is not None:

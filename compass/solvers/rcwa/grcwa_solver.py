@@ -168,7 +168,9 @@ class GrcwaSolver(SolverBase):
         return SimulationResult(
             qe_per_pixel={k: np.array(v) for k, v in all_qe.items()},
             wavelengths=self._source.wavelengths,
-            **result_arrays,
+            reflection=result_arrays["reflection"],
+            transmission=result_arrays["transmission"],
+            absorption=result_arrays["absorption"],
             metadata={"solver_name": "grcwa", "fourier_order": fourier_order, "device": self.device},
         )
 

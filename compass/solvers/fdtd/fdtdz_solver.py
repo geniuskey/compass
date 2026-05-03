@@ -273,7 +273,9 @@ class FdtdzSolver(SolverBase):
             qe_per_pixel={k: np.array(v) for k, v in all_qe.items()},
             wavelengths=self._source.wavelengths,
             fields=self._last_fields,
-            **result_arrays,
+            reflection=result_arrays["reflection"],
+            transmission=result_arrays["transmission"],
+            absorption=result_arrays["absorption"],
             metadata={
                 "solver_name": "fdtdz",
                 "grid_spacing": grid_spacing,
