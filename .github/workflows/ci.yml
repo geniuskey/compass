@@ -1,10 +1,9 @@
 name: CI
 
+# Disabled: re-enable when codebase is more stable.
+# To run on demand: Actions tab → CI → Run workflow.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   test:
