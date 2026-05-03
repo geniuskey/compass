@@ -263,17 +263,31 @@ const sortedPolys = computed(() => {
         break
       }
       case 'colorfilter': {
-        const bayer = [
-          { x0: 0, y0: 0, x1: 1, y1: 1, color: '#c0392b' },
-          { x0: 1, y0: 0, x1: 2, y1: 1, color: '#27ae60' },
-          { x0: 0, y0: 1, x1: 1, y1: 2, color: '#27ae60' },
-          { x0: 1, y0: 1, x1: 2, y1: 2, color: '#2980b9' },
+        // Each color filter has its own height; metal grid is shorter than tallest CF.
+        // Above shorter CFs / above the grid, the planarization layer fills the gap.
+        const cfH = zt - zb
+        const fracs = { R: 0.85, G: 1.00, B: 0.92, grid: 0.65 }
+        const planar = '#d5dbdb'
+        const bayer: { x0: number; y0: number; x1: number; y1: number; color: string; height: number }[] = [
+          { x0: 0, y0: 0, x1: 1, y1: 1, color: '#c0392b', height: cfH * fracs.R },
+          { x0: 1, y0: 0, x1: 2, y1: 1, color: '#27ae60', height: cfH * fracs.G },
+          { x0: 0, y0: 1, x1: 1, y1: 2, color: '#27ae60', height: cfH * fracs.G },
+          { x0: 1, y0: 1, x1: 2, y1: 2, color: '#2980b9', height: cfH * fracs.B },
         ]
-        addBox(polys, 0, 0, zb, 2, 2, zt, layer.color, 0.8, 0.7, 0.65, bayer)
-        // Metal grid walls
+        // Each Bayer cell as a separate box of its own height + planarization fill above
+        for (const c of bayer) {
+          addBox(polys, c.x0, c.y0, zb, c.x1, c.y1, zb + c.height, c.color, 0.8, 0.7, 0.65)
+          if (c.height < cfH - 1e-6) {
+            addBox(polys, c.x0, c.y0, zb + c.height, c.x1, c.y1, zt, planar, 0.7, 0.6, 0.55)
+          }
+        }
+        // Metal grid walls — shorter than tallest CF; planarization fills above grid
         const mw = 0.025
-        addBox(polys, 1 - mw, 0, zb, 1 + mw, 2, zt, '#555555', 0.85, 0.75, 0.7)
-        addBox(polys, 0, 1 - mw, zb, 2, 1 + mw, zt, '#555555', 0.85, 0.75, 0.7)
+        const gridH = cfH * fracs.grid
+        addBox(polys, 1 - mw, 0, zb, 1 + mw, 2, zb + gridH, '#555555', 0.85, 0.75, 0.7)
+        addBox(polys, 0, 1 - mw, zb, 2, 1 + mw, zb + gridH, '#555555', 0.85, 0.75, 0.7)
+        addBox(polys, 1 - mw, 0, zb + gridH, 1 + mw, 2, zt, planar, 0.7, 0.6, 0.55)
+        addBox(polys, 0, 1 - mw, zb + gridH, 2, 1 + mw, zt, planar, 0.7, 0.6, 0.55)
         break
       }
       case 'microlens': {

@@ -110,14 +110,24 @@
                 rx="1"
               />
 
-              <!-- Color Filter — two side by side (green + red) with metal grid between -->
+              <!-- Color Filter — G + R side by side, different heights, planarization fills gaps above shorter CFs -->
               <template v-if="layer.id === 'colorfilter'">
-                <!-- Green pixel -->
+                <!-- Planarization fill above R (R is shorter than G) -->
+                <rect
+                  :x="leftPixelX + pixelW + gapW"
+                  :y="layerPositions[idx].y"
+                  :width="pixelW"
+                  :height="layerPositions[idx].h * (1 - cfHeightFrac.R)"
+                  fill="#d5d8dc"
+                  :opacity="isHighlighted(layer.id) ? 0.6 : 0.55"
+                  style="pointer-events: none"
+                />
+                <!-- Green pixel (full CF height) -->
                 <rect
                   :x="leftPixelX"
                   :y="layerPositions[idx].y"
                   :width="pixelW"
-                  :height="layerPositions[idx].h"
+                  :height="layerPositions[idx].h * cfHeightFrac.G"
                   fill="#27ae60"
                   :stroke="isHighlighted(layer.id) ? 'var(--vp-c-brand-1)' : '#555'"
                   :stroke-width="isHighlighted(layer.id) ? 2.5 : 0.5"
@@ -126,16 +136,16 @@
                 />
                 <text
                   :x="leftPixelX + pixelW / 2"
-                  :y="layerPositions[idx].y + layerPositions[idx].h / 2 + 3"
+                  :y="layerPositions[idx].y + layerPositions[idx].h * cfHeightFrac.G / 2 + 3"
                   text-anchor="middle"
                   class="cf-label"
                 >G</text>
-                <!-- Red pixel -->
+                <!-- Red pixel (shorter than G, sits on top of grid baseline) -->
                 <rect
                   :x="leftPixelX + pixelW + gapW"
-                  :y="layerPositions[idx].y"
+                  :y="layerPositions[idx].y + layerPositions[idx].h * (1 - cfHeightFrac.R)"
                   :width="pixelW"
-                  :height="layerPositions[idx].h"
+                  :height="layerPositions[idx].h * cfHeightFrac.R"
                   fill="#c0392b"
                   :stroke="isHighlighted(layer.id) ? 'var(--vp-c-brand-1)' : '#555'"
                   :stroke-width="isHighlighted(layer.id) ? 2.5 : 0.5"
@@ -144,51 +154,93 @@
                 />
                 <text
                   :x="leftPixelX + pixelW + gapW + pixelW / 2"
-                  :y="layerPositions[idx].y + layerPositions[idx].h / 2 + 3"
+                  :y="layerPositions[idx].y + layerPositions[idx].h * (1 - cfHeightFrac.R / 2) + 3"
                   text-anchor="middle"
                   class="cf-label"
                 >R</text>
               </template>
 
-              <!-- Metal Grid — vertical lines between color filters -->
+              <!-- Metal Grid — vertical walls within CF region, shorter than CFs (planarization fills above grid) -->
               <template v-if="layer.id === 'metalgrid'">
-                <!-- Span full width at this layer's y position -->
-                <rect
-                  :x="leftPixelX"
-                  :y="layerPositions[idx].y"
-                  :width="totalPixelW"
-                  :height="layerPositions[idx].h"
-                  fill="transparent"
-                  style="pointer-events: all"
-                />
-                <!-- Left boundary -->
+                <!-- Hit area covers the grid wall regions only -->
                 <rect
                   :x="leftPixelX - 2"
                   :y="layerPositions[idx].y"
                   width="6"
                   :height="layerPositions[idx].h"
-                  :fill="layer.color"
-                  :opacity="isHighlighted(layer.id) ? 1 : 0.85"
-                  :stroke="isHighlighted(layer.id) ? 'var(--vp-c-brand-1)' : 'none'"
-                  :stroke-width="isHighlighted(layer.id) ? 1.5 : 0"
+                  fill="transparent"
+                  style="pointer-events: all"
                 />
-                <!-- Center grid -->
                 <rect
                   :x="leftPixelX + pixelW - 1"
                   :y="layerPositions[idx].y"
                   :width="gapW + 2"
                   :height="layerPositions[idx].h"
-                  :fill="layer.color"
-                  :opacity="isHighlighted(layer.id) ? 1 : 0.85"
-                  :stroke="isHighlighted(layer.id) ? 'var(--vp-c-brand-1)' : 'none'"
-                  :stroke-width="isHighlighted(layer.id) ? 1.5 : 0"
+                  fill="transparent"
+                  style="pointer-events: all"
                 />
-                <!-- Right boundary -->
                 <rect
                   :x="leftPixelX + totalPixelW - 4"
                   :y="layerPositions[idx].y"
                   width="6"
                   :height="layerPositions[idx].h"
+                  fill="transparent"
+                  style="pointer-events: all"
+                />
+                <!-- Planarization fill above grid (between grid top and CF top) -->
+                <rect
+                  :x="leftPixelX - 2"
+                  :y="layerPositions[idx].y"
+                  width="6"
+                  :height="layerPositions[idx].h * (1 - cfHeightFrac.grid)"
+                  fill="#d5d8dc"
+                  :opacity="isHighlighted(layer.id) ? 0.6 : 0.55"
+                  style="pointer-events: none"
+                />
+                <rect
+                  :x="leftPixelX + pixelW - 1"
+                  :y="layerPositions[idx].y"
+                  :width="gapW + 2"
+                  :height="layerPositions[idx].h * (1 - cfHeightFrac.grid)"
+                  fill="#d5d8dc"
+                  :opacity="isHighlighted(layer.id) ? 0.6 : 0.55"
+                  style="pointer-events: none"
+                />
+                <rect
+                  :x="leftPixelX + totalPixelW - 4"
+                  :y="layerPositions[idx].y"
+                  width="6"
+                  :height="layerPositions[idx].h * (1 - cfHeightFrac.grid)"
+                  fill="#d5d8dc"
+                  :opacity="isHighlighted(layer.id) ? 0.6 : 0.55"
+                  style="pointer-events: none"
+                />
+                <!-- Grid walls (left, center, right) -->
+                <rect
+                  :x="leftPixelX - 2"
+                  :y="layerPositions[idx].y + layerPositions[idx].h * (1 - cfHeightFrac.grid)"
+                  width="6"
+                  :height="layerPositions[idx].h * cfHeightFrac.grid"
+                  :fill="layer.color"
+                  :opacity="isHighlighted(layer.id) ? 1 : 0.85"
+                  :stroke="isHighlighted(layer.id) ? 'var(--vp-c-brand-1)' : 'none'"
+                  :stroke-width="isHighlighted(layer.id) ? 1.5 : 0"
+                />
+                <rect
+                  :x="leftPixelX + pixelW - 1"
+                  :y="layerPositions[idx].y + layerPositions[idx].h * (1 - cfHeightFrac.grid)"
+                  :width="gapW + 2"
+                  :height="layerPositions[idx].h * cfHeightFrac.grid"
+                  :fill="layer.color"
+                  :opacity="isHighlighted(layer.id) ? 1 : 0.85"
+                  :stroke="isHighlighted(layer.id) ? 'var(--vp-c-brand-1)' : 'none'"
+                  :stroke-width="isHighlighted(layer.id) ? 1.5 : 0"
+                />
+                <rect
+                  :x="leftPixelX + totalPixelW - 4"
+                  :y="layerPositions[idx].y + layerPositions[idx].h * (1 - cfHeightFrac.grid)"
+                  width="6"
+                  :height="layerPositions[idx].h * cfHeightFrac.grid"
                   :fill="layer.color"
                   :opacity="isHighlighted(layer.id) ? 1 : 0.85"
                   :stroke="isHighlighted(layer.id) ? 'var(--vp-c-brand-1)' : 'none'"
@@ -556,23 +608,34 @@ const selectedLayer = computed(() => {
 })
 
 // Compute vertical positions
-// Photodiode and DTI overlap with silicon — they share the silicon space
-const mainLayers = layers.filter(l => l.id !== 'photodiode' && l.id !== 'dti')
+// Photodiode/DTI overlay silicon; metalgrid overlays the color filter (coplanar with CF in the COMPASS model)
+const overlayIds = new Set(['photodiode', 'dti', 'metalgrid'])
+const mainLayers = layers.filter(l => !overlayIds.has(l.id))
 const totalFrac = mainLayers.reduce((s, l) => s + l.heightFrac, 0)
 const availableH = svgH - startY - 16
+
+// Height fractions of grid / R / G / B within the color filter z-range.
+// Physically the CF region is one z-band; grid and each color may have different heights,
+// and planarization fills the space above whichever is shorter.
+const cfHeightFrac = {
+  G: 1.00,   // tallest reference
+  R: 0.85,
+  B: 0.92,
+  grid: 0.65,
+}
 
 const layerPositions = computed(() => {
   const positions: { y: number; h: number }[] = []
   let currentY = startY
 
-  // Find silicon position for photodiode and DTI overlay
   let siliconY = 0
   let siliconH = 0
+  let cfY = 0
+  let cfH = 0
 
   for (const layer of layers) {
-    if (layer.id === 'photodiode' || layer.id === 'dti') {
-      // These will be placed relative to silicon
-      positions.push({ y: 0, h: 0 }) // placeholder
+    if (overlayIds.has(layer.id)) {
+      positions.push({ y: 0, h: 0 }) // placeholder, set below
       continue
     }
     const h = (layer.heightFrac / totalFrac) * availableH
@@ -580,25 +643,23 @@ const layerPositions = computed(() => {
       siliconY = currentY
       siliconH = h
     }
+    if (layer.id === 'colorfilter') {
+      cfY = currentY
+      cfH = h
+    }
     positions.push({ y: currentY, h })
     currentY += h
   }
 
-  // Now place photodiode and DTI within silicon region
   for (let i = 0; i < layers.length; i++) {
     if (layers[i].id === 'photodiode') {
-      // Photodiode occupies middle portion of silicon
-      positions[i] = {
-        y: siliconY + siliconH * 0.15,
-        h: siliconH * 0.55,
-      }
+      positions[i] = { y: siliconY + siliconH * 0.15, h: siliconH * 0.55 }
     }
     if (layers[i].id === 'dti') {
-      // DTI spans full silicon depth
-      positions[i] = {
-        y: siliconY + 2,
-        h: siliconH - 4,
-      }
+      positions[i] = { y: siliconY + 2, h: siliconH - 4 }
+    }
+    if (layers[i].id === 'metalgrid') {
+      positions[i] = { y: cfY, h: cfH }
     }
   }
 
