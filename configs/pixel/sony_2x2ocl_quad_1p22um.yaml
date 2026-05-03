@@ -1,0 +1,83 @@
+# @package _global_
+#
+# Sony 2x2 OCL Quad Bayer (e.g. IMX803-class, ~1.22 µm pitch, used in iPhone
+# 14/15 Pro main cameras and recent Sony LYTIA mid/high-end mobile sensors).
+# Reference: Sony Semiconductor "All-pixel AF" and 2x2 OCL technology pages.
+#
+# Distinctive features modelled here:
+# - Pitch = 1.22 µm.
+# - Quad Bayer color filter (2x2 same-color groups).
+# - **Shared 2x2 OCL**: one large microlens covers a 2x2 same-color group,
+#   enabling all-pixel PDAF. Modelled via `microlens.sharing: 2` so a single
+#   lens of ~ 2 x pitch diameter sits over each 2x2 cluster.
+# - Standard polymer microlens (n ≈ 1.56).
+# - F-DTI between every individual pixel.
+pixel:
+  pitch: 1.22
+  unit_cell: [4, 4]
+
+  layers:
+    air:
+      thickness: 1.0
+      material: "air"
+
+    microlens:
+      enabled: true
+      height: 0.95
+      sharing: 2                 # one OCL covers each 2x2 same-color group
+      # radius defaults to sharing * pitch / 2 = 1.22 µm if omitted.
+      material: "polymer_n1p56"
+      profile:
+        type: "superellipse"
+        n: 2.5
+        alpha: 1.0
+      shift:
+        mode: "auto_cra"
+        cra_deg: 0.0
+      gap: 0.05
+
+    planarization:
+      thickness: 0.30
+      material: "sio2"
+
+    color_filter:
+      thickness: 0.65
+      pattern: "tetracell"   # 2x2 same-color
+      materials:
+        R: "cf_red"
+        G: "cf_green"
+        B: "cf_blue"
+      grid:
+        enabled: true
+        width: 0.07
+        height: 0.65
+        material: "tungsten"
+
+    barl:
+      layers:
+        - thickness: 0.010
+          material: "sio2"
+        - thickness: 0.025
+          material: "hfo2"
+        - thickness: 0.015
+          material: "sio2"
+        - thickness: 0.030
+          material: "si3n4"
+
+    silicon:
+      thickness: 3.2
+      material: "silicon"
+      photodiode:
+        position: [0.0, 0.0, 0.5]
+        size: [0.85, 0.85, 2.2]
+      dti:
+        enabled: true
+        width: 0.09
+        depth: 3.2
+        material: "sio2"
+
+  bayer_map:
+    - ["R", "R", "G", "G"]
+    - ["R", "R", "G", "G"]
+    - ["G", "G", "B", "B"]
+    - ["G", "G", "B", "B"]

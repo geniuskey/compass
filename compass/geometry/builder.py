@@ -70,17 +70,31 @@ class GeometryBuilder:
         Returns:
             2D list of color strings.
         """
+        def _binned(group: int) -> list[list[str]]:
+            tile_rggb = [["R", "G"], ["G", "B"]]
+            size = 2 * group
+            out = [["" for _ in range(size)] for _ in range(size)]
+            for br in range(2):
+                for bc in range(2):
+                    color = tile_rggb[br][bc]
+                    for r in range(group):
+                        for c in range(group):
+                            out[br * group + r][bc * group + c] = color
+            return out
+
         base_patterns = {
             "bayer_rggb": [["R", "G"], ["G", "B"]],
             "bayer_grbg": [["G", "R"], ["B", "G"]],
             "bayer_gbrg": [["G", "B"], ["R", "G"]],
             "bayer_bggr": [["B", "G"], ["G", "R"]],
-            "quad_bayer": [
-                ["R", "R", "G", "G"],
-                ["R", "R", "G", "G"],
-                ["G", "G", "B", "B"],
-                ["G", "G", "B", "B"],
-            ],
+            # Quad Bayer (Tetracell): 2x2 same-color groups, 4x4 unit cell
+            "quad_bayer": _binned(2),
+            "tetracell": _binned(2),
+            # Nonacell: 3x3 same-color groups, 6x6 unit cell (Samsung 108MP HM1)
+            "nonacell": _binned(3),
+            # Hexadeca / Tetra^2 / Tetra2pixel: 4x4 same-color groups, 8x8 unit cell (Samsung HP9)
+            "hexadeca": _binned(4),
+            "tetra2cell": _binned(4),
         }
 
         # Strip "bayer_" prefix if not in mapping

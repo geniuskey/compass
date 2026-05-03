@@ -182,21 +182,34 @@ class PixelStack:
                 is_patterned=True,
             ))
 
-            # Create microlens specs for each pixel
-            for _r in range(self.unit_cell[0]):
-                for _c in range(self.unit_cell[1]):
+            # Multi-pixel lens sharing (Sony 2x2 OCL, Samsung Hexadeca 4x4 OCL).
+            # One microlens covers an N x N group of pixels; default radius
+            # auto-scales to N * pitch / 2 when not explicitly set.
+            sharing = max(1, int(ml_cfg.get("sharing", 1)))
+            default_r = sharing * self.pitch / 2.0
+            radius_x = ml_cfg.get("radius_x", default_r)
+            radius_y = ml_cfg.get("radius_y", default_r)
+            ml_material = ml_cfg.get("material", "polymer_n1p56")
+
+            # Place one MicrolensSpec per N x N group, anchored at group center.
+            rows, cols = self.unit_cell
+            for _r0 in range(0, rows, sharing):
+                for _c0 in range(0, cols, sharing):
                     self.microlenses.append(MicrolensSpec(
                         height=ml_height,
-                        radius_x=ml_cfg.get("radius_x", 0.48),
-                        radius_y=ml_cfg.get("radius_y", 0.48),
-                        material=ml_cfg.get("material", "polymer_n1p56"),
+                        radius_x=radius_x,
+                        radius_y=radius_y,
+                        material=ml_material,
                         profile_type=profile.get("type", "superellipse"),
                         n_param=profile.get("n", 2.5),
                         alpha_param=profile.get("alpha", 1.0),
                         shift_x=shift_x,
                         shift_y=shift_y,
                     ))
+            self._lens_sharing = sharing
             z_cursor += ml_height
+        else:
+            self._lens_sharing = 1
 
         # 6. Air layer (top)
         air_cfg = layers_cfg.get("air", {})
@@ -388,11 +401,14 @@ class PixelStack:
         if cache_key not in self._height_map_cache:
             xx, yy = self._get_meshgrid(nx, ny)
             height_map = np.zeros((ny, nx))
+            sharing = getattr(self, "_lens_sharing", 1)
+            n_groups_x = max(1, self.unit_cell[1] // sharing)
             for idx, ml in enumerate(self.microlenses):
-                r = idx // self.unit_cell[1]
-                c = idx % self.unit_cell[1]
-                cx = (c + 0.5) * self.pitch
-                cy = (r + 0.5) * self.pitch
+                gr = idx // n_groups_x
+                gc = idx % n_groups_x
+                # Center each shared lens over its sharing x sharing pixel group.
+                cx = (gc + 0.5) * sharing * self.pitch
+                cy = (gr + 0.5) * sharing * self.pitch
 
                 h = GeometryBuilder.superellipse_lens(
                     xx, yy,
