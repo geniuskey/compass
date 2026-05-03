@@ -115,6 +115,7 @@ microlens:
     shift_x: 0.0        # Manual x-offset (um)
     shift_y: 0.0        # Manual y-offset (um)
   gap: 0.0              # Gap between adjacent lenses (um)
+  sharing: 1            # 1 = 픽셀당 OCL, 2 = 2x2 OCL, 4 = 4x4 OCL
 ```
 
 | 파라미터         | 타입  | 기본값             | 설명                                              |
@@ -130,6 +131,20 @@ microlens:
 | `shift.mode`    | str   | `"auto_cra"`       | `"none"`, `"manual"`, 또는 `"auto_cra"`.            |
 | `shift.cra_deg`  | float | `0.0`              | 자동 시프트를 위한 주광선 각도(Chief Ray Angle, CRA)(도). |
 | `gap`           | float | `0.0`              | 인접 렌즈 간 간격(um).                               |
+| `sharing`       | int   | `1`                | 다중 픽셀 OCL 그룹 (아래 표 참조).                   |
+
+#### 다중 픽셀 OCL 공유
+
+`sharing: N` 설정은 $N \times N$ 픽셀 블록마다 마이크로렌즈를 **하나** 배치합니다 (Quad / Nona / Tetra² 같은 색 그룹을 가로지름). `radius_x`/`radius_y` 가 명시되지 않으면 클러스터를 가득 채우도록 `sharing * pitch / 2` 로 자동 스케일됩니다.
+
+| `sharing` | 사용 예                                  | 기본 렌즈 직경        |
+|-----------|------------------------------------------|-----------------------|
+| `1`       | 일반적인 픽셀당 OCL                       | `pitch`                |
+| `2`       | Sony 2×2 OCL / OmniVision Quad PD         | `2 × pitch`            |
+| `3`       | Nonacell 공유 렌즈 (드묾)                  | `3 × pitch`            |
+| `4`       | Samsung Hexadeca / Tetra² 4×4 OCL          | `4 × pitch`            |
+
+고굴절률 마이크로렌즈 재료 (`polymer_hri_n1p70`, `polymer_hri_n1p85`) 도 `MaterialDB` 에 등록되어 있어 최근 플래그십 픽셀(예: Samsung HP9) 모델링에 사용할 수 있습니다. 자세한 내용은 [벤더 픽셀 구조](./vendor-pixels.md) 가이드 참조.
 
 `shift.mode`가 `"auto_cra"`일 때, 마이크로렌즈 중심은 이미지 센서 가장자리에서의 비축 주광선 각도를 수용하기 위해 픽셀 중심에서 오프셋됩니다. 시프트는 마이크로렌즈 아래 각 레이어를 통해 스넬 법칙으로 주광선을 추적하여 계산됩니다:
 
@@ -180,12 +195,15 @@ color_filter:
 
 **지원되는 베이어 패턴:**
 
-| 패턴            | 레이아웃                                                  |
-|----------------|-------------------------------------------------------|
-| `bayer_rggb`   | 행 0: R G, 행 1: G B                                   |
-| `bayer_grbg`   | 행 0: G R, 행 1: B G                                   |
-| `bayer_gbrg`   | 행 0: G B, 행 1: R G                                   |
-| `bayer_bggr`   | 행 0: B G, 행 1: G R                                   |
+| 패턴                       | 같은 색 그룹 | 슈퍼픽셀 | 사용 예                                          |
+|---------------------------|--------------|----------|--------------------------------------------------|
+| `bayer_rggb`              | 1×1          | 2×2      | 표준 Bayer                                       |
+| `bayer_grbg`              | 1×1          | 2×2      | 표준 Bayer (GRBG 변형)                          |
+| `bayer_gbrg`              | 1×1          | 2×2      | 표준 Bayer (GBRG 변형)                          |
+| `bayer_bggr`              | 1×1          | 2×2      | 표준 Bayer (BGGR 변형)                          |
+| `tetracell` / `quad_bayer` | 2×2          | 4×4      | Sony Quad Bayer, Samsung Tetracell, OV Quad PD   |
+| `nonacell`                | 3×3          | 6×6      | Samsung 108 MP HM1                              |
+| `tetra2cell` / `hexadeca` | 4×4          | 8×8      | Samsung HP9 (200 MP, Tetra²pixel)                |
 
 최상위 수준의 `bayer_map`은 각 픽셀이 받는 재료를 결정합니다. `materials`의 키는 `bayer_map`에서 사용된 문자와 일치해야 합니다. 표준 베이어를 넘어선 사용자 정의 패턴(예: RGBW 쿼드 픽셀)은 `unit_cell`과 `bayer_map`을 확장하여 정의할 수 있습니다:
 
