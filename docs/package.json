@@ -14,5 +14,8 @@
     "three": "^0.160.1",
     "vitepress": "^1.5.0",
     "vitepress-plugin-mermaid": "^2.0.17"
+  },
+  "overrides": {
+    "uuid": "^14.0.0"
   }
 }
