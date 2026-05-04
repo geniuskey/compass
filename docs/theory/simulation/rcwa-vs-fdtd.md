@@ -105,7 +105,7 @@ FDTD is CFL-limited. When `dx`, `dy`, and `dz` shrink, the time step shrinks too
 
 ### Report the ladder
 
-COMPASS keeps the current ladder in the generated [RCWA/FDTD Convergence Analysis Report](/reports/convergence-analysis):
+COMPASS keeps the practical convergence workflow in the [Convergence Study](/cookbook/convergence-study):
 
 1. TMM vs zero-order RCWA vs 1D FDTD.
 2. Shared 2D periodic FDTI/BDTI trench geometry.

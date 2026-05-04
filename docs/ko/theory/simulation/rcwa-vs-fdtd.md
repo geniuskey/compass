@@ -105,7 +105,7 @@ FDTD는 CFL 조건의 제한을 받습니다. `dx`, `dy`, `dz`가 작아지면 t
 
 ### 사다리 형태로 보고
 
-COMPASS의 현재 수렴 사다리는 생성된 [RCWA/FDTD 수렴 분석 리포트](/ko/reports/convergence-analysis)에 정리합니다:
+COMPASS의 실무 수렴 워크플로는 [수렴 연구](/ko/cookbook/convergence-study)에 정리합니다:
 
 1. TMM vs zero-order RCWA vs 1D FDTD.
 2. 동일한 2D periodic FDTI/BDTI trench geometry.
