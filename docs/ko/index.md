@@ -11,7 +11,7 @@ hero:
   actions:
     - theme: brand
       text: 입문 — 이미지 센서 기초
-      link: /ko/introduction/what-is-cmos-sensor
+      link: /ko/theory/basics/what-is-cmos-sensor
     - theme: alt
       text: 시작하기
       link: /ko/guide/installation
@@ -21,7 +21,7 @@ hero:
 features:
   - title: "\U0001F4D6 입문자 친화적"
     details: 처음부터 시작하세요 — 시뮬레이션에 들어가기 전에 이미지 센서 광학 기초를 배우세요
-    link: /ko/introduction/what-is-cmos-sensor
+    link: /ko/theory/basics/what-is-cmos-sensor
 ---
 
 <HeroAnimation />
@@ -80,7 +80,7 @@ for pixel, qe in result.qe_per_pixel.items():
 ## 시작하기
 
 <div class="cta-grid">
-<a href="/ko/introduction/what-is-cmos-sensor" class="cta-card">
+<a href="/ko/theory/basics/what-is-cmos-sensor" class="cta-card">
   <strong>이미지 센서 기초</strong>
   <span>이미지 센서가 처음이라면 여기서 시작하세요</span>
 </a>

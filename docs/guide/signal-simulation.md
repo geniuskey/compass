@@ -338,7 +338,7 @@ signals = calc.compute_signal(channel_qe)
 
 ## Next steps
 
-- [Quantum Efficiency theory](../theory/quantum-efficiency.md) -- Understanding QE computation
-- [Signal Chain theory](../theory/signal-chain.md) -- Full radiometric signal chain derivation
+- [Quantum Efficiency theory](../theory/sensor/quantum-efficiency.md) -- Understanding QE computation
+- [Signal Chain theory](../theory/sensor/signal-chain.md) -- Full radiometric signal chain derivation
 - [Cone Illumination](./cone-illumination.md) -- Modeling realistic lens illumination
 - [Visualization](./visualization.md) -- Plotting signal and QE results

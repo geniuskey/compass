@@ -11,7 +11,7 @@ hero:
   actions:
     - theme: brand
       text: Start Here — Image Sensor Basics
-      link: /introduction/what-is-cmos-sensor
+      link: /theory/basics/what-is-cmos-sensor
     - theme: alt
       text: Get Started
       link: /guide/installation
@@ -21,7 +21,7 @@ hero:
 features:
   - title: "\U0001F4D6 Beginner Friendly"
     details: Start from zero — learn image sensor optics fundamentals before diving into simulation
-    link: /introduction/what-is-cmos-sensor
+    link: /theory/basics/what-is-cmos-sensor
 ---
 
 <HeroAnimation />
@@ -80,7 +80,7 @@ for pixel, qe in result.qe_per_pixel.items():
 ## Get Started
 
 <div class="cta-grid">
-<a href="/introduction/what-is-cmos-sensor" class="cta-card">
+<a href="/theory/basics/what-is-cmos-sensor" class="cta-card">
   <strong>Image Sensor Basics</strong>
   <span>New to image sensors? Start here</span>
 </a>

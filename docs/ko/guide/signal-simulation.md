@@ -338,7 +338,7 @@ signals = calc.compute_signal(channel_qe)
 
 ## 다음 단계
 
-- [양자 효율 이론](../theory/quantum-efficiency.md) -- QE 계산 이해
-- [신호 체인 이론](../theory/signal-chain.md) -- 완전한 복사 측정 신호 체인 유도
+- [양자 효율 이론](../theory/sensor/quantum-efficiency.md) -- QE 계산 이해
+- [신호 체인 이론](../theory/sensor/signal-chain.md) -- 완전한 복사 측정 신호 체인 유도
 - [원뿔 조명](./cone-illumination.md) -- 실제 렌즈 조명 모델링
 - [시각화](./visualization.md) -- 신호 및 QE 결과 도시

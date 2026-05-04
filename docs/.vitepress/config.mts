@@ -1,47 +1,35 @@
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 
-const introSidebar = [
-  { text: 'Introduction', items: [
-    { text: 'What is a CMOS Image Sensor?', link: '/introduction/what-is-cmos-sensor' },
-    { text: 'Optics Primer', link: '/introduction/optics-primer' },
-    { text: 'Pixel Anatomy', link: '/introduction/pixel-anatomy' },
-    { text: 'Understanding QE', link: '/introduction/qe-intuitive' },
-  ]}
-]
-
-const introSidebarKo = [
-  { text: '소개', items: [
-    { text: 'CMOS 이미지 센서란?', link: '/ko/introduction/what-is-cmos-sensor' },
-    { text: '광학 기초 입문', link: '/ko/introduction/optics-primer' },
-    { text: '픽셀 해부학', link: '/ko/introduction/pixel-anatomy' },
-    { text: '양자 효율 이해', link: '/ko/introduction/qe-intuitive' },
-  ]}
-]
-
 const theorySidebar = [
   { text: 'Theory', items: [
     { text: 'Overview', link: '/theory/' },
   ]},
+  { text: 'Basics', collapsed: false, items: [
+    { text: 'What is a CMOS Image Sensor?', link: '/theory/basics/what-is-cmos-sensor' },
+    { text: 'Optics Primer', link: '/theory/basics/optics-primer' },
+    { text: 'Pixel Anatomy', link: '/theory/basics/pixel-anatomy' },
+    { text: 'Understanding QE', link: '/theory/basics/qe-intuitive' },
+  ]},
   { text: 'Optics', collapsed: false, items: [
-    { text: 'Optics Overview', link: '/theory/optics-intro' },
-    { text: 'Light Basics', link: '/theory/light-basics' },
-    { text: 'Electromagnetic Waves', link: '/theory/electromagnetic-waves' },
-    { text: 'Thin Film Optics', link: '/theory/thin-film-optics' },
-    { text: 'Diffraction', link: '/theory/diffraction' },
+    { text: 'Optics Overview', link: '/theory/optics/' },
+    { text: 'Light Basics', link: '/theory/optics/light-basics' },
+    { text: 'Electromagnetic Waves', link: '/theory/optics/electromagnetic-waves' },
+    { text: 'Thin Film Optics', link: '/theory/optics/thin-film-optics' },
+    { text: 'Diffraction', link: '/theory/optics/diffraction' },
   ]},
   { text: 'Image Sensor', collapsed: false, items: [
-    { text: 'Image Sensor Overview', link: '/theory/sensor-intro' },
-    { text: 'Image Sensor Optics', link: '/theory/image-sensor-optics' },
-    { text: 'Quantum Efficiency', link: '/theory/quantum-efficiency' },
-    { text: 'Signal Chain', link: '/theory/signal-chain' },
+    { text: 'Image Sensor Overview', link: '/theory/sensor/' },
+    { text: 'Image Sensor Optics', link: '/theory/sensor/image-sensor-optics' },
+    { text: 'Quantum Efficiency', link: '/theory/sensor/quantum-efficiency' },
+    { text: 'Signal Chain', link: '/theory/sensor/signal-chain' },
   ]},
   { text: 'Optical Simulation', collapsed: false, items: [
-    { text: 'Simulation Overview', link: '/theory/simulation-intro' },
-    { text: 'RCWA Explained', link: '/theory/rcwa-explained' },
-    { text: 'FDTD Explained', link: '/theory/fdtd-explained' },
-    { text: 'RCWA vs FDTD', link: '/theory/rcwa-vs-fdtd' },
-    { text: 'Numerical Stability', link: '/theory/numerical-stability' },
+    { text: 'Simulation Overview', link: '/theory/simulation/' },
+    { text: 'RCWA Explained', link: '/theory/simulation/rcwa-explained' },
+    { text: 'FDTD Explained', link: '/theory/simulation/fdtd-explained' },
+    { text: 'RCWA vs FDTD', link: '/theory/simulation/rcwa-vs-fdtd' },
+    { text: 'Numerical Stability', link: '/theory/simulation/numerical-stability' },
   ]},
 ]
 
@@ -70,6 +58,18 @@ const guideSidebar = [
     { text: 'Visualization', link: '/guide/visualization' },
     { text: 'Troubleshooting', link: '/guide/troubleshooting' },
   ]},
+  { text: 'Recipes', items: [
+    { text: 'BSI 2x2 Basic', link: '/cookbook/bsi-2x2-basic' },
+    { text: 'Metal Grid Effect', link: '/cookbook/metal-grid-effect' },
+    { text: 'Microlens & CRA', link: '/cookbook/microlens-optimization' },
+    { text: 'Wavelength Sweep', link: '/cookbook/wavelength-sweep' },
+    { text: 'Solver Comparison', link: '/cookbook/solver-benchmark' },
+    { text: 'BARL Design', link: '/cookbook/barl-design' },
+    { text: 'DTI Crosstalk', link: '/cookbook/dti-crosstalk' },
+    { text: 'Signal Chain Color Accuracy', link: '/cookbook/signal-chain-color-accuracy' },
+    { text: 'TMM Validation Results', link: '/cookbook/tmm-validation-results' },
+    { text: 'Convergence Study', link: '/cookbook/convergence-study' },
+  ]}
 ]
 
 const referenceSidebar = [
@@ -85,21 +85,6 @@ const referenceSidebar = [
   ]}
 ]
 
-const cookbookSidebar = [
-  { text: 'Recipes', items: [
-    { text: 'BSI 2x2 Basic', link: '/cookbook/bsi-2x2-basic' },
-    { text: 'Metal Grid Effect', link: '/cookbook/metal-grid-effect' },
-    { text: 'Microlens & CRA', link: '/cookbook/microlens-optimization' },
-    { text: 'Wavelength Sweep', link: '/cookbook/wavelength-sweep' },
-    { text: 'Solver Comparison', link: '/cookbook/solver-benchmark' },
-    { text: 'BARL Design', link: '/cookbook/barl-design' },
-    { text: 'DTI Crosstalk', link: '/cookbook/dti-crosstalk' },
-    { text: 'Signal Chain Color Accuracy', link: '/cookbook/signal-chain-color-accuracy' },
-    { text: 'TMM Validation Results', link: '/cookbook/tmm-validation-results' },
-    { text: 'Convergence Study', link: '/cookbook/convergence-study' },
-  ]}
-]
-
 const researchSidebar = [
   { text: 'Research', items: [
     { text: 'EM Solver Survey', link: '/research/open-source-em-solvers-survey' },
@@ -109,6 +94,7 @@ const researchSidebar = [
     { text: 'Benchmarks & Validation', link: '/research/benchmarks-and-validation' },
   ]}
 ]
+
 
 const aboutSidebar = [
   { text: 'About', items: [
@@ -125,25 +111,31 @@ const theorySidebarKo = [
   { text: '이론', items: [
     { text: '개요', link: '/ko/theory/' },
   ]},
+  { text: '입문', collapsed: false, items: [
+    { text: 'CMOS 이미지 센서란?', link: '/ko/theory/basics/what-is-cmos-sensor' },
+    { text: '광학 기초 입문', link: '/ko/theory/basics/optics-primer' },
+    { text: '픽셀 해부학', link: '/ko/theory/basics/pixel-anatomy' },
+    { text: '양자 효율 이해', link: '/ko/theory/basics/qe-intuitive' },
+  ]},
   { text: '광학', collapsed: false, items: [
-    { text: '광학 개요', link: '/ko/theory/optics-intro' },
-    { text: '빛의 기초', link: '/ko/theory/light-basics' },
-    { text: '전자기파', link: '/ko/theory/electromagnetic-waves' },
-    { text: '박막 광학', link: '/ko/theory/thin-film-optics' },
-    { text: '회절', link: '/ko/theory/diffraction' },
+    { text: '광학 개요', link: '/ko/theory/optics/' },
+    { text: '빛의 기초', link: '/ko/theory/optics/light-basics' },
+    { text: '전자기파', link: '/ko/theory/optics/electromagnetic-waves' },
+    { text: '박막 광학', link: '/ko/theory/optics/thin-film-optics' },
+    { text: '회절', link: '/ko/theory/optics/diffraction' },
   ]},
   { text: '이미지 센서', collapsed: false, items: [
-    { text: '이미지 센서 개요', link: '/ko/theory/sensor-intro' },
-    { text: '이미지 센서 광학', link: '/ko/theory/image-sensor-optics' },
-    { text: '양자 효율', link: '/ko/theory/quantum-efficiency' },
-    { text: '신호 체인', link: '/ko/theory/signal-chain' },
+    { text: '이미지 센서 개요', link: '/ko/theory/sensor/' },
+    { text: '이미지 센서 광학', link: '/ko/theory/sensor/image-sensor-optics' },
+    { text: '양자 효율', link: '/ko/theory/sensor/quantum-efficiency' },
+    { text: '신호 체인', link: '/ko/theory/sensor/signal-chain' },
   ]},
   { text: '광학 시뮬레이션', collapsed: false, items: [
-    { text: '시뮬레이션 개요', link: '/ko/theory/simulation-intro' },
-    { text: 'RCWA 설명', link: '/ko/theory/rcwa-explained' },
-    { text: 'FDTD 설명', link: '/ko/theory/fdtd-explained' },
-    { text: 'RCWA vs FDTD', link: '/ko/theory/rcwa-vs-fdtd' },
-    { text: '수치 안정성', link: '/ko/theory/numerical-stability' },
+    { text: '시뮬레이션 개요', link: '/ko/theory/simulation/' },
+    { text: 'RCWA 설명', link: '/ko/theory/simulation/rcwa-explained' },
+    { text: 'FDTD 설명', link: '/ko/theory/simulation/fdtd-explained' },
+    { text: 'RCWA vs FDTD', link: '/ko/theory/simulation/rcwa-vs-fdtd' },
+    { text: '수치 안정성', link: '/ko/theory/simulation/numerical-stability' },
   ]},
 ]
 
@@ -172,6 +164,18 @@ const guideSidebarKo = [
     { text: '시각화', link: '/ko/guide/visualization' },
     { text: '문제 해결', link: '/ko/guide/troubleshooting' },
   ]},
+  { text: '레시피', items: [
+    { text: 'BSI 2x2 기본', link: '/ko/cookbook/bsi-2x2-basic' },
+    { text: '메탈 그리드 효과', link: '/ko/cookbook/metal-grid-effect' },
+    { text: '마이크로렌즈 & CRA', link: '/ko/cookbook/microlens-optimization' },
+    { text: '파장 스윕', link: '/ko/cookbook/wavelength-sweep' },
+    { text: '솔버 비교 가이드', link: '/ko/cookbook/solver-benchmark' },
+    { text: 'BARL 설계', link: '/ko/cookbook/barl-design' },
+    { text: 'DTI 크로스토크', link: '/ko/cookbook/dti-crosstalk' },
+    { text: '신호 체인 색 정확도', link: '/ko/cookbook/signal-chain-color-accuracy' },
+    { text: 'TMM 검증 결과', link: '/ko/cookbook/tmm-validation-results' },
+    { text: '수렴 연구', link: '/ko/cookbook/convergence-study' },
+  ]}
 ]
 
 const referenceSidebarKo = [
@@ -187,21 +191,6 @@ const referenceSidebarKo = [
   ]}
 ]
 
-const cookbookSidebarKo = [
-  { text: '레시피', items: [
-    { text: 'BSI 2x2 기본', link: '/ko/cookbook/bsi-2x2-basic' },
-    { text: '메탈 그리드 효과', link: '/ko/cookbook/metal-grid-effect' },
-    { text: '마이크로렌즈 & CRA', link: '/ko/cookbook/microlens-optimization' },
-    { text: '파장 스윕', link: '/ko/cookbook/wavelength-sweep' },
-    { text: '솔버 비교 가이드', link: '/ko/cookbook/solver-benchmark' },
-    { text: 'BARL 설계', link: '/ko/cookbook/barl-design' },
-    { text: 'DTI 크로스토크', link: '/ko/cookbook/dti-crosstalk' },
-    { text: '신호 체인 색 정확도', link: '/ko/cookbook/signal-chain-color-accuracy' },
-    { text: 'TMM 검증 결과', link: '/ko/cookbook/tmm-validation-results' },
-    { text: '수렴 연구', link: '/ko/cookbook/convergence-study' },
-  ]}
-]
-
 const researchSidebarKo = [
   { text: '리서치', items: [
     { text: 'EM 솔버 서베이', link: '/ko/research/open-source-em-solvers-survey' },
@@ -211,6 +200,7 @@ const researchSidebarKo = [
     { text: '벤치마크 & 검증', link: '/ko/research/benchmarks-and-validation' },
   ]}
 ]
+
 
 const aboutSidebarKo = [
   { text: '정보', items: [
@@ -324,14 +314,8 @@ export default withMermaid(defineConfig({
       lang: 'en',
       themeConfig: {
         nav: [
-          { text: 'Learn', items: [
-            { text: 'Introduction', link: '/introduction/what-is-cmos-sensor' },
-            { text: 'Theory', link: '/theory/' },
-          ]},
-          { text: 'Guide', items: [
-            { text: 'Getting Started', link: '/guide/installation' },
-            { text: 'Cookbook', link: '/cookbook/bsi-2x2-basic' },
-          ]},
+          { text: 'Learn', link: '/theory/' },
+          { text: 'Guide', link: '/guide/installation' },
           { text: 'Simulator', link: '/simulator/' },
           { text: 'Reference', items: [
             { text: 'API Reference', link: '/reference/api-overview' },
@@ -340,11 +324,10 @@ export default withMermaid(defineConfig({
           ]},
         ],
         sidebar: {
-          '/introduction/': introSidebar,
           '/theory/': theorySidebar,
           '/guide/': guideSidebar,
           '/reference/': referenceSidebar,
-          '/cookbook/': cookbookSidebar,
+          '/cookbook/': guideSidebar,
           '/research/': researchSidebar,
           '/about/': aboutSidebar,
           '/simulator/': simulatorSidebar,
@@ -356,14 +339,8 @@ export default withMermaid(defineConfig({
       lang: 'ko',
       themeConfig: {
         nav: [
-          { text: '학습', items: [
-            { text: '소개', link: '/ko/introduction/what-is-cmos-sensor' },
-            { text: '이론', link: '/ko/theory/' },
-          ]},
-          { text: '가이드', items: [
-            { text: '시작하기', link: '/ko/guide/installation' },
-            { text: '레시피', link: '/ko/cookbook/bsi-2x2-basic' },
-          ]},
+          { text: '학습', link: '/ko/theory/' },
+          { text: '가이드', link: '/ko/guide/installation' },
           { text: '시뮬레이터', link: '/ko/simulator/' },
           { text: '레퍼런스', items: [
             { text: 'API 레퍼런스', link: '/ko/reference/api-overview' },
@@ -372,11 +349,10 @@ export default withMermaid(defineConfig({
           ]},
         ],
         sidebar: {
-          '/ko/introduction/': introSidebarKo,
           '/ko/theory/': theorySidebarKo,
           '/ko/guide/': guideSidebarKo,
           '/ko/reference/': referenceSidebarKo,
-          '/ko/cookbook/': cookbookSidebarKo,
+          '/ko/cookbook/': guideSidebarKo,
           '/ko/research/': researchSidebarKo,
           '/ko/about/': aboutSidebarKo,
           '/ko/simulator/': simulatorSidebarKo,

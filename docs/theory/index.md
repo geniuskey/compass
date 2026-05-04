@@ -6,26 +6,28 @@ This section covers the physics, sensor architecture, and numerical methods behi
 
 | Chapter | Scope | Read this if you want to... |
 |---|---|---|
-| [Optics](./optics-intro.md) | Wave optics fundamentals — fields, films, diffraction | Understand *why* a wave-optics solver is needed for sub-wavelength pixels |
-| [Image Sensor](./sensor-intro.md) | BSI pixel structure, QE, full radiometric signal chain | Understand *what* is being modeled and how the result is interpreted |
-| [Simulation](./simulation-intro.md) | RCWA, FDTD, TMM and their numerical behavior | Understand *how* the solver actually computes the answer |
+| [Basics](./basics/what-is-cmos-sensor.md) | Non-mathematical orientation to CIS pixels, optics, and QE | Build intuition before the deeper theory pages |
+| [Optics](./optics/) | Wave optics fundamentals: fields, films, diffraction | Understand *why* a wave-optics solver is needed for sub-wavelength pixels |
+| [Image Sensor](./sensor/) | BSI pixel structure, QE, full radiometric signal chain | Understand *what* is being modeled and how the result is interpreted |
+| [Simulation](./simulation/) | RCWA, FDTD, TMM and their numerical behavior | Understand *how* the solver actually computes the answer |
 
 ## Suggested reading paths
 
 **Newcomer to image sensor optics**
-1. [Light Basics](./light-basics.md) → [Electromagnetic Waves](./electromagnetic-waves.md) → [Thin Film Optics](./thin-film-optics.md) → [Diffraction](./diffraction.md)
-2. [Image Sensor Optics](./image-sensor-optics.md) → [Quantum Efficiency](./quantum-efficiency.md)
-3. [Simulation Intro](./simulation-intro.md) → pick one solver page
+1. [What is a CMOS Image Sensor?](./basics/what-is-cmos-sensor.md) -> [Optics Primer](./basics/optics-primer.md) -> [Pixel Anatomy](./basics/pixel-anatomy.md)
+2. [Light Basics](./optics/light-basics.md) -> [Electromagnetic Waves](./optics/electromagnetic-waves.md) -> [Thin Film Optics](./optics/thin-film-optics.md) -> [Diffraction](./optics/diffraction.md)
+3. [Image Sensor Optics](./sensor/image-sensor-optics.md) -> [Quantum Efficiency](./sensor/quantum-efficiency.md)
+4. [Simulation Intro](./simulation/) -> pick one solver page
 
 **Engineer evaluating COMPASS for a project**
-1. [Image Sensor Optics](./image-sensor-optics.md) → [Quantum Efficiency](./quantum-efficiency.md) → [Signal Chain](./signal-chain.md)
-2. [Simulation Intro](./simulation-intro.md) → [RCWA vs FDTD](./rcwa-vs-fdtd.md) → [Numerical Stability](./numerical-stability.md)
+1. [Image Sensor Optics](./sensor/image-sensor-optics.md) -> [Quantum Efficiency](./sensor/quantum-efficiency.md) -> [Signal Chain](./sensor/signal-chain.md)
+2. [Simulation Intro](./simulation/) -> [RCWA vs FDTD](./simulation/rcwa-vs-fdtd.md) -> [Numerical Stability](./simulation/numerical-stability.md)
 
 **Researcher implementing a new solver or analysis**
-1. [Optics Intro](./optics-intro.md) → [Electromagnetic Waves](./electromagnetic-waves.md)
-2. [RCWA Explained](./rcwa-explained.md) and [FDTD Explained](./fdtd-explained.md)
-3. [Numerical Stability](./numerical-stability.md)
+1. [Optics Intro](./optics/) -> [Electromagnetic Waves](./optics/electromagnetic-waves.md)
+2. [RCWA Explained](./simulation/rcwa-explained.md) and [FDTD Explained](./simulation/fdtd-explained.md)
+3. [Numerical Stability](./simulation/numerical-stability.md)
 
 ::: tip
-If you have not used COMPASS before, start with [Introduction → What is a CMOS Image Sensor?](/introduction/what-is-cmos-sensor) for a non-mathematical orientation, then come back here.
+If you have not used COMPASS before, start with [Basics -> What is a CMOS Image Sensor?](/theory/basics/what-is-cmos-sensor) for a non-mathematical orientation, then come back here.
 :::
