@@ -1,26 +1,33 @@
-"""Recent-generation vendor pixel structures and structure-parameter heuristics.
+"""Representative sample pixel structures and structure-parameter heuristics.
 
-This module captures publicly-known structural features of recent (2022-2024)
-flagship CMOS image sensors from Samsung, Sony and OmniVision, and exposes a
-parameter-derivation utility that turns a small number of vendor-disclosed
-inputs (pitch, color-filter pattern, OCL sharing, etc.) into a complete pixel
-config dict that COMPASS can simulate.
+This module captures structural features of representative recent-generation
+CMOS image sensors covering the 0.56-1.6 µm pitch range, and exposes a
+parameter-derivation utility that turns a small number of headline inputs
+(pitch, color-filter pattern, OCL sharing, etc.) into a complete pixel config
+dict that COMPASS can simulate.
+
+The samples are intentionally generic: each one represents a *class* of recent
+flagship pixel architecture (sub-µm with super-cell binning, 1.0 µm Quad Bayer,
+1.6 µm split-substrate, 2x2 OCL, LOFIC HDR) rather than a specific vendor SKU.
+The numerical values come from the empirical scaling rules below, not from any
+single vendor process.
 
 # Why a heuristic?
 
-Vendors publish *headline* parameters in datasheets / press releases:
+Public information about modern flagship pixels is typically limited to
+*headline* parameters in datasheets / press releases:
 
-* Pixel pitch (e.g. Samsung HP9 = 0.56 µm, Sony LYT-900 = 1.6 µm).
-* Color-filter binning pattern (Bayer / Quad Bayer / Nona / Tetra²).
+* Pixel pitch.
+* Color-filter binning pattern (Bayer / Quad Bayer / Nona / 4x4 super-cell).
 * On-chip-lens (OCL) sharing (per-pixel / 2x2 OCL / 4x4 OCL).
-* Major architectural innovations (2-Layer Transistor, LOFIC, F-DTI fill, HRI
-  microlens material).
+* Major architectural innovations (split-substrate transistors, LOFIC, F-DTI
+  fill, high-refractive-index microlens material).
 
 But the *internal* structural numbers needed for an EM simulation -- microlens
 sag, color-filter thickness, BARL stack, DTI width, photodiode depth, etc. --
 are almost never disclosed.  We close that gap with the empirical scaling rules
-embedded below, derived from public ISSCC/IEDM/SPIE papers and TechInsights
-reverse-engineering reports for sub-µm to 2-µm BSI pixels.
+embedded below, derived from public ISSCC/IEDM/SPIE papers and reverse-
+engineering cross-section reports for sub-µm to 2-µm BSI pixels.
 
 # Three ways to determine missing parameters
 
@@ -28,10 +35,9 @@ reverse-engineering reports for sub-µm to 2-µm BSI pixels.
    returns physically reasonable values from pitch alone.
 2. **Calibration to measured QE**: If you have measured QE(λ) per color, fit
    thickness/microlens parameters with `compass.optimization` (e.g. the
-   ``MaximizeQE`` / custom L2-distance-to-target objectives). See the
-   ``Optimization`` section in CLAUDE.md.
-3. **TechInsights-style cross-section**: When a die-shot SEM is available,
-   measure layer thicknesses directly and override the heuristic defaults.
+   ``MaximizeQE`` / custom L2-distance-to-target objectives).
+3. **Cross-section measurement**: When a die-shot SEM is available, measure
+   layer thicknesses directly and override the heuristic defaults.
 
 The functions below cover (1) and produce a config dict that PixelStack
 accepts directly; (2) and (3) are workflow recommendations rather than code.
@@ -41,32 +47,32 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-VendorKey = Literal[
-    "samsung_hp9",
-    "samsung_gnj",
-    "sony_lyt900",
-    "sony_2x2ocl_quad",
-    "omnivision_ov50k40",
+SamplePixelKey = Literal[
+    "sample_p0p56um_4x4ocl",
+    "sample_p1p0um_quadbayer",
+    "sample_p1p6um_split_pd",
+    "sample_p1p22um_2x2ocl",
+    "sample_p1p2um_lofic",
     "generic_bsi",
 ]
 
 
-# Public, vendor-disclosed headline parameters for recent (2022-2024) sensors.
-# Sources: vendor press releases, product pages, TechInsights summaries.
-VENDOR_HEADLINES: dict[str, dict[str, Any]] = {
-    "samsung_hp9": {
+# Headline parameters for representative recent-generation pixel classes.
+# Values are derived from publicly-available descriptions of modern flagship
+# CIS technology and the empirical scaling rules in this module; they are not
+# tied to any specific vendor process.
+SAMPLE_HEADLINES: dict[str, dict[str, Any]] = {
+    "sample_p0p56um_4x4ocl": {
         "pitch": 0.56,
-        "format": "1/1.4\"",
         "megapixels": 200,
-        "cf_pattern": "tetra2cell",     # 4x4 same-color (Hexadeca / Tetra^2)
+        "cf_pattern": "tetra2cell",     # 4x4 same-color super-cell (16-cell binning)
         "ocl_sharing": 1,
-        "microlens_material": "polymer_hri_n1p70",  # HRI "new material"
+        "microlens_material": "polymer_hri_n1p70",  # high-refractive-index ML
         "dti_fill": "sio2",                          # F-DTI oxide fill
         "year": 2024,
     },
-    "samsung_gnj": {
+    "sample_p1p0um_quadbayer": {
         "pitch": 1.0,
-        "format": "1/1.57\"",
         "megapixels": 50,
         "cf_pattern": "tetracell",
         "ocl_sharing": 1,
@@ -74,20 +80,18 @@ VENDOR_HEADLINES: dict[str, dict[str, Any]] = {
         "dti_fill": "sio2",
         "year": 2024,
     },
-    "sony_lyt900": {
+    "sample_p1p6um_split_pd": {
         "pitch": 1.6,
-        "format": "1\"",
         "megapixels": 50,
         "cf_pattern": "bayer_rggb",
         "ocl_sharing": 1,
         "microlens_material": "polymer_n1p56",
         "dti_fill": "sio2",
-        "two_layer_transistor": True,    # PD volume enlarged
+        "split_pd": True,                # split-substrate transistors -> larger PD
         "year": 2024,
     },
-    "sony_2x2ocl_quad": {
+    "sample_p1p22um_2x2ocl": {
         "pitch": 1.22,
-        "format": "1/1.3\"",
         "megapixels": 48,
         "cf_pattern": "tetracell",
         "ocl_sharing": 2,                # 2x2 OCL
@@ -95,15 +99,14 @@ VENDOR_HEADLINES: dict[str, dict[str, Any]] = {
         "dti_fill": "sio2",
         "year": 2023,
     },
-    "omnivision_ov50k40": {
+    "sample_p1p2um_lofic": {
         "pitch": 1.2,
-        "format": "1/1.3\"",
         "megapixels": 50,
         "cf_pattern": "tetracell",
         "ocl_sharing": 2,                # Quad PD = 2x2 OCL
         "microlens_material": "polymer_n1p56",
         "dti_fill": "sio2",
-        "lofic": True,                   # TheiaCel: PD lateral footprint shrinks
+        "lofic": True,                   # LOFIC capacitor shrinks PD lateral footprint
         "year": 2024,
     },
     "generic_bsi": {
@@ -119,7 +122,7 @@ VENDOR_HEADLINES: dict[str, dict[str, Any]] = {
 # --- Scaling rules ----------------------------------------------------------
 #
 # All values below come from public ISSCC/IEDM/SPIE pixel-architecture papers
-# (2018-2024) and TechInsights cross-section reports.  They are *typical*
+# (2018-2024) and reverse-engineering cross-section reports.  They are *typical*
 # numbers; individual products will deviate by 10-30%.
 #
 # - Microlens sag-to-diameter ratio for sub-2 µm BSI pixels: 0.30-0.45.
@@ -168,7 +171,7 @@ def _ml_gap(pitch: float) -> float:
 
 
 def derive_parameters(
-    vendor: VendorKey | str = "generic_bsi",
+    sample: SamplePixelKey | str = "generic_bsi",
     *,
     pitch: float | None = None,
     cf_pattern: str | None = None,
@@ -178,20 +181,20 @@ def derive_parameters(
     cra_deg: float = 0.0,
     overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Build a full pixel config dict for a given vendor / pitch.
+    """Build a full pixel config dict for a given sample / pitch.
 
-    Disclosed (headline) parameters are taken from VENDOR_HEADLINES; missing
-    structural numbers are filled in by the scaling rules above.  Any
-    keyword argument explicitly passed in overrides the vendor headline, and
-    the optional ``overrides`` dict (keyed by ``layers.<name>.<field>``) wins
-    over everything else.
+    Headline parameters are taken from SAMPLE_HEADLINES; missing structural
+    numbers are filled in by the scaling rules above.  Any keyword argument
+    explicitly passed in overrides the sample headline, and the optional
+    ``overrides`` dict (keyed by ``layers.<name>.<field>``) wins over
+    everything else.
 
     Args:
-        vendor: Vendor key. ``"generic_bsi"`` is the catch-all.
-        pitch: Pixel pitch in µm. Required if ``vendor == "generic_bsi"``.
+        sample: Sample pixel key. ``"generic_bsi"`` is the catch-all.
+        pitch: Pixel pitch in µm. Required if ``sample == "generic_bsi"``.
         cf_pattern: CF binning pattern (bayer_rggb / tetracell / nonacell /
-            tetra2cell). Defaults to vendor headline.
-        ocl_sharing: Microlens sharing (1, 2, 3, 4). Defaults to vendor.
+            tetra2cell). Defaults to sample headline.
+        ocl_sharing: Microlens sharing (1, 2, 3, 4). Defaults to sample.
         microlens_material: Material name registered in MaterialDB.
         dti_fill: Material name for DTI trench fill.
         cra_deg: Chief ray angle in degrees for auto microlens shift.
@@ -201,7 +204,7 @@ def derive_parameters(
     Returns:
         Config dict ready to pass to PixelStack(config=...).
     """
-    headline = dict(VENDOR_HEADLINES.get(vendor, {}))
+    headline = dict(SAMPLE_HEADLINES.get(sample, {}))
     if pitch is not None:
         headline["pitch"] = pitch
     if cf_pattern is not None:
@@ -215,7 +218,7 @@ def derive_parameters(
 
     p = headline.get("pitch")
     if p is None:
-        raise ValueError(f"pitch is required for vendor={vendor!r}")
+        raise ValueError(f"pitch is required for sample={sample!r}")
     pattern = headline.get("cf_pattern", "bayer_rggb")
     sharing = int(headline.get("ocl_sharing", 1))
     ml_mat = headline.get("microlens_material", "polymer_n1p56")
@@ -239,14 +242,15 @@ def derive_parameters(
     dti_w = _dti_width(p)
     si_t = _si_thickness(p)
 
-    # 2-Layer-Transistor models a larger PD footprint and depth (Sony LYT-900).
-    if headline.get("two_layer_transistor"):
+    # Split-substrate (split_pd) places transistors on a separate layer, so the
+    # photodiode footprint and depth grow.
+    if headline.get("split_pd"):
         pd_xy = round(p * 0.88, 3)
         pd_z = round(si_t * 0.85, 3)
         pd_z_pos = round(si_t * 0.075, 3)
     elif headline.get("lofic"):
-        # LOFIC capacitor consumes part of the in-pixel Si: PD smaller (~ 65%
-        # area).
+        # LOFIC capacitor consumes part of the in-pixel Si: PD smaller
+        # (~ 65% area).
         pd_xy = round(p * 0.65, 3)
         pd_z = round(si_t * 0.67, 3)
         pd_z_pos = round(si_t * 0.17, 3)

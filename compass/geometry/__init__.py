@@ -2,10 +2,10 @@
 
 from compass.geometry.builder import GeometryBuilder
 from compass.geometry.pixel_stack import PixelStack
-from compass.geometry.vendor_pixels import VENDOR_HEADLINES, derive_parameters
+from compass.geometry.sample_pixels import SAMPLE_HEADLINES, derive_parameters
 
 __all__ = [
-    "VENDOR_HEADLINES",
+    "SAMPLE_HEADLINES",
     "GeometryBuilder",
     "PixelStack",
     "derive_parameters",

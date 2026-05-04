@@ -1,9 +1,8 @@
 # @package _global_
 #
-# OmniVision OV50K40 (2024) — 50 MP, 1.2 µm pixel, 1/1.3" optical format.
-# Reference: OmniVision press release (Mar 2024). First sensor with TheiaCel™
-# (LOFIC: Lateral Overflow Integration Capacitor) HDR technology and full-array
-# Quad Phase Detection (QPD).
+# Sample pixel structure: 1.2 µm pitch Quad Bayer with LOFIC HDR
+# (Lateral Overflow Integration Capacitor) and 2x2 shared on-chip lens.
+# See docs/guide/sample-pixels.md for the inspiration sources and methodology.
 #
 # Distinctive features modelled here:
 # - Pitch = 1.2 µm.

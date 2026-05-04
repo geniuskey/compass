@@ -1,21 +1,21 @@
-"""Unit tests for vendor pixel structure heuristics and configs."""
+"""Unit tests for sample pixel structure heuristics and configs."""
 
 from pathlib import Path
 
 import pytest
 import yaml
 
-from compass.geometry import VENDOR_HEADLINES, derive_parameters
+from compass.geometry import SAMPLE_HEADLINES, derive_parameters
 from compass.geometry.pixel_stack import PixelStack
 
 CONFIG_DIR = Path(__file__).resolve().parents[2] / "configs" / "pixel"
 
-VENDOR_YAML_FILES = [
-    "samsung_hp9_0p56um.yaml",
-    "samsung_gnj_50mp_1p0um.yaml",
-    "sony_lyt900_1p6um.yaml",
-    "sony_2x2ocl_quad_1p22um.yaml",
-    "omnivision_ov50k40_1p2um.yaml",
+SAMPLE_YAML_FILES = [
+    "sample_p0p56um_4x4ocl.yaml",
+    "sample_p1p0um_quadbayer.yaml",
+    "sample_p1p6um_split_pd.yaml",
+    "sample_p1p22um_2x2ocl.yaml",
+    "sample_p1p2um_lofic.yaml",
 ]
 
 
@@ -26,9 +26,9 @@ def _load_yaml(name: str) -> dict:
     return raw
 
 
-@pytest.mark.parametrize("yaml_name", VENDOR_YAML_FILES)
-def test_vendor_yaml_builds_pixel_stack(yaml_name: str) -> None:
-    """Each vendor YAML should build a PixelStack without errors."""
+@pytest.mark.parametrize("yaml_name", SAMPLE_YAML_FILES)
+def test_sample_yaml_builds_pixel_stack(yaml_name: str) -> None:
+    """Each sample YAML should build a PixelStack without errors."""
     cfg = _load_yaml(yaml_name)
     stack = PixelStack(cfg)
     # Stack must have at least silicon, BARL, CF, planarization, microlens, air.
@@ -45,7 +45,7 @@ def test_vendor_yaml_builds_pixel_stack(yaml_name: str) -> None:
 
 def test_shared_ocl_creates_one_lens_per_group() -> None:
     """`microlens.sharing: 2` means one lens per 2x2 cluster, not per pixel."""
-    cfg = _load_yaml("sony_2x2ocl_quad_1p22um.yaml")
+    cfg = _load_yaml("sample_p1p22um_2x2ocl.yaml")
     stack = PixelStack(cfg)
     rows, cols = cfg["pixel"]["unit_cell"]
     sharing = cfg["pixel"]["layers"]["microlens"]["sharing"]
@@ -55,18 +55,18 @@ def test_shared_ocl_creates_one_lens_per_group() -> None:
 
 def test_per_pixel_ocl_unchanged() -> None:
     """`sharing: 1` (default) keeps the legacy per-pixel lens count."""
-    cfg = _load_yaml("samsung_gnj_50mp_1p0um.yaml")
+    cfg = _load_yaml("sample_p1p0um_quadbayer.yaml")
     stack = PixelStack(cfg)
     rows, cols = cfg["pixel"]["unit_cell"]
     assert len(stack.microlenses) == rows * cols
 
 
-@pytest.mark.parametrize("vendor", list(VENDOR_HEADLINES.keys()))
-def test_derive_parameters_returns_buildable_config(vendor: str) -> None:
-    """Every entry in VENDOR_HEADLINES should produce a buildable config."""
-    headline = VENDOR_HEADLINES[vendor]
+@pytest.mark.parametrize("sample", list(SAMPLE_HEADLINES.keys()))
+def test_derive_parameters_returns_buildable_config(sample: str) -> None:
+    """Every entry in SAMPLE_HEADLINES should produce a buildable config."""
+    headline = SAMPLE_HEADLINES[sample]
     pitch = headline.get("pitch", 1.0)
-    cfg = derive_parameters(vendor=vendor, pitch=pitch)
+    cfg = derive_parameters(sample=sample, pitch=pitch)
     # Wrap in {"pixel": cfg} as PixelStack expects.
     stack = PixelStack({"pixel": cfg})
     assert stack.pitch == pytest.approx(pitch)
@@ -80,16 +80,16 @@ def test_derive_parameters_returns_buildable_config(vendor: str) -> None:
 
 def test_derive_parameters_overrides_take_priority() -> None:
     cfg = derive_parameters(
-        vendor="samsung_hp9",
+        sample="sample_p0p56um_4x4ocl",
         overrides={"layers.silicon.thickness": 1.7},
     )
     assert cfg["layers"]["silicon"]["thickness"] == 1.7
 
 
-def test_hexadeca_4x4_ocl_via_derive() -> None:
+def test_4x4_ocl_via_derive() -> None:
     """4x4 OCL (sharing=4) should produce one lens per 4x4 group."""
     cfg = derive_parameters(
-        vendor="generic_bsi",
+        sample="generic_bsi",
         pitch=0.7,
         cf_pattern="tetra2cell",
         ocl_sharing=4,

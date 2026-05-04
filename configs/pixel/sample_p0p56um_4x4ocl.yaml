@@ -1,22 +1,21 @@
 # @package _global_
 #
-# Samsung ISOCELL HP9 (2024) — 200 MP, 0.56 µm pixel, 1/1.4" optical format.
-# Industry's first 200 MP telephoto sensor for smartphones.
-# Reference: Samsung Newsroom (Jun 2024), Samsung Semiconductor product page.
+# Sample pixel structure: 0.56 µm sub-µm pixel with 4x4 super-cell binning
+# and high-refractive-index microlens.
+# See docs/guide/sample-pixels.md for the inspiration sources and methodology.
 #
 # Distinctive structural features modelled here:
 # - Pitch = 0.56 µm.
-# - Tetra²pixel: 4x4 same-color group (announced as "Hexadeca" / 16-cell binning).
+# - 4x4 same-color super-cell color filter (16-cell binning).
 #   The Bayer tile is therefore an 8x8 unit cell with R/G/G/B 4x4 blocks.
-# - High-refractive-index microlens ("new material" announced for HP9) — modelled
-#   here with `polymer_hri_n1p70` (TiO2-doped polymer, n≈1.70).
-# - F-DTI with SiO2 (Samsung GNJ generation upgraded the trench fill from
-#   polysilicon to silicon oxide for lower crosstalk).
+# - High-refractive-index microlens — modelled with `polymer_hri_n1p70`
+#   (TiO2-doped polymer, n ≈ 1.70).
+# - F-DTI with SiO2 oxide fill for lower crosstalk.
 # - Sub-µm pitches use a thinner color filter (~0.4 µm) and a slightly thinner
 #   silicon epi (~2.0 µm) than legacy 1.0 µm pixels.
 #
 # All numerical values are reasonable defaults inferred from public scaling
-# trends; precise process numbers are not disclosed by the vendor and should be
+# trends; precise process numbers are not publicly disclosed and should be
 # refined via measured QE/crosstalk fits if available.
 pixel:
   pitch: 0.56
@@ -50,7 +49,7 @@ pixel:
 
     color_filter:
       thickness: 0.40
-      pattern: "tetra2cell"   # 4x4 same-color groups (Hexadeca)
+      pattern: "tetra2cell"   # 4x4 same-color super-cell (16-cell binning)
       materials:
         R: "cf_red"
         G: "cf_green"
@@ -82,9 +81,9 @@ pixel:
         enabled: true
         width: 0.07          # F-DTI process-limited trench width
         depth: 2.0           # full-depth
-        material: "sio2"     # GNJ-generation oxide-fill DTI
+        material: "sio2"     # F-DTI oxide fill
 
-  # Hexadeca / Tetra^2 Bayer: 4x4 same-color groups in 8x8 super-pixel.
+  # 4x4 same-color super-cell binning in 8x8 super-pixel.
   bayer_map:
     - ["R", "R", "R", "R", "G", "G", "G", "G"]
     - ["R", "R", "R", "R", "G", "G", "G", "G"]

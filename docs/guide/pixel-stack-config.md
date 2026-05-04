@@ -140,11 +140,11 @@ microlens:
 | `sharing` | Use case                                  | Lens diameter (default)   |
 |-----------|-------------------------------------------|---------------------------|
 | `1`       | Conventional per-pixel OCL                | `pitch`                    |
-| `2`       | Sony 2×2 OCL / OmniVision Quad PD         | `2 × pitch`                |
+| `2`       | 2×2 OCL / Quad PD (all-pixel PDAF)        | `2 × pitch`                |
 | `3`       | Nonacell shared lens (rare)               | `3 × pitch`                |
-| `4`       | Samsung Hexadeca / Tetra² 4×4 OCL          | `4 × pitch`                |
+| `4`       | 4×4 super-cell OCL                         | `4 × pitch`                |
 
-High-refractive-index microlens materials (`polymer_hri_n1p70`, `polymer_hri_n1p85`) are also registered for modelling recent flagship pixels (e.g. Samsung HP9). See the [Vendor pixel structures](./vendor-pixels.md) guide.
+High-refractive-index microlens materials (`polymer_hri_n1p70`, `polymer_hri_n1p85`) are also registered for modelling recent flagship sub-µm pixels. See the [Sample pixel structures](./sample-pixels.md) guide.
 
 When `shift.mode` is `"auto_cra"`, the microlens center is offset from the pixel center to accommodate off-axis chief ray angles at the image sensor edge. The shift is computed by tracing the chief ray through each layer below the microlens using Snell's law:
 
@@ -201,9 +201,9 @@ color_filter:
 | `bayer_grbg`              | 1×1              | 2×2         | Standard Bayer (GRBG variant)                    |
 | `bayer_gbrg`              | 1×1              | 2×2         | Standard Bayer (GBRG variant)                    |
 | `bayer_bggr`              | 1×1              | 2×2         | Standard Bayer (BGGR variant)                    |
-| `tetracell` / `quad_bayer` | 2×2              | 4×4         | Sony Quad Bayer, Samsung Tetracell, OV Quad PD   |
-| `nonacell`                | 3×3              | 6×6         | Samsung 108 MP HM1                               |
-| `tetra2cell` / `hexadeca` | 4×4              | 8×8         | Samsung HP9 (200 MP, Tetra²pixel)                |
+| `tetracell` / `quad_bayer` | 2×2              | 4×4         | Quad Bayer (50 MP-class main cameras)            |
+| `nonacell`                | 3×3              | 6×6         | 9-cell binning (early 108 MP-class sensors)      |
+| `tetra2cell` / `hexadeca` | 4×4              | 8×8         | 16-cell binning (200 MP-class sub-µm pixels)     |
 
 The `bayer_map` at the top level determines which material each pixel receives. The keys in `materials` must match the characters used in `bayer_map`. Custom patterns beyond standard Bayer (e.g., RGBW quad-pixel) can be defined by enlarging the `unit_cell` and `bayer_map`:
 

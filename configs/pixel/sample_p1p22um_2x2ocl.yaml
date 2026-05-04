@@ -1,17 +1,20 @@
 # @package _global_
 #
-# Samsung ISOCELL GNJ-class 50 MP (2023–2024) — 1.0 µm pixel, 1/1.57" main sensor.
-# Reference: Samsung ISOCELL GNJ news (2024), GN3/GNJ generation.
+# Sample pixel structure: 1.22 µm pitch Quad Bayer with 2x2 shared on-chip lens
+# (one microlens per 2x2 same-color group, enabling all-pixel PDAF).
+# See docs/guide/sample-pixels.md for the inspiration sources and methodology.
 #
 # Distinctive features modelled here:
-# - Pitch = 1.0 µm.
-# - Quad Bayer (2x2 same-color groups, Tetracell) with per-pixel microlens.
-# - Front-side full-depth DTI (F-DTI) with SiO2 fill (GNJ upgrade vs. earlier
-#   polysilicon-filled DTI of GN3).
-# - Standard polymer microlens (n ≈ 1.56) per pixel.
+# - Pitch = 1.22 µm.
+# - Quad Bayer color filter (2x2 same-color groups).
+# - **Shared 2x2 OCL**: one large microlens covers a 2x2 same-color group,
+#   enabling all-pixel PDAF. Modelled via `microlens.sharing: 2` so a single
+#   lens of ~ 2 x pitch diameter sits over each 2x2 cluster.
+# - Standard polymer microlens (n ≈ 1.56).
+# - F-DTI between every individual pixel.
 pixel:
-  pitch: 1.0
-  unit_cell: [4, 4]   # Quad Bayer -> 4x4 super-tile (2x2 per color)
+  pitch: 1.22
+  unit_cell: [4, 4]
 
   layers:
     air:
@@ -20,10 +23,9 @@ pixel:
 
     microlens:
       enabled: true
-      height: 0.55
-      sharing: 1
-      radius_x: 0.48
-      radius_y: 0.48
+      height: 0.95
+      sharing: 2                 # one OCL covers each 2x2 same-color group
+      # radius defaults to sharing * pitch / 2 = 1.22 µm if omitted.
       material: "polymer_n1p56"
       profile:
         type: "superellipse"
@@ -32,23 +34,23 @@ pixel:
       shift:
         mode: "auto_cra"
         cra_deg: 0.0
-      gap: 0.02
+      gap: 0.05
 
     planarization:
       thickness: 0.30
       material: "sio2"
 
     color_filter:
-      thickness: 0.55
-      pattern: "tetracell"   # Quad Bayer / 2x2 same-color
+      thickness: 0.65
+      pattern: "tetracell"   # 2x2 same-color
       materials:
         R: "cf_red"
         G: "cf_green"
         B: "cf_blue"
       grid:
         enabled: true
-        width: 0.06
-        height: 0.55
+        width: 0.07
+        height: 0.65
         material: "tungsten"
 
     barl:
@@ -63,18 +65,17 @@ pixel:
           material: "si3n4"
 
     silicon:
-      thickness: 3.0
+      thickness: 3.2
       material: "silicon"
       photodiode:
         position: [0.0, 0.0, 0.5]
-        size: [0.70, 0.70, 2.0]
+        size: [0.85, 0.85, 2.2]
       dti:
         enabled: true
-        width: 0.08
-        depth: 3.0
-        material: "sio2"   # F-DTI oxide fill (GNJ generation)
+        width: 0.09
+        depth: 3.2
+        material: "sio2"
 
-  # Quad Bayer: 2x2 same-color groups in 4x4 super-pixel.
   bayer_map:
     - ["R", "R", "G", "G"]
     - ["R", "R", "G", "G"]

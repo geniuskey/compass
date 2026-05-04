@@ -135,16 +135,16 @@ microlens:
 
 #### 다중 픽셀 OCL 공유
 
-`sharing: N` 설정은 $N \times N$ 픽셀 블록마다 마이크로렌즈를 **하나** 배치합니다 (Quad / Nona / Tetra² 같은 색 그룹을 가로지름). `radius_x`/`radius_y` 가 명시되지 않으면 클러스터를 가득 채우도록 `sharing * pitch / 2` 로 자동 스케일됩니다.
+`sharing: N` 설정은 $N \times N$ 픽셀 블록마다 마이크로렌즈를 **하나** 배치합니다 (Quad / Nona / 4×4 슈퍼셀 같은 색 그룹을 가로지름). `radius_x`/`radius_y` 가 명시되지 않으면 클러스터를 가득 채우도록 `sharing * pitch / 2` 로 자동 스케일됩니다.
 
 | `sharing` | 사용 예                                  | 기본 렌즈 직경        |
 |-----------|------------------------------------------|-----------------------|
 | `1`       | 일반적인 픽셀당 OCL                       | `pitch`                |
-| `2`       | Sony 2×2 OCL / OmniVision Quad PD         | `2 × pitch`            |
+| `2`       | 2×2 OCL / Quad PD (전 픽셀 PDAF)          | `2 × pitch`            |
 | `3`       | Nonacell 공유 렌즈 (드묾)                  | `3 × pitch`            |
-| `4`       | Samsung Hexadeca / Tetra² 4×4 OCL          | `4 × pitch`            |
+| `4`       | 4×4 슈퍼셀 OCL                            | `4 × pitch`            |
 
-고굴절률 마이크로렌즈 재료 (`polymer_hri_n1p70`, `polymer_hri_n1p85`) 도 `MaterialDB` 에 등록되어 있어 최근 플래그십 픽셀(예: Samsung HP9) 모델링에 사용할 수 있습니다. 자세한 내용은 [벤더 픽셀 구조](./vendor-pixels.md) 가이드 참조.
+고굴절률 마이크로렌즈 재료 (`polymer_hri_n1p70`, `polymer_hri_n1p85`) 도 `MaterialDB` 에 등록되어 있어 최근 플래그십 sub-µm 픽셀 모델링에 사용할 수 있습니다. 자세한 내용은 [샘플 픽셀 구조](./sample-pixels.md) 가이드 참조.
 
 `shift.mode`가 `"auto_cra"`일 때, 마이크로렌즈 중심은 이미지 센서 가장자리에서의 비축 주광선 각도를 수용하기 위해 픽셀 중심에서 오프셋됩니다. 시프트는 마이크로렌즈 아래 각 레이어를 통해 스넬 법칙으로 주광선을 추적하여 계산됩니다:
 
@@ -201,9 +201,9 @@ color_filter:
 | `bayer_grbg`              | 1×1          | 2×2      | 표준 Bayer (GRBG 변형)                          |
 | `bayer_gbrg`              | 1×1          | 2×2      | 표준 Bayer (GBRG 변형)                          |
 | `bayer_bggr`              | 1×1          | 2×2      | 표준 Bayer (BGGR 변형)                          |
-| `tetracell` / `quad_bayer` | 2×2          | 4×4      | Sony Quad Bayer, Samsung Tetracell, OV Quad PD   |
-| `nonacell`                | 3×3          | 6×6      | Samsung 108 MP HM1                              |
-| `tetra2cell` / `hexadeca` | 4×4          | 8×8      | Samsung HP9 (200 MP, Tetra²pixel)                |
+| `tetracell` / `quad_bayer` | 2×2          | 4×4      | Quad Bayer (50 MP 급 메인 카메라)               |
+| `nonacell`                | 3×3          | 6×6      | 9-cell 비닝 (초기 108 MP 급 센서)              |
+| `tetra2cell` / `hexadeca` | 4×4          | 8×8      | 16-cell 비닝 (200 MP 급 sub-µm 픽셀)            |
 
 최상위 수준의 `bayer_map`은 각 픽셀이 받는 재료를 결정합니다. `materials`의 키는 `bayer_map`에서 사용된 문자와 일치해야 합니다. 표준 베이어를 넘어선 사용자 정의 패턴(예: RGBW 쿼드 픽셀)은 `unit_cell`과 `bayer_map`을 확장하여 정의할 수 있습니다:
 
