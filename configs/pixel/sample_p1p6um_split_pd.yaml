@@ -1,17 +1,17 @@
 # @package _global_
 #
-# Sony LYTIA LYT-900 (2024) — 1-inch type, 50 MP, 1.6 µm pixel.
-# Reference: Sony Semiconductor Solutions (Dec 2023, Aug 2024 IEDM presentation
-# of "2-Layer Transistor pixel-stacked CMOS image sensor technology").
+# Sample pixel structure: 1.6 µm pitch with split-substrate transistors
+# (photodiode and pixel transistors on separate substrate layers).
+# See docs/guide/sample-pixels.md for the inspiration sources and methodology.
 #
 # Distinctive features modelled here:
 # - Pitch = 1.6 µm.
-# - 2-Layer Transistor (2LT): photodiodes and pixel transistors are placed on
-#   separate substrate layers. The transistor layer is below the PD layer.
-#   Optically, this means the silicon photodiode region is NOT shared with
-#   transistor area, so the PD lateral footprint is enlarged (~ pitch x pitch)
-#   and the saturation-equivalent z-extent ~ doubles. We model this here by
-#   maximizing PD lateral size and using a deep PD volume.
+# - Split-substrate transistor architecture: photodiodes and pixel transistors
+#   are placed on separate substrate layers. The transistor layer is below the
+#   PD layer. Optically, this means the silicon photodiode region is NOT shared
+#   with transistor area, so the PD lateral footprint is enlarged
+#   (~ pitch x pitch) and the saturation-equivalent z-extent ~ doubles. We
+#   model this by maximizing PD lateral size and using a deep PD volume.
 # - Conventional Bayer pattern (50 MP, no remosaic).
 # - Standard polymer microlens, one lens per pixel.
 # - F-DTI between pixels.
@@ -69,11 +69,11 @@ pixel:
           material: "si3n4"
 
     silicon:
-      thickness: 4.0   # 2LT enables a thicker / fuller PD volume per pixel
+      thickness: 4.0   # split substrate enables a thicker / fuller PD volume per pixel
       material: "silicon"
       photodiode:
         # Larger lateral footprint and deeper z-extent because pixel transistors
-        # have moved off this substrate layer (2-Layer Transistor pixel).
+        # have moved off this substrate layer (split-substrate architecture).
         position: [0.0, 0.0, 0.3]
         size: [1.40, 1.40, 3.4]
       dti:

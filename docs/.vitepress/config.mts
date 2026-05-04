@@ -53,7 +53,7 @@ const guideSidebar = [
   ]},
   { text: 'Configuration', items: [
     { text: 'Pixel Stack Config', link: '/guide/pixel-stack-config' },
-    { text: 'Vendor Pixel Structures', link: '/guide/vendor-pixels' },
+    { text: 'Sample Pixel Structures', link: '/guide/sample-pixels' },
     { text: 'Material Database', link: '/guide/material-database' },
     { text: 'Choosing a Solver', link: '/guide/choosing-solver' },
   ]},
@@ -155,7 +155,7 @@ const guideSidebarKo = [
   ]},
   { text: '설정', items: [
     { text: '픽셀 스택 구성', link: '/ko/guide/pixel-stack-config' },
-    { text: '벤더 픽셀 구조', link: '/ko/guide/vendor-pixels' },
+    { text: '샘플 픽셀 구조', link: '/ko/guide/sample-pixels' },
     { text: '재료 데이터베이스', link: '/ko/guide/material-database' },
     { text: '솔버 선택', link: '/ko/guide/choosing-solver' },
   ]},

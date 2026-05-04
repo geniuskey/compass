@@ -30,18 +30,20 @@ $$n_f = \sqrt{n_\text{air} \cdot n_\text{substrate}}$$
 
 ## Multi-layer stacks
 
-Real image sensors use multiple thin films. The BARL (Bottom Anti-Reflection Layer) in a typical COMPASS configuration consists of alternating SiO2, HfO2, and Si3N4 layers:
+Real image sensors use multiple thin films. The BARL (Bottom Anti-Reflection Layer) is a multi-layer dielectric stack at the color-filter / silicon interface, but the exact materials, the number of layers (typically 2 to 5), and the stacking order vary substantially from vendor to vendor — these choices are part of each vendor's process recipe and are usually not disclosed. Common building blocks include SiO2, Si3N4, HfO2, Al2O3, TiO2, and Ta2O5, used in different combinations to hit a target broadband anti-reflection band.
+
+The example below is one *illustrative* 4-layer stack that ships with the COMPASS sample configs. It is not a "correct" recipe — re-optimize the materials, layer count, and thicknesses for whatever silicon thickness, color filter, and target QE band you are actually modeling:
 
 ```yaml
 barl:
   layers:
-    - thickness: 0.010   # SiO2
+    - thickness: 0.010   # example layer 1
       material: "sio2"
-    - thickness: 0.025   # HfO2
+    - thickness: 0.025   # example layer 2
       material: "hfo2"
-    - thickness: 0.015   # SiO2
+    - thickness: 0.015   # example layer 3
       material: "sio2"
-    - thickness: 0.030   # Si3N4
+    - thickness: 0.030   # example layer 4
       material: "si3n4"
 ```
 

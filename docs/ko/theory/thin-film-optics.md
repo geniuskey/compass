@@ -30,18 +30,20 @@ $$n_f = \sqrt{n_\text{air} \cdot n_\text{substrate}}$$
 
 ## 다층 스택
 
-실제 이미지 센서는 여러 층의 박막을 사용합니다. 일반적인 COMPASS 구성에서 BARL(Bottom Anti-Reflection Layer, 하부 반사 방지층)은 SiO2, HfO2, Si3N4 층이 교대로 배치됩니다:
+실제 이미지 센서는 여러 층의 박막을 사용합니다. BARL(Bottom Anti-Reflection Layer, 하부 반사 방지층) 은 컬러 필터 / 실리콘 계면에 놓이는 다층 유전체 스택인데, **사용 재료, 층 수(보통 2~5층), 적층 순서는 벤더마다 크게 다릅니다** — 이 부분은 각 벤더의 공정 레시피이며 대개 공개되지 않습니다. 자주 쓰이는 재료로는 SiO2, Si3N4, HfO2, Al2O3, TiO2, Ta2O5 등이 있고, 타깃으로 하는 광대역 반사 방지 대역에 맞춰 다양한 조합으로 쌓입니다.
+
+아래 예시는 COMPASS 샘플 설정에 들어 있는 *예시용* 4층 스택일 뿐이며 "정답" 레시피가 아닙니다. 실제로 모델링하려는 실리콘 두께, 컬러 필터, 타깃 QE 대역에 맞춰 재료·층 수·두께를 다시 최적화하세요:
 
 ```yaml
 barl:
   layers:
-    - thickness: 0.010   # SiO2
+    - thickness: 0.010   # 예시 레이어 1
       material: "sio2"
-    - thickness: 0.025   # HfO2
+    - thickness: 0.025   # 예시 레이어 2
       material: "hfo2"
-    - thickness: 0.015   # SiO2
+    - thickness: 0.015   # 예시 레이어 3
       material: "sio2"
-    - thickness: 0.030   # Si3N4
+    - thickness: 0.030   # 예시 레이어 4
       material: "si3n4"
 ```
 

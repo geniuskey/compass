@@ -74,7 +74,7 @@ Without BARL, the reflection at a color-filter/silicon interface ($n \approx 1.5
 
 $$R = \left(\frac{n_\text{Si} - n_\text{CF}}{n_\text{Si} + n_\text{CF}}\right)^2 \approx 20\%$$
 
-A well-designed BARL stack (e.g., SiO2/HfO2/Si3N4) can reduce this to under 5% across the visible spectrum.
+A well-designed BARL stack can reduce this to under 5% across the visible spectrum. The specific materials, layer count, and stacking order vary by vendor — there is no single canonical recipe.
 
 ## Silicon and photodiode
 
