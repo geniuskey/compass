@@ -20,7 +20,7 @@ Design arbitrary multilayer thin film coatings with full control over layer coun
 
 ## Built-in Presets
 
-- **BARL 4-layer**: Default BSI pixel anti-reflection stack (SiO₂/HfO₂/SiO₂/Si₃N₄)
+- **BARL 4-layer (illustrative)**: Example BSI pixel anti-reflection stack (SiO₂/HfO₂/SiO₂/Si₃N₄). Real BARL recipes vary substantially by vendor; treat this as a starting point and re-optimize for your target band.
 - **2-layer AR**: Simple MgF₂/TiO₂ anti-reflection coating
 - **Broadband AR**: 4-layer design for wide spectral coverage
 - **HR Blue mirror**: 6-layer high-reflectance stack for blue wavelengths

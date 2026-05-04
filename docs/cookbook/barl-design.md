@@ -4,7 +4,7 @@ This recipe demonstrates multi-layer Bottom Anti-Reflective Layer (BARL) optimiz
 
 ## Background
 
-The BARL sits between the color filter and the silicon photodiode. Without an anti-reflective coating, the air/SiO2/silicon interface reflects 15--30% of incident light, significantly reducing QE. A well-designed BARL stack reduces this reflection to under 5% across the visible spectrum.
+The BARL sits between the color filter and the silicon photodiode. Without an anti-reflective coating, the air/SiO2/silicon interface reflects 15--30% of incident light, significantly reducing QE. A well-designed BARL stack reduces this reflection to under 5% across the visible spectrum. Real BARL recipes — the choice of materials, the number of layers, and their stacking order — vary widely between vendors and are usually proprietary; the stacks used below are illustrative starting points for a design sweep, not a canonical recipe.
 
 The quarter-wave condition for a single-layer ARC is:
 

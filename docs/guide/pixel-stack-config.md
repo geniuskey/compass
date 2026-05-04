@@ -236,7 +236,7 @@ barl:
       material: "si3n4"
 ```
 
-Each entry is a `{thickness, material}` pair. Layers are ordered top-to-bottom. Typical BARL stacks use alternating high/low refractive index materials (SiO2/HfO2 or SiO2/Si3N4) to create a graded index transition. The optimal thickness for each sub-layer follows the quarter-wave condition:
+Each entry is a `{thickness, material}` pair. Layers are ordered top-to-bottom. The example above is one *illustrative* stack; the actual material set, layer count, and stacking order are vendor-specific recipes that vary widely (common ingredients include SiO2, Si3N4, HfO2, Al2O3, TiO2, Ta2O5). The general design strategy is to interleave higher- and lower-index dielectrics so that the index transition between filter and silicon becomes graded, with each layer tuned by the quarter-wave condition:
 
 $$t = \frac{\lambda_0}{4 n}$$
 
