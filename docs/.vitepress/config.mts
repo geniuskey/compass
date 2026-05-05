@@ -329,7 +329,7 @@ export default withMermaid(defineConfig({
           { text: 'Learn', link: '/theory/' },
           { text: 'Guide', link: '/guide/installation' },
           { text: 'Simulator', link: '/simulator/' },
-          { text: 'Reference', items: [
+          { text: 'Resources', items: [
             { text: 'API Reference', link: '/reference/api-overview' },
             { text: 'Research', link: '/research/open-source-em-solvers-survey' },
             { text: 'Reports', link: '/reports/' },
@@ -356,7 +356,7 @@ export default withMermaid(defineConfig({
           { text: '학습', link: '/ko/theory/' },
           { text: '가이드', link: '/ko/guide/installation' },
           { text: '시뮬레이터', link: '/ko/simulator/' },
-          { text: '레퍼런스', items: [
+          { text: '자료', items: [
             { text: 'API 레퍼런스', link: '/ko/reference/api-overview' },
             { text: '리서치', link: '/ko/research/open-source-em-solvers-survey' },
             { text: '리포트', link: '/ko/reports/' },
