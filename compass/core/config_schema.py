@@ -68,6 +68,7 @@ class PhotodiodeConfig(BaseModel):
 
 class DtiConfig(BaseModel):
     enabled: bool = True
+    mode: Literal["fdti", "bdti"] = "fdti"
     width: float = 0.1
     depth: float = 3.0
     material: str = "sio2"

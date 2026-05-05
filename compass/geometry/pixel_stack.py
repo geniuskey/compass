@@ -352,15 +352,7 @@ class PixelStack:
 
             elif layer.name == "silicon":
                 # Silicon with optional DTI
-                eps_grid = self._build_si_layer(wavelength, nx, ny, si_cfg)
-                slices.append(LayerSlice(
-                    z_start=layer.z_start,
-                    z_end=layer.z_end,
-                    thickness=layer.thickness,
-                    eps_grid=eps_grid,
-                    name="silicon",
-                    material="silicon",
-                ))
+                slices.extend(self._build_silicon_slices(layer, wavelength, nx, ny, si_cfg))
 
             else:
                 # Uniform layer
@@ -517,12 +509,94 @@ class PixelStack:
 
         return eps_grid
 
+    def _build_silicon_slices(
+        self,
+        layer: Layer,
+        wavelength: float,
+        nx: int,
+        ny: int,
+        si_cfg: dict,
+    ) -> list[LayerSlice]:
+        """Build z-aware silicon slices for FDTI and BDTI layouts."""
+
+        material = si_cfg.get("material", "silicon")
+        dti_cfg = si_cfg.get("dti", {})
+        if not dti_cfg.get("enabled", False):
+            eps_grid = self._build_si_layer(wavelength, nx, ny, si_cfg, include_dti=False)
+            return [LayerSlice(
+                z_start=layer.z_start,
+                z_end=layer.z_end,
+                thickness=layer.thickness,
+                eps_grid=eps_grid,
+                name="silicon",
+                material=material,
+            )]
+
+        mode = str(dti_cfg.get("mode", "fdti")).lower()
+        if mode not in {"fdti", "bdti"}:
+            raise ValueError(f"Unsupported DTI mode '{mode}'. Expected 'fdti' or 'bdti'.")
+
+        eps_dti_grid = self._build_si_layer(wavelength, nx, ny, si_cfg, include_dti=True)
+        if mode == "fdti":
+            return [LayerSlice(
+                z_start=layer.z_start,
+                z_end=layer.z_end,
+                thickness=layer.thickness,
+                eps_grid=eps_dti_grid,
+                name="silicon",
+                material=material,
+            )]
+
+        depth = float(dti_cfg.get("depth", layer.thickness))
+        depth = float(np.clip(depth, 0.0, layer.thickness))
+        if depth <= 0.0:
+            eps_grid = self._build_si_layer(wavelength, nx, ny, si_cfg, include_dti=False)
+            return [LayerSlice(
+                z_start=layer.z_start,
+                z_end=layer.z_end,
+                thickness=layer.thickness,
+                eps_grid=eps_grid,
+                name="silicon",
+                material=material,
+            )]
+        if depth >= layer.thickness:
+            return [LayerSlice(
+                z_start=layer.z_start,
+                z_end=layer.z_end,
+                thickness=layer.thickness,
+                eps_grid=eps_dti_grid,
+                name="silicon",
+                material=material,
+            )]
+
+        eps_bulk_grid = self._build_si_layer(wavelength, nx, ny, si_cfg, include_dti=False)
+        dti_start = layer.z_end - depth
+        return [
+            LayerSlice(
+                z_start=layer.z_start,
+                z_end=dti_start,
+                thickness=dti_start - layer.z_start,
+                eps_grid=eps_bulk_grid,
+                name="silicon_bulk",
+                material=material,
+            ),
+            LayerSlice(
+                z_start=dti_start,
+                z_end=layer.z_end,
+                thickness=layer.z_end - dti_start,
+                eps_grid=eps_dti_grid,
+                name="silicon_bdti",
+                material=material,
+            ),
+        ]
+
     def _build_si_layer(
         self,
         wavelength: float,
         nx: int,
         ny: int,
         si_cfg: dict,
+        include_dti: bool = True,
     ) -> np.ndarray:
         """Build silicon layer with optional DTI."""
         eps_si = self.material_db.get_epsilon(
@@ -531,7 +605,7 @@ class PixelStack:
         eps_grid = np.full((ny, nx), eps_si, dtype=complex)
 
         dti_cfg = si_cfg.get("dti", {})
-        if dti_cfg.get("enabled", False):
+        if include_dti and dti_cfg.get("enabled", False):
             dti_width = dti_cfg.get("width", 0.1)
             dti_material = dti_cfg.get("material", "sio2")
             eps_dti = self.material_db.get_epsilon(dti_material, wavelength)

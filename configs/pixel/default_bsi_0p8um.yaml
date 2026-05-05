@@ -59,6 +59,7 @@ pixel:
         size: [0.55, 0.55, 1.6]
       dti:
         enabled: true
+        mode: "fdti"
         width: 0.1
         depth: 2.5
         material: "sio2"

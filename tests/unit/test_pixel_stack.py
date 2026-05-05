@@ -155,6 +155,42 @@ class TestPixelStack:
         unique_eps = len(np.unique(np.round(np.real(eps), 2)))
         assert unique_eps >= 2, "Expected DTI pattern in Si layer"
 
+    def test_fdti_uses_full_silicon_depth(self, default_config):
+        """FDTI should ignore trench depth and run through the full silicon layer."""
+        dti = default_config["pixel"]["layers"]["silicon"]["dti"]
+        dti.update({"mode": "fdti", "depth": 1.0})
+        stack = PixelStack(default_config)
+
+        slices = stack.get_layer_slices(wavelength=0.55, nx=64, ny=64)
+        si_slices = [s for s in slices if s.name == "silicon"]
+        assert len(si_slices) == 1
+        assert si_slices[0].z_start == pytest.approx(0.0)
+        assert si_slices[0].z_end == pytest.approx(3.0)
+
+        unique_eps = len(np.unique(np.round(np.real(si_slices[0].eps_grid), 2)))
+        assert unique_eps >= 2, "Expected full-depth FDTI pattern in Si layer"
+
+    def test_bdti_depth_splits_silicon_from_top(self, default_config):
+        """BDTI should trench from the opposite side with selectable depth."""
+        dti = default_config["pixel"]["layers"]["silicon"]["dti"]
+        dti.update({"mode": "bdti", "depth": 1.0})
+        stack = PixelStack(default_config)
+
+        slices = stack.get_layer_slices(wavelength=0.55, nx=64, ny=64)
+        si_slices = [s for s in slices if s.name.startswith("silicon")]
+        assert [s.name for s in si_slices] == ["silicon_bulk", "silicon_bdti"]
+
+        bulk, bdti = si_slices
+        assert bulk.z_start == pytest.approx(0.0)
+        assert bulk.z_end == pytest.approx(2.0)
+        assert bdti.z_start == pytest.approx(2.0)
+        assert bdti.z_end == pytest.approx(3.0)
+
+        bulk_unique = len(np.unique(np.round(np.real(bulk.eps_grid), 2)))
+        bdti_unique = len(np.unique(np.round(np.real(bdti.eps_grid), 2)))
+        assert bulk_unique == 1
+        assert bdti_unique >= 2
+
 
 class TestSnellCRAShift:
     """Tests for Snell's law CRA shift computation."""
