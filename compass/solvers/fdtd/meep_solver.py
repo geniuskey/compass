@@ -26,9 +26,12 @@ logger = logging.getLogger(__name__)
 
 _MEEP_AVAILABLE = False
 try:
-    import meep as mp  # noqa: F401
+    import meep as mp
 
-    _MEEP_AVAILABLE = True
+    _MEEP_AVAILABLE = all(
+        hasattr(mp, attr)
+        for attr in ("Simulation", "Medium", "Vector3", "Block", "PML")
+    )
 except ImportError:
     pass
 
@@ -54,8 +57,9 @@ class MeepSolver(SolverBase):
     def __init__(self, config: dict, device: str = "cpu"):
         if not _MEEP_AVAILABLE:
             logger.warning(
-                "meep package is not installed. "
-                "Install with: pip install meep (or conda install -c conda-forge pymeep)"
+                "MIT photonics Meep Python API is not installed. "
+                "Install with conda/mamba from conda-forge as pymeep; "
+                "the PyPI package named 'meep' is a different task runner."
             )
         super().__init__(config, device)
         self._source: PlanewaveSource | None = None
@@ -122,8 +126,9 @@ class MeepSolver(SolverBase):
 
         if not _MEEP_AVAILABLE:
             raise ImportError(
-                "meep is required. Install with: pip install meep "
-                "(or conda install -c conda-forge pymeep)"
+                "MIT photonics Meep Python API is required. "
+                "Install with conda/mamba from conda-forge as pymeep; "
+                "the PyPI package named 'meep' is a different task runner."
             )
 
         import meep as mp
