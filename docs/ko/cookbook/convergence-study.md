@@ -16,6 +16,14 @@ outline: deep
 
 이 파라미터들을 증가시키면 정확도가 향상되지만 계산 시간이 증가합니다. 목표는 결과가 더 이상 크게 변하지 않는 "무릎(knee)" 지점, 즉 **수렴** 영역을 찾는 것입니다.
 
+::: info 생성된 수렴 리포트
+현재 RCWA/FDTD 정합성, periodic trench, full-pixel 시각적 수렴 결과는 [RCWA/FDTD 수렴 분석 리포트](/ko/reports/convergence-analysis)에 정리되어 있습니다. 로컬 benchmark를 다시 실행한 뒤 다음 명령으로 리포트를 갱신합니다:
+
+```bash
+uv run python scripts/generate_convergence_report.py
+```
+:::
+
 ::: tip 수렴이 중요한 이유
 너무 적은 하모닉스로 실행하면 잘못된 결과(과소평가된 흡수)를 얻습니다. 너무 많이 사용하면 계산 시간이 낭비됩니다. 수렴 연구는 최적의 지점을 찾습니다.
 :::

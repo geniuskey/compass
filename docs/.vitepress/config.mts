@@ -95,6 +95,12 @@ const researchSidebar = [
   ]}
 ]
 
+const reportsSidebar = [
+  { text: 'Reports', items: [
+    { text: 'Overview', link: '/reports/' },
+    { text: 'RCWA/FDTD Convergence', link: '/reports/convergence-analysis' },
+  ]}
+]
 
 const aboutSidebar = [
   { text: 'About', items: [
@@ -201,6 +207,12 @@ const researchSidebarKo = [
   ]}
 ]
 
+const reportsSidebarKo = [
+  { text: '리포트', items: [
+    { text: '개요', link: '/ko/reports/' },
+    { text: 'RCWA/FDTD 수렴', link: '/ko/reports/convergence-analysis' },
+  ]}
+]
 
 const aboutSidebarKo = [
   { text: '정보', items: [
@@ -320,6 +332,7 @@ export default withMermaid(defineConfig({
           { text: 'Reference', items: [
             { text: 'API Reference', link: '/reference/api-overview' },
             { text: 'Research', link: '/research/open-source-em-solvers-survey' },
+            { text: 'Reports', link: '/reports/' },
             { text: 'About', link: '/about/references' },
           ]},
         ],
@@ -329,6 +342,7 @@ export default withMermaid(defineConfig({
           '/reference/': referenceSidebar,
           '/cookbook/': guideSidebar,
           '/research/': researchSidebar,
+          '/reports/': reportsSidebar,
           '/about/': aboutSidebar,
           '/simulator/': simulatorSidebar,
         },
@@ -345,6 +359,7 @@ export default withMermaid(defineConfig({
           { text: '레퍼런스', items: [
             { text: 'API 레퍼런스', link: '/ko/reference/api-overview' },
             { text: '리서치', link: '/ko/research/open-source-em-solvers-survey' },
+            { text: '리포트', link: '/ko/reports/' },
             { text: '정보', link: '/ko/about/references' },
           ]},
         ],
@@ -354,6 +369,7 @@ export default withMermaid(defineConfig({
           '/ko/reference/': referenceSidebarKo,
           '/ko/cookbook/': guideSidebarKo,
           '/ko/research/': researchSidebarKo,
+          '/ko/reports/': reportsSidebarKo,
           '/ko/about/': aboutSidebarKo,
           '/ko/simulator/': simulatorSidebarKo,
         },

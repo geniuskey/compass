@@ -1,0 +1,281 @@
+{
+  "alignment": [
+    {
+      "key": "alignment_slab",
+      "title": "1D slab: TMM vs torcwa RCWA vs 1D FDTD",
+      "source_dir": "outputs\\rcwa_fdtd_alignment",
+      "metric_file": "alignment_metrics.json",
+      "status": "available",
+      "images": [
+        {
+          "title": "01 Slab Spectrum Alignment",
+          "path": "/reports/convergence/alignment_slab/01_slab_spectrum_alignment.png"
+        },
+        {
+          "title": "01 Spectrum Alignment",
+          "path": "/reports/convergence/alignment_slab/01_spectrum_alignment.png"
+        },
+        {
+          "title": "02 Alignment Errors",
+          "path": "/reports/convergence/alignment_slab/02_alignment_errors.png"
+        },
+        {
+          "title": "03 Fdtd Grid Convergence",
+          "path": "/reports/convergence/alignment_slab/03_fdtd_grid_convergence.png"
+        }
+      ]
+    },
+    {
+      "key": "alignment_multilayer",
+      "title": "1D lossless multilayer: TMM vs torcwa RCWA vs 1D FDTD",
+      "source_dir": "outputs\\rcwa_fdtd_alignment_multilayer",
+      "metric_file": "alignment_metrics.json",
+      "status": "available",
+      "images": [
+        {
+          "title": "01 Spectrum Alignment",
+          "path": "/reports/convergence/alignment_multilayer/01_spectrum_alignment.png"
+        },
+        {
+          "title": "02 Alignment Errors",
+          "path": "/reports/convergence/alignment_multilayer/02_alignment_errors.png"
+        },
+        {
+          "title": "03 Fdtd Grid Convergence",
+          "path": "/reports/convergence/alignment_multilayer/03_fdtd_grid_convergence.png"
+        }
+      ]
+    },
+    {
+      "key": "alignment_lossy_multilayer",
+      "title": "1D lossy pixel-like multilayer: TMM vs torcwa RCWA vs 1D FDTD",
+      "source_dir": "outputs\\rcwa_fdtd_alignment_lossy",
+      "metric_file": "alignment_metrics.json",
+      "status": "available",
+      "images": [
+        {
+          "title": "01 Spectrum Alignment",
+          "path": "/reports/convergence/alignment_lossy_multilayer/01_spectrum_alignment.png"
+        },
+        {
+          "title": "02 Alignment Errors",
+          "path": "/reports/convergence/alignment_lossy_multilayer/02_alignment_errors.png"
+        },
+        {
+          "title": "03 Fdtd Grid Convergence",
+          "path": "/reports/convergence/alignment_lossy_multilayer/03_fdtd_grid_convergence.png"
+        }
+      ]
+    }
+  ],
+  "trench": [
+    {
+      "key": "periodic_trench",
+      "title": "2D periodic FDTI/BDTI trench: torcwa RCWA vs 2D TE FDTD",
+      "source_dir": "outputs\\rcwa_fdtd_trench_benchmark",
+      "metric_file": "trench_benchmark_metrics.json",
+      "status": "available",
+      "images": [
+        {
+          "title": "01 Shared Geometry",
+          "path": "/reports/convergence/periodic_trench/01_shared_geometry.png"
+        },
+        {
+          "title": "02 Spectrum Alignment",
+          "path": "/reports/convergence/periodic_trench/02_spectrum_alignment.png"
+        },
+        {
+          "title": "03 Rta Error",
+          "path": "/reports/convergence/periodic_trench/03_rta_error.png"
+        },
+        {
+          "title": "04 Fdtd Field Maps",
+          "path": "/reports/convergence/periodic_trench/04_fdtd_field_maps.png"
+        },
+        {
+          "title": "05 Convergence",
+          "path": "/reports/convergence/periodic_trench/05_convergence.png"
+        }
+      ]
+    }
+  ],
+  "pixel": [
+    {
+      "key": "pixel_44x44x118_steps950",
+      "title": "2x2 pixel scalar FDTD, 44x44x118, 950 steps",
+      "source_dir": "outputs\\rcwa_fdtd_pixel_benchmark",
+      "metric_file": "pixel_benchmark_metrics.json",
+      "status": "available",
+      "images": [
+        {
+          "title": "01 Geometry Slices",
+          "path": "/reports/convergence/pixel_44x44x118_steps950/01_geometry_slices.png"
+        },
+        {
+          "title": "02 Rcwa Rta",
+          "path": "/reports/convergence/pixel_44x44x118_steps950/02_rcwa_rta.png"
+        },
+        {
+          "title": "03 Fdtd Crosstalk Matrix",
+          "path": "/reports/convergence/pixel_44x44x118_steps950/03_fdtd_crosstalk_matrix.png"
+        },
+        {
+          "title": "04 Fdtd Field Slices",
+          "path": "/reports/convergence/pixel_44x44x118_steps950/04_fdtd_field_slices.png"
+        }
+      ]
+    },
+    {
+      "key": "pixel_44x44x118_steps2200",
+      "title": "2x2 pixel scalar FDTD, 44x44x118, 2200 steps",
+      "source_dir": "outputs\\rcwa_fdtd_pixel_benchmark_steps2200",
+      "metric_file": "pixel_benchmark_metrics.json",
+      "status": "available",
+      "images": [
+        {
+          "title": "01 Geometry Slices",
+          "path": "/reports/convergence/pixel_44x44x118_steps2200/01_geometry_slices.png"
+        },
+        {
+          "title": "02 Rcwa Rta",
+          "path": "/reports/convergence/pixel_44x44x118_steps2200/02_rcwa_rta.png"
+        },
+        {
+          "title": "03 Fdtd Crosstalk Matrix",
+          "path": "/reports/convergence/pixel_44x44x118_steps2200/03_fdtd_crosstalk_matrix.png"
+        },
+        {
+          "title": "04 Fdtd Field Slices",
+          "path": "/reports/convergence/pixel_44x44x118_steps2200/04_fdtd_field_slices.png"
+        }
+      ]
+    },
+    {
+      "key": "pixel_44x44x118_steps3500",
+      "title": "2x2 pixel scalar FDTD, 44x44x118, 3500 steps",
+      "source_dir": "outputs\\rcwa_fdtd_pixel_benchmark_steps3500",
+      "metric_file": "pixel_benchmark_metrics.json",
+      "status": "available",
+      "images": [
+        {
+          "title": "01 Geometry Slices",
+          "path": "/reports/convergence/pixel_44x44x118_steps3500/01_geometry_slices.png"
+        },
+        {
+          "title": "02 Rcwa Rta",
+          "path": "/reports/convergence/pixel_44x44x118_steps3500/02_rcwa_rta.png"
+        },
+        {
+          "title": "03 Fdtd Crosstalk Matrix",
+          "path": "/reports/convergence/pixel_44x44x118_steps3500/03_fdtd_crosstalk_matrix.png"
+        },
+        {
+          "title": "04 Fdtd Field Slices",
+          "path": "/reports/convergence/pixel_44x44x118_steps3500/04_fdtd_field_slices.png"
+        }
+      ]
+    },
+    {
+      "key": "pixel_64x64x170_steps3500",
+      "title": "2x2 pixel scalar FDTD, 64x64x170, 3500 steps",
+      "source_dir": "outputs\\rcwa_fdtd_pixel_benchmark_64x64x170_steps3500",
+      "metric_file": "pixel_benchmark_metrics.json",
+      "status": "available",
+      "images": [
+        {
+          "title": "01 Geometry Slices",
+          "path": "/reports/convergence/pixel_64x64x170_steps3500/01_geometry_slices.png"
+        },
+        {
+          "title": "02 Rcwa Rta",
+          "path": "/reports/convergence/pixel_64x64x170_steps3500/02_rcwa_rta.png"
+        },
+        {
+          "title": "03 Fdtd Crosstalk Matrix",
+          "path": "/reports/convergence/pixel_64x64x170_steps3500/03_fdtd_crosstalk_matrix.png"
+        },
+        {
+          "title": "04 Fdtd Field Slices",
+          "path": "/reports/convergence/pixel_64x64x170_steps3500/04_fdtd_field_slices.png"
+        }
+      ]
+    },
+    {
+      "key": "pixel_64x64x170_steps5200",
+      "title": "2x2 pixel scalar FDTD, 64x64x170, 5200 steps",
+      "source_dir": "outputs\\rcwa_fdtd_pixel_benchmark_64x64x170_steps5200",
+      "metric_file": "pixel_benchmark_metrics.json",
+      "status": "available",
+      "images": [
+        {
+          "title": "01 Geometry Slices",
+          "path": "/reports/convergence/pixel_64x64x170_steps5200/01_geometry_slices.png"
+        },
+        {
+          "title": "02 Rcwa Rta",
+          "path": "/reports/convergence/pixel_64x64x170_steps5200/02_rcwa_rta.png"
+        },
+        {
+          "title": "03 Fdtd Crosstalk Matrix",
+          "path": "/reports/convergence/pixel_64x64x170_steps5200/03_fdtd_crosstalk_matrix.png"
+        },
+        {
+          "title": "04 Fdtd Field Slices",
+          "path": "/reports/convergence/pixel_64x64x170_steps5200/04_fdtd_field_slices.png"
+        }
+      ]
+    },
+    {
+      "key": "pixel_128x128x340_single_steps10400",
+      "title": "2x2 pixel scalar FDTD, 128x128x340, single source, 10400 steps",
+      "source_dir": "outputs\\rcwa_fdtd_pixel_benchmark_128x128x340_single_steps10400",
+      "metric_file": "pixel_benchmark_metrics.json",
+      "status": "available",
+      "images": [
+        {
+          "title": "01 Geometry Slices",
+          "path": "/reports/convergence/pixel_128x128x340_single_steps10400/01_geometry_slices.png"
+        },
+        {
+          "title": "02 Rcwa Rta",
+          "path": "/reports/convergence/pixel_128x128x340_single_steps10400/02_rcwa_rta.png"
+        },
+        {
+          "title": "03 Fdtd Crosstalk Matrix",
+          "path": "/reports/convergence/pixel_128x128x340_single_steps10400/03_fdtd_crosstalk_matrix.png"
+        },
+        {
+          "title": "04 Fdtd Field Slices",
+          "path": "/reports/convergence/pixel_128x128x340_single_steps10400/04_fdtd_field_slices.png"
+        }
+      ]
+    }
+  ],
+  "visual": [
+    {
+      "key": "visual_cmos_pixel",
+      "title": "Visual CMOS pixel smoke test",
+      "source_dir": "outputs\\visual_cmos_optical_simulation",
+      "metric_file": "visual_metrics.json",
+      "status": "available",
+      "images": [
+        {
+          "title": "01 Geometry Overview",
+          "path": "/reports/convergence/visual_cmos_pixel/01_geometry_overview.png"
+        },
+        {
+          "title": "02 Rcwa Visual Test",
+          "path": "/reports/convergence/visual_cmos_pixel/02_rcwa_visual_test.png"
+        },
+        {
+          "title": "03 Fdtd Visual Test",
+          "path": "/reports/convergence/visual_cmos_pixel/03_fdtd_visual_test.png"
+        },
+        {
+          "title": "04 Rcwa Fdtd Comparison",
+          "path": "/reports/convergence/visual_cmos_pixel/04_rcwa_fdtd_comparison.png"
+        }
+      ]
+    }
+  ]
+}

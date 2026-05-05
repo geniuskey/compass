@@ -16,6 +16,14 @@ A convergence study determines the minimum simulation parameter values that yiel
 
 Increasing any of these parameters improves accuracy but increases computation time. The goal is to find the "knee" where results stop changing significantly -- the **converged** regime.
 
+::: info Generated convergence report
+Current RCWA/FDTD alignment, periodic trench, and full-pixel visual convergence results are published in the [RCWA/FDTD Convergence Analysis Report](/reports/convergence-analysis). Regenerate the report after local benchmark runs with:
+
+```bash
+uv run python scripts/generate_convergence_report.py
+```
+:::
+
 ::: tip Why convergence matters
 Running with too few harmonics gives incorrect results (underestimated absorption). Running with too many wastes compute time. A convergence study finds the sweet spot.
 :::
