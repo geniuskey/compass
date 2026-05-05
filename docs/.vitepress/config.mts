@@ -35,6 +35,7 @@ const theorySidebar = [
 
 const guideSidebar = [
   { text: 'Getting Started', items: [
+    { text: 'Overview', link: '/guide/' },
     { text: 'Installation', link: '/guide/installation' },
     { text: 'Quick Start', link: '/guide/quickstart' },
     { text: 'First Simulation', link: '/guide/first-simulation' },
@@ -74,7 +75,8 @@ const guideSidebar = [
 
 const referenceSidebar = [
   { text: 'API Reference', items: [
-    { text: 'Overview', link: '/reference/api-overview' },
+    { text: 'Overview', link: '/reference/' },
+    { text: 'API Map', link: '/reference/api-overview' },
     { text: 'PixelStack', link: '/reference/pixel-stack' },
     { text: 'MaterialDB', link: '/reference/material-db' },
     { text: 'SolverBase', link: '/reference/solver-base' },
@@ -87,6 +89,7 @@ const referenceSidebar = [
 
 const researchSidebar = [
   { text: 'Research', items: [
+    { text: 'Overview', link: '/research/' },
     { text: 'EM Solver Survey', link: '/research/open-source-em-solvers-survey' },
     { text: 'CIS Technology Trends', link: '/research/cis-technology-trends' },
     { text: 'Simulation Methods', link: '/research/simulation-methods-comparison' },
@@ -147,6 +150,7 @@ const theorySidebarKo = [
 
 const guideSidebarKo = [
   { text: '시작하기', items: [
+    { text: '개요', link: '/ko/guide/' },
     { text: '설치', link: '/ko/guide/installation' },
     { text: '빠른 시작', link: '/ko/guide/quickstart' },
     { text: '첫 번째 시뮬레이션', link: '/ko/guide/first-simulation' },
@@ -186,7 +190,8 @@ const guideSidebarKo = [
 
 const referenceSidebarKo = [
   { text: 'API 레퍼런스', items: [
-    { text: '개요', link: '/ko/reference/api-overview' },
+    { text: '개요', link: '/ko/reference/' },
+    { text: 'API 지도', link: '/ko/reference/api-overview' },
     { text: 'PixelStack', link: '/ko/reference/pixel-stack' },
     { text: 'MaterialDB', link: '/ko/reference/material-db' },
     { text: 'SolverBase', link: '/ko/reference/solver-base' },
@@ -199,6 +204,7 @@ const referenceSidebarKo = [
 
 const researchSidebarKo = [
   { text: '리서치', items: [
+    { text: '개요', link: '/ko/research/' },
     { text: 'EM 솔버 서베이', link: '/ko/research/open-source-em-solvers-survey' },
     { text: 'CIS 기술 동향', link: '/ko/research/cis-technology-trends' },
     { text: '시뮬레이션 방법론', link: '/ko/research/simulation-methods-comparison' },
@@ -327,11 +333,11 @@ export default withMermaid(defineConfig({
       themeConfig: {
         nav: [
           { text: 'Learn', link: '/theory/' },
-          { text: 'Guide', link: '/guide/installation' },
+          { text: 'Guide', link: '/guide/' },
           { text: 'Simulator', link: '/simulator/' },
           { text: 'Resources', items: [
-            { text: 'API Reference', link: '/reference/api-overview' },
-            { text: 'Research', link: '/research/open-source-em-solvers-survey' },
+            { text: 'API Reference', link: '/reference/' },
+            { text: 'Research', link: '/research/' },
             { text: 'Reports', link: '/reports/' },
             { text: 'About', link: '/about/references' },
           ]},
@@ -354,11 +360,11 @@ export default withMermaid(defineConfig({
       themeConfig: {
         nav: [
           { text: '학습', link: '/ko/theory/' },
-          { text: '가이드', link: '/ko/guide/installation' },
+          { text: '가이드', link: '/ko/guide/' },
           { text: '시뮬레이터', link: '/ko/simulator/' },
           { text: '자료', items: [
-            { text: 'API 레퍼런스', link: '/ko/reference/api-overview' },
-            { text: '리서치', link: '/ko/research/open-source-em-solvers-survey' },
+            { text: 'API 레퍼런스', link: '/ko/reference/' },
+            { text: '리서치', link: '/ko/research/' },
             { text: '리포트', link: '/ko/reports/' },
             { text: '정보', link: '/ko/about/references' },
           ]},

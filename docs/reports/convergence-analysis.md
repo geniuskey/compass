@@ -4,11 +4,16 @@ outline: deep
 
 # RCWA/FDTD Convergence Analysis Report
 
-_Generated on 2026-05-01 from local `outputs/` benchmark artifacts._
+_Generated on 2026-05-05 from local `outputs/` benchmark artifacts._
 
 This page turns the Python-level benchmark outputs into a publication-style report. The source JSON and plots stay in `outputs/` for local iteration, while selected figures and tables are promoted to `docs/public/reports/convergence/` so the same evidence can be served by GitHub Pages.
 
-## Current status
+## How to read this report
+
+- If you are evaluating COMPASS as a user, read the executive summary, the convergence tables, and the interpretation section. Those parts explain which numbers are ready to trust and which ones are still visual proxies.
+- If you are maintaining solver code, use the validation ladder and regeneration commands as an internal checklist. The goal is to keep 1D physics, 2D trench alignment, and full-pixel visual checks from being mixed into one ambiguous test.
+
+## Executive summary
 
 - The 1D ladder is aligned: torcwa RCWA matches TMM at near numerical precision, and the 1D FDTD implementation is within the sub-percent target on the lossy pixel-like multilayer.
 - The 2D periodic trench benchmark is aligned for FDTI and BDTI at the current coarse settings, with maximum R/T/A differences below roughly 3 percentage points.
@@ -18,7 +23,15 @@ This page turns the Python-level benchmark outputs into a publication-style repo
 A fixed `--fdtd-steps` value is not equivalent across grids. Finer grids use a smaller time step, so they cover less physical time unless the step count is scaled. Compare the reported `c*time` and energy-tail values, not only the grid dimensions.
 :::
 
-## Regeneration commands
+## Internal validation protocol
+
+The report is intentionally split into three rungs. Do not use the full pixel proxy to debug a normalization issue that should have failed in the 1D ladder.
+
+1. **1D alignment** validates material loss, source normalization, monitor math, and energy accounting against an analytical TMM reference.
+2. **2D periodic trench alignment** validates FDTI/BDTI geometry direction, boundary conditions, and R/T/A consistency on a shared periodic structure.
+3. **Full-pixel visual convergence** validates realistic stack construction, photodiode windows, and crosstalk proxies. Treat it as a visual and diagnostic benchmark until the energy tail is below the target threshold.
+
+### Regeneration commands
 
 ```powershell
 uv run python scripts\rcwa_fdtd_alignment.py --structure lossy-multilayer --outdir outputs\rcwa_fdtd_alignment_lossy
@@ -273,9 +286,16 @@ These plots are not used as rigorous solver evidence. They are retained as fast 
 
 *04 Rcwa Fdtd Comparison*
 
-## Interpretation
+## How to act on this report
+
+**For users**
+
+- Use the 44x44x118, 3500-step pixel rows as the current stable visual comparison point for FDTI/BDTI behavior.
+- Treat the 64x64x170 and 128x128x340 rows as diagnostic evidence, not final performance claims, because their physical runtime is still short.
+- Prefer the convergence-study cookbook page for routine parameter choices; use this report when you need the evidence behind those choices.
+
+**For maintainers**
 
 - Use the 1D ladder to validate normalization, material loss, and monitor math before debugging full pixels.
 - Use the periodic trench benchmark to compare FDTI and BDTI with the same geometry, boundary conditions, and R/T/A definitions.
-- Treat full-pixel scalar FDTD as a visual convergence and crosstalk proxy until the energy tail falls below the selected threshold at the target grid.
 - For final high-accuracy work, scale FDTD steps with grid refinement, run all four sources, and repeat the RCWA side with Fourier order and permittivity-grid sweeps.

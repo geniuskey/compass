@@ -472,7 +472,16 @@ def build_english_report(
         "figures and tables are promoted to `docs/public/reports/convergence/` so the "
         "same evidence can be served by GitHub Pages.",
         "",
-        "## Current status",
+        "## How to read this report",
+        "",
+        "- If you are evaluating COMPASS as a user, read the executive summary, the "
+        "convergence tables, and the interpretation section. Those parts explain which "
+        "numbers are ready to trust and which ones are still visual proxies.",
+        "- If you are maintaining solver code, use the validation ladder and regeneration "
+        "commands as an internal checklist. The goal is to keep 1D physics, 2D trench "
+        "alignment, and full-pixel visual checks from being mixed into one ambiguous test.",
+        "",
+        "## Executive summary",
         "",
         "- The 1D ladder is aligned: torcwa RCWA matches TMM at near numerical precision, "
         "and the 1D FDTD implementation is within the sub-percent target on the lossy "
@@ -492,7 +501,20 @@ def build_english_report(
         "grid dimensions.",
         ":::",
         "",
-        "## Regeneration commands",
+        "## Internal validation protocol",
+        "",
+        "The report is intentionally split into three rungs. Do not use the full pixel "
+        "proxy to debug a normalization issue that should have failed in the 1D ladder.",
+        "",
+        "1. **1D alignment** validates material loss, source normalization, monitor math, "
+        "and energy accounting against an analytical TMM reference.",
+        "2. **2D periodic trench alignment** validates FDTI/BDTI geometry direction, "
+        "boundary conditions, and R/T/A consistency on a shared periodic structure.",
+        "3. **Full-pixel visual convergence** validates realistic stack construction, "
+        "photodiode windows, and crosstalk proxies. Treat it as a visual and diagnostic "
+        "benchmark until the energy tail is below the target threshold.",
+        "",
+        "### Regeneration commands",
         "",
         "```powershell",
         "uv run python scripts\\rcwa_fdtd_alignment.py --structure lossy-multilayer --outdir outputs\\rcwa_fdtd_alignment_lossy",
@@ -657,16 +679,25 @@ def build_english_report(
 
     lines.extend(
         [
-            "## Interpretation",
+            "## How to act on this report",
             "",
-            "- Use the 1D ladder to validate normalization, material loss, and monitor "
-            "math before debugging full pixels.",
+            "**For users**",
+            "",
+            "- Use the 44x44x118, 3500-step pixel rows as the current stable visual "
+            "comparison point for FDTI/BDTI behavior.",
+            "- Treat the 64x64x170 and 128x128x340 rows as diagnostic evidence, not final "
+            "performance claims, because their physical runtime is still short.",
+            "- Prefer the convergence-study cookbook page for routine parameter choices; "
+            "use this report when you need the evidence behind those choices.",
+            "",
+            "**For maintainers**",
+            "",
+            "- Use the 1D ladder to validate normalization, material loss, and monitor math "
+            "before debugging full pixels.",
             "- Use the periodic trench benchmark to compare FDTI and BDTI with the same "
             "geometry, boundary conditions, and R/T/A definitions.",
-            "- Treat full-pixel scalar FDTD as a visual convergence and crosstalk proxy "
-            "until the energy tail falls below the selected threshold at the target grid.",
-            "- For final high-accuracy work, scale FDTD steps with grid refinement, run "
-            "all four sources, and repeat the RCWA side with Fourier order and "
+            "- For final high-accuracy work, scale FDTD steps with grid refinement, run all "
+            "four sources, and repeat the RCWA side with Fourier order and "
             "permittivity-grid sweeps.",
             "",
         ]
@@ -692,7 +723,15 @@ def build_korean_report(
         "리포트 형태로 정리한다. 큰 원본 산출물은 `outputs/`에 두고, 선별된 "
         "그림과 표만 `docs/public/reports/convergence/`로 복사한다.",
         "",
-        "## 현재 판단",
+        "## 읽는 방법",
+        "",
+        "- COMPASS를 평가하는 사용자라면 요약, 수렴 표, 해석 기준을 먼저 보면 된다. "
+        "어떤 수치를 신뢰해도 되는지, 어떤 결과가 아직 시각적 proxy인지 구분한다.",
+        "- 솔버 코드를 유지보수하는 경우에는 검증 사다리와 재생성 명령을 내부 체크리스트로 "
+        "사용한다. 1D 물리 검증, 2D trench 정합성, full-pixel 시각 검증을 섞지 않는 "
+        "것이 목적이다.",
+        "",
+        "## 요약 판단",
         "",
         "- 1D 정합성 사다리는 통과했다. torcwa RCWA는 TMM과 수치 오차 수준으로 "
         "맞고, 1D FDTD도 lossy pixel-like multilayer에서 sub-percent 범위다.",
@@ -707,7 +746,20 @@ def build_korean_report(
         "고해상도 행은 grid 크기만 보지 말고 `c*time`과 energy tail 값을 함께 봐야 한다.",
         ":::",
         "",
-        "## 재생성 명령",
+        "## 내부 검증 프로토콜",
+        "",
+        "리포트는 의도적으로 세 단계로 나뉜다. 1D 사다리에서 잡아야 할 normalization "
+        "문제를 full pixel proxy로 디버깅하지 않는 것이 중요하다.",
+        "",
+        "1. **1D 정합성**: analytic TMM 기준으로 material loss, source normalization, "
+        "monitor 계산, energy accounting을 검증한다.",
+        "2. **2D periodic trench 정합성**: 공유 periodic 구조에서 FDTI/BDTI 방향, "
+        "boundary condition, R/T/A 정의가 맞는지 확인한다.",
+        "3. **Full-pixel 시각 수렴**: 실제 stack 구성, photodiode window, crosstalk "
+        "proxy를 검증한다. energy tail이 목표 기준 이하가 되기 전까지는 시각적/진단용 "
+        "벤치마크로 해석한다.",
+        "",
+        "### 재생성 명령",
         "",
         "```powershell",
         "uv run python scripts\\rcwa_fdtd_alignment.py --structure lossy-multilayer --outdir outputs\\rcwa_fdtd_alignment_lossy",
@@ -869,14 +921,23 @@ def build_korean_report(
 
     lines.extend(
         [
-            "## 해석 기준",
+            "## 이 리포트를 어떻게 쓸 것인가",
+            "",
+            "**사용자 관점**",
+            "",
+            "- FDTI/BDTI 동작의 현재 안정적 시각 비교 기준은 44x44x118, 3500-step "
+            "pixel 행이다.",
+            "- 64x64x170 및 128x128x340 행은 아직 물리 시간이 짧으므로 최종 성능 "
+            "주장이 아니라 진단 근거로 해석한다.",
+            "- 일반적인 파라미터 선택은 convergence-study cookbook을 우선 보고, 그 판단의 "
+            "근거가 필요할 때 이 리포트를 사용한다.",
+            "",
+            "**유지보수자 관점**",
             "",
             "- 전체 pixel을 보기 전에 1D 사다리로 normalization, material loss, monitor "
             "계산을 먼저 검증한다.",
             "- FDTI/BDTI 비교는 periodic trench benchmark에서 같은 geometry와 R/T/A "
             "정의로 먼저 맞춘다.",
-            "- full-pixel scalar FDTD는 목표 grid에서 energy tail이 기준 이하로 내려갈 "
-            "때까지 시각적 수렴 및 crosstalk proxy로 해석한다.",
             "- 최종 고정밀 평가는 FDTD step을 grid refinement에 맞춰 늘리고, 네 source를 "
             "모두 돌리며, RCWA도 Fourier order와 permittivity grid sweep을 같이 수행해야 한다.",
             "",
@@ -899,10 +960,22 @@ def write_index_pages(docs_root: Path, generated_on: str) -> None:
             "",
             "# Simulation Reports",
             "",
-            "Publication-style reports generated from Python benchmark artifacts.",
+            "Publication-style reports generated from Python benchmark artifacts. "
+            "These pages are written for both readers who want the current engineering "
+            "conclusion and maintainers who need the validation trail behind that conclusion.",
+            "",
+            "## Available reports",
             "",
             f"- [RCWA/FDTD Convergence Analysis](./convergence-analysis.md) "
             f"(generated {generated_on})",
+            "",
+            "## What belongs here",
+            "",
+            "- Cross-solver validation results that should be inspectable from GitHub Pages.",
+            "- Plots and tables promoted from local `outputs/` artifacts into "
+            "`docs/public/reports/`.",
+            "- Reproducibility notes that explain which scripts regenerate the published "
+            "figures.",
             "",
             "The report assets are served from `docs/public/reports/`, so they are "
             "included in the VitePress build and the GitHub Pages deployment.",
@@ -917,10 +990,20 @@ def write_index_pages(docs_root: Path, generated_on: str) -> None:
             "",
             "# 시뮬레이션 리포트",
             "",
-            "Python benchmark 산출물에서 생성한 publication-style 리포트다.",
+            "Python benchmark 산출물에서 생성한 publication-style 리포트다. 현재 공학적 "
+            "판단을 알고 싶은 사용자와, 그 판단의 검증 과정을 추적해야 하는 유지보수자를 "
+            "모두 대상으로 한다.",
+            "",
+            "## 리포트 목록",
             "",
             f"- [RCWA/FDTD 수렴 분석](./convergence-analysis.md) "
             f"(생성일 {generated_on})",
+            "",
+            "## 이 섹션에 들어갈 내용",
+            "",
+            "- GitHub Pages에서 바로 확인할 수 있어야 하는 cross-solver 검증 결과.",
+            "- 로컬 `outputs/` 산출물에서 `docs/public/reports/`로 승격한 그림과 표.",
+            "- 공개된 그림을 어떤 스크립트로 다시 만들 수 있는지 설명하는 재현성 노트.",
             "",
             "리포트 이미지는 `docs/public/reports/`에서 서빙되므로 VitePress build와 "
             "GitHub Pages 배포에 포함된다.",

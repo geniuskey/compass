@@ -1,6 +1,13 @@
+---
+title: CMOS Image Sensor Optics Theory
+description: Learning path for CMOS image sensor optics, wave optics, quantum efficiency, signal chains, RCWA, FDTD, and numerical stability.
+---
+
 # Theory
 
 This section covers the physics, sensor architecture, and numerical methods behind every COMPASS simulation. The chapters are organized so you can read top-to-bottom or jump to the topic you need.
+
+Use this section for concepts and mental models. Use [Guide](/guide/) for runnable workflows, [Reports](/reports/) for generated validation evidence, and [API Reference](/reference/) for exact classes and configuration fields.
 
 ## How this section is organized
 
@@ -10,6 +17,12 @@ This section covers the physics, sensor architecture, and numerical methods behi
 | [Optics](./optics/) | Wave optics fundamentals: fields, films, diffraction | Understand *why* a wave-optics solver is needed for sub-wavelength pixels |
 | [Image Sensor](./sensor/) | BSI pixel structure, QE, full radiometric signal chain | Understand *what* is being modeled and how the result is interpreted |
 | [Simulation](./simulation/) | RCWA, FDTD, TMM and their numerical behavior | Understand *how* the solver actually computes the answer |
+
+## What This Section Does Not Cover
+
+- Installation and command-line workflows live in [Guide](/guide/).
+- Generated benchmark evidence lives in [Reports](/reports/).
+- API signatures and YAML schema details live in [API Reference](/reference/).
 
 ## Suggested reading paths
 

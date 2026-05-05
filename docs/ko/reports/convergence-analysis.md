@@ -4,11 +4,16 @@ outline: deep
 
 # RCWA/FDTD 수렴 분석 리포트
 
-_생성일: 2026-05-01. 로컬 `outputs/` 벤치마크 산출물에서 생성됨._
+_생성일: 2026-05-05. 로컬 `outputs/` 벤치마크 산출물에서 생성됨._
 
 이 페이지는 Python 레벨 벤치마크 결과를 GitHub Pages에서 볼 수 있는 리포트 형태로 정리한다. 큰 원본 산출물은 `outputs/`에 두고, 선별된 그림과 표만 `docs/public/reports/convergence/`로 복사한다.
 
-## 현재 판단
+## 읽는 방법
+
+- COMPASS를 평가하는 사용자라면 요약, 수렴 표, 해석 기준을 먼저 보면 된다. 어떤 수치를 신뢰해도 되는지, 어떤 결과가 아직 시각적 proxy인지 구분한다.
+- 솔버 코드를 유지보수하는 경우에는 검증 사다리와 재생성 명령을 내부 체크리스트로 사용한다. 1D 물리 검증, 2D trench 정합성, full-pixel 시각 검증을 섞지 않는 것이 목적이다.
+
+## 요약 판단
 
 - 1D 정합성 사다리는 통과했다. torcwa RCWA는 TMM과 수치 오차 수준으로 맞고, 1D FDTD도 lossy pixel-like multilayer에서 sub-percent 범위다.
 - 2D periodic trench는 현재 coarse 설정에서 FDTI/BDTI 모두 R/T/A 차이가 대략 3 percentage point 이하로 맞는다.
@@ -18,7 +23,15 @@ _생성일: 2026-05-01. 로컬 `outputs/` 벤치마크 산출물에서 생성됨
 `--fdtd-steps`를 고정하면 격자가 촘촘해질수록 실제 물리 시간이 짧아진다. 고해상도 행은 grid 크기만 보지 말고 `c*time`과 energy tail 값을 함께 봐야 한다.
 :::
 
-## 재생성 명령
+## 내부 검증 프로토콜
+
+리포트는 의도적으로 세 단계로 나뉜다. 1D 사다리에서 잡아야 할 normalization 문제를 full pixel proxy로 디버깅하지 않는 것이 중요하다.
+
+1. **1D 정합성**: analytic TMM 기준으로 material loss, source normalization, monitor 계산, energy accounting을 검증한다.
+2. **2D periodic trench 정합성**: 공유 periodic 구조에서 FDTI/BDTI 방향, boundary condition, R/T/A 정의가 맞는지 확인한다.
+3. **Full-pixel 시각 수렴**: 실제 stack 구성, photodiode window, crosstalk proxy를 검증한다. energy tail이 목표 기준 이하가 되기 전까지는 시각적/진단용 벤치마크로 해석한다.
+
+### 재생성 명령
 
 ```powershell
 uv run python scripts\rcwa_fdtd_alignment.py --structure lossy-multilayer --outdir outputs\rcwa_fdtd_alignment_lossy
@@ -273,9 +286,16 @@ Pixel benchmark는 실제 `PixelStack` 경로를 사용한다. FDTI/BDTI 옵션,
 
 *04 Rcwa Fdtd Comparison*
 
-## 해석 기준
+## 이 리포트를 어떻게 쓸 것인가
+
+**사용자 관점**
+
+- FDTI/BDTI 동작의 현재 안정적 시각 비교 기준은 44x44x118, 3500-step pixel 행이다.
+- 64x64x170 및 128x128x340 행은 아직 물리 시간이 짧으므로 최종 성능 주장이 아니라 진단 근거로 해석한다.
+- 일반적인 파라미터 선택은 convergence-study cookbook을 우선 보고, 그 판단의 근거가 필요할 때 이 리포트를 사용한다.
+
+**유지보수자 관점**
 
 - 전체 pixel을 보기 전에 1D 사다리로 normalization, material loss, monitor 계산을 먼저 검증한다.
 - FDTI/BDTI 비교는 periodic trench benchmark에서 같은 geometry와 R/T/A 정의로 먼저 맞춘다.
-- full-pixel scalar FDTD는 목표 grid에서 energy tail이 기준 이하로 내려갈 때까지 시각적 수렴 및 crosstalk proxy로 해석한다.
 - 최종 고정밀 평가는 FDTD step을 grid refinement에 맞춰 늘리고, 네 source를 모두 돌리며, RCWA도 Fourier order와 permittivity grid sweep을 같이 수행해야 한다.
