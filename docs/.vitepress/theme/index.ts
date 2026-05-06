@@ -42,6 +42,7 @@ const globalComponents = [
   ['ConvergenceStudyChart', () => import('./components/ConvergenceStudyChart.vue')],
   ['PerColorConvergenceChart', () => import('./components/PerColorConvergenceChart.vue')],
   ['PixelCrossSections', () => import('./components/PixelCrossSections.vue')],
+  ['PixelParameterDiagram', () => import('./components/PixelParameterDiagram.vue')],
   ['Pixel3DViewer', () => import('./components/Pixel3DViewer.vue')],
   ['TmmQeCalculator', () => import('./components/TmmQeCalculator.vue')],
   ['BarlOptimizer', () => import('./components/BarlOptimizer.vue')],
