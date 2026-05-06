@@ -21,6 +21,24 @@
       ) }}
     </p>
 
+    <div v-if="activeTab === 'xy'" class="xy-toggles">
+      <span class="xy-toggles-label">{{ t('Layers:', '레이어:') }}</span>
+      <label
+        v-for="opt in xyToggleOptions"
+        :key="opt.key"
+        class="xy-toggle"
+      >
+        <input type="checkbox" v-model="xyVisible[opt.key]" />
+        <span class="xy-toggle-swatch" :style="{ background: opt.color }"></span>
+        {{ t(opt.labelEn, opt.labelKo) }}
+      </label>
+      <button
+        type="button"
+        class="xy-toggle-reset"
+        @click="resetXyVisibility"
+      >{{ t('Reset', '초기화') }}</button>
+    </div>
+
     <!-- ==================== XZ Cross-Section ==================== -->
     <svg
       v-if="activeTab === 'xz'"
@@ -404,27 +422,29 @@
       :aria-label="t('XY top view with parameter annotations', 'XY 평면 파라미터 주석')"
     >
       <!-- 2x2 Bayer cells (background) -->
-      <rect
-        v-for="cell in bayerCells"
-        :key="'BY-' + cell.label + cell.cx + cell.cy"
-        :x="xyToSvg(cell.cx - 0.5)"
-        :y="xyToSvg(cell.cy - 0.5)"
-        :width="xyToSvg(1) - xyToSvg(0)"
-        :height="xyToSvg(1) - xyToSvg(0)"
-        :fill="cell.fill"
-        :opacity="dimLayer('color_filter') ? 0.2 : 0.55"
-      />
-      <text
-        v-for="cell in bayerCells"
-        :key="'BL-' + cell.label + cell.cx + cell.cy"
-        :x="xyToSvg(cell.cx)"
-        :y="xyToSvg(cell.cy) + 6"
-        class="bayer-letter"
-        text-anchor="middle"
-      >{{ cell.label }}</text>
+      <template v-if="xyVisible.color_filter">
+        <rect
+          v-for="cell in bayerCells"
+          :key="'BY-' + cell.label + cell.cx + cell.cy"
+          :x="xyToSvg(cell.cx - 0.5)"
+          :y="xyToSvg(cell.cy - 0.5)"
+          :width="xyToSvg(1) - xyToSvg(0)"
+          :height="xyToSvg(1) - xyToSvg(0)"
+          :fill="cell.fill"
+          :opacity="dimLayer('color_filter') ? 0.2 : 0.55"
+        />
+        <text
+          v-for="cell in bayerCells"
+          :key="'BL-' + cell.label + cell.cx + cell.cy"
+          :x="xyToSvg(cell.cx)"
+          :y="xyToSvg(cell.cy) + 6"
+          class="bayer-letter"
+          text-anchor="middle"
+        >{{ cell.label }}</text>
+      </template>
 
       <!-- Metal grid lines (CF boundaries) -->
-      <g>
+      <g v-if="xyVisible.grid">
         <rect
           v-for="x in [0, 1, 2]"
           :key="'mgv-' + x"
@@ -450,7 +470,7 @@
       </g>
 
       <!-- DTI grid (slightly wider, dashed-blue) -->
-      <g>
+      <g v-if="xyVisible.dti">
         <rect
           v-for="x in [0, 1, 2]"
           :key="'dtv-' + x"
@@ -478,33 +498,37 @@
       </g>
 
       <!-- Photodiode footprints (dashed) -->
-      <rect
-        v-for="(pd, i) in pdFootprints"
-        :key="'pdxy-' + i"
-        :x="xyToSvg(pd.x0)"
-        :y="xyToSvg(pd.y0)"
-        :width="xyToSvg(pd.x1) - xyToSvg(pd.x0)"
-        :height="xyToSvg(pd.y1) - xyToSvg(pd.y0)"
-        fill="#b85c5c"
-        :opacity="highlight === 'pd' || highlight === 'pd_dxdy' ? 0.4 : 0.18"
-        :stroke="highlight === 'pd' || highlight === 'pd_dxdy' ? '#e74c3c' : '#b85c5c'"
-        :stroke-width="highlight === 'pd' || highlight === 'pd_dxdy' ? 1.6 : 1.2"
-        stroke-dasharray="4 2"
-      />
+      <template v-if="xyVisible.photodiode">
+        <rect
+          v-for="(pd, i) in pdFootprints"
+          :key="'pdxy-' + i"
+          :x="xyToSvg(pd.x0)"
+          :y="xyToSvg(pd.y0)"
+          :width="xyToSvg(pd.x1) - xyToSvg(pd.x0)"
+          :height="xyToSvg(pd.y1) - xyToSvg(pd.y0)"
+          fill="#b85c5c"
+          :opacity="highlight === 'pd' || highlight === 'pd_dxdy' ? 0.4 : 0.18"
+          :stroke="highlight === 'pd' || highlight === 'pd_dxdy' ? '#e74c3c' : '#b85c5c'"
+          :stroke-width="highlight === 'pd' || highlight === 'pd_dxdy' ? 1.6 : 1.2"
+          stroke-dasharray="4 2"
+        />
+      </template>
 
       <!-- Microlens ellipses -->
-      <ellipse
-        v-for="(ml, i) in mlFootprints"
-        :key="'mlxy-' + i"
-        :cx="xyToSvg(ml.cx)"
-        :cy="xyToSvg(ml.cy)"
-        :rx="ml.rx * xyScale"
-        :ry="ml.ry * xyScale"
-        fill="#dda0dd"
-        :opacity="dimLayer('microlens') ? 0.25 : 0.55"
-        :stroke="highlight === 'ml_rx' || highlight === 'ml_ry' ? '#e74c3c' : '#b07eb0'"
-        :stroke-width="highlight === 'ml_rx' || highlight === 'ml_ry' ? 1.6 : 1"
-      />
+      <template v-if="xyVisible.microlens">
+        <ellipse
+          v-for="(ml, i) in mlFootprints"
+          :key="'mlxy-' + i"
+          :cx="xyToSvg(ml.cx)"
+          :cy="xyToSvg(ml.cy)"
+          :rx="ml.rx * xyScale"
+          :ry="ml.ry * xyScale"
+          fill="#dda0dd"
+          :opacity="dimLayer('microlens') ? 0.25 : 0.55"
+          :stroke="highlight === 'ml_rx' || highlight === 'ml_ry' ? '#e74c3c' : '#b07eb0'"
+          :stroke-width="highlight === 'ml_rx' || highlight === 'ml_ry' ? 1.6 : 1"
+        />
+      </template>
 
       <!-- pitch arrow (bottom) -->
       <g class="dim-group">
@@ -541,7 +565,7 @@
       </g>
 
       <!-- microlens.radius_x (horizontal across one ML) -->
-      <g class="dim-group">
+      <g class="dim-group" v-if="xyVisible.microlens">
         <line
           :x1="xyToSvg(0.5 - mlR)" :y1="xyToSvg(0.5)"
           :x2="xyToSvg(0.5 + mlR)" :y2="xyToSvg(0.5)"
@@ -558,7 +582,7 @@
       </g>
 
       <!-- microlens.radius_y (vertical across one ML) -->
-      <g class="dim-group">
+      <g class="dim-group" v-if="xyVisible.microlens">
         <line
           :x1="xyToSvg(1.5)" :y1="xyToSvg(0.5 - mlR)"
           :x2="xyToSvg(1.5)" :y2="xyToSvg(0.5 + mlR)"
@@ -575,7 +599,7 @@
       </g>
 
       <!-- photodiode size dx/dy on bottom-right pixel -->
-      <g class="dim-group">
+      <g class="dim-group" v-if="xyVisible.photodiode">
         <line
           :x1="xyToSvg(1.5 - pdHalf)" :y1="xyToSvg(1.5) + pdHalfPx + 6"
           :x2="xyToSvg(1.5 + pdHalf)" :y2="xyToSvg(1.5) + pdHalfPx + 6"
@@ -606,7 +630,7 @@
       </g>
 
       <!-- DTI width leader -->
-      <g class="dim-group">
+      <g class="dim-group" v-if="xyVisible.dti">
         <line
           :x1="xyToSvg(1) - dtiHalfXY" :y1="xyToSvg(1.7)"
           :x2="xyToSvg(1) + dtiHalfXY" :y2="xyToSvg(1.7)"
@@ -628,7 +652,7 @@
       </g>
 
       <!-- grid.width leader -->
-      <g class="dim-group">
+      <g class="dim-group" v-if="xyVisible.grid">
         <line
           :x1="xyToSvg(2) - mgHalfXY" :y1="xyToSvg(0.3)"
           :x2="xyToSvg(2) + mgHalfXY" :y2="xyToSvg(0.3)"
@@ -739,6 +763,27 @@ const tabs = computed(() => [
 
 const activeTab = ref<'xz' | 'xy'>('xz')
 const highlight = ref<string | null>(null)
+
+type XyLayerKey = 'microlens' | 'color_filter' | 'grid' | 'dti' | 'photodiode'
+const defaultXyVisible: Record<XyLayerKey, boolean> = {
+  microlens: true,
+  color_filter: true,
+  grid: true,
+  dti: true,
+  photodiode: true,
+}
+const xyVisible = ref<Record<XyLayerKey, boolean>>({ ...defaultXyVisible })
+function resetXyVisibility() {
+  xyVisible.value = { ...defaultXyVisible }
+}
+
+const xyToggleOptions: { key: XyLayerKey; labelEn: string; labelKo: string; color: string }[] = [
+  { key: 'microlens',    labelEn: 'Microlens',    labelKo: '마이크로렌즈',  color: '#dda0dd' },
+  { key: 'color_filter', labelEn: 'Color filter', labelKo: '컬러 필터',    color: '#27ae60' },
+  { key: 'grid',         labelEn: 'Metal grid',   labelKo: '금속 격자',    color: '#555555' },
+  { key: 'dti',          labelEn: 'DTI',          labelKo: 'DTI',         color: '#aed6f1' },
+  { key: 'photodiode',   labelEn: 'Photodiode',   labelKo: '포토다이오드',  color: '#b85c5c' },
+]
 
 // ===== XZ geometry (matches default_bsi_1um.yaml) =====
 const xzW = 720
@@ -997,6 +1042,61 @@ const legendRows = [
   font-size: 0.85rem;
   color: var(--vp-c-text-2);
   margin: 4px 0 8px 0;
+}
+
+.xy-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 10px;
+  margin: 0 0 8px 0;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.xy-toggles-label {
+  color: var(--vp-c-text-2);
+  font-weight: 600;
+}
+
+.xy-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.xy-toggle input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.xy-toggle-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.xy-toggle-reset {
+  margin-left: auto;
+  padding: 3px 10px;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.xy-toggle-reset:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
 }
 
 .diagram-svg {
