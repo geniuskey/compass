@@ -1,3 +1,8 @@
+---
+title: Optics Chapter Overview
+description: Overview of wave-optics fundamentals for CMOS image sensor simulation, including light basics, Maxwell equations, thin films, and diffraction.
+---
+
 # Optics Chapter Overview
 
 This chapter covers the wave-optics fundamentals you need before reading the simulation or image sensor chapters. It is solver-agnostic: the equations and intuitions here hold for *any* electromagnetic method.

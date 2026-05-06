@@ -1,3 +1,8 @@
+---
+title: 이미지 센서 챕터 개요
+description: BSI 픽셀 구조, 픽셀 광학 효과, 양자 효율, 크로스토크, 신호 체인 모델링을 다루는 이미지 센서 이론 챕터 개요입니다.
+---
+
 # 이미지 센서 챕터 개요
 
 이 챕터는 현대 CMOS 이미지 센서(CIS) 픽셀의 광학적 구조와, 입사 광자가 측정 가능한 신호로 변환되는 일련의 물리 현상을 설명합니다.
@@ -19,6 +24,7 @@ silicon → BARL → color filter → planarization → microlens → air
 | 페이지 | 주제 | 핵심 내용 |
 |---|---|---|
 | [이미지 센서 광학](./image-sensor-optics.md) | BSI 구조, 마이크로렌즈, CFA, BARL, DTI | 광학 스택의 해부와 각 레이어의 역할 |
+| [픽셀 광학 효과](./pixel-optical-effects.md) | CRA, CFA 분광 응답, BARL, 실리콘 흡수, DTI, 각도/편광 응답 | QE와 크로스토크를 좌우하는 설계 트레이드오프 |
 | [양자 효율](./quantum-efficiency.md) | QE 정의, 계산 방법, 크로스토크 | 대표 지표와 COMPASS의 측정 방식 |
 | [신호 체인](./signal-chain.md) | 광원 → 장면 → 렌즈 → 센서 신호 | 시뮬레이션된 QE가 라디오메트릭 픽셀 값으로 변환되는 과정 |
 
@@ -33,7 +39,7 @@ silicon → BARL → color filter → planarization → microlens → air
 ## 읽는 방법
 
 - 픽셀의 광학적 설계만 궁금하다면 [이미지 센서 광학](./image-sensor-optics.md)으로 충분합니다.
-- 센서 성능을 평가한다면 [양자 효율](./quantum-efficiency.md)까지 이어 보세요.
+- 센서 성능을 평가한다면 [픽셀 광학 효과](./pixel-optical-effects.md)와 [양자 효율](./quantum-efficiency.md)까지 이어 보세요.
 - 색 정확도, SNR 등 엔드-투-엔드 화질을 예측하려면 [신호 체인](./signal-chain.md)도 함께 읽으세요.
 
 ::: tip 사전 지식

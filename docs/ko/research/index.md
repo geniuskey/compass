@@ -11,14 +11,15 @@ description: 전자기 솔버, CMOS 이미지 센서 기술 동향, 시뮬레이
 
 | 주제 | 먼저 볼 문서 | 중요한 이유 |
 |---|---|---|
-| 솔버 생태계 | [EM 솔버 서베이](./open-source-em-solvers-survey.md) | open-source RCWA/FDTD 옵션과 라이선스 비교 |
-| 센서 방향 | [CIS 기술 동향](./cis-technology-trends.md) | pixel scaling, BSI 구조, DTI, optical stack 동향 파악 |
+| 이론 커버리지 | [이론 커버리지 지도](./theory-coverage-map.md) | 이론 페이지의 범위를 유지하고 중복 설명을 방지 |
+| 솔버 생태계 | [EM 솔버 서베이](./open-source-em-solvers-survey.md) | 오픈소스 RCWA/FDTD 옵션과 라이선스 비교 |
+| 센서 방향 | [CIS 기술 동향](./cis-technology-trends.md) | 픽셀 스케일링, BSI 구조, DTI, 광학 스택 동향 파악 |
 | 방법 선택 | [시뮬레이션 방법론](./simulation-methods-comparison.md) | TMM, RCWA, FDTD, hybrid validation 전략 비교 |
 | 문헌 | [핵심 논문](./key-papers.md) | 구현 선택을 공개 논문과 연결 |
-| 검증 | [벤치마크 & 검증](./benchmarks-and-validation.md) | COMPASS가 solver correctness를 입증하는 방식 정의 |
+| 검증 | [벤치마크 & 검증](./benchmarks-and-validation.md) | COMPASS가 솔버 정확성을 입증하는 방식 정의 |
 
 ## 사용 방법
 
-- 새 solver backend를 추가하기 전에 읽습니다.
+- 새 솔버 백엔드를 추가하기 전에 읽습니다.
 - 외부 근거가 필요한 설계 결정을 issue나 PR에서 설명할 때 링크합니다.
 - 생성된 benchmark 증거는 [리포트](/ko/reports/)에서 보고, 이 섹션은 더 넓은 기술 맥락을 확인할 때 사용합니다.

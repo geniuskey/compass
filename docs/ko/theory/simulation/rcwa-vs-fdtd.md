@@ -1,3 +1,8 @@
+---
+title: RCWA vs FDTD
+description: CMOS 이미지 센서 광학에서 RCWA와 FDTD의 정확도 영역, 수렴 워크플로, 성능 벤치마크, 교차 검증 방법을 비교합니다.
+---
+
 # RCWA vs FDTD
 
 ::: tip 선수 지식

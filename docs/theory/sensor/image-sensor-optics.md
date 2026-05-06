@@ -1,3 +1,8 @@
+---
+title: Image Sensor Optics
+description: Technical map of BSI CMOS image sensor optical stacks, including microlens, CFA, BARL, silicon photodiode, DTI, and full-wave optical effects.
+---
+
 # Image Sensor Optics
 
 ::: tip Prerequisites
@@ -117,3 +122,7 @@ DTI is critical for:
 | Total internal reflection | High-index Si / low-index surroundings | Traps light, increases effective path length |
 
 All of these effects are captured automatically by the full-wave EM solvers (RCWA, FDTD) in COMPASS.
+
+## Next step
+
+This page is the stack map. For design trade-offs across microlens CRA matching, CFA spectra, BARL tuning, silicon thickness, DTI, angular response, and polarization sensitivity, continue with [Pixel Optical Effects](./pixel-optical-effects.md). For the metric definitions and post-processing formulas, continue with [Quantum Efficiency](./quantum-efficiency.md).

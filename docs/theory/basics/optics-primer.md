@@ -1,3 +1,8 @@
+---
+title: Optics Primer for Beginners
+description: Beginner-friendly introduction to wavelength, refractive index, absorption, reflection, interference, diffraction, polarization, and their role in CMOS image sensor simulation.
+---
+
 # Optics Primer for Beginners
 
 Light is the raw material of every image sensor. To understand how COMPASS simulates a pixel, you need to understand how light behaves -- how it travels, bends, reflects, and gets absorbed. This page introduces the essential optical concepts from scratch. No physics background is assumed, and no equations appear in the main text. (If you are curious about the math, expand the optional "Math Detail" sections.)

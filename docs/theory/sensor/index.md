@@ -1,3 +1,8 @@
+---
+title: Image Sensor Chapter Overview
+description: Overview of the image sensor theory chapter covering BSI pixel architecture, pixel optical effects, quantum efficiency, crosstalk, and signal chain modeling.
+---
+
 # Image Sensor Chapter Overview
 
 This chapter explains the optical structure of a modern CMOS image sensor (CIS) pixel and the chain of physical effects that turn incident photons into a measurable signal.
@@ -19,6 +24,7 @@ Light propagates in the **−z** direction (air → silicon), and z = 0 is at th
 | Page | Topic | Key takeaway |
 |---|---|---|
 | [Image Sensor Optics](./image-sensor-optics.md) | BSI architecture, microlens, CFA, BARL, DTI | Anatomy of the optical stack and what each layer does |
+| [Pixel Optical Effects](./pixel-optical-effects.md) | CRA, CFA spectral response, BARL, silicon absorption, DTI, angular and polarization response | Design trade-offs that shape QE and crosstalk |
 | [Quantum Efficiency](./quantum-efficiency.md) | QE definition, computation methods, crosstalk | The headline metric and how COMPASS measures it |
 | [Signal Chain](./signal-chain.md) | Illuminant → scene → lens → sensor signal | How simulated QE turns into a radiometric pixel value |
 
@@ -33,7 +39,7 @@ Light propagates in the **−z** direction (air → silicon), and z = 0 is at th
 ## How to read this chapter
 
 - If you only care about the optical design of the pixel, [Image Sensor Optics](./image-sensor-optics.md) is enough.
-- If you are evaluating sensor performance, continue with [Quantum Efficiency](./quantum-efficiency.md).
+- If you are evaluating sensor performance, continue with [Pixel Optical Effects](./pixel-optical-effects.md) and [Quantum Efficiency](./quantum-efficiency.md).
 - If you need end-to-end image quality predictions (color accuracy, SNR), read [Signal Chain](./signal-chain.md) as well.
 
 ::: tip Prerequisites

@@ -1,3 +1,8 @@
+---
+title: RCWA vs FDTD
+description: Comparison of RCWA and FDTD for CMOS image sensor optics, including accuracy regimes, convergence workflow, performance benchmarks, and cross-validation guidance.
+---
+
 # RCWA vs FDTD
 
 ::: tip Prerequisites

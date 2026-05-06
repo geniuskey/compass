@@ -1,3 +1,8 @@
+---
+title: 박막 광학
+description: 프레넬 반사, 다층 간섭, BARL과 ARC 스택, 스펙트럼 리플, COMPASS의 박막 구현을 설명합니다.
+---
+
 # 박막 광학
 
 ::: tip 선수 지식

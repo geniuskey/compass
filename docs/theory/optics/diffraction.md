@@ -1,3 +1,8 @@
+---
+title: Diffraction and Periodic Structures
+description: Wave-optics explanation of diffraction, periodic gratings, Bloch modes, pixel pitch versus wavelength, Fourier order, and RCWA convergence.
+---
+
 # Diffraction and Periodic Structures
 
 ::: tip Prerequisites

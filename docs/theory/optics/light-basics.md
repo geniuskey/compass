@@ -1,3 +1,8 @@
+---
+title: Light Basics
+description: Compact reference for wavelength, frequency, refractive index, complex permittivity, absorption, refraction, and polarization in image sensor optics.
+---
+
 # Light Basics
 
 ::: tip Learning Path

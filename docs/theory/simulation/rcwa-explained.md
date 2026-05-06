@@ -1,3 +1,8 @@
+---
+title: RCWA Explained
+description: Rigorous coupled-wave analysis explanation for periodic pixel stacks, including Fourier expansion, eigenmodes, S-matrix recursion, factorization, and convergence.
+---
+
 # RCWA Explained
 
 ::: tip Prerequisites

@@ -1,3 +1,8 @@
+---
+title: Pixel Anatomy
+description: Visual beginner tour of a BSI CMOS image sensor pixel stack, including microlens, color filter, BARL, silicon, photodiode, DTI, and common optical losses.
+---
+
 # Pixel Anatomy
 
 Let's take a journey through a single pixel — from the top where light enters, to the bottom where it becomes an electrical signal.

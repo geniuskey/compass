@@ -1,3 +1,8 @@
+---
+title: FDTD 상세 설명
+description: 이미지 센서 광학을 위한 FDTD 시뮬레이션을 Yee 격자, 갱신식, Courant 안정성, 경계 조건, source injection 중심으로 설명합니다.
+---
+
 # FDTD 상세 설명
 
 ::: tip 선수 지식

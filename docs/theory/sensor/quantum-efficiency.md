@@ -1,3 +1,8 @@
+---
+title: Quantum Efficiency
+description: Formal reference for quantum efficiency in COMPASS, including absorbed-power integrals, Poynting flux, per-pixel QE, crosstalk, and energy balance.
+---
+
 # Quantum Efficiency
 
 ::: tip Prerequisites
@@ -136,3 +141,15 @@ The blackbody spectrum below shows how the solar spectral irradiance relates to 
 ::: info
 QE above 80% for a single channel is rare because color filter absorption, reflection losses, and photodiode fill factor all reduce the total efficiency.
 :::
+
+## From Theory to Simulation
+
+Use [Pixel Optical Effects](./pixel-optical-effects.md) to decide which design variable is likely limiting the QE curve, then run a focused sweep:
+
+| Symptom in QE or crosstalk | Likely design variable | Practical workflow |
+|---|---|---|
+| Low blue QE with strong edge leakage | Microlens shape, metal grid aperture, diffraction | [Microlens & CRA](/cookbook/microlens-optimization) |
+| Spectral ripple or broad reflection loss | BARL thickness/material stack | [BARL Design](/cookbook/barl-design) |
+| Red/NIR QE falls too early | Silicon thickness, photodiode depth, DTI depth | [Si Absorption Depth](/simulator/si-absorption) |
+| Color channels bleed into neighbors | Metal grid, CFA absorption, DTI geometry | [DTI Crosstalk](/cookbook/dti-crosstalk) |
+| Corner pixels underperform | CRA, microlens offset, angular response | [Angular Response](/simulator/angular-response) |

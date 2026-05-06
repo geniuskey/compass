@@ -1,3 +1,8 @@
+---
+title: Electromagnetic Waves
+description: Maxwell-equation foundation for COMPASS optical simulation, including plane waves, incidence geometry, boundary conditions, and Poynting energy flow.
+---
+
 # Electromagnetic Waves
 
 ::: tip Prerequisites

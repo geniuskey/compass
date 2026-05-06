@@ -1,3 +1,8 @@
+---
+title: Thin Film Optics
+description: Theory of Fresnel reflection, multilayer interference, BARL and ARC stacks, spectral ripple, and thin-film implementation in COMPASS.
+---
+
 # Thin Film Optics
 
 ::: tip Prerequisites

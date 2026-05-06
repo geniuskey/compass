@@ -1,3 +1,8 @@
+---
+title: Numerical Stability
+description: Advanced guide to RCWA numerical stability, eigenvalue conditioning, S-matrix recursion, Li factorization, precision management, and convergence diagnostics.
+---
+
 # Numerical Stability
 
 ::: tip Prerequisites

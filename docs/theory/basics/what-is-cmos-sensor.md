@@ -1,3 +1,8 @@
+---
+title: What is a CMOS Image Sensor?
+description: Plain-language introduction to CMOS image sensors, pixels, BSI and FSI architectures, Bayer color, QE, crosstalk, and why optical simulation matters.
+---
+
 # What is a CMOS Image Sensor?
 
 Every photo you take with your smartphone, every frame of video from a security camera, every image captured by a self-driving car -- they all start at the same place: a tiny chip called an **image sensor**. This chip sits behind the camera lens, silently converting light into electrical signals millions of times per second. Understanding how this chip works is the first step toward understanding what COMPASS simulates and why it matters.

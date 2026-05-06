@@ -1,3 +1,8 @@
+---
+title: FDTD Explained
+description: Explanation of finite-difference time-domain simulation for image sensor optics, including Yee grids, update equations, Courant stability, boundaries, and sources.
+---
+
 # FDTD Explained
 
 ::: tip Prerequisites

@@ -1,3 +1,8 @@
+---
+title: Optical Simulation Chapter Overview
+description: Overview of optical simulation methods in COMPASS, including TMM, RCWA, FDTD, solver selection, permittivity handling, and validation strategy.
+---
+
 # Optical Simulation Chapter Overview
 
 This chapter explains the numerical methods COMPASS uses to solve Maxwell's equations for an image sensor pixel. It covers *how* a solver actually computes reflection, transmission, and absorption — not the optics or sensor architecture, which are covered in the previous chapters.

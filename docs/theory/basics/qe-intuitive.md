@@ -1,3 +1,8 @@
+---
+title: Understanding Quantum Efficiency
+description: Intuitive photon-budget explanation of quantum efficiency, wavelength dependence, QE loss mechanisms, crosstalk, and how COMPASS computes QE.
+---
+
 # Understanding Quantum Efficiency
 
 Quantum Efficiency answers one simple question: out of all the photons that hit this pixel, how many actually got detected?

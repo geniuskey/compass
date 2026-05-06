@@ -11,6 +11,7 @@ This section collects background research that informs COMPASS design decisions.
 
 | Topic | Start here | Why it matters |
 |---|---|---|
+| Theory coverage | [Theory Coverage Map](./theory-coverage-map.md) | Keep theory pages scoped and avoid duplicate explanations |
 | Solver ecosystem | [EM Solver Survey](./open-source-em-solvers-survey.md) | Compare open-source RCWA/FDTD options and licensing |
 | Sensor direction | [CIS Technology Trends](./cis-technology-trends.md) | Track pixel scaling, BSI structures, DTI, and optical stack trends |
 | Method choice | [Simulation Methods](./simulation-methods-comparison.md) | Compare TMM, RCWA, FDTD, and hybrid validation strategies |

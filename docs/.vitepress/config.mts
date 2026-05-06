@@ -22,6 +22,7 @@ const theorySidebar = [
   { text: 'Image Sensor', collapsed: false, items: [
     { text: 'Image Sensor Overview', link: '/theory/sensor/' },
     { text: 'Image Sensor Optics', link: '/theory/sensor/image-sensor-optics' },
+    { text: 'Pixel Optical Effects', link: '/theory/sensor/pixel-optical-effects' },
     { text: 'Quantum Efficiency', link: '/theory/sensor/quantum-efficiency' },
     { text: 'Signal Chain', link: '/theory/sensor/signal-chain' },
   ]},
@@ -91,6 +92,7 @@ const referenceSidebar = [
 const researchSidebar = [
   { text: 'Research', items: [
     { text: 'Overview', link: '/research/' },
+    { text: 'Theory Coverage Map', link: '/research/theory-coverage-map' },
     { text: 'EM Solver Survey', link: '/research/open-source-em-solvers-survey' },
     { text: 'CIS Technology Trends', link: '/research/cis-technology-trends' },
     { text: 'Simulation Methods', link: '/research/simulation-methods-comparison' },
@@ -138,6 +140,7 @@ const theorySidebarKo = [
   { text: '이미지 센서', collapsed: false, items: [
     { text: '이미지 센서 개요', link: '/ko/theory/sensor/' },
     { text: '이미지 센서 광학', link: '/ko/theory/sensor/image-sensor-optics' },
+    { text: '픽셀 광학 효과', link: '/ko/theory/sensor/pixel-optical-effects' },
     { text: '양자 효율', link: '/ko/theory/sensor/quantum-efficiency' },
     { text: '신호 체인', link: '/ko/theory/sensor/signal-chain' },
   ]},
@@ -207,6 +210,7 @@ const referenceSidebarKo = [
 const researchSidebarKo = [
   { text: '리서치', items: [
     { text: '개요', link: '/ko/research/' },
+    { text: '이론 커버리지 지도', link: '/ko/research/theory-coverage-map' },
     { text: 'EM 솔버 서베이', link: '/ko/research/open-source-em-solvers-survey' },
     { text: 'CIS 기술 동향', link: '/ko/research/cis-technology-trends' },
     { text: '시뮬레이션 방법론', link: '/ko/research/simulation-methods-comparison' },
