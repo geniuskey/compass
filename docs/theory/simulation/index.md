@@ -36,6 +36,14 @@ A rough decision tree:
 | [RCWA vs FDTD](./rcwa-vs-fdtd.md) | Side-by-side comparison and use cases | When to use which |
 | [Numerical Stability](./numerical-stability.md) | Eigenvalue conditioning, S-matrix vs T-matrix, mixed precision | How COMPASS keeps RCWA stable at high Fourier order |
 
+## Boundary with nearby pages
+
+| Nearby page | Difference |
+|---|---|
+| [Optics](../optics/) | Defines the electromagnetic equations and wave phenomena; this chapter explains discretization and solver behavior. |
+| [Image Sensor](../sensor/) | Defines the physical target and metrics; this chapter explains how those metrics are computed. |
+| [Reports](/reports/) | Publishes generated validation evidence; this chapter explains the methods behind those reports. |
+
 ::: tip Prerequisites
 This chapter assumes the [Optics](../optics/) chapter — especially [Electromagnetic Waves](../optics/electromagnetic-waves.md) and [Diffraction](../optics/diffraction.md). If terms like *Bloch mode* or *S-matrix* are new, read those first.
 :::

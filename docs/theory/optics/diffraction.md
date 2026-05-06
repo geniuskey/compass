@@ -1,7 +1,7 @@
 # Diffraction and Periodic Structures
 
-::: tip 선수 지식 | Prerequisites
-[픽셀 해부학](/theory/basics/pixel-anatomy) → [빛의 기초](/theory/optics/light-basics) → 이 페이지
+::: tip Prerequisites
+[Pixel Anatomy](/theory/basics/pixel-anatomy) -> [Light Basics](/theory/optics/light-basics) -> this page
 :::
 
 As pixel pitches shrink below 1 um, the pixel structures become comparable in size to the wavelength of light. At this point, light doesn't just travel in straight lines -- it bends around edges and through openings. This is diffraction, and it's the fundamental reason why we need wave-optics simulation rather than simple ray tracing.

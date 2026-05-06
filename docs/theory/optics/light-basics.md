@@ -1,8 +1,11 @@
 # Light Basics
 
-::: tip 학습 경로 | Learning Path
-처음이라면? [CMOS 이미지 센서란?](/theory/basics/what-is-cmos-sensor)부터 시작하세요.
-New here? Start with [What is a CMOS Image Sensor?](/theory/basics/what-is-cmos-sensor)
+::: tip Learning Path
+New here? Start with [What is a CMOS Image Sensor?](/theory/basics/what-is-cmos-sensor), then read the [Optics Primer](/theory/basics/optics-primer).
+:::
+
+::: info Scope of this page
+This page is the compact reference for optical quantities used throughout the documentation. It assumes the intuition from the primer and prepares you for [Electromagnetic Waves](./electromagnetic-waves.md), [Thin Film Optics](./thin-film-optics.md), and [Diffraction](./diffraction.md).
 :::
 
 This page covers the fundamental properties of light that underpin every simulation in COMPASS.

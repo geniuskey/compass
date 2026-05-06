@@ -8,6 +8,10 @@ QE is the single most important performance metric for an image sensor pixel. It
 
 It is worth noting that QE is a property of the pixel at a specific wavelength. A single pixel does not have "a QE" — it has a QE spectrum, a curve that tells you how efficiently the pixel detects each wavelength of light from ultraviolet through visible to near-infrared. When someone says "this sensor has 80% QE," they typically mean the peak value of that curve, which usually occurs in the green wavelength range (around 530-560 nm).
 
+::: info Scope of this page
+This page explains QE as an intuitive photon budget. For the formal definition, absorption integral, Poynting-flux method, and per-pixel channel handling, read [Quantum Efficiency](../sensor/quantum-efficiency.md).
+:::
+
 ---
 
 ## The Photon Budget

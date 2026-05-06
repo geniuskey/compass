@@ -1,8 +1,8 @@
 # RCWA Explained
 
-::: tip 선수 지식 | Prerequisites
-[전자기파](/theory/optics/electromagnetic-waves) → [회절](/theory/optics/diffraction) → 이 페이지
-RCWA가 처음이라면 먼저 [솔버 선택 가이드](/guide/choosing-solver)에서 개요를 확인하세요.
+::: tip Prerequisites
+[Electromagnetic Waves](/theory/optics/electromagnetic-waves) -> [Diffraction](/theory/optics/diffraction) -> this page.
+If RCWA is new to you, start with the [solver selection guide](/guide/choosing-solver).
 :::
 
 RCWA (Rigorous Coupled-Wave Analysis) is one of the two main solver types in COMPASS. Think of it as a method that breaks down the pixel structure into its spatial frequency components (Fourier series), then solves Maxwell's equations for each component. It's particularly fast for periodic structures like pixel arrays.

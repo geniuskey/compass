@@ -4,6 +4,10 @@
 처음이라면? [CMOS 이미지 센서란?](/ko/theory/basics/what-is-cmos-sensor)부터 시작하세요.
 :::
 
+::: info 이 페이지의 범위
+이 페이지는 문서 전체에서 사용하는 광학량을 압축해 정리한 기준 페이지입니다. 직관은 [광학 기초 입문](../basics/optics-primer.md)에서 만들고, 여기서는 [전자기파](./electromagnetic-waves.md), [박막 광학](./thin-film-optics.md), [회절](./diffraction.md)을 읽기 위한 용어와 식을 정리합니다.
+:::
+
 이 페이지에서는 COMPASS의 모든 시뮬레이션을 뒷받침하는 빛의 기본 성질을 다룹니다.
 
 ## 빛이란 무엇인가?

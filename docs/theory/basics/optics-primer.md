@@ -4,6 +4,10 @@ Light is the raw material of every image sensor. To understand how COMPASS simul
 
 By the end of this page, you will understand the physical phenomena that COMPASS solvers compute for you automatically.
 
+::: info Scope of this page
+This page builds intuition without requiring equations. Use [Light Basics](../optics/light-basics.md) for the compact formula reference, [Electromagnetic Waves](../optics/electromagnetic-waves.md) for Maxwell's equations, [Thin Film Optics](../optics/thin-film-optics.md) for multilayer interference, and [Diffraction](../optics/diffraction.md) for periodic sub-wavelength structures.
+:::
+
 ---
 
 ## What is Light?

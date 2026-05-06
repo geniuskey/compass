@@ -22,6 +22,14 @@ Light propagates in the **−z** direction (air → silicon), and z = 0 is at th
 | [Quantum Efficiency](./quantum-efficiency.md) | QE definition, computation methods, crosstalk | The headline metric and how COMPASS measures it |
 | [Signal Chain](./signal-chain.md) | Illuminant → scene → lens → sensor signal | How simulated QE turns into a radiometric pixel value |
 
+## Boundary with nearby pages
+
+| Nearby page | Difference |
+|---|---|
+| [Pixel Anatomy](../basics/pixel-anatomy.md) | A guided beginner tour of the same stack; this chapter is the compact technical model. |
+| [Optics](../optics/) | Defines the wave-optics laws; this chapter maps them onto sensor components. |
+| [Simulation](../simulation/) | Explains the numerical methods that compute the fields and absorbed power. |
+
 ## How to read this chapter
 
 - If you only care about the optical design of the pixel, [Image Sensor Optics](./image-sensor-optics.md) is enough.

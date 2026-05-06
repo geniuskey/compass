@@ -4,6 +4,10 @@
 
 이 페이지를 다 읽으면, COMPASS 솔버가 자동으로 계산해주는 물리 현상들을 이해하게 됩니다.
 
+::: info 이 페이지의 범위
+이 페이지는 수식 없이 직관을 만드는 입문 페이지입니다. 압축된 공식은 [빛의 기초](../optics/light-basics.md), 맥스웰 방정식은 [전자기파](../optics/electromagnetic-waves.md), 다층 간섭은 [박막 광학](../optics/thin-film-optics.md), 주기적 서브파장 구조는 [회절](../optics/diffraction.md)에서 다룹니다.
+:::
+
 ---
 
 ## 빛이란 무엇인가?

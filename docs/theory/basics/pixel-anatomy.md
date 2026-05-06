@@ -4,6 +4,10 @@ Let's take a journey through a single pixel — from the top where light enters,
 
 A modern smartphone camera sensor contains millions of pixels, each one a carefully engineered stack of optical and electronic layers. Every layer has a specific job: bending light, filtering colors, reducing reflections, or converting photons into electrons. Understanding this stack is the first step toward understanding how image sensor simulation works — and why it matters.
 
+::: info Scope of this page
+This is a guided visual tour of the pixel stack. For the concise technical model of the same components, read [Image Sensor Optics](../sensor/image-sensor-optics.md). For formulas that turn absorbed light into a metric, read [Quantum Efficiency](../sensor/quantum-efficiency.md).
+:::
+
 <PixelAnatomyViewer />
 
 In this page, we will walk through a **BSI (Back-Side Illuminated)** pixel architecture from top to bottom. BSI is the dominant architecture in modern sensors because it places the wiring layers behind the silicon, giving light a clear path to the photodetector. Think of it as removing obstacles from the hallway before inviting guests in.

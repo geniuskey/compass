@@ -1,7 +1,6 @@
 # Electromagnetic Waves
 
-::: tip 선수 지식 | Prerequisites
-이 페이지를 읽기 전에 [광학 기초 입문](/theory/basics/optics-primer)과 [빛의 기초](/theory/optics/light-basics)를 먼저 읽어보세요.
+::: tip Prerequisites
 Before reading this page, check out the [Optics Primer](/theory/basics/optics-primer) and [Light Basics](/theory/optics/light-basics).
 :::
 

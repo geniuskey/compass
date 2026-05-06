@@ -4,6 +4,10 @@ Every photo you take with your smartphone, every frame of video from a security 
 
 Let's start from the big picture and zoom all the way down to the individual pixel.
 
+::: info Scope of this page
+This is the highest-level orientation page. It explains what a CMOS image sensor is and why COMPASS simulates pixels. For the physical pixel stack, continue to [Pixel Anatomy](./pixel-anatomy.md) or [Image Sensor Optics](../sensor/image-sensor-optics.md). For solver mechanics, skip ahead to [Optical Simulation](../simulation/).
+:::
+
 ---
 
 ## From Camera to Pixel
@@ -292,7 +296,7 @@ This entire journey takes less than a billionth of a second. COMPASS simulates s
 Now that you have a high-level understanding of what CMOS image sensors are and why simulation matters, here are some suggested next steps:
 
 - **[Optics Primer for Beginners](./optics-primer.md)** -- Learn the fundamental optical concepts (wavelength, refractive index, interference) that underpin all COMPASS simulations. No prior physics background required.
-- **[Pixel Anatomy](/theory/sensor/image-sensor-optics)** -- A deeper look at each layer of a modern BSI pixel and the physics at each interface.
+- **[Pixel Anatomy](./pixel-anatomy.md)** -- A guided look at each layer of a modern BSI pixel and the role it plays.
 - **[First Simulation](/guide/first-simulation)** -- Jump straight in and run your first COMPASS simulation with a step-by-step guide.
 - **[Installation Guide](/guide/installation)** -- Set up COMPASS and its solver backends on your machine.
 

@@ -5,8 +5,8 @@ description: Complete radiometric signal chain from light source through scene r
 
 # Radiometric Signal Chain
 
-::: tip 선수 지식 | Prerequisites
-[양자 효율](/theory/sensor/quantum-efficiency) → 이 페이지
+::: tip Prerequisites
+[Quantum Efficiency](/theory/sensor/quantum-efficiency) -> this page
 :::
 
 Understanding the full radiometric signal chain is essential for predicting the signal level and color accuracy of an image sensor pixel. This chapter traces the journey of light from source to electrical signal, quantifying each stage with spectral models.

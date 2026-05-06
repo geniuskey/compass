@@ -1,8 +1,7 @@
 # Numerical Stability
 
-::: tip 선수 지식 | Prerequisites
-[RCWA 설명](/theory/simulation/rcwa-explained) → [FDTD 설명](/theory/simulation/fdtd-explained) → 이 페이지
-이 페이지는 고급 주제입니다. 처음 사용하시는 분은 건너뛰어도 됩니다.
+::: tip Prerequisites
+[RCWA Explained](/theory/simulation/rcwa-explained) -> [FDTD Explained](/theory/simulation/fdtd-explained) -> this page.
 This is an advanced topic. If you're just getting started, feel free to skip this for now.
 :::
 

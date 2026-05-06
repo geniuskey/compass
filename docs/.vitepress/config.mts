@@ -6,6 +6,7 @@ const theorySidebar = [
     { text: 'Overview', link: '/theory/' },
   ]},
   { text: 'Basics', collapsed: false, items: [
+    { text: 'Basics Overview', link: '/theory/basics/' },
     { text: 'What is a CMOS Image Sensor?', link: '/theory/basics/what-is-cmos-sensor' },
     { text: 'Optics Primer', link: '/theory/basics/optics-primer' },
     { text: 'Pixel Anatomy', link: '/theory/basics/pixel-anatomy' },
@@ -121,6 +122,7 @@ const theorySidebarKo = [
     { text: '개요', link: '/ko/theory/' },
   ]},
   { text: '입문', collapsed: false, items: [
+    { text: '입문 개요', link: '/ko/theory/basics/' },
     { text: 'CMOS 이미지 센서란?', link: '/ko/theory/basics/what-is-cmos-sensor' },
     { text: '광학 기초 입문', link: '/ko/theory/basics/optics-primer' },
     { text: '픽셀 해부학', link: '/ko/theory/basics/pixel-anatomy' },

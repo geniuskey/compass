@@ -1,7 +1,7 @@
 # RCWA vs FDTD
 
-::: tip 선수 지식 | Prerequisites
-[RCWA 설명](/theory/simulation/rcwa-explained) → [FDTD 설명](/theory/simulation/fdtd-explained) → 이 페이지
+::: tip Prerequisites
+[RCWA Explained](/theory/simulation/rcwa-explained) -> [FDTD Explained](/theory/simulation/fdtd-explained) -> this page
 :::
 
 COMPASS supports both RCWA and FDTD solvers. This page helps you understand the trade-offs and choose the right solver for your simulation.

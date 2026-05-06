@@ -1,7 +1,11 @@
 # Quantum Efficiency
 
-::: tip 선수 지식 | Prerequisites
-[양자 효율 이해](/theory/basics/qe-intuitive) (직관적 설명) → 이 페이지 (수학적 분석)
+::: tip Prerequisites
+[Understanding QE](/theory/basics/qe-intuitive) gives the intuition; this page gives the mathematical model.
+:::
+
+::: info Scope of this page
+This page is the formal QE reference for COMPASS. It covers definitions, absorbed-power calculations, channel aggregation, crosstalk, and energy balance. For an intuitive photon-budget story, use [Understanding QE](../basics/qe-intuitive.md).
 :::
 
 Quantum Efficiency (QE) is the primary figure of merit computed by COMPASS. It measures how effectively a pixel converts incident photons into electrical signal.

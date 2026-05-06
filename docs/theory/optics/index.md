@@ -21,6 +21,14 @@ To predict quantum efficiency, crosstalk, and angular response correctly, we hav
 | [Thin Film Optics](./thin-film-optics.md) | Fresnel coefficients, multilayer interference, ARC design | Why BARL stacks and ARCs work |
 | [Diffraction](./diffraction.md) | Periodic gratings, diffraction orders, Bloch waves | Why sub-wavelength pixel features require modal methods |
 
+## Boundary with nearby pages
+
+| Nearby page | Difference |
+|---|---|
+| [Optics Primer](../basics/optics-primer.md) | Builds intuition without equations; this chapter gives the compact formulas and solver vocabulary. |
+| [Image Sensor Optics](../sensor/image-sensor-optics.md) | Applies these laws to microlenses, CFA, BARL, silicon, and DTI. |
+| [RCWA Explained](../simulation/rcwa-explained.md) | Turns the diffraction and Maxwell formalism into a numerical algorithm. |
+
 ## How this connects to the rest of theory
 
 - The **image sensor** chapter applies these concepts to the layered BSI pixel structure.

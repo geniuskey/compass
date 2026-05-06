@@ -4,6 +4,10 @@
 [양자 효율 이해](/ko/theory/basics/qe-intuitive) (직관적 설명) → 이 페이지 (수학적 분석)
 :::
 
+::: info 이 페이지의 범위
+이 페이지는 COMPASS의 공식 QE 기준 문서입니다. 정의, 흡수 전력 계산, 채널 집계, 크로스토크, 에너지 보존을 다룹니다. 광자 예산 중심의 직관은 [양자 효율 이해](../basics/qe-intuitive.md)에서 먼저 볼 수 있습니다.
+:::
+
 양자 효율(Quantum Efficiency, QE)은 COMPASS에서 계산하는 핵심 성능 지표(Figure of Merit)입니다. 픽셀이 입사 광자를 전기 신호로 얼마나 효과적으로 변환하는지를 측정합니다.
 
 ## 정의

@@ -1,7 +1,7 @@
 # Thin Film Optics
 
-::: tip 선수 지식 | Prerequisites
-[광학 기초 입문](/theory/basics/optics-primer) → [빛의 기초](/theory/optics/light-basics) → [전자기파](/theory/optics/electromagnetic-waves) → 이 페이지
+::: tip Prerequisites
+[Optics Primer](/theory/basics/optics-primer) -> [Light Basics](/theory/optics/light-basics) -> [Electromagnetic Waves](/theory/optics/electromagnetic-waves) -> this page
 :::
 
 Thin films are everywhere in an image sensor pixel -- the anti-reflection coating (BARL), the color filter, even the microlens. When layers are only nanometers thick, interference effects become critical. Understanding thin film optics helps you design better BARL stacks and predict how layer thicknesses affect QE.
