@@ -37,6 +37,12 @@ Key conventions:
 - The origin of the x-y plane is at the lower-left corner of the unit cell
 - The `position` and `size` for photodiodes are relative to each pixel center
 
+## Parameter map (visual reference)
+
+The diagram below labels every dimensional parameter directly on a 2D cross-section of the default 1.0 µm BSI pixel. Switch between **XZ Cross-Section** (vertical stack, layer thicknesses, DTI/photodiode depth) and **XY Top View** (in-plane pitch, microlens footprint, photodiode/DTI/grid widths). Hover any row in the legend to highlight that parameter on the diagram.
+
+<PixelParameterDiagram />
+
 ## Top-level pixel parameters
 
 ```yaml
