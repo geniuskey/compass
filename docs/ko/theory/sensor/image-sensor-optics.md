@@ -17,29 +17,7 @@ description: BSI CMOS 이미지 센서 광학 스택을 마이크로렌즈, CFA,
 
 ## BSI 픽셀 구조
 
-BSI 픽셀에서 빛은 실리콘 후면(배선측의 반대편)을 통해 입사합니다. 픽셀 스택은 상단(빛 입사측)에서 하단 순으로 다음과 같이 구성됩니다:
-
-```
-              Incident light
-                   |
-                   v
-    +---------------------------------+
-    |             Air                  |
-    +---------------------------------+
-    |          Microlens               |   Focuses light into pixel center
-    +---------------------------------+
-    |       Planarization (SiO2)       |   Uniform dielectric
-    +---------------------------------+
-    |  Color Filter (Bayer pattern)    |   Wavelength-selective absorption
-    |  + Metal Grid (W)               |   Optical isolation between pixels
-    +---------------------------------+
-    |   BARL (anti-reflection stack)   |   Minimizes reflection at CF/Si
-    +---------------------------------+
-    |         Silicon                  |   Absorbs photons, generates e-h pairs
-    |   [Photodiode regions]           |   Collects charge
-    |   [DTI trenches]                 |   Prevents optical/electrical crosstalk
-    +---------------------------------+
-```
+BSI 픽셀에서 빛은 실리콘 후면(배선측의 반대편)을 통해 입사합니다. 아래 인터랙티브 단면은 빛 입사측에서 시작해 마이크로렌즈, 컬러 필터, BARL, 실리콘, 포토다이오드, 격리 구조로 이어지는 스택을 보여줍니다.
 
 <StackVisualizer />
 

@@ -36,24 +36,24 @@ const theorySidebar = [
 ]
 
 const guideSidebar = [
-  { text: 'Getting Started', items: [
+  { text: 'Getting Started', collapsed: false, items: [
     { text: 'Overview', link: '/guide/' },
     { text: 'Installation', link: '/guide/installation' },
     { text: 'Quick Start', link: '/guide/quickstart' },
     { text: 'First Simulation', link: '/guide/first-simulation' },
   ]},
-  { text: 'Configuration', items: [
+  { text: 'Configuration', collapsed: false, items: [
     { text: 'Pixel Stack Config', link: '/guide/pixel-stack-config' },
     { text: 'Sample Pixel Structures', link: '/guide/sample-pixels' },
     { text: 'Material Database', link: '/guide/material-database' },
     { text: 'Choosing a Solver', link: '/guide/choosing-solver' },
   ]},
-  { text: 'Running Solvers', items: [
+  { text: 'Running Solvers', collapsed: false, items: [
     { text: 'Running RCWA', link: '/guide/running-rcwa' },
     { text: 'Running FDTD', link: '/guide/running-fdtd' },
     { text: 'Cross-Validation', link: '/guide/cross-validation' },
   ]},
-  { text: 'Advanced', items: [
+  { text: 'Advanced', collapsed: false, items: [
     { text: 'Cone Illumination', link: '/guide/cone-illumination' },
     { text: 'Signal Simulation', link: '/guide/signal-simulation' },
     { text: 'ROI Sweep', link: '/guide/roi-sweep' },
@@ -61,7 +61,7 @@ const guideSidebar = [
     { text: 'Visualization', link: '/guide/visualization' },
     { text: 'Troubleshooting', link: '/guide/troubleshooting' },
   ]},
-  { text: 'Recipes', items: [
+  { text: 'Recipes', collapsed: false, items: [
     { text: 'BSI 2x2 Basic', link: '/cookbook/bsi-2x2-basic' },
     { text: 'Metal Grid Effect', link: '/cookbook/metal-grid-effect' },
     { text: 'Microlens & CRA', link: '/cookbook/microlens-optimization' },
@@ -154,24 +154,24 @@ const theorySidebarKo = [
 ]
 
 const guideSidebarKo = [
-  { text: '시작하기', items: [
+  { text: '시작하기', collapsed: false, items: [
     { text: '개요', link: '/ko/guide/' },
     { text: '설치', link: '/ko/guide/installation' },
     { text: '빠른 시작', link: '/ko/guide/quickstart' },
     { text: '첫 번째 시뮬레이션', link: '/ko/guide/first-simulation' },
   ]},
-  { text: '설정', items: [
+  { text: '설정', collapsed: false, items: [
     { text: '픽셀 스택 구성', link: '/ko/guide/pixel-stack-config' },
     { text: '샘플 픽셀 구조', link: '/ko/guide/sample-pixels' },
     { text: '재료 데이터베이스', link: '/ko/guide/material-database' },
     { text: '솔버 선택', link: '/ko/guide/choosing-solver' },
   ]},
-  { text: '솔버 실행', items: [
+  { text: '솔버 실행', collapsed: false, items: [
     { text: 'RCWA 실행', link: '/ko/guide/running-rcwa' },
     { text: 'FDTD 실행', link: '/ko/guide/running-fdtd' },
     { text: '교차 검증', link: '/ko/guide/cross-validation' },
   ]},
-  { text: '고급', items: [
+  { text: '고급', collapsed: false, items: [
     { text: '원뿔 조명', link: '/ko/guide/cone-illumination' },
     { text: '신호 시뮬레이션', link: '/ko/guide/signal-simulation' },
     { text: 'ROI 스윕', link: '/ko/guide/roi-sweep' },
@@ -179,7 +179,7 @@ const guideSidebarKo = [
     { text: '시각화', link: '/ko/guide/visualization' },
     { text: '문제 해결', link: '/ko/guide/troubleshooting' },
   ]},
-  { text: '레시피', items: [
+  { text: '레시피', collapsed: false, items: [
     { text: 'BSI 2x2 기본', link: '/ko/cookbook/bsi-2x2-basic' },
     { text: '메탈 그리드 효과', link: '/ko/cookbook/metal-grid-effect' },
     { text: '마이크로렌즈 & CRA', link: '/ko/cookbook/microlens-optimization' },

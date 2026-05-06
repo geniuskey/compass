@@ -17,29 +17,7 @@ Use this page as the physical map of the BSI pixel stack: what each component is
 
 ## BSI pixel architecture
 
-In a BSI pixel, light enters through the silicon backside (opposite to the wiring side). The pixel stack, from top (light-entry side) to bottom, consists of:
-
-```
-              Incident light
-                   |
-                   v
-    +---------------------------------+
-    |             Air                  |
-    +---------------------------------+
-    |          Microlens               |   Focuses light into pixel center
-    +---------------------------------+
-    |       Planarization (SiO2)       |   Uniform dielectric
-    +---------------------------------+
-    |  Color Filter (Bayer pattern)    |   Wavelength-selective absorption
-    |  + Metal Grid (W)               |   Optical isolation between pixels
-    +---------------------------------+
-    |   BARL (anti-reflection stack)   |   Minimizes reflection at CF/Si
-    +---------------------------------+
-    |         Silicon                  |   Absorbs photons, generates e-h pairs
-    |   [Photodiode regions]           |   Collects charge
-    |   [DTI trenches]                 |   Prevents optical/electrical crosstalk
-    +---------------------------------+
-```
+In a BSI pixel, light enters through the silicon backside (opposite to the wiring side). The interactive cross-section below follows the stack from the light-entry side down through the microlens, color filter, BARL, silicon, photodiode, and isolation structures.
 
 <StackVisualizer />
 
