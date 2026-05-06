@@ -8,6 +8,10 @@ Calculate sensor dynamic range from full well capacity, read noise, dark current
 
 <DynamicRangeCalculator />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Dynamic Range Definition
 
 Dynamic range is the ratio between the maximum signal a sensor can capture (saturation) and the minimum detectable signal (noise floor):

@@ -8,6 +8,10 @@ Trace rays through a superellipse microlens to visualize focusing behavior, spot
 
 <MicrolensRayTrace />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Physics
 
 The microlens is modeled as a superellipse profile, where the shape parameter controls the transition from a spherical lens to a more cylindrical form. Ray propagation follows Snell's law at each interface:

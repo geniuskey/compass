@@ -8,6 +8,10 @@ Visualize how photon absorption depth in silicon varies with wavelength using th
 
 <SiliconAbsorptionDepth />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Physics
 
 The intensity of light propagating through silicon decays exponentially according to the Beer-Lambert law:

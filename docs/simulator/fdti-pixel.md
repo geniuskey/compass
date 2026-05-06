@@ -8,6 +8,10 @@ Build a virtual deep trench isolation CMOS image sensor pixel and inspect how FD
 
 <FdtiPixelSimulator />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Model
 
 This simulator uses a fast browser-side paraxial/ray approximation. It is intended as a visual design review and QA aid:

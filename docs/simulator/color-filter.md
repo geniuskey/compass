@@ -8,6 +8,10 @@ Design RGB color filter spectral responses and visualize the resulting color gam
 
 <ColorFilterDesigner />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Color Filter Design Trade-offs
 
 - **Narrower bandwidth** → purer colors, larger gamut, but lower QE (less light passes through)

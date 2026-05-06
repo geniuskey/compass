@@ -8,6 +8,10 @@ Simulate relative illumination across the sensor based on chief ray angle, micro
 
 <LensShadingSimulator />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Relative Illumination Model
 
 The relative illumination (RI) at each sensor position combines geometric and optical effects:

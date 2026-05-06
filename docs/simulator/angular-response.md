@@ -8,6 +8,10 @@ In real cameras, light hits pixels at various angles depending on the pixel's po
 
 <AngularResponseSimulator />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## CRA Effects
 
 As the angle of incidence increases:

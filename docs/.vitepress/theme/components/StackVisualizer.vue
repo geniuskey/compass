@@ -3,8 +3,8 @@
     <h4>{{ t('Interactive BSI Pixel Stack Cross-Section', '인터랙티브 BSI 픽셀 스택 단면') }}</h4>
     <p class="component-description">
       {{ t(
-        'Click on any layer to view its material properties and role in the pixel stack.',
-        '스택 다이어그램에서 레이어를 클릭하면 해당 재료 특성과 픽셀 스택에서의 역할을 확인할 수 있습니다.'
+        'Select any layer to view its material properties and role in the pixel stack.',
+        '스택 다이어그램에서 레이어를 선택하면 해당 재료 특성과 픽셀 스택에서의 역할을 확인할 수 있습니다.'
       ) }}
     </p>
 
@@ -30,7 +30,13 @@
           <template v-for="(layer, idx) in layers" :key="layer.id">
             <g
               :class="['layer-group', { selected: selectedId === layer.id }]"
+              role="button"
+              tabindex="0"
+              :aria-label="layerAriaLabel(layer)"
+              :aria-pressed="selectedId === layer.id"
               @click="selectLayer(layer.id)"
+              @keydown.enter.prevent="selectLayer(layer.id)"
+              @keydown.space.prevent="selectLayer(layer.id)"
               style="cursor: pointer"
             >
               <!-- Layer rectangle (air extends through microlens space; microlens rect hidden) -->
@@ -165,8 +171,8 @@
         </div>
         <div v-else class="detail-placeholder">
           {{ t(
-            'Click a layer in the stack diagram to see its properties.',
-            '스택 다이어그램에서 레이어를 클릭하면 속성을 확인할 수 있습니다.'
+            'Select a layer in the stack diagram to see its properties.',
+            '스택 다이어그램에서 레이어를 선택하면 속성을 확인할 수 있습니다.'
           ) }}
         </div>
       </div>
@@ -316,6 +322,10 @@ function selectLayer(id) {
   selectedId.value = selectedId.value === id ? null : id
 }
 
+function layerAriaLabel(layer) {
+  return t(`Show ${layer.name} layer details`, `${layer.name} 레이어 세부 정보 보기`)
+}
+
 const selectedLayer = computed(() => {
   if (!selectedId.value) return null
   return layers.find((l) => l.id === selectedId.value) || null
@@ -359,6 +369,10 @@ const selectedLayer = computed(() => {
 }
 .layer-group:hover rect {
   filter: brightness(1.1);
+}
+.layer-group:focus-visible rect {
+  stroke: var(--vp-c-brand-1);
+  stroke-width: 2.5;
 }
 .layer-group.selected rect {
   filter: brightness(1.05);

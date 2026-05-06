@@ -8,6 +8,10 @@ Analyze sensor transfer curve linearity with adjustable non-linearity and knee p
 
 <LinearityAnalyzer />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Linearity Model
 
 The ideal transfer function is linear:

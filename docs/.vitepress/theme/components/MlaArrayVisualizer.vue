@@ -190,7 +190,7 @@
       <!-- 3D View (Plotly) -->
       <div v-show="viewMode === '3d'" ref="plotly3dDiv" class="plotly-wrapper"></div>
       <p v-if="viewMode === '3d' && plotlyLoading" class="loading-text">{{ t('Loading 3D engine...', '3D 엔진 로딩 중...') }}</p>
-      <p v-if="viewMode === '3d' && plotlyFailed" class="loading-text" style="color: var(--vp-c-danger-1)">{{ t('Failed to load 3D library. Check network or ad-blocker.', '3D 라이브러리 로드 실패. 네트워크 또는 광고 차단기를 확인하세요.') }}</p>
+      <p v-if="viewMode === '3d' && plotlyFailed" class="loading-text" style="color: var(--vp-c-danger-1)">{{ t('Failed to load 3D library.', '3D 라이브러리 로드에 실패했습니다.') }}</p>
 
       <!-- 2D Ray Trace View -->
       <svg v-if="viewMode === 'ray'" :viewBox="`0 0 ${svgW} ${svgH}`" class="mla-svg">
@@ -280,7 +280,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useLocale } from '../composables/useLocale'
 
 const { t } = useLocale()
@@ -677,40 +677,27 @@ const plotly3dDiv = ref<HTMLElement | null>(null)
 const plotlyLoading = ref(false)
 const plotlyFailed = ref(false)
 let plotlyLib: any = null
-
-const PLOTLY_CDNS = [
-  'https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.32.0/plotly.min.js',
-  'https://cdn.plot.ly/plotly-2.32.0.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js',
-]
-
-function tryLoadScript(url: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const script = document.createElement('script')
-    script.src = url
-    script.onload = () => resolve(true)
-    script.onerror = () => { script.remove(); resolve(false) }
-    document.head.appendChild(script)
-  })
-}
+let render3dTimer: ReturnType<typeof setTimeout> | null = null
+let isUnmounted = false
 
 async function loadPlotly(): Promise<any> {
   if (typeof window === 'undefined') return null
-  if ((window as any).Plotly) return (window as any).Plotly
   if (plotlyLib) return plotlyLib
 
   plotlyLoading.value = true
-  for (const url of PLOTLY_CDNS) {
-    const ok = await tryLoadScript(url)
-    if (ok && (window as any).Plotly) {
-      plotlyLib = (window as any).Plotly
-      plotlyLoading.value = false
-      return plotlyLib
-    }
+  plotlyFailed.value = false
+
+  try {
+    const module = await import('plotly.js-dist-min')
+    plotlyLib = (module as any).default ?? module
+    return plotlyLib
+  } catch (error) {
+    console.error('Failed to load Plotly', error)
+    plotlyFailed.value = true
+    return null
+  } finally {
+    plotlyLoading.value = false
   }
-  plotlyLoading.value = false
-  plotlyFailed.value = true
-  return null
 }
 
 async function render3D() {
@@ -718,7 +705,7 @@ async function render3D() {
   if (!div) return
 
   const Plotly = await loadPlotly()
-  if (!Plotly) return
+  if (!Plotly || isUnmounted) return
 
   const rows = arrRows.value, cols = arrCols.value
   const res = meshRes3d.value
@@ -783,12 +770,21 @@ async function render3D() {
   Plotly.react(div, [trace], layout, { responsive: true })
 }
 
-let render3dTimer: ReturnType<typeof setTimeout> | null = null
-
 function debouncedRender3D() {
   if (render3dTimer) clearTimeout(render3dTimer)
   render3dTimer = setTimeout(render3D, 80)
 }
+
+onBeforeUnmount(() => {
+  isUnmounted = true
+  if (render3dTimer) {
+    clearTimeout(render3dTimer)
+    render3dTimer = null
+  }
+  if (plotly3dDiv.value && plotlyLib?.purge) {
+    plotlyLib.purge(plotly3dDiv.value)
+  }
+})
 
 watch(
   [arrayConfig, Rx, Ry, h, n, alpha, spacingX, spacingY, meshRes3d, colormap3d],

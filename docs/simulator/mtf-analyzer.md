@@ -8,6 +8,10 @@ Analyze the Modulation Transfer Function of an image sensor system, combining pi
 
 <MtfAnalyzer />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Physics
 
 The MTF describes how faithfully a system reproduces spatial detail at each frequency. For a sensor, the total MTF is the product of individual contributions:

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 interface Reference {
   id: string
@@ -20,17 +20,38 @@ const props = defineProps<{
 const selectedRef = ref<Reference | null>(null)
 const isModalOpen = ref(false)
 
+const setBodyScrollLocked = (locked: boolean) => {
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = locked ? 'hidden' : ''
+  }
+}
+
 const openModal = (refItem: Reference) => {
   selectedRef.value = refItem
   isModalOpen.value = true
-  document.body.style.overflow = 'hidden'
+  setBodyScrollLocked(true)
 }
 
 const closeModal = () => {
   isModalOpen.value = false
   selectedRef.value = null
-  document.body.style.overflow = ''
+  setBodyScrollLocked(false)
 }
+
+const onGlobalKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && isModalOpen.value) {
+    closeModal()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onGlobalKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onGlobalKeydown)
+  setBodyScrollLocked(false)
+})
 
 const groupedReferences = computed(() => {
   const groups: Record<string, { name: string; items: Reference[] }> = {}
@@ -49,7 +70,17 @@ const groupedReferences = computed(() => {
     <div v-for="(category, index) in groupedReferences" :key="index" class="category-group">
       <h2 class="category-title">{{ category.name }}</h2>
       <div class="cards-grid">
-        <div v-for="item in category.items" :key="item.id" class="ref-card" @click="openModal(item)">
+        <div
+          v-for="item in category.items"
+          :key="item.id"
+          class="ref-card"
+          role="button"
+          tabindex="0"
+          :aria-label="`Open reference details for ${item.title}`"
+          @click="openModal(item)"
+          @keydown.enter.prevent="openModal(item)"
+          @keydown.space.prevent="openModal(item)"
+        >
           <div class="ref-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
           </div>
@@ -128,10 +159,16 @@ const groupedReferences = computed(() => {
   transition: all 0.2s ease;
 }
 
-.ref-card:hover {
+.ref-card:hover,
+.ref-card:focus-visible {
   border-color: var(--vp-c-brand);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ref-card:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 3px;
 }
 
 .ref-icon {

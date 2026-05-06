@@ -8,6 +8,10 @@ Visualize the fundamental noise-vs-signal relationship to extract read noise, co
 
 <PhotonTransferCurve />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Physics
 
 The Photon Transfer Curve plots total noise (standard deviation) against mean signal on a log-log scale. Three distinct noise regimes emerge:

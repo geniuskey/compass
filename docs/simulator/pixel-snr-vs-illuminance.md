@@ -8,6 +8,10 @@ Plot signal-to-noise ratio as a function of photon count (illuminance). Visualiz
 
 <PixelSNRvsIlluminance />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## SNR Model
 
 **SNR = N / sqrt(σ_read² + N + (PRNU × N)²)**

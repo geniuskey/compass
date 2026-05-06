@@ -37,10 +37,15 @@
 
         <!-- BARL Parameters (collapsible) -->
         <div class="ctrl-section">
-          <div class="section-header collapsible" @click="barlOpen = !barlOpen">
+          <button
+            type="button"
+            class="section-header collapsible"
+            :aria-expanded="barlOpen"
+            @click="barlOpen = !barlOpen"
+          >
             {{ t('BARL Parameters', 'BARL 파라미터') }}
             <span class="toggle-icon">{{ barlOpen ? '\u25B2' : '\u25BC' }}</span>
-          </div>
+          </button>
           <div v-show="barlOpen" class="collapsible-body">
             <div class="slider-group">
               <label>SiO2 #1: <strong>{{ barl1 }} nm</strong></label>
@@ -80,10 +85,15 @@
 
         <!-- Top Layers (collapsible) -->
         <div class="ctrl-section">
-          <div class="section-header collapsible" @click="topOpen = !topOpen">
+          <button
+            type="button"
+            class="section-header collapsible"
+            :aria-expanded="topOpen"
+            @click="topOpen = !topOpen"
+          >
             {{ t('Top Layers', '상부 레이어') }}
             <span class="toggle-icon">{{ topOpen ? '\u25B2' : '\u25BC' }}</span>
-          </div>
+          </button>
           <div v-show="topOpen" class="collapsible-body">
             <div class="slider-group">
               <label>{{ t('Planarization:', '평탄화:') }} <strong>{{ planThickness.toFixed(2) }} um</strong></label>
@@ -680,6 +690,12 @@ const spectrumStops = computed(() => {
   margin-bottom: 8px;
 }
 .section-header.collapsible {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--vp-c-brand-1);
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -689,6 +705,11 @@ const spectrumStops = computed(() => {
 }
 .section-header.collapsible:hover {
   opacity: 0.8;
+}
+.section-header.collapsible:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 .toggle-icon {
   font-size: 0.7em;

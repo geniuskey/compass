@@ -8,6 +8,10 @@ Visualize micro lens array (MLA) geometry with configurable array patterns, asym
 
 <MlaArrayVisualizer />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Physics
 
 Each microlens is modeled as a superellipse profile with independent X and Y radii, allowing asymmetric lens shapes. The height profile follows:

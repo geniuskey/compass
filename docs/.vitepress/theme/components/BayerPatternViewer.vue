@@ -2,7 +2,7 @@
   <div class="bayer-container">
     <h4>{{ t('Interactive Bayer Pattern Viewer', '대화형 베이어 패턴 뷰어') }}</h4>
     <p class="component-description">
-      {{ t('Explore different color filter array (CFA) patterns. Click a pixel to see its details.', '다양한 컬러 필터 배열(CFA) 패턴을 탐색해 보세요. 픽셀을 클릭하면 세부 정보를 볼 수 있습니다.') }}
+      {{ t('Explore different color filter array (CFA) patterns. Select a pixel to see its details.', '다양한 컬러 필터 배열(CFA) 패턴을 탐색해 보세요. 픽셀을 선택하면 세부 정보를 볼 수 있습니다.') }}
     </p>
 
     <div class="controls-row">
@@ -31,8 +31,13 @@
               :fill="cell.fill"
               :stroke="selectedPixel && selectedPixel.row === cell.row && selectedPixel.col === cell.col ? 'var(--vp-c-brand-1)' : '#555'"
               :stroke-width="selectedPixel && selectedPixel.row === cell.row && selectedPixel.col === cell.col ? 2.5 : 0.8"
+              role="button"
+              tabindex="0"
+              :aria-label="pixelAriaLabel(cell)"
               style="cursor: pointer"
               @click="selectPixel(cell)"
+              @keydown.enter.prevent="selectPixel(cell)"
+              @keydown.space.prevent="selectPixel(cell)"
             />
             <!-- Pixel index label -->
             <text
@@ -226,6 +231,13 @@ function selectPixel(cell) {
     selectedPixelState.value = cell
   }
 }
+
+function pixelAriaLabel(cell) {
+  return t(
+    `${cell.color} pixel at row ${cell.row}, column ${cell.col}`,
+    `${cell.color} 픽셀, ${cell.row}행 ${cell.col}열`
+  )
+}
 </script>
 
 <style scoped>
@@ -298,6 +310,10 @@ function selectPixel(cell) {
 .bayer-svg {
   width: 320px;
   max-width: 100%;
+}
+.bayer-svg [role='button']:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
 }
 .cell-label {
   font-size: 14px;

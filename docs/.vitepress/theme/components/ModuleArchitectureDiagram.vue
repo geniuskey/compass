@@ -3,8 +3,8 @@
     <h4>{{ t('Module Architecture Diagram', '모듈 아키텍처 다이어그램') }}</h4>
     <p class="component-description">
       {{ t(
-        'Click on any module to see its description and key classes. Hover to highlight dependency arrows.',
-        '모듈을 클릭하면 설명과 주요 클래스를 볼 수 있습니다. 마우스를 올리면 의존성 화살표가 강조됩니다.'
+        'Select any module to see its description and key classes. Hover to highlight dependency arrows.',
+        '모듈을 선택하면 설명과 주요 클래스를 볼 수 있습니다. 마우스를 올리면 의존성 화살표가 강조됩니다.'
       ) }}
     </p>
 
@@ -41,9 +41,15 @@
           :key="mod.id"
           :transform="`translate(${mod.x}, ${mod.y})`"
           class="module-block"
+          role="button"
+          tabindex="0"
+          :aria-label="moduleAriaLabel(mod)"
+          :aria-pressed="selectedModule === mod.id"
           @mouseenter="hoveredModule = mod.id"
           @mouseleave="hoveredModule = null"
           @click="toggleSelected(mod.id)"
+          @keydown.enter.prevent="toggleSelected(mod.id)"
+          @keydown.space.prevent="toggleSelected(mod.id)"
           style="cursor: pointer"
         >
           <rect
@@ -80,7 +86,7 @@
       <div v-if="selectedModule" class="detail-panel">
         <div class="detail-header">
           <strong>{{ selectedDetail.label }}</strong>
-          <button class="detail-close" @click="selectedModule = null">&times;</button>
+          <button class="detail-close" :aria-label="t('Close details', '상세 정보 닫기')" @click="selectedModule = null">&times;</button>
         </div>
         <p class="detail-desc">{{ selectedDetail.description }}</p>
         <div class="detail-classes">
@@ -107,6 +113,10 @@ const selectedModule = ref(null)
 
 function toggleSelected(id) {
   selectedModule.value = selectedModule.value === id ? null : id
+}
+
+function moduleAriaLabel(mod) {
+  return t(`Show ${mod.label} module details`, `${mod.label} 모듈 세부 정보 보기`)
 }
 
 // Module positions: top row and bottom row
@@ -307,6 +317,11 @@ const selectedDetail = computed(() => {
 
 .module-block rect {
   transition: stroke 0.15s, stroke-width 0.15s;
+}
+
+.module-block:focus-visible rect {
+  stroke: var(--vp-c-brand-1);
+  stroke-width: 2.5;
 }
 
 .block-label {

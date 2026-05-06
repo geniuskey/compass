@@ -8,6 +8,10 @@ Visualize the Airy diffraction pattern from a circular aperture and see how it m
 
 <DiffractionPsfViewer />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Physics
 
 A circular aperture produces the Airy pattern as its point spread function (PSF):

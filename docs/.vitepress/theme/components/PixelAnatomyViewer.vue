@@ -3,8 +3,8 @@
     <h4>{{ t('BSI Pixel Cross-Section Anatomy', 'BSI 픽셀 단면 구조') }}</h4>
     <p class="component-description">
       {{ t(
-        'Click on any layer to highlight it and view a detailed description below. An animated light ray traces the optical path.',
-        '레이어를 클릭하면 강조 표시되고 아래에 상세 설명이 나타납니다. 애니메이션 광선이 광학 경로를 추적합니다.'
+        'Select any layer to highlight it and view a detailed description below. An animated light ray traces the optical path.',
+        '레이어를 선택하면 강조 표시되고 아래에 상세 설명이 나타납니다. 애니메이션 광선이 광학 경로를 추적합니다.'
       ) }}
     </p>
 
@@ -48,7 +48,13 @@
           <template v-for="(layer, idx) in layers" :key="layer.id">
             <g
               :class="['pa-layer-group', { selected: selectedId === layer.id }]"
+              role="button"
+              tabindex="0"
+              :aria-label="layerAriaLabel(layer)"
+              :aria-pressed="selectedId === layer.id"
               @click="selectLayer(layer.id)"
+              @keydown.enter.prevent="selectLayer(layer.id)"
+              @keydown.space.prevent="selectLayer(layer.id)"
               @mouseenter="hoveredId = layer.id"
               @mouseleave="hoveredId = null"
               style="cursor: pointer"
@@ -424,8 +430,8 @@
         </div>
         <div v-else class="info-placeholder">
           {{ t(
-            'Click on a layer in the diagram to learn about its role in the pixel stack.',
-            '다이어그램에서 레이어를 클릭하여 픽셀 스택에서의 역할을 알아보세요.'
+            'Select a layer in the diagram to learn about its role in the pixel stack.',
+            '다이어그램에서 레이어를 선택하여 픽셀 스택에서의 역할을 알아보세요.'
           ) }}
         </div>
       </div>
@@ -598,6 +604,10 @@ function selectLayer(id: string) {
   selectedId.value = selectedId.value === id ? null : id
 }
 
+function layerAriaLabel(layer: Layer): string {
+  return t(`Show ${layer.name} layer details`, `${layer.name} 레이어 세부 정보 보기`)
+}
+
 function isHighlighted(id: string): boolean {
   return selectedId.value === id || hoveredId.value === id
 }
@@ -718,6 +728,10 @@ const layerPositions = computed(() => {
 }
 .pa-layer-group:hover {
   filter: brightness(1.08);
+}
+.pa-layer-group:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
 }
 .pa-layer-group.selected {
   filter: brightness(1.04);

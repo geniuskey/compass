@@ -8,6 +8,10 @@ Evaluate color reproduction accuracy of a sensor by computing the Color Correcti
 
 <ColorAccuracyAnalyzer />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Physics
 
 A sensor's raw RGB response does not directly correspond to human color perception. Color accuracy analysis bridges this gap through a calibrated pipeline:

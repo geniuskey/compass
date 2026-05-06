@@ -2,7 +2,7 @@
   <div class="solver-pipeline-container">
     <h4>{{ t('Solver Pipeline: Abstract Methods', '솔버 파이프라인: 추상 메서드') }}</h4>
     <p class="component-description">
-      {{ t('Click on each step to see the method signature and data types. Toggle between RCWA and FDTD paths.', '각 단계를 클릭하여 메서드 시그니처와 데이터 타입을 확인하세요. RCWA와 FDTD 경로를 전환할 수 있습니다.') }}
+      {{ t('Select each step to see the method signature and data types. Toggle between RCWA and FDTD paths.', '각 단계를 선택하여 메서드 시그니처와 데이터 타입을 확인하세요. RCWA와 FDTD 경로를 전환할 수 있습니다.') }}
     </p>
 
     <!-- Solver type toggle -->
@@ -26,7 +26,13 @@
         :key="step.id"
         class="flow-block"
         :class="{ active: selectedStep === step.id }"
-        @click="selectedStep = selectedStep === step.id ? null : step.id"
+        role="button"
+        tabindex="0"
+        :aria-label="stepAriaLabel(step)"
+        :aria-pressed="selectedStep === step.id"
+        @click="toggleStep(step.id)"
+        @keydown.enter.prevent="toggleStep(step.id)"
+        @keydown.space.prevent="toggleStep(step.id)"
       >
         <div class="flow-label">{{ step.label }}</div>
         <div class="flow-sub">{{ step.sub }}</div>
@@ -82,6 +88,14 @@ const { t } = useLocale()
 
 const solverType = ref('rcwa')
 const selectedStep = ref(null)
+
+function toggleStep(id) {
+  selectedStep.value = selectedStep.value === id ? null : id
+}
+
+function stepAriaLabel(step) {
+  return t(`Show pipeline step ${step.label}`, `파이프라인 단계 ${step.label} 보기`)
+}
 
 const steps = computed(() => [
   {
@@ -232,6 +246,7 @@ const backends = [
   margin-right: 0;
 }
 .flow-block:hover,
+.flow-block:focus-visible,
 .flow-block.active {
   border-color: var(--vp-c-brand-1);
   background: var(--vp-c-brand-soft);

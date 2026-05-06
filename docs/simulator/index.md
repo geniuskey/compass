@@ -4,7 +4,7 @@ title: Simulator
 
 # Interactive Simulators
 
-Explore CMOS image sensor pixel optics through browser-based simulators. All calculations run locally using the Transfer Matrix Method (TMM) — no server required.
+Explore CMOS image sensor pixel optics through browser-based simulators. Calculations run locally in the browser — no server required.
 
 ## Available Simulators
 
@@ -35,6 +35,15 @@ Explore CMOS image sensor pixel optics through browser-based simulators. All cal
 - **[Color Accuracy Analyzer](./color-accuracy)** — Evaluate color reproduction with CCM computation and Delta E analysis on ColorChecker patches
 - **[Dark Current & Temperature](./dark-current)** — Simulate Arrhenius dark current model and visualize thermal noise impact on image quality
 
-::: tip
-These simulators use a 1D TMM approximation. For full 3D simulations with RCWA or FDTD, see the [Guide](/guide/installation).
+## Model Scope
+
+| Tool family | Model type | Best for |
+|-------------|------------|----------|
+| TMM / thin-film tools | 1D planar multilayer optics | BARL trends, reflectance, silicon absorption, first-pass QE |
+| Ray / geometry tools | Paraxial or Snell-law geometric optics | Microlens intuition, CRA directionality, layout sensitivity |
+| Sensor metrics tools | Analytical camera equations | SNR, dynamic range, MTF, EMVA-style comparisons |
+| Visualizers | Deterministic illustrative models | Explaining structure, relative trends, and failure modes |
+
+::: warning
+Treat these as educational and design-space tools. They do not replace RCWA/FDTD sign-off, silicon calibration, or vendor process data. For solver workflows, see the [Guide](/guide/) and [Reports](/reports/).
 :::

@@ -28,9 +28,15 @@
           v-for="(step, idx) in steps"
           :key="step.id"
           :transform="`translate(${step.x}, ${step.y})`"
+          role="button"
+          tabindex="0"
+          :aria-label="stepAriaLabel(step, idx)"
+          :aria-pressed="selectedStep === idx"
           @mouseenter="hoveredStep = idx"
           @mouseleave="hoveredStep = null"
           @click="toggleStep(idx)"
+          @keydown.enter.prevent="toggleStep(idx)"
+          @keydown.space.prevent="toggleStep(idx)"
           style="cursor: pointer"
         >
           <!-- Main box -->
@@ -98,7 +104,7 @@
       <div v-if="selectedStep !== null" class="arch-detail-panel">
         <div class="arch-detail-header">
           <strong>{{ steps[selectedStep].title }}</strong>
-          <button class="arch-detail-close" @click="selectedStep = null">&times;</button>
+          <button class="arch-detail-close" :aria-label="t('Close details', '상세 정보 닫기')" @click="selectedStep = null">&times;</button>
         </div>
         <p class="arch-detail-desc">{{ steps[selectedStep].description }}</p>
         <div class="arch-detail-items">
@@ -121,6 +127,13 @@ const selectedStep = ref(null)
 
 function toggleStep(idx) {
   selectedStep.value = selectedStep.value === idx ? null : idx
+}
+
+function stepAriaLabel(step, idx) {
+  return t(
+    `Show architecture step ${idx + 1}: ${step.title}`,
+    `아키텍처 ${idx + 1}단계 ${step.title} 보기`
+  )
 }
 
 // Layout
@@ -289,6 +302,11 @@ const arrows = computed(() => {
 
 .step-box {
   transition: stroke 0.2s, stroke-width 0.2s;
+}
+
+g[role='button']:focus-visible .step-box {
+  stroke: var(--vp-c-brand-1);
+  stroke-width: 2.5;
 }
 
 .step-number {

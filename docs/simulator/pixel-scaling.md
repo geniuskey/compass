@@ -8,6 +8,10 @@ Explore how key image sensor performance metrics scale as pixel pitch shrinks, w
 
 <PixelScalingTrends />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Physics
 
 Pixel miniaturization involves fundamental trade-offs governed by geometry and diffraction:

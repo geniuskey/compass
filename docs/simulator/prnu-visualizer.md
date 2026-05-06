@@ -8,6 +8,10 @@ Visualize fixed pattern noise (FPN) in image sensors — both photo response non
 
 <PRNUVisualizer />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Fixed Pattern Noise
 
 Fixed pattern noise (FPN) is a pixel-to-pixel variation that remains constant across frames. It consists of two components:

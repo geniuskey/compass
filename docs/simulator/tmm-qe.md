@@ -8,6 +8,10 @@ Compute the quantum efficiency spectrum of a BSI CMOS pixel using the Transfer M
 
 <TmmQeCalculator />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## How It Works
 
 The TMM models each layer as a thin film with complex refractive index. Light propagation through the stack is computed via 2×2 transfer matrices, yielding reflectance (R), transmittance (T), and per-layer absorption (A). The QE equals the fraction of light absorbed in the silicon photodiode layer.

@@ -8,6 +8,10 @@ Explore single-layer thin film interference with a phasor diagram showing how mu
 
 <FabryPerotVisualizer />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Physics
 
 When light encounters a thin film of thickness d and refractive index n, partial reflections occur at each interface. The reflected beams interfere, with the result determined by the Fresnel coefficients and the phase accumulated during each round trip:

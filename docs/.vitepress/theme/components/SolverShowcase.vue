@@ -34,7 +34,7 @@
             <span v-if="selectedDetail.gpu" class="gpu-tag-lg">GPU</span>
             <span v-if="selectedDetail.diffable" class="diff-tag-lg">{{ t('Differentiable', '미분 가능') }}</span>
           </div>
-          <button class="solver-detail-close" @click="selectedSolver = null">&times;</button>
+          <button class="solver-detail-close" :aria-label="t('Close details', '상세 정보 닫기')" @click="selectedSolver = null">&times;</button>
         </div>
         <p class="solver-detail-desc">{{ selectedDetail.description }}</p>
         <div class="solver-detail-meta">

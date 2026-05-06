@@ -8,6 +8,10 @@ Design arbitrary multilayer thin film coatings with full control over layer coun
 
 <BarlOptimizer />
 
+::: info Model scope
+Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
+:::
+
 ## Supported Materials (20+)
 
 | Category | Materials |
