@@ -6,7 +6,7 @@
     </p>
 
     <div class="controls-row">
-      <button class="play-btn" @click="togglePlay">
+      <button type="button" class="play-btn" @click="togglePlay">
         {{ isPlaying ? t('Pause', '일시정지') : t('Play', '재생') }}
       </button>
       <div class="slider-group">

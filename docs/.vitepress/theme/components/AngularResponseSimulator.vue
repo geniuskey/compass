@@ -10,12 +10,14 @@
 
     <div class="controls-row">
       <div class="toggle-group">
-        <button
+        <button type="button"
           :class="['toggle-btn', { active: displayMode === 'single' }]"
+          :aria-pressed="displayMode === 'single'"
           @click="displayMode = 'single'"
         >{{ t('Single Wavelength', '\uB2E8\uC77C \uD30C\uC7A5') }}</button>
-        <button
+        <button type="button"
           :class="['toggle-btn', { active: displayMode === 'rgb' }]"
+          :aria-pressed="displayMode === 'rgb'"
           @click="displayMode = 'rgb'"
         >{{ t('R/G/B Channels', 'R/G/B \uCC44\uB110') }}</button>
       </div>

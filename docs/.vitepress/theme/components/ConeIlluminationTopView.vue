@@ -30,14 +30,16 @@
       <div class="toggle-group">
         <label class="toggle-label">{{ t('Sampling method', '샘플링 방식') }}:</label>
         <div class="toggle-buttons">
-          <button
+          <button type="button"
             :class="['toggle-btn', { active: samplingMethod === 'fibonacci' }]"
+            :aria-pressed="samplingMethod === 'fibonacci'"
             @click="samplingMethod = 'fibonacci'"
           >
             {{ t('Fibonacci', '피보나치') }}
           </button>
-          <button
+          <button type="button"
             :class="['toggle-btn', { active: samplingMethod === 'grid' }]"
+            :aria-pressed="samplingMethod === 'grid'"
             @click="samplingMethod = 'grid'"
           >
             {{ t('Grid', '격자') }}

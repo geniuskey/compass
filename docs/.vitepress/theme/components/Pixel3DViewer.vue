@@ -9,7 +9,7 @@
         <input type="checkbox" v-model="autoRotate" />
         <span>Auto Rotate</span>
       </label>
-      <button class="ctrl-btn" @click="resetView">Reset View</button>
+      <button type="button" class="ctrl-btn" @click="resetView">Reset View</button>
       <div class="layer-toggles">
         <label v-for="l in layerDefs" :key="l.id" class="toggle-item">
           <input type="checkbox" v-model="l.visible" />

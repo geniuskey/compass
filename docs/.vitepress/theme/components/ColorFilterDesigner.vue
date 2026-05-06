@@ -5,7 +5,14 @@
         <h4>{{ t('Color Filter Designer & Gamut Viewer', '컬러 필터 설계 및 색역 뷰어') }}</h4>
         <p v-if="!isFullscreen" class="component-description">{{ t('Design color filter spectral responses with multiple models, IR cut filter, and evaluate gamut, crosstalk, CCM quality, and Vora-Value.','다양한 모델로 컬러 필터 분광 응답을 설계하고, IR 차단 필터, 색역, 크로스토크, CCM 품질, Vora-Value를 평가합니다.') }}</p>
       </div>
-      <button class="fs-btn" @click="toggleFullscreen" :title="t('Toggle fullscreen','전체화면 전환')">{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
+      <button
+        type="button"
+        class="fs-btn"
+        :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+        :aria-pressed="isFullscreen"
+        :title="t('Toggle fullscreen','전체화면 전환')"
+        @click="toggleFullscreen"
+      >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     </div>
 
     <!-- Top controls -->
@@ -13,7 +20,7 @@
       <div class="ctrl-group">
         <label class="ctrl-label">{{ t('Model','모델') }}</label>
         <div class="btn-row">
-          <button v-for="m in [['gaussian','Gaussian','가우시안'],['lorentzian','Lorentzian','로렌츠'],['realDye','Real Dye','실측 염료']]" :key="m[0]" :class="['toggle-btn',{active:filterModel===m[0]}]" @click="filterModel=m[0] as ModelType">{{ t(m[1],m[2]) }}</button>
+          <button type="button" v-for="m in [['gaussian','Gaussian','가우시안'],['lorentzian','Lorentzian','로렌츠'],['realDye','Real Dye','실측 염료']]" :key="m[0]" :class="['toggle-btn',{active:filterModel===m[0]}]" :aria-pressed="filterModel===m[0]" @click="filterModel=m[0] as ModelType">{{ t(m[1],m[2]) }}</button>
         </div>
       </div>
       <div class="ctrl-group">
@@ -46,7 +53,7 @@
           </div>
         </div>
 
-        <div class="export-row"><button class="export-btn" @click="exportConfig">{{ t('Export Design (JSON)','설계 내보내기 (JSON)') }}</button></div>
+        <div class="export-row"><button type="button" class="export-btn" @click="exportConfig">{{ t('Export Design (JSON)','설계 내보내기 (JSON)') }}</button></div>
       </div>
 
       <!-- Spectrum chart -->

@@ -13,10 +13,11 @@
       <div class="control-group">
         <label>{{ t('Wavelength', '파장') }}</label>
         <div class="wavelength-btns">
-          <button
+          <button type="button"
             v-for="wl in wavelengthOptions"
             :key="wl.value"
             :class="['wl-btn', { active: selectedWavelength === wl.value }]"
+            :aria-pressed="selectedWavelength === wl.value"
             :style="{ borderColor: wl.color }"
             @click="selectWavelength(wl.value)"
           >
@@ -27,10 +28,11 @@
       <div class="control-group">
         <label>{{ t('Speed', '속도') }}</label>
         <div class="speed-btns">
-          <button
+          <button type="button"
             v-for="sp in speedOptions"
             :key="sp.value"
             :class="['speed-btn', { active: speed === sp.value }]"
+            :aria-pressed="speed === sp.value"
             @click="speed = sp.value"
           >{{ sp.label }}</button>
         </div>
@@ -38,16 +40,16 @@
     </div>
 
     <div class="controls-row">
-      <button class="ctrl-btn" @click="togglePlay">
+      <button type="button" class="ctrl-btn" @click="togglePlay">
         {{ isPlaying ? t('Pause', '일시정지') : t('Play', '재생') }}
       </button>
-      <button class="ctrl-btn" @click="stepBackward" :disabled="currentStep <= 0 || isPlaying">
+      <button type="button" class="ctrl-btn" @click="stepBackward" :disabled="currentStep <= 0 || isPlaying">
         {{ t('Prev', '이전') }}
       </button>
-      <button class="ctrl-btn" @click="stepForward" :disabled="currentStep >= totalSteps || isPlaying">
+      <button type="button" class="ctrl-btn" @click="stepForward" :disabled="currentStep >= totalSteps || isPlaying">
         {{ t('Next', '다음') }}
       </button>
-      <button class="ctrl-btn reset-btn" @click="resetAnimation">
+      <button type="button" class="ctrl-btn reset-btn" @click="resetAnimation">
         {{ t('Reset', '리셋') }}
       </button>
       <span class="step-indicator">

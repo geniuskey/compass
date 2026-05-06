@@ -10,12 +10,14 @@
 
     <div class="controls-row">
       <div class="toggle-group">
-        <button
+        <button type="button"
           :class="['toggle-btn', { active: mode === 'single' }]"
+          :aria-pressed="mode === 'single'"
           @click="mode = 'single'"
         >{{ t('Single Wavelength', '단일 파장') }}</button>
-        <button
+        <button type="button"
           :class="['toggle-btn', { active: mode === 'spectrum' }]"
+          :aria-pressed="mode === 'spectrum'"
           @click="mode = 'spectrum'"
         >{{ t('Full Spectrum', '전체 스펙트럼') }}</button>
       </div>

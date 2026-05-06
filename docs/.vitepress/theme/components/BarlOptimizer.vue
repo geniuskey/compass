@@ -47,7 +47,7 @@
           <option value="full">Full (380-780nm)</option>
         </select>
       </div>
-      <button class="optimize-btn" :disabled="optimizing || layers.length === 0" @click="runOptimize">
+      <button type="button" class="optimize-btn" :disabled="optimizing || layers.length === 0" @click="runOptimize">
         <template v-if="optimizing">{{ t('Optimizing...', '최적화 중...') }}</template>
         <template v-else>{{ t('Auto Optimize', '자동 최적화') }}</template>
       </button>
@@ -58,10 +58,10 @@
       <div class="layers-header">
         <span class="layers-title">{{ t('Layers', '레이어') }} ({{ layers.length }})</span>
         <span class="layers-subtitle">{{ t('top → bottom (light direction)', '상단 → 하단 (빛 진행 방향)') }}</span>
-        <button class="add-btn" @click="addLayer">+ {{ t('Add layer', '레이어 추가') }}</button>
+        <button type="button" class="add-btn" @click="addLayer">+ {{ t('Add layer', '레이어 추가') }}</button>
       </div>
       <div v-if="layers.length === 0" class="empty-layers">
-        {{ t('No layers. Click "Add layer" to start.', '레이어가 없습니다. "레이어 추가"를 클릭하세요.') }}
+        {{ t('No layers. Use "Add layer" to start.', '레이어가 없습니다. "레이어 추가"로 시작하세요.') }}
       </div>
       <div class="layer-list">
         <div v-for="(layer, idx) in layers" :key="layer.id" class="layer-row">
@@ -86,9 +86,9 @@
             <span class="unit">nm</span>
           </div>
           <div class="layer-actions">
-            <button class="icon-btn" @click="moveLayer(idx, -1)" :disabled="idx === 0" :title="t('Move up','위로')">&#x25B2;</button>
-            <button class="icon-btn" @click="moveLayer(idx, 1)" :disabled="idx === layers.length - 1" :title="t('Move down','아래로')">&#x25BC;</button>
-            <button class="icon-btn remove-btn" @click="removeLayer(idx)" :title="t('Remove','제거')">&#x2715;</button>
+            <button type="button" class="icon-btn" @click="moveLayer(idx, -1)" :disabled="idx === 0" :title="t('Move up','위로')" :aria-label="t(`Move layer ${idx + 1} up`, `${idx + 1}번 레이어 위로 이동`)">&#x25B2;</button>
+            <button type="button" class="icon-btn" @click="moveLayer(idx, 1)" :disabled="idx === layers.length - 1" :title="t('Move down','아래로')" :aria-label="t(`Move layer ${idx + 1} down`, `${idx + 1}번 레이어 아래로 이동`)">&#x25BC;</button>
+            <button type="button" class="icon-btn remove-btn" @click="removeLayer(idx)" :title="t('Remove','제거')" :aria-label="t(`Remove layer ${idx + 1}`, `${idx + 1}번 레이어 제거`)">&#x2715;</button>
           </div>
         </div>
       </div>

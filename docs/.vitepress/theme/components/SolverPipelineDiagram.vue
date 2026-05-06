@@ -7,14 +7,16 @@
 
     <!-- Solver type toggle -->
     <div class="toggle-row">
-      <button
+      <button type="button"
         class="toggle-pill"
         :class="{ active: solverType === 'rcwa' }"
+        :aria-pressed="solverType === 'rcwa'"
         @click="solverType = 'rcwa'"
       >RCWA</button>
-      <button
+      <button type="button"
         class="toggle-pill"
         :class="{ active: solverType === 'fdtd' }"
+        :aria-pressed="solverType === 'fdtd'"
         @click="solverType = 'fdtd'"
       >FDTD</button>
     </div>

@@ -76,9 +76,9 @@
           <div class="slider-group">
             <label>{{ t('Channel:', '채널:') }}</label>
             <div class="pol-btns">
-              <button :class="['pol-btn', { active: cfChannel === 'red' }]" @click="cfChannel = 'red'" style="color:#e74c3c">R</button>
-              <button :class="['pol-btn', { active: cfChannel === 'green' }]" @click="cfChannel = 'green'" style="color:#27ae60">G</button>
-              <button :class="['pol-btn', { active: cfChannel === 'blue' }]" @click="cfChannel = 'blue'" style="color:#3498db">B</button>
+              <button type="button" :class="['pol-btn', { active: cfChannel === 'red' }]" :aria-pressed="cfChannel === 'red'" @click="cfChannel = 'red'" style="color:#e74c3c">R</button>
+              <button type="button" :class="['pol-btn', { active: cfChannel === 'green' }]" :aria-pressed="cfChannel === 'green'" @click="cfChannel = 'green'" style="color:#27ae60">G</button>
+              <button type="button" :class="['pol-btn', { active: cfChannel === 'blue' }]" :aria-pressed="cfChannel === 'blue'" @click="cfChannel = 'blue'" style="color:#3498db">B</button>
             </div>
           </div>
         </div>
@@ -116,9 +116,9 @@
           <div class="slider-group">
             <label>{{ t('Polarization:', '편광:') }}</label>
             <div class="pol-btns">
-              <button :class="['pol-btn', { active: pol === 'avg' }]" @click="pol = 'avg'">{{ t('Unpolarized', '비편광') }}</button>
-              <button :class="['pol-btn', { active: pol === 's' }]" @click="pol = 's'">s</button>
-              <button :class="['pol-btn', { active: pol === 'p' }]" @click="pol = 'p'">p</button>
+              <button type="button" :class="['pol-btn', { active: pol === 'avg' }]" :aria-pressed="pol === 'avg'" @click="pol = 'avg'">{{ t('Unpolarized', '비편광') }}</button>
+              <button type="button" :class="['pol-btn', { active: pol === 's' }]" :aria-pressed="pol === 's'" @click="pol = 's'">s</button>
+              <button type="button" :class="['pol-btn', { active: pol === 'p' }]" :aria-pressed="pol === 'p'" @click="pol = 'p'">p</button>
             </div>
           </div>
         </div>
@@ -128,13 +128,13 @@
       <div class="results-panel">
         <!-- Tab buttons -->
         <div class="tab-row">
-          <button :class="['tab-btn', { active: activeTab === 'qe' }]" @click="activeTab = 'qe'">
+          <button type="button" :class="['tab-btn', { active: activeTab === 'qe' }]" :aria-pressed="activeTab === 'qe'" @click="activeTab = 'qe'">
             {{ t('QE Spectrum', 'QE 스펙트럼') }}
           </button>
-          <button :class="['tab-btn', { active: activeTab === 'stack' }]" @click="activeTab = 'stack'">
+          <button type="button" :class="['tab-btn', { active: activeTab === 'stack' }]" :aria-pressed="activeTab === 'stack'" @click="activeTab = 'stack'">
             {{ t('Layer Stack', '레이어 스택') }}
           </button>
-          <button :class="['tab-btn', { active: activeTab === 'energy' }]" @click="activeTab = 'energy'">
+          <button type="button" :class="['tab-btn', { active: activeTab === 'energy' }]" :aria-pressed="activeTab === 'energy'" @click="activeTab = 'energy'">
             {{ t('Energy Budget', '에너지 버짓') }}
           </button>
         </div>

@@ -91,9 +91,10 @@
     </div>
 
     <div class="tab-row">
-      <button
+      <button type="button"
         v-for="tab in tabs" :key="tab.key"
         :class="['tab-btn', { active: viewMode === tab.key }]"
+        :aria-pressed="viewMode === tab.key"
         @click="viewMode = tab.key"
       >{{ t(tab.en, tab.ko) }}</button>
     </div>

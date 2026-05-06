@@ -1,11 +1,12 @@
 <template>
   <div class="pixel-cross-sections">
     <div class="tab-row">
-      <button
+      <button type="button"
         v-for="tab in tabs"
         :key="tab.key"
         class="tab-btn"
         :class="{ active: activeTab === tab.key }"
+        :aria-pressed="activeTab === tab.key"
         @click="activeTab = tab.key"
       >
         {{ tab.label }}

@@ -24,9 +24,9 @@
       <div class="slider-group">
         <label>{{ t('View', '보기') }}</label>
         <div class="view-toggle">
-          <button :class="['toggle-btn', { active: viewMode === 'fpn' }]" @click="viewMode = 'fpn'">FPN</button>
-          <button :class="['toggle-btn', { active: viewMode === 'prnu' }]" @click="viewMode = 'prnu'">PRNU</button>
-          <button :class="['toggle-btn', { active: viewMode === 'dsnu' }]" @click="viewMode = 'dsnu'">DSNU</button>
+          <button type="button" :class="['toggle-btn', { active: viewMode === 'fpn' }]" :aria-pressed="viewMode === 'fpn'" @click="viewMode = 'fpn'">FPN</button>
+          <button type="button" :class="['toggle-btn', { active: viewMode === 'prnu' }]" :aria-pressed="viewMode === 'prnu'" @click="viewMode = 'prnu'">PRNU</button>
+          <button type="button" :class="['toggle-btn', { active: viewMode === 'dsnu' }]" :aria-pressed="viewMode === 'dsnu'" @click="viewMode = 'dsnu'">DSNU</button>
         </div>
       </div>
     </div>

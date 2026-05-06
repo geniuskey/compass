@@ -70,12 +70,14 @@
 
     <!-- Tab buttons -->
     <div class="tab-row">
-      <button
+      <button type="button"
         :class="['tab-btn', { active: viewMode === 'qe' }]"
+        :aria-pressed="viewMode === 'qe'"
         @click="viewMode = 'qe'"
       >{{ t('QE Spectrum', 'QE 스펙트럼') }}</button>
-      <button
+      <button type="button"
         :class="['tab-btn', { active: viewMode === 'rta' }]"
+        :aria-pressed="viewMode === 'rta'"
         @click="viewMode = 'rta'"
       >{{ t('R/T/A Spectrum', 'R/T/A 스펙트럼') }}</button>
       <div v-if="viewMode === 'rta'" class="rta-cf-selector">

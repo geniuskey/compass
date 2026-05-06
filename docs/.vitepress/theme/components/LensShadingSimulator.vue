@@ -24,8 +24,9 @@
       <div class="slider-group">
         <label>{{ t('Channel', '채널') }}</label>
         <div class="channel-toggle">
-          <button v-for="ch in channels" :key="ch.key"
+          <button type="button" v-for="ch in channels" :key="ch.key"
             :class="['ch-btn', { active: channel === ch.key }]"
+            :aria-pressed="channel === ch.key"
             :style="{ '--ch-color': ch.color }"
             @click="channel = ch.key"
           >{{ ch.label }}</button>

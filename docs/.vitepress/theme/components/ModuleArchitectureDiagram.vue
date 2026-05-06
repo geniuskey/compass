@@ -86,7 +86,7 @@
       <div v-if="selectedModule" class="detail-panel">
         <div class="detail-header">
           <strong>{{ selectedDetail.label }}</strong>
-          <button class="detail-close" :aria-label="t('Close details', '상세 정보 닫기')" @click="selectedModule = null">&times;</button>
+          <button type="button" class="detail-close" :aria-label="t('Close details', '상세 정보 닫기')" @click="selectedModule = null">&times;</button>
         </div>
         <p class="detail-desc">{{ selectedDetail.description }}</p>
         <div class="detail-classes">

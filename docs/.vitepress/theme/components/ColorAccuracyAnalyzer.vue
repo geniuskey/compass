@@ -23,19 +23,22 @@
         <input type="range" min="50" max="150" step="5" v-model.number="cfBandwidth" class="ctrl-range" />
       </div>
       <div class="chart-toggle">
-        <button
+        <button type="button"
           :class="['toggle-btn', { active: chartType === 'classic' }]"
+          :aria-pressed="chartType === 'classic'"
           @click="chartType = 'classic'"
         >Classic 24</button>
-        <button
+        <button type="button"
           :class="['toggle-btn', { active: chartType === 'sg' }]"
+          :aria-pressed="chartType === 'sg'"
           @click="chartType = 'sg'"
         >SG 140</button>
       </div>
       <div class="chart-toggle">
-        <button
+        <button type="button"
           v-for="m in DE_METHODS" :key="m.key"
           :class="['toggle-btn', { active: deMethod === m.key }]"
+          :aria-pressed="deMethod === m.key"
           @click="deMethod = m.key"
         >{{ m.label }}</button>
       </div>
@@ -46,8 +49,9 @@
         </select>
       </div>
       <div class="chart-toggle">
-        <button v-for="m in WB_METHODS" :key="m.key"
+        <button type="button" v-for="m in WB_METHODS" :key="m.key"
           :class="['toggle-btn', { active: wbMethod === m.key }]"
+          :aria-pressed="wbMethod === m.key"
           @click="wbMethod = m.key"
         >{{ m.label }}</button>
       </div>
@@ -71,14 +75,14 @@
 
     <!-- Action row -->
     <div class="action-row">
-      <button class="action-btn" @click="runOptimization" :disabled="optimizing">
+      <button type="button" class="action-btn" @click="runOptimization" :disabled="optimizing">
         {{ optimizing ? t('Optimizing...', '최적화 중...') : t('Auto Optimize', '자동 최적화') }}
       </button>
-      <button class="action-btn" @click="takeSnapshot">{{ t('Snapshot', '스냅샷') }}</button>
-      <button class="action-btn" v-if="snapshot" @click="snapshot = null">{{ t('Clear', '삭제') }}</button>
-      <button class="action-btn" @click="exportCsv">CSV</button>
-      <button class="action-btn" @click="exportPng">PNG</button>
-      <button class="action-btn" @click="saveCondition">{{ t('Save Config', '설정 저장') }}</button>
+      <button type="button" class="action-btn" @click="takeSnapshot">{{ t('Snapshot', '스냅샷') }}</button>
+      <button type="button" class="action-btn" v-if="snapshot" @click="snapshot = null">{{ t('Clear', '삭제') }}</button>
+      <button type="button" class="action-btn" :aria-label="t('Export CSV', 'CSV 내보내기')" @click="exportCsv">CSV</button>
+      <button type="button" class="action-btn" :aria-label="t('Export PNG', 'PNG 내보내기')" @click="exportPng">PNG</button>
+      <button type="button" class="action-btn" @click="saveCondition">{{ t('Save Config', '설정 저장') }}</button>
     </div>
 
     <!-- Optimization result -->
@@ -173,12 +177,14 @@
           <span class="patch-count">({{ activePatches.length }})</span>
         </h5>
         <div class="chart-toggle view-toggle">
-          <button
+          <button type="button"
             :class="['toggle-btn', { active: patchView === 'swatch' }]"
+            :aria-pressed="patchView === 'swatch'"
             @click="patchView = 'swatch'"
           >{{ t('Swatch', '스와치') }}</button>
-          <button
+          <button type="button"
             :class="['toggle-btn', { active: patchView === 'heatmap' }]"
+            :aria-pressed="patchView === 'heatmap'"
             @click="patchView = 'heatmap'"
           >{{ t('Heatmap', '히트맵') }}</button>
         </div>
@@ -431,7 +437,7 @@
               <td class="mono-val">{{ cond.avgDE.toFixed(2) }}</td>
               <td class="mono-val">{{ cond.maxDE.toFixed(2) }}</td>
               <td class="mono-val">{{ cond.excellentPct.toFixed(0) }}%</td>
-              <td><button class="del-btn" @click="savedConditions.splice(idx, 1)">&times;</button></td>
+              <td><button type="button" class="del-btn" :aria-label="t(`Delete saved condition ${idx + 1}`, `${idx + 1}번 저장 조건 삭제`)" @click="savedConditions.splice(idx, 1)">&times;</button></td>
             </tr>
           </tbody>
         </table>

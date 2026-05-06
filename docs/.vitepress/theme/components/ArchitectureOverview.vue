@@ -104,7 +104,7 @@
       <div v-if="selectedStep !== null" class="arch-detail-panel">
         <div class="arch-detail-header">
           <strong>{{ steps[selectedStep].title }}</strong>
-          <button class="arch-detail-close" :aria-label="t('Close details', '상세 정보 닫기')" @click="selectedStep = null">&times;</button>
+          <button type="button" class="arch-detail-close" :aria-label="t('Close details', '상세 정보 닫기')" @click="selectedStep = null">&times;</button>
         </div>
         <p class="arch-detail-desc">{{ steps[selectedStep].description }}</p>
         <div class="arch-detail-items">

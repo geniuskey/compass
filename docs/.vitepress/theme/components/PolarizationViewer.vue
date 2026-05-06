@@ -15,7 +15,7 @@
           <option v-for="p in polOptions" :key="p.key" :value="p.key">{{ t(p.label, p.labelKo) }}</option>
         </select>
       </div>
-      <button class="play-btn" @click="togglePlay">
+      <button type="button" class="play-btn" @click="togglePlay">
         {{ isPlaying ? t('Pause', '일시정지') : t('Play', '재생') }}
       </button>
       <div class="slider-group">

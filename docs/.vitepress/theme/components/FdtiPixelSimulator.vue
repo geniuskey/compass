@@ -42,8 +42,8 @@
           <div class="slider-group">
             <label>{{ t('Trench type', '트렌치 방식') }}</label>
             <div class="segmented-row">
-              <button :class="['seg-btn', { active: isolationMode === 'fdti' }]" @click="setIsolationMode('fdti')">FDTI</button>
-              <button :class="['seg-btn', { active: isolationMode === 'bdti' }]" @click="setIsolationMode('bdti')">BDTI</button>
+              <button type="button" :class="['seg-btn', { active: isolationMode === 'fdti' }]" :aria-pressed="isolationMode === 'fdti'" @click="setIsolationMode('fdti')">FDTI</button>
+              <button type="button" :class="['seg-btn', { active: isolationMode === 'bdti' }]" :aria-pressed="isolationMode === 'bdti'" @click="setIsolationMode('bdti')">BDTI</button>
             </div>
           </div>
           <div class="slider-group">
@@ -71,9 +71,9 @@
           <div class="slider-group">
             <label>{{ t('Fill / liner', '충전 / 라이너') }}</label>
             <div class="segmented-row">
-              <button :class="['seg-btn', { active: liner === 'oxide' }]" @click="setLiner('oxide')">SiO2</button>
-              <button :class="['seg-btn', { active: liner === 'nitride' }]" @click="setLiner('nitride')">SiN</button>
-              <button :class="['seg-btn', { active: liner === 'metal' }]" @click="setLiner('metal')">Metal</button>
+              <button type="button" :class="['seg-btn', { active: liner === 'oxide' }]" :aria-pressed="liner === 'oxide'" @click="setLiner('oxide')">SiO2</button>
+              <button type="button" :class="['seg-btn', { active: liner === 'nitride' }]" :aria-pressed="liner === 'nitride'" @click="setLiner('nitride')">SiN</button>
+              <button type="button" :class="['seg-btn', { active: liner === 'metal' }]" :aria-pressed="liner === 'metal'" @click="setLiner('metal')">Metal</button>
             </div>
           </div>
         </div>

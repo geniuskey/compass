@@ -8,11 +8,12 @@
       </div>
 
       <div class="solver-badges">
-        <button
+        <button type="button"
           v-for="solver in group.solvers"
           :key="solver.name"
           class="solver-badge"
           :class="{ active: selectedSolver === solver.name }"
+          :aria-pressed="selectedSolver === solver.name"
           @click="toggleSolver(solver.name)"
         >
           <span class="solver-name">{{ solver.name }}</span>
@@ -34,7 +35,7 @@
             <span v-if="selectedDetail.gpu" class="gpu-tag-lg">GPU</span>
             <span v-if="selectedDetail.diffable" class="diff-tag-lg">{{ t('Differentiable', '미분 가능') }}</span>
           </div>
-          <button class="solver-detail-close" :aria-label="t('Close details', '상세 정보 닫기')" @click="selectedSolver = null">&times;</button>
+          <button type="button" class="solver-detail-close" :aria-label="t('Close details', '상세 정보 닫기')" @click="selectedSolver = null">&times;</button>
         </div>
         <p class="solver-detail-desc">{{ selectedDetail.description }}</p>
         <div class="solver-detail-meta">
