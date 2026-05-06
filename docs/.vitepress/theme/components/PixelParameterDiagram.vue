@@ -16,8 +16,8 @@
 
     <p class="hint">
       {{ t(
-        'Hover a parameter row in the legend below to highlight it on the diagram. All values shown match the default 1.0 µm BSI pixel (configs/pixel/default_bsi_1um.yaml).',
-        '아래 범례의 파라미터 행에 마우스를 올리면 다이어그램에서 해당 위치가 강조됩니다. 표시된 값은 기본 1.0 µm BSI 픽셀(configs/pixel/default_bsi_1um.yaml) 기준입니다.'
+        'Hover a parameter row in the legend below to highlight it on the diagram. Dimensions follow the default 1.0 µm BSI pixel (configs/pixel/default_bsi_1um.yaml); the photodiode is drawn slightly above center so its label does not overlap the silicon-thickness callout.',
+        '아래 범례의 파라미터 행에 마우스를 올리면 다이어그램에서 해당 위치가 강조됩니다. 치수는 기본 1.0 µm BSI 픽셀(configs/pixel/default_bsi_1um.yaml) 기준이며, 라벨이 silicon.thickness 라벨과 겹치지 않도록 포토다이오드는 중앙보다 약간 위에 그려집니다.'
       ) }}
     </p>
 
@@ -827,13 +827,15 @@ const mlR = 0.48
 const mlGap = 0.04
 const shiftXIllustrative = 0.12
 
-// Photodiode (1µm pixel default): position [0,0,0.5] from pixel center, size [0.7,0.7,2.0]
-// Pixel centers at (0.5, 0.5) and (1.5, 0.5) for the bottom row of the unit_cell.
-// position[z] = 0.5 means the *top* of PD sits 0.5 µm below top of Si (z=2.5) per yaml convention.
+// Photodiode (1µm pixel default): position [0,0,0.5] from pixel center, size [0.7,0.7,2.0].
+// In the parameter diagram we draw PD slightly biased upward (position[z] = 0.2 µm) so the
+// rotated `size[dz]` label inside the PD does not align vertically with the silicon.thickness
+// label on the right margin.
 const pdSizeXY = 0.7
 const pdSizeZ = 2.0
-const pdZTop = siTop - 0.5  // 2.5
-const pdZBot = pdZTop - pdSizeZ // 0.5
+const pdPosZ = 0.2          // illustrative: PD top sits 0.2 µm below top of Si
+const pdZTop = siTop - pdPosZ
+const pdZBot = pdZTop - pdSizeZ
 
 const pdRectsXZ = [
   { x0: 0.5 - pdSizeXY / 2, x1: 0.5 + pdSizeXY / 2, zTop: pdZTop, zBot: pdZBot },
@@ -1004,7 +1006,7 @@ const legendRows = [
     meaningEn: 'PD lateral footprint per pixel',          meaningKo: '픽셀당 PD 횡방향 면적' },
   { id: 'pd_dz',     param: 'silicon.photodiode.size[dz]',     value: '2.0 µm',     color: '#c0392b',
     meaningEn: 'PD depth (z extent inside Si)',           meaningKo: '실리콘 내부 PD 깊이(z 방향 길이)' },
-  { id: 'pd_pz',     param: 'silicon.photodiode.position[z]',  value: '0.5 µm',     color: '#c0392b',
+  { id: 'pd_pz',     param: 'silicon.photodiode.position[z]',  value: '0.5 µm (default; 0.2 shown)', color: '#c0392b',
     meaningEn: 'PD top below top of Si',                  meaningKo: '실리콘 상단 기준 PD 상단까지의 거리' },
 ]
 </script>
