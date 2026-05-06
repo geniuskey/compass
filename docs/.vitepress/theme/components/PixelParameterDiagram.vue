@@ -310,7 +310,7 @@
           :font-weight="highlight === 'dti_w' ? '700' : '500'"
         >dti.width</text>
 
-        <!-- DTI depth: vertical arrow alongside the trench -->
+        <!-- DTI depth: vertical arrow alongside the trench, label below PD in silicon -->
         <line
           :x1="xToSvg(1.0) + dtiHalfWPx + 6" :y1="zToY(siTop)"
           :x2="xToSvg(1.0) + dtiHalfWPx + 6" :y2="zToY(siTop - dtiDepth)"
@@ -319,42 +319,44 @@
           marker-start="url(#arr-d)" marker-end="url(#arr-u)"
         />
         <text
-          :x="xToSvg(1.0) + dtiHalfWPx + 10" :y="zToY(siTop - dtiDepth / 2) + 3"
+          :x="xToSvg(1.0) + dtiHalfWPx + 10" :y="zToY(0.22) + 3"
           :fill="dimColor('dti_d')"
           class="dim-text" text-anchor="start"
           :font-weight="highlight === 'dti_d' ? '700' : '500'"
         >dti.depth</text>
       </g>
 
-      <!-- Photodiode size dz (vertical) and position z (offset from Si top) -->
+      <!-- Photodiode size dz (vertical, inside right PD) and position z (offset from Si top) -->
       <g class="dim-group">
-        <!-- pd.size dz on right photodiode -->
+        <!-- pd.size dz: arrow inside the right PD with rotated label -->
         <line
-          :x1="xToSvg(1.5) + 60" :y1="zToY(pdZTop)"
-          :x2="xToSvg(1.5) + 60" :y2="zToY(pdZBot)"
+          :x1="xToSvg(1.5)" :y1="zToY(pdZTop)"
+          :x2="xToSvg(1.5)" :y2="zToY(pdZBot)"
           :stroke="dimColor('pd_dz')"
           :stroke-width="highlight === 'pd_dz' ? 2 : 1"
           marker-start="url(#arr-d)" marker-end="url(#arr-u)"
         />
         <text
-          :x="xToSvg(1.5) + 64" :y="(zToY(pdZTop) + zToY(pdZBot)) / 2 + 3"
+          :x="xToSvg(1.5)" :y="(zToY(pdZTop) + zToY(pdZBot)) / 2"
           :fill="dimColor('pd_dz')"
-          class="dim-text" text-anchor="start"
+          class="dim-text" text-anchor="middle"
+          dy="-3"
+          :transform="`rotate(-90, ${xToSvg(1.5)}, ${(zToY(pdZTop) + zToY(pdZBot)) / 2})`"
           :font-weight="highlight === 'pd_dz' ? '700' : '500'"
         >photodiode.size[dz]</text>
 
-        <!-- pd.position z: top of Si to top of PD -->
+        <!-- pd.position z: top of Si to top of PD, label inside silicon gap above PD -->
         <line
-          :x1="xToSvg(0.5) - 18" :y1="zToY(siTop)"
-          :x2="xToSvg(0.5) - 18" :y2="zToY(pdZTop)"
+          :x1="xToSvg(0.5)" :y1="zToY(siTop)"
+          :x2="xToSvg(0.5)" :y2="zToY(pdZTop)"
           :stroke="dimColor('pd_pz')"
           :stroke-width="highlight === 'pd_pz' ? 2 : 1"
           marker-start="url(#arr-d)" marker-end="url(#arr-u)"
         />
         <text
-          :x="xToSvg(0.5) - 22" :y="(zToY(siTop) + zToY(pdZTop)) / 2 + 3"
+          :x="xToSvg(0.5) + 6" :y="(zToY(siTop) + zToY(pdZTop)) / 2 + 4"
           :fill="dimColor('pd_pz')"
-          class="dim-text" text-anchor="end"
+          class="dim-text" text-anchor="start"
           :font-weight="highlight === 'pd_pz' ? '700' : '500'"
         >position[z]</text>
       </g>
@@ -786,12 +788,15 @@ const xyToggleOptions: { key: XyLayerKey; labelEn: string; labelKo: string; colo
 ]
 
 // ===== XZ geometry (matches default_bsi_1um.yaml) =====
-const xzW = 720
-const xzH = 520
-const pad = { left: 110, right: 220, top: 30, bottom: 60 }
-const plotW = xzW - pad.left - pad.right
-const plotH = xzH - pad.top - pad.bottom
+// Axis equal: 100 svg-pixels per µm in both x and z.
 const totalZ = 5.58
+const totalX = 2.0  // two pixels of pitch 1 µm
+const xzScale = 100
+const plotW = totalX * xzScale       // 200
+const plotH = totalZ * xzScale       // 558
+const pad = { left: 110, right: 220, top: 30, bottom: 60 }
+const xzW = pad.left + plotW + pad.right    // 530
+const xzH = pad.top  + plotH + pad.bottom   // 648
 
 const layers = [
   { id: 'silicon', label: 'silicon', color: '#5d6d7e', zBot: 0,    zTop: 3.0 },
