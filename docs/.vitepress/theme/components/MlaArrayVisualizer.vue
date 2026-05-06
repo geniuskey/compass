@@ -187,10 +187,16 @@
         <text x="10" :y="(secPad.top + secSvgH - secPad.bottom) / 2" text-anchor="middle" class="axis-label" :transform="`rotate(-90, 10, ${(secPad.top + secSvgH - secPad.bottom) / 2})`">Z (um)</text>
       </svg>
 
-      <!-- 3D View (Plotly) -->
-      <div v-show="viewMode === '3d'" ref="plotly3dDiv" class="plotly-wrapper"></div>
-      <p v-if="viewMode === '3d' && plotlyLoading" class="loading-text">{{ t('Loading 3D engine...', '3D 엔진 로딩 중...') }}</p>
-      <p v-if="viewMode === '3d' && plotlyFailed" class="loading-text" style="color: var(--vp-c-danger-1)">{{ t('Failed to load 3D library.', '3D 라이브러리 로드에 실패했습니다.') }}</p>
+      <!-- 3D View -->
+      <div
+        v-show="viewMode === '3d'"
+        ref="surface3dDiv"
+        class="surface3d-wrapper"
+        role="img"
+        :aria-label="t('Interactive 3D microlens array surface', '인터랙티브 3D 마이크로렌즈 어레이 표면')"
+      ></div>
+      <p v-if="viewMode === '3d' && surfaceLoading" class="loading-text">{{ t('Loading 3D view...', '3D 뷰 로딩 중...') }}</p>
+      <p v-if="viewMode === '3d' && surfaceFailed" class="loading-text" style="color: var(--vp-c-danger-1)">{{ t('Failed to render 3D view.', '3D 뷰 렌더링에 실패했습니다.') }}</p>
 
       <!-- 2D Ray Trace View -->
       <svg v-if="viewMode === 'ray'" :viewBox="`0 0 ${svgW} ${svgH}`" class="mla-svg">
@@ -280,7 +286,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, nextTick } from 'vue'
 import { useLocale } from '../composables/useLocale'
 
 const { t } = useLocale()
@@ -672,102 +678,199 @@ const sectionHoverYZ = computed(() => {
   return lensZ(superDist(0, v, Rx.value, Ry.value, n.value), h.value, alpha.value).toFixed(4)
 })
 
-// ===== 3D Plotly View =====
-const plotly3dDiv = ref<HTMLElement | null>(null)
-const plotlyLoading = ref(false)
-const plotlyFailed = ref(false)
-let plotlyLib: any = null
+// ===== 3D Surface View =====
+const surface3dDiv = ref<HTMLElement | null>(null)
+const surfaceLoading = ref(false)
+const surfaceFailed = ref(false)
+let threeLib: any = null
+let orbitControlsCtor: any = null
+let threeScene: any = null
+let threeCamera: any = null
+let threeRenderer: any = null
+let threeControls: any = null
+let surfaceMesh: any = null
+let surfaceGrid: any = null
+let resizeObserver: ResizeObserver | null = null
+let animationFrame: number | null = null
 let render3dTimer: ReturnType<typeof setTimeout> | null = null
 let isUnmounted = false
 
-async function loadPlotly(): Promise<any> {
+async function loadThree(): Promise<any> {
   if (typeof window === 'undefined') return null
-  if (plotlyLib) return plotlyLib
+  if (threeLib && orbitControlsCtor) return threeLib
 
-  plotlyLoading.value = true
-  plotlyFailed.value = false
+  surfaceLoading.value = true
+  surfaceFailed.value = false
 
   try {
-    const module = await import('plotly.js-dist-min')
-    plotlyLib = (module as any).default ?? module
-    return plotlyLib
+    const [threeModule, controlsModule] = await Promise.all([
+      import('three'),
+      import('three/examples/jsm/controls/OrbitControls.js'),
+    ])
+    threeLib = threeModule
+    orbitControlsCtor = controlsModule.OrbitControls
+    return threeLib
   } catch (error) {
-    console.error('Failed to load Plotly', error)
-    plotlyFailed.value = true
+    console.error('Failed to load Three.js surface view', error)
+    surfaceFailed.value = true
     return null
   } finally {
-    plotlyLoading.value = false
+    surfaceLoading.value = false
+  }
+}
+
+function surfaceExtent() {
+  const rows = arrRows.value, cols = arrCols.value
+  if (arrayConfig.value === '1x1') {
+    const e = Math.max(Rx.value, Ry.value) * 1.4
+    return { xMin: -e, xMax: e, yMin: -e, yMax: e }
+  }
+  const hw = (cols * spacingX.value) / 2 + Rx.value * 0.2
+  const hh = (rows * spacingY.value) / 2 + Ry.value * 0.2
+  return { xMin: -hw, xMax: hw, yMin: -hh, yMax: hh }
+}
+
+function surfaceColor(tVal: number, THREE: any) {
+  const tClamped = Math.max(0, Math.min(1, tVal))
+  const palettes: Record<string, string[]> = {
+    Viridis: ['#440154', '#31688e', '#35b779', '#fde725'],
+    Plasma: ['#0d0887', '#9c179e', '#ed7953', '#f0f921'],
+    Inferno: ['#000004', '#781c6d', '#ed6925', '#fcffa4'],
+    Jet: ['#00007f', '#007fff', '#7fff7f', '#ff7f00', '#7f0000'],
+    Hot: ['#260000', '#b60000', '#ff7b00', '#ffff66'],
+  }
+  const stops = palettes[colormap3d.value] || palettes.Viridis
+  const scaled = tClamped * (stops.length - 1)
+  const idx = Math.min(stops.length - 2, Math.floor(scaled))
+  return new THREE.Color(stops[idx]).lerp(new THREE.Color(stops[idx + 1]), scaled - idx)
+}
+
+function initThreeScene(THREE: any) {
+  const div = surface3dDiv.value
+  if (!div || threeRenderer) return
+
+  const width = Math.max(div.clientWidth, 320)
+  const height = 480
+  threeScene = new THREE.Scene()
+  threeCamera = new THREE.PerspectiveCamera(42, width / height, 0.01, 100)
+  threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+  threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+  threeRenderer.setSize(width, height)
+  threeRenderer.outputColorSpace = THREE.SRGBColorSpace
+  div.innerHTML = ''
+  div.appendChild(threeRenderer.domElement)
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.55)
+  const key = new THREE.DirectionalLight(0xffffff, 0.85)
+  key.position.set(2.5, 4, 3)
+  threeScene.add(ambient, key)
+
+  threeControls = new orbitControlsCtor(threeCamera, threeRenderer.domElement)
+  threeControls.enableDamping = true
+  threeControls.dampingFactor = 0.08
+  threeControls.screenSpacePanning = false
+  resizeObserver = new ResizeObserver(resizeThreeView)
+  resizeObserver.observe(div)
+  animateThreeView()
+}
+
+function resizeThreeView() {
+  const div = surface3dDiv.value
+  if (!div || !threeRenderer || !threeCamera) return
+  const width = Math.max(div.clientWidth, 320)
+  const height = 480
+  threeCamera.aspect = width / height
+  threeCamera.updateProjectionMatrix()
+  threeRenderer.setSize(width, height)
+}
+
+function updateThreeSurface(THREE: any) {
+  const ext = surfaceExtent()
+  const res = meshRes3d.value
+  const physW = ext.xMax - ext.xMin
+  const physH = ext.yMax - ext.yMin
+  const maxDim = Math.max(physW, physH, h.value)
+  const vertices: number[] = []
+  const colors: number[] = []
+  const indices: number[] = []
+
+  for (let iy = 0; iy <= res; iy++) {
+    const py = ext.yMin + (physH * iy) / res
+    for (let ix = 0; ix <= res; ix++) {
+      const px = ext.xMin + (physW * ix) / res
+      const z = arrayZ(px, py)
+      vertices.push(px, z, py)
+      const color = surfaceColor(z / Math.max(h.value, 0.001), THREE)
+      colors.push(color.r, color.g, color.b)
+    }
+  }
+
+  for (let iy = 0; iy < res; iy++) {
+    for (let ix = 0; ix < res; ix++) {
+      const a = iy * (res + 1) + ix
+      const b = a + 1
+      const c = a + res + 1
+      const d = c + 1
+      indices.push(a, c, b, b, c, d)
+    }
+  }
+
+  if (surfaceMesh) {
+    threeScene.remove(surfaceMesh)
+    surfaceMesh.geometry.dispose()
+    surfaceMesh.material.dispose()
+    surfaceMesh = null
+  }
+  if (surfaceGrid) {
+    threeScene.remove(surfaceGrid)
+    surfaceGrid = null
+  }
+
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+  geometry.setIndex(indices)
+  geometry.computeVertexNormals()
+
+  const material = new THREE.MeshStandardMaterial({
+    vertexColors: true,
+    side: THREE.DoubleSide,
+    roughness: 0.58,
+    metalness: 0.03,
+  })
+  surfaceMesh = new THREE.Mesh(geometry, material)
+  threeScene.add(surfaceMesh)
+
+  surfaceGrid = new THREE.GridHelper(maxDim, 8, 0x9aa7b2, 0xd8dee6)
+  surfaceGrid.position.y = 0
+  threeScene.add(surfaceGrid)
+
+  threeCamera.position.set(maxDim * 0.75, Math.max(maxDim * 0.45, h.value * 2.2), maxDim * 1.1)
+  threeCamera.near = Math.max(0.01, maxDim / 1000)
+  threeCamera.far = maxDim * 20
+  threeCamera.updateProjectionMatrix()
+  threeControls.target.set(0, h.value * 0.25, 0)
+  threeControls.update()
+}
+
+function animateThreeView() {
+  if (isUnmounted) return
+  animationFrame = window.requestAnimationFrame(animateThreeView)
+  if (threeRenderer && threeScene && threeCamera) {
+    threeControls?.update()
+    threeRenderer.render(threeScene, threeCamera)
   }
 }
 
 async function render3D() {
-  const div = plotly3dDiv.value
+  const div = surface3dDiv.value
   if (!div) return
 
-  const Plotly = await loadPlotly()
-  if (!Plotly || isUnmounted) return
-
-  const rows = arrRows.value, cols = arrCols.value
-  const res = meshRes3d.value
-  const ext = (() => {
-    if (arrayConfig.value === '1x1') {
-      const e = Math.max(Rx.value, Ry.value) * 1.4
-      return { xMin: -e, xMax: e, yMin: -e, yMax: e }
-    }
-    const hw = (cols * spacingX.value) / 2 + Rx.value * 0.2
-    const hh = (rows * spacingY.value) / 2 + Ry.value * 0.2
-    return { xMin: -hw, xMax: hw, yMin: -hh, yMax: hh }
-  })()
-
-  const physW = ext.xMax - ext.xMin
-  const physH = ext.yMax - ext.yMin
-
-  const xArr: number[] = []
-  const yArr: number[] = []
-  const zArr: number[][] = []
-
-  for (let i = 0; i <= res; i++) {
-    const px = ext.xMin + (physW * i) / res
-    xArr.push(px)
-  }
-  for (let j = 0; j <= res; j++) {
-    const py = ext.yMin + (physH * j) / res
-    yArr.push(py)
-  }
-  for (let i = 0; i <= res; i++) {
-    const row: number[] = []
-    for (let j = 0; j <= res; j++) {
-      row.push(arrayZ(xArr[i], yArr[j]))
-    }
-    zArr.push(row)
-  }
-
-  const trace = {
-    x: xArr,
-    y: yArr,
-    z: zArr,
-    type: 'surface',
-    colorscale: colormap3d.value,
-    showscale: true,
-    colorbar: { title: 'Z (um)', thickness: 15, len: 0.7 },
-  }
-
-  const maxDim = Math.max(physW, physH)
-  const layout = {
-    margin: { l: 0, r: 0, t: 30, b: 0 },
-    scene: {
-      xaxis: { title: 'X (um)' },
-      yaxis: { title: 'Y (um)' },
-      zaxis: { title: 'Z (um)', range: [0, h.value * 1.5] },
-      aspectmode: 'manual' as const,
-      aspectratio: { x: physW / maxDim, y: physH / maxDim, z: (h.value * 1.5) / maxDim },
-    },
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    height: 480,
-  }
-
-  Plotly.react(div, [trace], layout, { responsive: true })
+  const THREE = await loadThree()
+  if (!THREE || isUnmounted) return
+  initThreeScene(THREE)
+  updateThreeSurface(THREE)
+  resizeThreeView()
 }
 
 function debouncedRender3D() {
@@ -781,8 +884,17 @@ onBeforeUnmount(() => {
     clearTimeout(render3dTimer)
     render3dTimer = null
   }
-  if (plotly3dDiv.value && plotlyLib?.purge) {
-    plotlyLib.purge(plotly3dDiv.value)
+  if (animationFrame) {
+    window.cancelAnimationFrame(animationFrame)
+    animationFrame = null
+  }
+  resizeObserver?.disconnect()
+  threeControls?.dispose()
+  surfaceMesh?.geometry?.dispose()
+  surfaceMesh?.material?.dispose()
+  threeRenderer?.dispose()
+  if (surface3dDiv.value && threeRenderer?.domElement?.parentElement === surface3dDiv.value) {
+    surface3dDiv.value.removeChild(threeRenderer.domElement)
   }
 })
 
@@ -1070,13 +1182,19 @@ const fillFactor = computed(() => {
   width: 100%;
   max-width: 580px;
 }
-.plotly-wrapper {
+.surface3d-wrapper {
   width: 100%;
   max-width: 620px;
+  height: 480px;
   margin: 0 auto;
   border-radius: 6px;
   border: 1px solid var(--vp-c-divider);
   overflow: hidden;
+  background: linear-gradient(180deg, var(--vp-c-bg), var(--vp-c-bg-soft));
+  touch-action: none;
+}
+.surface3d-wrapper canvas {
+  display: block;
 }
 .loading-text {
   text-align: center;
