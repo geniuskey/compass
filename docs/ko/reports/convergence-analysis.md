@@ -4,7 +4,7 @@ outline: deep
 
 # RCWA/FDTD 수렴 분석 리포트
 
-_생성일: 2026-05-05. 로컬 `outputs/` 벤치마크 산출물에서 생성됨._
+_생성일: 2026-05-07. 로컬 `outputs/` 벤치마크 산출물에서 생성됨._
 
 이 페이지는 Python 레벨 벤치마크 결과를 GitHub Pages에서 볼 수 있는 리포트 형태로 정리한다. 큰 원본 산출물은 `outputs/`에 두고, 선별된 그림과 표만 `docs/public/reports/convergence/`로 복사한다.
 
@@ -154,9 +154,9 @@ Pixel benchmark는 실제 `PixelStack` 경로를 사용한다. FDTI/BDTI 옵션,
 
 ### Pixel plots
 
-아래 이미지는 benchmark output 폴더에서 복사한 것이다. geometry와 field slice 그림은 숫자 metric만으로 놓치기 쉬운 방향, indexing, source-placement 문제를 확인하는 데 중요하다.
+Benchmark 폴더에는 run마다 geometry와 RCWA R/T/A 이미지가 들어 있지만, 두 그림은 같은 물리적 2x2 BSI stack과 같은 RCWA 기준값을 사용하므로 의도적으로 동일하다. 아래에는 한 번만 표시한다. Run별 섹션에는 grid, runtime, source 설정에 따라 달라지는 FDTD crosstalk matrix와 field slice만 표시한다.
 
-#### 2x2 pixel scalar FDTD, 44x44x118, 950 steps
+#### 공통 geometry 및 RCWA 기준
 
 ![01 Geometry Slices](/reports/convergence/pixel_44x44x118_steps950/01_geometry_slices.png)
 
@@ -165,6 +165,8 @@ Pixel benchmark는 실제 `PixelStack` 경로를 사용한다. FDTI/BDTI 옵션,
 ![02 Rcwa Rta](/reports/convergence/pixel_44x44x118_steps950/02_rcwa_rta.png)
 
 *02 Rcwa Rta*
+
+#### 2x2 pixel scalar FDTD, 44x44x118, 950 steps
 
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_44x44x118_steps950/03_fdtd_crosstalk_matrix.png)
 
@@ -176,14 +178,6 @@ Pixel benchmark는 실제 `PixelStack` 경로를 사용한다. FDTI/BDTI 옵션,
 
 #### 2x2 pixel scalar FDTD, 44x44x118, 2200 steps
 
-![01 Geometry Slices](/reports/convergence/pixel_44x44x118_steps2200/01_geometry_slices.png)
-
-*01 Geometry Slices*
-
-![02 Rcwa Rta](/reports/convergence/pixel_44x44x118_steps2200/02_rcwa_rta.png)
-
-*02 Rcwa Rta*
-
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_44x44x118_steps2200/03_fdtd_crosstalk_matrix.png)
 
 *03 Fdtd Crosstalk Matrix*
@@ -193,14 +187,6 @@ Pixel benchmark는 실제 `PixelStack` 경로를 사용한다. FDTI/BDTI 옵션,
 *04 Fdtd Field Slices*
 
 #### 2x2 pixel scalar FDTD, 44x44x118, 3500 steps
-
-![01 Geometry Slices](/reports/convergence/pixel_44x44x118_steps3500/01_geometry_slices.png)
-
-*01 Geometry Slices*
-
-![02 Rcwa Rta](/reports/convergence/pixel_44x44x118_steps3500/02_rcwa_rta.png)
-
-*02 Rcwa Rta*
 
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_44x44x118_steps3500/03_fdtd_crosstalk_matrix.png)
 
@@ -212,14 +198,6 @@ Pixel benchmark는 실제 `PixelStack` 경로를 사용한다. FDTI/BDTI 옵션,
 
 #### 2x2 pixel scalar FDTD, 64x64x170, 3500 steps
 
-![01 Geometry Slices](/reports/convergence/pixel_64x64x170_steps3500/01_geometry_slices.png)
-
-*01 Geometry Slices*
-
-![02 Rcwa Rta](/reports/convergence/pixel_64x64x170_steps3500/02_rcwa_rta.png)
-
-*02 Rcwa Rta*
-
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_64x64x170_steps3500/03_fdtd_crosstalk_matrix.png)
 
 *03 Fdtd Crosstalk Matrix*
@@ -230,14 +208,6 @@ Pixel benchmark는 실제 `PixelStack` 경로를 사용한다. FDTI/BDTI 옵션,
 
 #### 2x2 pixel scalar FDTD, 64x64x170, 5200 steps
 
-![01 Geometry Slices](/reports/convergence/pixel_64x64x170_steps5200/01_geometry_slices.png)
-
-*01 Geometry Slices*
-
-![02 Rcwa Rta](/reports/convergence/pixel_64x64x170_steps5200/02_rcwa_rta.png)
-
-*02 Rcwa Rta*
-
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_64x64x170_steps5200/03_fdtd_crosstalk_matrix.png)
 
 *03 Fdtd Crosstalk Matrix*
@@ -247,14 +217,6 @@ Pixel benchmark는 실제 `PixelStack` 경로를 사용한다. FDTI/BDTI 옵션,
 *04 Fdtd Field Slices*
 
 #### 2x2 pixel scalar FDTD, 128x128x340, single source, 10400 steps
-
-![01 Geometry Slices](/reports/convergence/pixel_128x128x340_single_steps10400/01_geometry_slices.png)
-
-*01 Geometry Slices*
-
-![02 Rcwa Rta](/reports/convergence/pixel_128x128x340_single_steps10400/02_rcwa_rta.png)
-
-*02 Rcwa Rta*
 
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_128x128x340_single_steps10400/03_fdtd_crosstalk_matrix.png)
 

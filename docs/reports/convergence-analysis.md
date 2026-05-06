@@ -4,7 +4,7 @@ outline: deep
 
 # RCWA/FDTD Convergence Analysis Report
 
-_Generated on 2026-05-05 from local `outputs/` benchmark artifacts._
+_Generated on 2026-05-07 from local `outputs/` benchmark artifacts._
 
 This page turns the Python-level benchmark outputs into a publication-style report. The source JSON and plots stay in `outputs/` for local iteration, while selected figures and tables are promoted to `docs/public/reports/convergence/` so the same evidence can be served by GitHub Pages.
 
@@ -154,9 +154,9 @@ The pixel benchmark uses the real `PixelStack` path with FDTI/BDTI options, mate
 
 ### Pixel plots
 
-The images below are copied from the benchmark output folders. Use the geometry and field-slice plots to catch direction, indexing, and source-placement issues that scalar metrics alone can hide.
+The benchmark folders include geometry and RCWA R/T/A images for every run, but those two plots are intentionally identical because each run uses the same physical 2x2 BSI stack and the same RCWA reference. They are shown once below. The per-run sections show only the FDTD crosstalk matrix and field slices, which change with grid, runtime, and source settings.
 
-#### 2x2 pixel scalar FDTD, 44x44x118, 950 steps
+#### Shared geometry and RCWA reference
 
 ![01 Geometry Slices](/reports/convergence/pixel_44x44x118_steps950/01_geometry_slices.png)
 
@@ -165,6 +165,8 @@ The images below are copied from the benchmark output folders. Use the geometry 
 ![02 Rcwa Rta](/reports/convergence/pixel_44x44x118_steps950/02_rcwa_rta.png)
 
 *02 Rcwa Rta*
+
+#### 2x2 pixel scalar FDTD, 44x44x118, 950 steps
 
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_44x44x118_steps950/03_fdtd_crosstalk_matrix.png)
 
@@ -176,14 +178,6 @@ The images below are copied from the benchmark output folders. Use the geometry 
 
 #### 2x2 pixel scalar FDTD, 44x44x118, 2200 steps
 
-![01 Geometry Slices](/reports/convergence/pixel_44x44x118_steps2200/01_geometry_slices.png)
-
-*01 Geometry Slices*
-
-![02 Rcwa Rta](/reports/convergence/pixel_44x44x118_steps2200/02_rcwa_rta.png)
-
-*02 Rcwa Rta*
-
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_44x44x118_steps2200/03_fdtd_crosstalk_matrix.png)
 
 *03 Fdtd Crosstalk Matrix*
@@ -193,14 +187,6 @@ The images below are copied from the benchmark output folders. Use the geometry 
 *04 Fdtd Field Slices*
 
 #### 2x2 pixel scalar FDTD, 44x44x118, 3500 steps
-
-![01 Geometry Slices](/reports/convergence/pixel_44x44x118_steps3500/01_geometry_slices.png)
-
-*01 Geometry Slices*
-
-![02 Rcwa Rta](/reports/convergence/pixel_44x44x118_steps3500/02_rcwa_rta.png)
-
-*02 Rcwa Rta*
 
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_44x44x118_steps3500/03_fdtd_crosstalk_matrix.png)
 
@@ -212,14 +198,6 @@ The images below are copied from the benchmark output folders. Use the geometry 
 
 #### 2x2 pixel scalar FDTD, 64x64x170, 3500 steps
 
-![01 Geometry Slices](/reports/convergence/pixel_64x64x170_steps3500/01_geometry_slices.png)
-
-*01 Geometry Slices*
-
-![02 Rcwa Rta](/reports/convergence/pixel_64x64x170_steps3500/02_rcwa_rta.png)
-
-*02 Rcwa Rta*
-
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_64x64x170_steps3500/03_fdtd_crosstalk_matrix.png)
 
 *03 Fdtd Crosstalk Matrix*
@@ -230,14 +208,6 @@ The images below are copied from the benchmark output folders. Use the geometry 
 
 #### 2x2 pixel scalar FDTD, 64x64x170, 5200 steps
 
-![01 Geometry Slices](/reports/convergence/pixel_64x64x170_steps5200/01_geometry_slices.png)
-
-*01 Geometry Slices*
-
-![02 Rcwa Rta](/reports/convergence/pixel_64x64x170_steps5200/02_rcwa_rta.png)
-
-*02 Rcwa Rta*
-
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_64x64x170_steps5200/03_fdtd_crosstalk_matrix.png)
 
 *03 Fdtd Crosstalk Matrix*
@@ -247,14 +217,6 @@ The images below are copied from the benchmark output folders. Use the geometry 
 *04 Fdtd Field Slices*
 
 #### 2x2 pixel scalar FDTD, 128x128x340, single source, 10400 steps
-
-![01 Geometry Slices](/reports/convergence/pixel_128x128x340_single_steps10400/01_geometry_slices.png)
-
-*01 Geometry Slices*
-
-![02 Rcwa Rta](/reports/convergence/pixel_128x128x340_single_steps10400/02_rcwa_rta.png)
-
-*02 Rcwa Rta*
 
 ![03 Fdtd Crosstalk Matrix](/reports/convergence/pixel_128x128x340_single_steps10400/03_fdtd_crosstalk_matrix.png)
 

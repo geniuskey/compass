@@ -8,7 +8,7 @@ Publication-style reports generated from Python benchmark artifacts. These pages
 
 ## Available reports
 
-- [RCWA/FDTD Convergence Analysis](./convergence-analysis.md) (generated 2026-05-05)
+- [RCWA/FDTD Convergence Analysis](./convergence-analysis.md) (generated 2026-05-07)
 
 ## What belongs here
 

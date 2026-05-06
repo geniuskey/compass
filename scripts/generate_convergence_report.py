@@ -223,6 +223,30 @@ def image_block(images: list[dict[str, str]], limit: int | None = None) -> str:
     return "\n".join(lines).strip()
 
 
+def images_named(images: list[dict[str, str]], names: set[str]) -> list[dict[str, str]]:
+    return [image for image in images if image["path"].rsplit("/", 1)[-1] in names]
+
+
+def first_pixel_shared_images(items: list[dict[str, Any]]) -> list[dict[str, str]]:
+    for item in items:
+        if item["metric"] is None:
+            continue
+        shared = images_named(
+            item["images"],
+            {"01_geometry_slices.png", "02_rcwa_rta.png"},
+        )
+        if shared:
+            return shared
+    return []
+
+
+def pixel_run_images(item: dict[str, Any]) -> list[dict[str, str]]:
+    return images_named(
+        item["images"],
+        {"03_fdtd_crosstalk_matrix.png", "04_fdtd_field_slices.png"},
+    )
+
+
 def first_metadata(metric: dict[str, Any], mode: str) -> dict[str, Any]:
     signals = metric.get("pd_signals", {}).get(mode, {})
     if not isinstance(signals, dict) or not signals:
@@ -635,9 +659,15 @@ def build_english_report(
             "",
             "### Pixel plots",
             "",
-            "The images below are copied from the benchmark output folders. Use the geometry "
-            "and field-slice plots to catch direction, indexing, and source-placement "
-            "issues that scalar metrics alone can hide.",
+            "The benchmark folders include geometry and RCWA R/T/A images for every run, "
+            "but those two plots are intentionally identical because each run uses the "
+            "same physical 2x2 BSI stack and the same RCWA reference. They are shown once "
+            "below. The per-run sections show only the FDTD crosstalk matrix and field "
+            "slices, which change with grid, runtime, and source settings.",
+            "",
+            "#### Shared geometry and RCWA reference",
+            "",
+            image_block(first_pixel_shared_images(pixel)),
             "",
         ]
     )
@@ -645,11 +675,12 @@ def build_english_report(
     for item in pixel:
         if item["metric"] is None:
             continue
+        run_images = pixel_run_images(item)
         lines.extend(
             [
                 f"#### {item['source'].title}",
                 "",
-                image_block(item["images"], limit=4),
+                image_block(run_images),
                 "",
             ]
         )
@@ -878,9 +909,15 @@ def build_korean_report(
             "",
             "### Pixel plots",
             "",
-            "아래 이미지는 benchmark output 폴더에서 복사한 것이다. geometry와 field slice "
-            "그림은 숫자 metric만으로 놓치기 쉬운 방향, indexing, source-placement 문제를 "
-            "확인하는 데 중요하다.",
+            "Benchmark 폴더에는 run마다 geometry와 RCWA R/T/A 이미지가 들어 있지만, "
+            "두 그림은 같은 물리적 2x2 BSI stack과 같은 RCWA 기준값을 사용하므로 "
+            "의도적으로 동일하다. 아래에는 한 번만 표시한다. Run별 섹션에는 grid, "
+            "runtime, source 설정에 따라 달라지는 FDTD crosstalk matrix와 field slice만 "
+            "표시한다.",
+            "",
+            "#### 공통 geometry 및 RCWA 기준",
+            "",
+            image_block(first_pixel_shared_images(groups["pixel"])),
             "",
         ]
     )
@@ -888,11 +925,12 @@ def build_korean_report(
     for item in groups["pixel"]:
         if item["metric"] is None:
             continue
+        run_images = pixel_run_images(item)
         lines.extend(
             [
                 f"#### {item['source'].title}",
                 "",
-                image_block(item["images"], limit=4),
+                image_block(run_images),
                 "",
             ]
         )
