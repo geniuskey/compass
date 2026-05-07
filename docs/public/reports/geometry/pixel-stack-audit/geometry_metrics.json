@@ -1,0 +1,167 @@
+{
+  "generated_on": "2026-05-08",
+  "samples": [
+    {
+      "key": "generic_bsi",
+      "label": "Generic 1.0 um BSI",
+      "pitch_um": 1.0,
+      "unit_cell": "2x2",
+      "domain_um": [
+        2.0,
+        2.0
+      ],
+      "total_height_um": 5.497999999999999,
+      "color_filter_stack_um": 0.648,
+      "grid_thickness_um": 0.468,
+      "grid_width_um": 0.08,
+      "red_thickness_um": 0.624,
+      "green_thickness_um": 0.6,
+      "blue_thickness_um": 0.648,
+      "min_contact_angle_deg": 62.0,
+      "color_filter_slice_count": 11,
+      "photodiode_xy_fill": 0.48999999999999994,
+      "dti_width_um": 0.075,
+      "checks": {
+        "cf_stack_covers_all_channels": true,
+        "grid_not_taller_than_stack": true,
+        "relief_uses_multiple_slices": true,
+        "photodiode_inside_pixel": true
+      }
+    },
+    {
+      "key": "sample_p0p56um_4x4ocl",
+      "label": "0.56 um 4x4 OCL",
+      "pitch_um": 0.56,
+      "unit_cell": "8x8",
+      "domain_um": [
+        4.48,
+        4.48
+      ],
+      "total_height_um": 4.584,
+      "color_filter_stack_um": 0.594,
+      "grid_thickness_um": 0.429,
+      "grid_width_um": 0.067,
+      "red_thickness_um": 0.572,
+      "green_thickness_um": 0.55,
+      "blue_thickness_um": 0.594,
+      "min_contact_angle_deg": 62.0,
+      "color_filter_slice_count": 11,
+      "photodiode_xy_fill": 0.48999999999999994,
+      "dti_width_um": 0.064,
+      "checks": {
+        "cf_stack_covers_all_channels": true,
+        "grid_not_taller_than_stack": true,
+        "relief_uses_multiple_slices": true,
+        "photodiode_inside_pixel": true
+      }
+    },
+    {
+      "key": "sample_p1p0um_quadbayer",
+      "label": "1.0 um Quad Bayer",
+      "pitch_um": 1.0,
+      "unit_cell": "4x4",
+      "domain_um": [
+        4.0,
+        4.0
+      ],
+      "total_height_um": 5.497999999999999,
+      "color_filter_stack_um": 0.648,
+      "grid_thickness_um": 0.468,
+      "grid_width_um": 0.08,
+      "red_thickness_um": 0.624,
+      "green_thickness_um": 0.6,
+      "blue_thickness_um": 0.648,
+      "min_contact_angle_deg": 62.0,
+      "color_filter_slice_count": 11,
+      "photodiode_xy_fill": 0.48999999999999994,
+      "dti_width_um": 0.075,
+      "checks": {
+        "cf_stack_covers_all_channels": true,
+        "grid_not_taller_than_stack": true,
+        "relief_uses_multiple_slices": true,
+        "photodiode_inside_pixel": true
+      }
+    },
+    {
+      "key": "sample_p1p22um_2x2ocl",
+      "label": "1.22 um 2x2 OCL",
+      "pitch_um": 1.22,
+      "unit_cell": "4x4",
+      "domain_um": [
+        4.88,
+        4.88
+      ],
+      "total_height_um": 6.036,
+      "color_filter_stack_um": 0.756,
+      "grid_thickness_um": 0.546,
+      "grid_width_um": 0.087,
+      "red_thickness_um": 0.728,
+      "green_thickness_um": 0.7,
+      "blue_thickness_um": 0.756,
+      "min_contact_angle_deg": 62.0,
+      "color_filter_slice_count": 11,
+      "photodiode_xy_fill": 0.48999999999999994,
+      "dti_width_um": 0.081,
+      "checks": {
+        "cf_stack_covers_all_channels": true,
+        "grid_not_taller_than_stack": true,
+        "relief_uses_multiple_slices": true,
+        "photodiode_inside_pixel": true
+      }
+    },
+    {
+      "key": "sample_p1p6um_split_pd",
+      "label": "1.6 um split PD",
+      "pitch_um": 1.6,
+      "unit_cell": "2x2",
+      "domain_um": [
+        3.2,
+        3.2
+      ],
+      "total_height_um": 6.97,
+      "color_filter_stack_um": 0.94,
+      "grid_thickness_um": 0.679,
+      "grid_width_um": 0.098,
+      "red_thickness_um": 0.905,
+      "green_thickness_um": 0.87,
+      "blue_thickness_um": 0.94,
+      "min_contact_angle_deg": 62.0,
+      "color_filter_slice_count": 11,
+      "photodiode_xy_fill": 0.7743999999999999,
+      "dti_width_um": 0.09,
+      "checks": {
+        "cf_stack_covers_all_channels": true,
+        "grid_not_taller_than_stack": true,
+        "relief_uses_multiple_slices": true,
+        "photodiode_inside_pixel": true
+      }
+    },
+    {
+      "key": "sample_p1p2um_lofic",
+      "label": "1.2 um LOFIC",
+      "pitch_um": 1.2,
+      "unit_cell": "4x4",
+      "domain_um": [
+        4.8,
+        4.8
+      ],
+      "total_height_um": 5.984999999999999,
+      "color_filter_stack_um": 0.745,
+      "grid_thickness_um": 0.538,
+      "grid_width_um": 0.086,
+      "red_thickness_um": 0.718,
+      "green_thickness_um": 0.69,
+      "blue_thickness_um": 0.745,
+      "min_contact_angle_deg": 62.0,
+      "color_filter_slice_count": 11,
+      "photodiode_xy_fill": 0.42250000000000004,
+      "dti_width_um": 0.08,
+      "checks": {
+        "cf_stack_covers_all_channels": true,
+        "grid_not_taller_than_stack": true,
+        "relief_uses_multiple_slices": true,
+        "photodiode_inside_pixel": true
+      }
+    }
+  ]
+}

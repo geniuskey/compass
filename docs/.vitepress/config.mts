@@ -123,9 +123,15 @@ const researchSidebar = [
 ]
 
 const reportsSidebar = [
-  { text: 'Reports', items: [
+  { text: 'Reports', collapsed: false, items: [
     { text: 'Overview', link: '/reports/' },
+  ]},
+  { text: 'Solver Validation', collapsed: false, items: [
     { text: 'RCWA/FDTD Convergence', link: '/reports/convergence-analysis' },
+  ]},
+  { text: 'Geometry Validation', collapsed: false, items: [
+    { text: 'Pixel Stack Geometry Audit', link: '/reports/pixel-stack-geometry-audit' },
+    { text: 'Color Filter Relief Sensitivity', link: '/reports/color-filter-relief-sensitivity' },
   ]}
 ]
 
@@ -262,9 +268,15 @@ const researchSidebarKo = [
 ]
 
 const reportsSidebarKo = [
-  { text: '리포트', items: [
+  { text: '리포트', collapsed: false, items: [
     { text: '개요', link: '/ko/reports/' },
+  ]},
+  { text: '솔버 검증', collapsed: false, items: [
     { text: 'RCWA/FDTD 수렴', link: '/ko/reports/convergence-analysis' },
+  ]},
+  { text: 'Geometry 검증', collapsed: false, items: [
+    { text: '픽셀 스택 Geometry 감사', link: '/ko/reports/pixel-stack-geometry-audit' },
+    { text: '컬러 필터 Relief 민감도', link: '/ko/reports/color-filter-relief-sensitivity' },
   ]}
 ]
 

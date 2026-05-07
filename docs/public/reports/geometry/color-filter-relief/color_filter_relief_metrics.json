@@ -1,0 +1,32 @@
+{
+  "generated_on": "2026-05-08",
+  "pitch_um": 1.0,
+  "grid_width_um": 0.08,
+  "grid_thickness_um": 0.468,
+  "rows": [
+    {
+      "color": "R",
+      "material": "cf_red",
+      "thickness_um": 0.624,
+      "protrusion_above_grid_um": 0.15599999999999997,
+      "contact_angle_deg": 66.0,
+      "top_area_fraction_of_pitch": 0.6100994794458521
+    },
+    {
+      "color": "G",
+      "material": "cf_green",
+      "thickness_um": 0.6,
+      "protrusion_above_grid_um": 0.13199999999999995,
+      "contact_angle_deg": 72.0,
+      "top_area_fraction_of_pitch": 0.6959250108539733
+    },
+    {
+      "color": "B",
+      "material": "cf_blue",
+      "thickness_um": 0.648,
+      "protrusion_above_grid_um": 0.18,
+      "contact_angle_deg": 62.0,
+      "top_area_fraction_of_pitch": 0.5308355260628599
+    }
+  ]
+}
