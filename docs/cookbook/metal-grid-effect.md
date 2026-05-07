@@ -178,6 +178,42 @@ plt.savefig("grid_width_sweep.png", dpi=150)
 Numbers shown above are illustrative outputs from one specific run. They depend on solver version, materials, hardware (GPU vs CPU, fp32 vs fp64), and config. **Always re-run the recipe in your environment to validate** before drawing conclusions.
 :::
 
+## Rounded-rectangle CF corners
+
+Real CF photolithography rounds the four corners of each color filter cell. Set
+`grid.corner_radius` to model each CF as a rounded rectangle (same `r` at all
+four corners); the metal grid is then the complement within the unit cell.
+`corner_radius = 0` keeps the original sharp-cornered grid.
+
+```python
+corner_radii = [0.0, 0.05, 0.10, 0.15]
+results_vs_radius = []
+
+for r in corner_radii:
+    cfg = copy.deepcopy(base_config)
+    cfg["pixel"]["layers"]["color_filter"]["grid"]["enabled"] = True
+    cfg["pixel"]["layers"]["color_filter"]["grid"]["width"] = 0.05
+    cfg["pixel"]["layers"]["color_filter"]["grid"]["corner_radius"] = r
+    results_vs_radius.append(SingleRunner.run(cfg))
+    print(f"corner_radius {r*1000:.0f} nm: done")
+
+fig, ax = plt.subplots(figsize=(10, 6))
+plot_qe_comparison(
+    results=results_vs_radius,
+    labels=[f"r={r*1000:.0f}nm" for r in corner_radii],
+    ax=ax,
+)
+ax.set_title("QE vs CF corner radius (sharp -> rounded)")
+plt.tight_layout()
+plt.savefig("grid_corner_radius_sweep.png", dpi=150)
+```
+
+Increasing `r` enlarges the metal area near the four-pixel intersections, so the
+trend usually mirrors a small effective grid-width increase: peak QE drops
+slightly while diagonal-neighbor crosstalk drops more than edge-neighbor
+crosstalk. `r` is auto-clamped to `(pitch - grid.width) / 2`; at that limit the
+CF degenerates into an inscribed circle.
+
 ## See also
 
 - [Analysis](/reference/analysis)

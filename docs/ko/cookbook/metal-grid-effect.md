@@ -178,6 +178,42 @@ plt.savefig("grid_width_sweep.png", dpi=150)
 위에 표시된 수치는 특정 실행에서 얻은 예시 값입니다. 솔버 버전, 재료, 하드웨어(GPU/CPU, fp32/fp64), 설정에 따라 달라집니다. **결론을 내리기 전에 자신의 환경에서 직접 레시피를 다시 실행하여 검증하세요.**
 :::
 
+## CF 모서리 라운딩 (Rounded rectangle)
+
+실제 CF 포토리소그래피 공정에서는 각 컬러 필터 셀의 네 모서리가 둥글게
+형성됩니다. `grid.corner_radius`를 지정하면 각 CF 셀이 네 모서리 모두 동일한
+반경 `r`을 갖는 rounded rectangle로 모델링되고, 메탈 격자는 단위 셀에서
+그 보집합으로 채워집니다. `corner_radius = 0`이면 기존 직각 격자와 동일합니다.
+
+```python
+corner_radii = [0.0, 0.05, 0.10, 0.15]
+results_vs_radius = []
+
+for r in corner_radii:
+    cfg = copy.deepcopy(base_config)
+    cfg["pixel"]["layers"]["color_filter"]["grid"]["enabled"] = True
+    cfg["pixel"]["layers"]["color_filter"]["grid"]["width"] = 0.05
+    cfg["pixel"]["layers"]["color_filter"]["grid"]["corner_radius"] = r
+    results_vs_radius.append(SingleRunner.run(cfg))
+    print(f"corner_radius {r*1000:.0f} nm: done")
+
+fig, ax = plt.subplots(figsize=(10, 6))
+plot_qe_comparison(
+    results=results_vs_radius,
+    labels=[f"r={r*1000:.0f}nm" for r in corner_radii],
+    ax=ax,
+)
+ax.set_title("QE vs CF 모서리 반경 (sharp -> rounded)")
+plt.tight_layout()
+plt.savefig("grid_corner_radius_sweep.png", dpi=150)
+```
+
+`r`이 커질수록 4-픽셀 교차 지점 부근의 메탈 면적이 늘어나므로, 대체로
+유효 격자 폭이 살짝 커진 것과 비슷한 경향이 나타납니다 — 피크 QE가 약간
+감소하고, 대각 이웃(diagonal neighbor) 크로스토크 감소 폭이 변(edge)
+이웃보다 더 큽니다. `r`은 `(pitch - grid.width) / 2`로 자동 클램프되며,
+이 한계에서는 CF가 내접원(inscribed circle)으로 수렴합니다.
+
 ## 함께 보기
 
 - [분석(Analysis)](/ko/reference/analysis)

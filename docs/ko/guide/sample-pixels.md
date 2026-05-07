@@ -44,6 +44,7 @@ python scripts/run_simulation.py pixel=sample_p1p2um_lofic source=cone_illuminat
 - **4×4 같은 색 슈퍼셀** 색필터 (16-cell 비닝); 8×8 unit cell.
 - **고굴절률 마이크로렌즈** — `MaterialDB` 의 `polymer_hri_n1p70` (TiO₂-doped polymer, n ≈ 1.70) 항목으로 모델링.
 - **F-DTI SiO₂ 채움** (크로스토크 감소를 위한 산화막 채움 DTI).
+- **rounded rectangle CF 격자** (`grid.corner_radius = 0.05` µm) — sub-µm 피치에서의 포토리소그래피 모서리 라운딩 모사.
 
 ### `sample_p1p0um_quadbayer` — 1.0 µm Quad Bayer
 

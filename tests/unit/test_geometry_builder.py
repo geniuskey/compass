@@ -193,3 +193,74 @@ class TestDtiGrid:
             nx=100, ny=100, pitch=1.0, unit_cell=(2, 2), dti_width=0.0,
         )
         assert np.sum(mask) == 0
+
+
+class TestMetalGridRounded:
+    """Tests for the rounded-rectangle metal grid (corner_radius > 0)."""
+
+    def test_sharp_fallback_matches_dti(self):
+        """corner_radius=0 must be identical to dti_grid."""
+        sharp = GeometryBuilder.metal_grid(
+            nx=64, ny=64, pitch=1.0, unit_cell=(2, 2), grid_width=0.05,
+        )
+        dti = GeometryBuilder.dti_grid(
+            nx=64, ny=64, pitch=1.0, unit_cell=(2, 2), dti_width=0.05,
+        )
+        assert np.array_equal(sharp, dti)
+
+    def test_rounded_has_more_metal_than_sharp(self):
+        """Rounding the CF corners must increase the metal area."""
+        sharp = GeometryBuilder.metal_grid(
+            nx=128, ny=128, pitch=1.0, unit_cell=(2, 2), grid_width=0.05,
+        )
+        rounded = GeometryBuilder.metal_grid(
+            nx=128, ny=128, pitch=1.0, unit_cell=(2, 2),
+            grid_width=0.05, corner_radius=0.1,
+        )
+        assert rounded.mean() > sharp.mean()
+
+    def test_metal_area_monotonic_in_radius(self):
+        """Metal fraction should grow monotonically with corner_radius."""
+        fractions = []
+        for r in [0.0, 0.05, 0.1, 0.2, 0.3]:
+            mask = GeometryBuilder.metal_grid(
+                nx=128, ny=128, pitch=1.0, unit_cell=(2, 2),
+                grid_width=0.05, corner_radius=r,
+            )
+            fractions.append(mask.mean())
+        for a, b in zip(fractions, fractions[1:]):
+            assert b >= a - 1e-12
+
+    def test_per_pixel_symmetry(self):
+        """Each pixel's CF should be symmetric in x and y about its center."""
+        mask = GeometryBuilder.metal_grid(
+            nx=64, ny=64, pitch=1.0, unit_cell=(1, 1),
+            grid_width=0.05, corner_radius=0.15,
+        )
+        assert np.array_equal(mask, mask[::-1, :])
+        assert np.array_equal(mask, mask[:, ::-1])
+
+    def test_radius_clamped_to_inner_half(self):
+        """Oversized r must clamp; CF becomes the inscribed circle."""
+        nx = ny = 256
+        pitch = 1.0
+        gw = 0.05
+        inner_half = (pitch - gw) / 2.0
+        mask = GeometryBuilder.metal_grid(
+            nx=nx, ny=ny, pitch=pitch, unit_cell=(1, 1),
+            grid_width=gw, corner_radius=10.0,
+        )
+        # CF area ≈ π r²; metal area ≈ pitch² - π r²
+        cf_fraction = 1.0 - mask.mean()
+        expected = np.pi * inner_half**2 / (pitch * pitch)
+        assert abs(cf_fraction - expected) < 0.01
+
+    def test_mask_dtype_and_range(self):
+        """Mask must be float64 with values in {0, 1}."""
+        mask = GeometryBuilder.metal_grid(
+            nx=32, ny=32, pitch=1.0, unit_cell=(2, 2),
+            grid_width=0.05, corner_radius=0.1,
+        )
+        assert mask.dtype == np.float64
+        unique = np.unique(mask)
+        assert set(unique.tolist()).issubset({0.0, 1.0})
