@@ -328,22 +328,20 @@
 
       <!-- Photodiode size dz (vertical, inside right PD) and position z (offset from Si top) -->
       <g class="dim-group">
-        <!-- pd.size dz: arrow inside the right PD with rotated label -->
+        <!-- pd.size dz: horizontal label at PD top, arrow below it spanning the rest of PD -->
+        <text
+          :x="xToSvg(1.5)" :y="zToY(pdZTop) + 12"
+          :fill="dimColor('pd_dz')"
+          class="dim-text" text-anchor="middle"
+          :font-weight="highlight === 'pd_dz' ? '700' : '500'"
+        >size[dz]</text>
         <line
-          :x1="xToSvg(1.5)" :y1="zToY(pdZTop)"
-          :x2="xToSvg(1.5)" :y2="zToY(pdZBot)"
+          :x1="xToSvg(1.5)" :y1="zToY(pdZTop) + 18"
+          :x2="xToSvg(1.5)" :y2="zToY(pdZBot) - 2"
           :stroke="dimColor('pd_dz')"
           :stroke-width="highlight === 'pd_dz' ? 2 : 1"
           marker-start="url(#arr-d)" marker-end="url(#arr-u)"
         />
-        <text
-          :x="xToSvg(1.5)" :y="(zToY(pdZTop) + zToY(pdZBot)) / 2"
-          :fill="dimColor('pd_dz')"
-          class="dim-text" text-anchor="middle"
-          dy="-3"
-          :transform="`rotate(-90, ${xToSvg(1.5)}, ${(zToY(pdZTop) + zToY(pdZBot)) / 2})`"
-          :font-weight="highlight === 'pd_dz' ? '700' : '500'"
-        >photodiode.size[dz]</text>
 
         <!-- pd.position z: top of Si to top of PD, label inside silicon gap above PD -->
         <line
