@@ -264,3 +264,7 @@ PYTHONPATH=. python3.11 scripts/convergence_study.py --sweep angle_per_color
 9. **Blue channel converges slower** than red/green in per-color studies due to shorter wavelength features
 10. **Cross-solver per-color gap is largest for blue** (3.8%) -- blue wavelengths are more sensitive to solver implementation differences
 11. **grcwa TM instability is wavelength-dependent** -- nG=81 fails at 620nm but is stable at 450nm and 530nm
+
+::: tip Reproducibility
+Numbers shown above are illustrative outputs from one specific run. They depend on solver version, materials, hardware (GPU vs CPU, fp32 vs fp64), and config. **Always re-run the recipe in your environment to validate** before drawing conclusions.
+:::

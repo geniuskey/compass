@@ -300,9 +300,15 @@ plt.savefig("ml_2d_optimization.png", dpi=150)
 - **Red channel** is least sensitive because photons penetrate deep into silicon regardless of focus quality.
 - **CRA shift** is the single most impactful compensation for edge-of-sensor pixels. With auto CRA shift, the lens compensates and maintains QE up to 15-20 degrees before declining.
 
+
+::: tip Reproducibility
+Numbers shown above are illustrative outputs from one specific run. They depend on solver version, materials, hardware (GPU vs CPU, fp32 vs fp64), and config. **Always re-run the recipe in your environment to validate** before drawing conclusions.
+:::
+
 ## See also
 
 - [Analysis](/reference/analysis)
 - [SolverBase / runners](/reference/solver-base)
 - [API overview](/reference/api-overview)
+- [Glossary](/reference/glossary)
 - [Config reference](/reference/config-reference)

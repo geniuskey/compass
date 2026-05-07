@@ -2,6 +2,24 @@
 
 A comprehensive glossary of terms used throughout the COMPASS (Cross-solver Optical Modeling Platform for Advanced Sensor Simulation) documentation. Terms are organized alphabetically for quick reference.
 
+## Quick lookup — common abbreviations
+
+| Acronym | Stands for | Section |
+|---|---|---|
+| BARL | Bottom Anti-Reflection Layer | [B](#b) |
+| BDTI | Back-side Deep Trench Isolation | [D](#d) |
+| BSI | Back-Side Illumination | [B](#b) |
+| CFA | Color Filter Array | [C](#c) |
+| CIS | CMOS Image Sensor | [C](#c) |
+| CRA | Chief Ray Angle | [C](#c) |
+| DTI | Deep Trench Isolation | [D](#d) |
+| FDTD | Finite-Difference Time-Domain | [F](#f) |
+| FDTI | Front-side Deep Trench Isolation | [F](#f) |
+| FSI | Front-Side Illumination | [F](#f) |
+| QE | Quantum Efficiency | [Q](#q) |
+| RCWA | Rigorous Coupled-Wave Analysis | [R](#r) |
+| TMM | Transfer Matrix Method | [T](#t) |
+
 ---
 
 ## A
@@ -36,7 +54,8 @@ A comprehensive glossary of terms used throughout the COMPASS (Cross-solver Opti
 
 | Term | Definition | Related Topics |
 |------|-----------|----------------|
-| Deep Trench Isolation (DTI) | Narrow, oxide-filled trenches etched between adjacent pixels in a CMOS image sensor to physically block optical and electrical crosstalk. | Crosstalk, BSI |
+| BDTI (Back-side DTI) | A DTI variant in which the trench is etched from the back side of the silicon, typically partial-depth. Easier to integrate with BSI sensors than full-depth DTI but provides less complete isolation. | DTI, FDTI, BSI, Crosstalk |
+| Deep Trench Isolation (DTI) | Narrow, oxide-filled trenches etched between adjacent pixels in a CMOS image sensor to physically block optical and electrical crosstalk. | Crosstalk, BSI, FDTI, BDTI |
 | Diffraction | The bending and spreading of electromagnetic waves when they encounter obstacles or apertures with dimensions comparable to the wavelength. Governs light behavior in sub-wavelength pixel structures. | Diffraction Order, Grating Equation, Huygens' Principle |
 | Diffraction Order | An integer index ($m$) labeling the discrete directions into which light is diffracted by a periodic structure, as determined by the grating equation. | Grating Equation, RCWA, Fourier Order |
 | Dispersion | The dependence of a material's optical properties (refractive index, extinction coefficient) on wavelength. Must be accounted for in broadband simulations. | Refractive Index, Extinction Coefficient, Permittivity |
@@ -54,6 +73,7 @@ A comprehensive glossary of terms used throughout the COMPASS (Cross-solver Opti
 | Term | Definition | Related Topics |
 |------|-----------|----------------|
 | FDTD (Finite-Difference Time-Domain) | A numerical method that solves Maxwell's equations directly in the time domain on a discrete (Yee) grid. Naturally handles broadband and nonlinear problems. One of the two primary solvers in COMPASS. | Yee Grid, Courant Condition, PML |
+| FDTI (Front-side DTI) | A DTI variant in which the trench is etched from the front side of the silicon (typically full-depth, through the entire active layer). Provides strong optical/electrical isolation but is harder to integrate with the wiring stack. | DTI, BDTI, BSI, Crosstalk |
 | Floquet Mode | A characteristic field pattern in a periodic structure whose spatial profile repeats with a phase factor determined by the Bloch wave vector. Each diffraction order corresponds to a Floquet mode. | Bloch/Floquet Theorem, Diffraction Order |
 | Fourier Order ($N$) | The number of Fourier harmonics retained in the RCWA plane-wave expansion. Higher $N$ increases accuracy but also computational cost (matrix size scales as $(2N+1)^2$ in 2D). | RCWA, Eigenvalue Problem, Gibbs Phenomenon |
 | Fresnel Equations | Analytical expressions for the reflection and transmission coefficients of light at a planar interface between two media, as functions of incidence angle and polarization. | Snell's Law, TE/TM Polarization, S-Matrix |

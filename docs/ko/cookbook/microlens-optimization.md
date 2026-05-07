@@ -300,9 +300,15 @@ plt.savefig("ml_2d_optimization.png", dpi=150)
 - **적색 채널**은 가장 덜 민감합니다. 광자가 집속 품질과 관계없이 실리콘 깊숙이 침투하기 때문입니다.
 - **CRA 시프트**는 센서 가장자리 픽셀에 대한 가장 효과적인 단일 보상 방법입니다. 자동 CRA 시프트를 적용하면 렌즈가 보상하여 15-20도까지 QE를 유지한 후 감소합니다.
 
+
+::: tip 재현성 안내
+위에 표시된 수치는 특정 실행에서 얻은 예시 값입니다. 솔버 버전, 재료, 하드웨어(GPU/CPU, fp32/fp64), 설정에 따라 달라집니다. **결론을 내리기 전에 자신의 환경에서 직접 레시피를 다시 실행하여 검증하세요.**
+:::
+
 ## 함께 보기
 
 - [분석(Analysis)](/ko/reference/analysis)
 - [SolverBase / 러너](/ko/reference/solver-base)
 - [API 개요](/ko/reference/api-overview)
+- [용어집](/ko/reference/glossary)
 - [설정 레퍼런스](/ko/reference/config-reference)

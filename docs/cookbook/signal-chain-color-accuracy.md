@@ -443,3 +443,7 @@ Use `compass.visualization.signal_plot` to generate publication-quality figures 
 ::: tip Connect to a color difference metric
 Convert the white-balanced R/G/B signals to CIE XYZ and then to CIELAB. Compute Delta-E (CIE2000) between illuminant pairs for each patch to get a single-number color accuracy score.
 :::
+
+::: tip Reproducibility
+Numbers shown above are illustrative outputs from one specific run. They depend on solver version, materials, hardware (GPU vs CPU, fp32 vs fp64), and config. **Always re-run the recipe in your environment to validate** before drawing conclusions.
+:::

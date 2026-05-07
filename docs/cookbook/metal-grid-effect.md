@@ -173,9 +173,15 @@ plt.tight_layout()
 plt.savefig("grid_width_sweep.png", dpi=150)
 ```
 
+
+::: tip Reproducibility
+Numbers shown above are illustrative outputs from one specific run. They depend on solver version, materials, hardware (GPU vs CPU, fp32 vs fp64), and config. **Always re-run the recipe in your environment to validate** before drawing conclusions.
+:::
+
 ## See also
 
 - [Analysis](/reference/analysis)
 - [SolverBase / runners](/reference/solver-base)
 - [API overview](/reference/api-overview)
+- [Glossary](/reference/glossary)
 - [Config reference](/reference/config-reference)

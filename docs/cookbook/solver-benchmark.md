@@ -498,10 +498,16 @@ Choose the specific RCWA solver based on your needs:
 | Cross-validation reference | Run TMM + 2 RCWA solvers | Compare results |
 | Non-periodic structure | meep or fdtdx | Minutes to hours |
 
+
+::: tip Reproducibility
+Numbers shown above are illustrative outputs from one specific run. They depend on solver version, materials, hardware (GPU vs CPU, fp32 vs fp64), and config. **Always re-run the recipe in your environment to validate** before drawing conclusions.
+:::
+
 ## See also
 
 - [Analysis](/reference/analysis)
 - [SolverBase / runners](/reference/solver-base)
 - [Sources](/reference/sources)
 - [API overview](/reference/api-overview)
+- [Glossary](/reference/glossary)
 - [Config reference](/reference/config-reference)

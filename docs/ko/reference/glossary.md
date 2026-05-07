@@ -4,6 +4,24 @@ COMPASS(Cross-solver Optical Modeling Platform for Advanced Sensor Simulation) �
 
 > **참고:** 기술 용어는 한글(영어) 형식으로 표기합니다.
 
+## 빠른 조회 — 자주 쓰는 약어
+
+| 약어 | 풀이 | 섹션 |
+|---|---|---|
+| BARL | Bottom Anti-Reflection Layer | [B](#b) |
+| BDTI | 후면 DTI (Back-side DTI) | [D](#d) |
+| BSI | 후면 조사형 (Back-Side Illumination) | [B](#b) |
+| CFA | 컬러 필터 어레이 (Color Filter Array) | [C](#c) |
+| CIS | CMOS 이미지 센서 | [C](#c) |
+| CRA | 주광선 각도 (Chief Ray Angle) | [C](#c) |
+| DTI | 깊은 트렌치 격리 (Deep Trench Isolation) | [D](#d) |
+| FDTD | 유한차분 시간영역법 | [F](#f) |
+| FDTI | 전면 DTI (Front-side DTI) | [F](#f) |
+| FSI | 전면 조사형 (Front-Side Illumination) | [F](#f) |
+| QE | 양자 효율 (Quantum Efficiency) | [Q](#q) |
+| RCWA | 엄밀 결합파 해석법 | [R](#r) |
+| TMM | 전달 행렬 법 (Transfer Matrix Method) | [T](#t) |
+
 ---
 
 ## A
@@ -38,7 +56,8 @@ COMPASS(Cross-solver Optical Modeling Platform for Advanced Sensor Simulation) �
 
 | 용어 | 정의 | 관련 항목 |
 |------|------|-----------|
-| 깊은 트렌치 격리(Deep Trench Isolation, DTI) | 인접 픽셀 사이에 식각하여 산화물로 채운 좁은 트렌치로, 광학적 및 전기적 크로스토크를 물리적으로 차단한다. | 크로스토크, 후면 조사형 |
+| BDTI (Back-side DTI, 후면 DTI) | 트렌치를 실리콘 후면에서 식각하는 DTI 변형. 일반적으로 부분 깊이로 형성되며, 완전 깊이 DTI보다 BSI 센서 통합이 쉬우나 격리 효과는 약하다. | DTI, FDTI, 후면 조사형, 크로스토크 |
+| 깊은 트렌치 격리(Deep Trench Isolation, DTI) | 인접 픽셀 사이에 식각하여 산화물로 채운 좁은 트렌치로, 광학적 및 전기적 크로스토크를 물리적으로 차단한다. | 크로스토크, 후면 조사형, FDTI, BDTI |
 | 회절(Diffraction) | 전자기파가 파장과 비슷한 크기의 장애물이나 개구부를 만날 때 휘어지고 퍼지는 현상. 서브파장 픽셀 구조 내 빛의 거동을 지배한다. | 회절 차수, 회절 격자 방정식, 하위헌스 원리 |
 | 회절 차수(Diffraction Order) | 주기 구조에 의해 회절된 빛의 이산적인 방향을 나타내는 정수 인덱스($m$). 회절 격자 방정식에 의해 결정된다. | 회절 격자 방정식, 엄밀 결합파 해석법, 푸리에 차수 |
 | 분산(Dispersion) | 재료의 광학 특성(굴절률, 소광 계수)이 파장에 따라 달라지는 성질. 광대역 시뮬레이션에서 반드시 고려해야 한다. | 굴절률, 소광 계수, 유전율 |
@@ -56,6 +75,7 @@ COMPASS(Cross-solver Optical Modeling Platform for Advanced Sensor Simulation) �
 | 용어 | 정의 | 관련 항목 |
 |------|------|-----------|
 | 유한차분 시간영역법(Finite-Difference Time-Domain, FDTD) | 여 격자(Yee grid) 위에서 맥스웰 방정식을 시간 영역에서 직접 푸는 수치 해법. 광대역 및 비선형 문제를 자연스럽게 처리한다. COMPASS의 두 가지 주요 솔버 중 하나이다. | 여 격자, 쿠랑 조건, 완전 정합층 |
+| FDTI (Front-side DTI, 전면 DTI) | 트렌치를 실리콘 전면에서 식각하는 DTI 변형. 일반적으로 활성층 전체를 관통하는 전(全) 깊이로 형성되어 강력한 광학·전기적 격리를 제공하지만, 배선 스택과의 통합이 어렵다. | DTI, BDTI, 후면 조사형, 크로스토크 |
 | 플로케 모드(Floquet Mode) | 주기 구조 내에서 블로흐 파수 벡터에 의한 위상 인자와 함께 공간적으로 반복되는 특성 필드 패턴. 각 회절 차수는 하나의 플로케 모드에 대응한다. | 블로흐 정리/플로케 정리, 회절 차수 |
 | 푸리에 차수(Fourier Order, $N$) | RCWA 평면파 전개에서 유지하는 푸리에 고조파의 수. $N$이 클수록 정확도가 높아지지만 계산 비용도 증가한다(2D에서 행렬 크기는 $(2N+1)^2$에 비례). | 엄밀 결합파 해석법, 고유값 문제, 기브스 현상 |
 | 프레넬 방정식(Fresnel Equations) | 두 매질 사이의 평면 계면에서 입사각과 편광에 따른 반사 계수 및 투과 계수를 나타내는 해석적 표현식. | 스넬의 법칙, TE/TM 편광, 산란 행렬 |

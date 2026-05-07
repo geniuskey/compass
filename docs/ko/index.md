@@ -3,23 +3,20 @@ layout: home
 
 hero:
   name: "COMPASS"
-  text: "고급 센서 시뮬레이션을 위한 크로스 솔버 광학 모델링 플랫폼"
-  tagline: 하나의 YAML 설정으로 여러 EM 솔버를 사용하여 CMOS 이미지 센서 픽셀을 시뮬레이션합니다
+  text: "픽셀 설정 하나, 9개의 EM 솔버, 교차 검증."
+  tagline: 오픈소스 CMOS 이미지 센서 광학 플랫폼 — 픽셀 스택을 한 번 정의하면 9개의 RCWA/FDTD/TMM 백엔드로 QE·크로스토크·필드 맵을 교차 검증합니다.
   image:
     src: /logo.svg
     alt: COMPASS
   actions:
     - theme: brand
-      text: 입문 — 이미지 센서 기초
-      link: /ko/theory/basics/what-is-cmos-sensor
-    - theme: alt
       text: 시작하기
-      link: /ko/guide/installation
+      link: /ko/guide/quickstart
     - theme: alt
-      text: GitHub
-      link: https://github.com/geniuskey/compass
+      text: 이미지 센서가 처음이라면
+      link: /ko/theory/basics/what-is-cmos-sensor
 features:
-  - title: "\U0001F4D6 입문자 친화적"
+  - title: "📖 입문자 친화적"
     details: 처음부터 시작하세요 — 시뮬레이션에 들어가기 전에 이미지 센서 광학 기초를 배우세요
     link: /ko/theory/basics/what-is-cmos-sensor
 ---
@@ -43,6 +40,17 @@ COMPASS는 전자기 이론과 실용적인 CMOS 이미지 센서 설계 사이�
 COMPASS는 세 가지 전자기 방법에 걸쳐 **9개 솔버 백엔드**에 대한 통합 인터페이스를 제공합니다. 솔버를 클릭하면 세부 정보를 확인할 수 있습니다.
 
 <SolverShowcase />
+
+## 브라우저 기반 시뮬레이터
+
+Python 솔버 파이프라인 외에도, COMPASS는 빠른 탐색과 직관 형성을 위한 **20+ 개의 브라우저 기반 시뮬레이터**를 제공합니다. 전부 클라이언트에서 실행되어 설치나 Python이 필요 없으며, 교육·설계 공간 탐색·본격 RCWA/FDTD 실행 전 sanity check 용도로 적합합니다.
+
+- **광학 스택** — TMM QE, 박막 설계기, 에너지 버짓
+- **성능** — SNR, 다이나믹 레인지, EMVA 1288, 광자 전달 곡선
+- **파동 물리** — Si 흡수, 마이크로렌즈 광선 추적, 파브리-페로, 회절 PSF
+- **시스템** — MTF, 색 정확도(ΔE), 픽셀 스케일링, 암전류
+
+[모든 시뮬레이터 둘러보기 →](/ko/simulator/)
 
 ## 빠른 예제
 
@@ -80,21 +88,21 @@ for pixel, qe in result.qe_per_pixel.items():
 ## 시작하기
 
 <div class="cta-grid">
-<a href="/ko/theory/basics/what-is-cmos-sensor" class="cta-card">
-  <strong>이미지 센서 기초</strong>
-  <span>이미지 센서가 처음이라면 여기서 시작하세요</span>
+<a href="/ko/guide/quickstart" class="cta-card">
+  <strong>빠른 시작</strong>
+  <span>몇 분 안에 첫 번째 시뮬레이션을 실행하세요</span>
 </a>
 <a href="/ko/guide/installation" class="cta-card">
   <strong>설치 가이드</strong>
   <span>COMPASS와 솔버 백엔드를 설정하세요</span>
 </a>
-<a href="/ko/guide/quickstart" class="cta-card">
-  <strong>빠른 시작</strong>
-  <span>몇 분 안에 첫 번째 시뮬레이션을 실행하세요</span>
+<a href="/ko/theory/basics/what-is-cmos-sensor" class="cta-card">
+  <strong>이미지 센서 기초</strong>
+  <span>이미지 센서가 처음이라면 여기서 시작하세요</span>
 </a>
-<a href="/ko/theory/" class="cta-card">
-  <strong>이론 배경</strong>
-  <span>시뮬레이션의 물리학을 이해하세요</span>
+<a href="/ko/theory/simulation/rcwa-vs-fdtd" class="cta-card">
+  <strong>RCWA vs FDTD</strong>
+  <span>상황에 맞는 솔버를 선택하세요</span>
 </a>
 <a href="/ko/cookbook/bsi-2x2-basic" class="cta-card">
   <strong>쿡북</strong>

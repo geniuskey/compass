@@ -170,8 +170,14 @@ Platform    : macOS (Darwin 25.2.0, Apple Silicon)
 | Full sweep (380–780 nm, 10 nm step) | 41 | ~4 ms |
 | CRA sweep (7 angles × 2 configs) | 14 runs | ~12 ms |
 
+
+::: tip Reproducibility
+Numbers shown above are illustrative outputs from one specific run. They depend on solver version, materials, hardware (GPU vs CPU, fp32 vs fp64), and config. **Always re-run the recipe in your environment to validate** before drawing conclusions.
+:::
+
 ## See also
 
 - [MaterialDB](/reference/material-db)
 - [API overview](/reference/api-overview)
+- [Glossary](/reference/glossary)
 - [Config reference](/reference/config-reference)
