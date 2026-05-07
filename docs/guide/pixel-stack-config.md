@@ -187,17 +187,19 @@ color_filter:
     width: 0.05          # Grid line width in um
     height: 0.6          # Grid height (usually = CFA thickness)
     material: "tungsten"  # Metal grid material
+    corner_radius: 0.0   # Optional: round CF corners by r (um). 0 = sharp.
 ```
 
-| Parameter        | Type | Default          | Description                            |
-|-----------------|------|------------------|----------------------------------------|
-| `thickness`     | float | `0.6`           | Color filter thickness in um.          |
-| `pattern`       | str  | `"bayer_rggb"`   | CFA pattern name.                      |
-| `materials`     | dict | R/G/B mapping    | Maps color keys to material names.     |
-| `grid.enabled`  | bool | `true`           | Enable metal isolation grid.           |
-| `grid.width`    | float | `0.05`          | Grid line width in um.                 |
-| `grid.height`   | float | `0.6`           | Grid line height in um.               |
-| `grid.material` | str  | `"tungsten"`     | Grid material.                         |
+| Parameter            | Type | Default          | Description                            |
+|---------------------|------|------------------|----------------------------------------|
+| `thickness`         | float | `0.6`           | Color filter thickness in um.          |
+| `pattern`           | str  | `"bayer_rggb"`   | CFA pattern name.                      |
+| `materials`         | dict | R/G/B mapping    | Maps color keys to material names.     |
+| `grid.enabled`      | bool | `true`           | Enable metal isolation grid.           |
+| `grid.width`        | float | `0.05`          | Grid line width in um.                 |
+| `grid.height`       | float | `0.6`           | Grid line height in um.               |
+| `grid.material`     | str  | `"tungsten"`     | Grid material.                         |
+| `grid.corner_radius`| float | `0.0`           | Rounded-rectangle corner radius `r` (um), applied identically at all four corners of each CF cell. `0` keeps the sharp-cornered grid; values `> 0` model each CF as a rounded rectangle and the grid as its complement. Auto-clamped to `(pitch - grid.width) / 2`. |
 
 **Supported Bayer patterns:**
 

@@ -79,6 +79,7 @@ layers:
 | `grid.width` | float | `0.05` | 그리드 선 폭 (um) |
 | `grid.height` | float | `0.6` | 그리드 높이 (um) |
 | `grid.material` | str | `"tungsten"` | 그리드 재료 |
+| `grid.corner_radius` | float | `0.0` | 각 CF 셀의 rounded rectangle 모서리 반경 `r`(um). 네 모서리 모두 동일. `0` = 직각, `> 0`이면 CF를 rounded rectangle로 모델링하고 격자는 그 보집합. `(pitch - grid.width) / 2`로 클램프. |
 
 ### pixel.layers.barl: BarlConfig
 
