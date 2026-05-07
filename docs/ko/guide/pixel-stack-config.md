@@ -187,17 +187,19 @@ color_filter:
     width: 0.05          # Grid line width in um
     height: 0.6          # Grid height (usually = CFA thickness)
     material: "tungsten"  # Metal grid material
+    corner_radius: 0.0   # 선택: CF 모서리 반경 r(um). 0 = 직각.
 ```
 
-| 파라미터         | 타입  | 기본값           | 설명                                   |
-|-----------------|------|------------------|----------------------------------------|
-| `thickness`     | float | `0.6`           | 컬러 필터 두께(um).                      |
-| `pattern`       | str  | `"bayer_rggb"`   | CFA 패턴명.                             |
-| `materials`     | dict | R/G/B 매핑       | 색상 키를 재료명에 매핑합니다.             |
-| `grid.enabled`  | bool | `true`           | 금속 절연 격자 활성화.                    |
-| `grid.width`    | float | `0.05`          | 격자 선 너비(um).                        |
-| `grid.height`   | float | `0.6`           | 격자 선 높이(um).                        |
-| `grid.material` | str  | `"tungsten"`     | 격자 재료.                               |
+| 파라미터              | 타입  | 기본값           | 설명                                   |
+|----------------------|------|------------------|----------------------------------------|
+| `thickness`          | float | `0.6`           | 컬러 필터 두께(um).                      |
+| `pattern`            | str  | `"bayer_rggb"`   | CFA 패턴명.                             |
+| `materials`          | dict | R/G/B 매핑       | 색상 키를 재료명에 매핑합니다.             |
+| `grid.enabled`       | bool | `true`           | 금속 절연 격자 활성화.                    |
+| `grid.width`         | float | `0.05`          | 격자 선 너비(um).                        |
+| `grid.height`        | float | `0.6`           | 격자 선 높이(um).                        |
+| `grid.material`      | str  | `"tungsten"`     | 격자 재료.                               |
+| `grid.corner_radius` | float | `0.0`           | rounded rectangle 모서리 반경 `r`(um). 네 모서리 모두 동일하게 적용. `0`이면 기존 직각 격자 유지, `> 0`이면 각 CF 셀을 rounded rectangle로 모델링하고 그 보집합을 메탈 격자로 채움. `(pitch - grid.width) / 2`로 자동 클램프. |
 
 **지원되는 베이어 패턴:**
 

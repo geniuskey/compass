@@ -79,6 +79,7 @@ layers:
 | `grid.width` | float | `0.05` | Grid line width (um) |
 | `grid.height` | float | `0.6` | Grid height (um) |
 | `grid.material` | str | `"tungsten"` | Grid material |
+| `grid.corner_radius` | float | `0.0` | Rounded-rectangle corner radius `r` (um) for each CF cell, identical at all four corners. `0` = sharp; `> 0` models the CF as a rounded rectangle and the grid as its complement. Clamped to `(pitch - grid.width) / 2`. |
 
 ### pixel.layers.barl: BarlConfig
 

@@ -44,6 +44,7 @@ Smallest-pitch sample. Distinctive optical features:
 - **4×4 same-color super-cell** color filter (16-cell binning); 8×8 unit cell.
 - **High-refractive-index microlens** modelled via the `polymer_hri_n1p70` (TiO₂-doped polymer, n ≈ 1.70) entry registered in `MaterialDB`.
 - **F-DTI with SiO₂** fill (oxide-fill DTI for lower crosstalk).
+- **Rounded-rectangle CF grid** (`grid.corner_radius = 0.05` µm) approximating photolithography corner rounding at sub-µm pitches.
 
 ### `sample_p1p0um_quadbayer` — 1.0 µm Quad Bayer
 

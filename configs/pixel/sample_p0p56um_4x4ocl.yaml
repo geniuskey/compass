@@ -11,6 +11,8 @@
 # - High-refractive-index microlens — modelled with `polymer_hri_n1p70`
 #   (TiO2-doped polymer, n ≈ 1.70).
 # - F-DTI with SiO2 oxide fill for lower crosstalk.
+# - CF metal grid uses a rounded-rectangle CF profile (corner_radius = 50 nm)
+#   to mimic photolithography corner rounding at sub-µm pitches.
 # - Sub-µm pitches use a thinner color filter (~0.4 µm) and a slightly thinner
 #   silicon epi (~2.0 µm) than legacy 1.0 µm pixels.
 #
@@ -59,6 +61,7 @@ pixel:
         width: 0.06
         height: 0.40
         material: "tungsten"
+        corner_radius: 0.05    # rounded-rectangle CF corners (process rounding)
 
     barl:
       layers:
