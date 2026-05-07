@@ -2,7 +2,7 @@
   <div class="cone-illum-container">
     <h4>{{ t('Interactive Cone Illumination Viewer', '인터랙티브 콘 조명 뷰어') }}</h4>
     <p class="component-description">
-      {{ t('Visualize how Chief Ray Angle (CRA) and cone half-angle affect pixel illumination. The microlens shifts using a Snell-law stack estimate to keep the focus near the photodiode.', 'CRA(주광선 각도)와 콘 반각이 픽셀 조명에 미치는 영향을 시각화합니다. 마이크로렌즈는 스넬 법칙 기반 스택 추정으로 이동해 초점이 포토다이오드 근처에 유지되도록 합니다.') }}
+      {{ t('Visualize how Chief Ray Angle (CRA) and cone half-angle affect pixel illumination. The cone is rendered as multiple parallel beam bundles (one per direction); each bundle is refracted by the microlens and the high-index stack via Snell\'s law, converging to a direction-specific focal point.', 'CRA(주광선 각도)와 콘 반각이 픽셀 조명에 미치는 영향을 시각화합니다. 콘은 방향별 평행 광선 묶음들로 표현되며, 각 묶음은 마이크로렌즈와 고굴절률 스택을 통과하면서 스넬 법칙에 따라 굴절되어 방향별 초점으로 수렴합니다.') }}
     </p>
 
     <div class="controls-row">
@@ -85,40 +85,42 @@
         <rect :x="pdLeft" :y="pdY" :width="pdW" :height="pdH" fill="#f5deb3" opacity="0.5" stroke="#d2691e" stroke-width="1.2" rx="2" />
         <text :x="pixelCenterX" :y="pdY + pdH / 2 + 4" text-anchor="middle" class="region-label">{{ t('Photodiode', '포토다이오드') }}</text>
 
-        <!-- Light rays (cone) -->
+        <!-- Light rays: parallel bundles per cone direction, Snell-bent at the stack -->
         <template v-for="(ray, idx) in rays" :key="idx">
+          <!-- Air segment (parallel bundle, all rays at same angle) -->
           <line
             :x1="ray.x1"
             :y1="ray.y1"
             :x2="ray.x2"
             :y2="ray.y2"
             :stroke="ray.color"
-            :stroke-width="ray.isChief ? 2 : 1"
-            :opacity="ray.isChief ? 0.9 : 0.45"
-            :stroke-dasharray="ray.isChief ? 'none' : '4,2'"
+            :stroke-width="ray.isChief ? 1.6 : 1"
+            :opacity="ray.isChief ? 0.9 : 0.55"
           />
-          <!-- Refracted continuation into stack -->
+          <!-- Refracted segment through the stack, converging to the bundle focus -->
           <line
             :x1="ray.x2"
             :y1="ray.y2"
             :x2="ray.xBot"
             :y2="ray.yBot"
             :stroke="ray.color"
-            :stroke-width="ray.isChief ? 1.5 : 0.8"
-            :opacity="ray.isChief ? 0.7 : 0.3"
+            :stroke-width="ray.isChief ? 1.4 : 0.8"
+            :opacity="ray.isChief ? 0.75 : 0.45"
+            :stroke-dasharray="ray.isChief ? 'none' : '3,2'"
           />
         </template>
 
-        <!-- Focus spot indicator -->
-        <ellipse
-          :cx="focusX"
-          :cy="pdY + 6"
-          :rx="focusSpotR"
-          ry="3"
-          fill="#f39c12"
-          opacity="0.6"
-        />
-        <text :x="focusX" :y="pdY - 4" text-anchor="middle" class="focus-label">{{ t('Focus spot', '초점 위치') }}</text>
+        <!-- Focal points per cone direction -->
+        <template v-for="(focus, idx) in bundleFoci" :key="`f${idx}`">
+          <circle
+            :cx="focus.x"
+            :cy="pdY + 6"
+            :r="focus.isChief ? 3 : 2"
+            :fill="focus.color"
+            :opacity="focus.isChief ? 0.9 : 0.7"
+          />
+        </template>
+        <text :x="pixelCenterX" :y="pdY - 4" text-anchor="middle" class="focus-label">{{ t('Bundle foci', '묶음 초점') }}</text>
 
         <!-- Arrow markers -->
         <defs>
@@ -217,42 +219,64 @@ const solidAngle = computed(() => {
   return 2 * Math.PI * (1 - Math.cos(halfAngleRad.value))
 })
 
-// Generate rays within the cone
-const numRays = 7
-const rays = computed(() => {
+// The cone is decomposed into a few discrete directions; each direction is a
+// parallel bundle whose rays span the microlens aperture. Microlens + stack
+// refract the bundle (via Snell's law) toward a direction-specific focal point.
+const numDirections = 3
+const numParallelRays = 4
+
+function bundleColor(dirFrac, isChief) {
+  if (isChief) return '#f39c12'
+  // Negative side cool (blue), positive side warm (red).
+  return dirFrac < 0 ? '#3498db' : '#e74c3c'
+}
+
+const bundleFoci = computed(() => {
+  const chiefShift = snellShiftUm(craRad.value)
   const result = []
-  for (let i = 0; i < numRays; i++) {
-    const frac = numRays > 1 ? (i / (numRays - 1)) * 2 - 1 : 0 // -1 to 1
-    const angle = craRad.value + frac * halfAngleRad.value
-    const isChief = Math.abs(frac) < 0.01
-
-    // Ray starts above the SVG, arrives at microlens
-    const entryX = mlCenterX.value
-    const entryY = mlY + mlH * 0.5
-    const rayLength = 80
-    const x1 = entryX - rayLength * Math.sin(angle)
-    const y1 = entryY - rayLength * Math.cos(angle)
-
-    // Schematic focusing after the shifted microlens. The chief ray lands at the
-    // compensated focus, while marginal cone rays form a finite spot around it.
-    const coneOffset = frac * focusSpotR.value * 0.65
-    const xBot = focusX.value + coneOffset
-    const yBot = pdY + 6
-
-    // Color based on position in cone
-    const hue = 30 + 20 * Math.abs(frac)
-    const color = isChief ? '#f39c12' : `hsl(${hue}, 80%, 55%)`
-
-    result.push({ x1, y1, x2: entryX, y2: entryY, xBot, yBot, isChief, color })
+  for (let d = 0; d < numDirections; d++) {
+    const dirFrac = numDirections > 1 ? (d / (numDirections - 1)) * 2 - 1 : 0
+    const angleAir = craRad.value + dirFrac * halfAngleRad.value
+    const isChief = Math.abs(dirFrac) < 0.01
+    // Snell-bent focal position: the residual offset relative to chief shift.
+    const dirShiftUm = snellShiftUm(angleAir) * Math.sign(angleAir || 1)
+    const chiefSign = Math.sign(craRad.value || 1)
+    const dx = (dirShiftUm - chiefShift * chiefSign) * svgUmScale
+    result.push({ x: pixelCenterX + dx, color: bundleColor(dirFrac, isChief), isChief, dirFrac })
   }
   return result
 })
 
-// Auto CRA compensation re-centers the chief-ray focus on the photodiode.
-const focusX = computed(() => pixelCenterX)
-
-const focusSpotR = computed(() => {
-  return 4 + halfAngle.value * 0.3
+const rays = computed(() => {
+  const result = []
+  const apertureHalf = pixelW * 0.36
+  const foci = bundleFoci.value
+  for (let d = 0; d < numDirections; d++) {
+    const dirFrac = numDirections > 1 ? (d / (numDirections - 1)) * 2 - 1 : 0
+    const angleAir = craRad.value + dirFrac * halfAngleRad.value
+    const isChief = Math.abs(dirFrac) < 0.01
+    const color = bundleColor(dirFrac, isChief)
+    const focusXDir = foci[d].x
+    const focusYDir = pdY + 6
+    for (let p = 0; p < numParallelRays; p++) {
+      const pFrac = numParallelRays > 1 ? (p / (numParallelRays - 1)) * 2 - 1 : 0
+      // Distribute parallel rays across the (shifted) microlens aperture.
+      const apertureOffset = pFrac * apertureHalf
+      const entryX = mlCenterX.value + apertureOffset
+      const entryY = mlY
+      // Trace back along the air angle to render a finite parallel segment.
+      const rayLength = 70
+      const x1 = entryX - rayLength * Math.sin(angleAir)
+      const y1 = entryY - rayLength * Math.cos(angleAir)
+      result.push({
+        x1, y1,
+        x2: entryX, y2: entryY,
+        xBot: focusXDir, yBot: focusYDir,
+        isChief, color, dirFrac
+      })
+    }
+  }
+  return result
 })
 </script>
 
