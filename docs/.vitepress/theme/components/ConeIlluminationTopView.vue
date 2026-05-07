@@ -286,8 +286,17 @@ const samplingMethod = ref('fibonacci')
 const svgSize = 400
 const pixelPitch = 1.0   // um
 const domainSize = 2.0   // um (2x2 Bayer)
-const stackHeight = 2.5  // um from microlens to pixel plane
+const stackHeight = 2.5  // um used for cone half-angle footprint radius
 const scale = 150         // px per um
+const stackLayers = [
+  { thickness: 0.30, n: 1.46 }, // planarization
+  { thickness: 0.60, n: 1.62 }, // green color filter reference
+  { thickness: 0.010, n: 1.46 },
+  { thickness: 0.025, n: 2.00 },
+  { thickness: 0.015, n: 1.46 },
+  { thickness: 0.030, n: 2.02 },
+  { thickness: 2.50, n: 4.00 }, // silicon top to PD center
+]
 
 // --- Derived pixel grid layout ---
 const pixelSizePx = pixelPitch * scale
@@ -311,8 +320,18 @@ const footprintDiameter = computed(() => 2 * footprintRadiusUm.value)
 // Lens area (pi * r^2) in um^2
 const lensArea = computed(() => Math.PI * footprintRadiusUm.value * footprintRadiusUm.value)
 
-// CRA shift in um: shift = stackHeight * tan(CRA)
-const craShiftUm = computed(() => stackHeight * Math.tan(craRad.value))
+function snellShiftUm(angleRad) {
+  const sinCra = Math.sin(angleRad)
+  return stackLayers.reduce((sum, layer) => {
+    const sinTheta = Math.min(0.999, Math.abs(sinCra) / layer.n)
+    const cosTheta = Math.sqrt(1 - sinTheta * sinTheta)
+    return sum + layer.thickness * sinTheta / cosTheta
+  }, 0)
+}
+
+// CRA footprint-center shift in um. Use the refracted stack path rather than
+// raw air-path stackHeight*tan(CRA), which overstates shifts in high-index layers.
+const craShiftUm = computed(() => snellShiftUm(craRad.value))
 const craShiftPx = computed(() => craShiftUm.value * scale)
 
 // Cone center in SVG coords (shifted from pixel array center along +x direction)

@@ -2,7 +2,7 @@
   <div class="cone-illum-container">
     <h4>{{ t('Interactive Cone Illumination Viewer', '인터랙티브 콘 조명 뷰어') }}</h4>
     <p class="component-description">
-      {{ t('Visualize how Chief Ray Angle (CRA) and cone half-angle affect pixel illumination. The microlens shifts to compensate for oblique incidence.', 'CRA(주광선 각도)와 콘 반각이 픽셀 조명에 미치는 영향을 시각화합니다. 마이크로렌즈가 경사 입사를 보상하기 위해 이동합니다.') }}
+      {{ t('Visualize how Chief Ray Angle (CRA) and cone half-angle affect pixel illumination. The microlens shifts using a Snell-law stack estimate to keep the focus near the photodiode.', 'CRA(주광선 각도)와 콘 반각이 픽셀 조명에 미치는 영향을 시각화합니다. 마이크로렌즈는 스넬 법칙 기반 스택 추정으로 이동해 초점이 포토다이오드 근처에 유지되도록 합니다.') }}
     </p>
 
     <div class="controls-row">
@@ -160,19 +160,39 @@ const pixelLeft = pixelCenterX - pixelW / 2
 const pixelRight = pixelCenterX + pixelW / 2
 const pdW = pixelW * 0.7
 const pdLeft = pixelCenterX - pdW / 2
+const pixelPitchUm = 1.0
+const svgUmScale = pixelW / pixelPitchUm
 
-// Stack height in um (for shift calculation)
-const stackHeight = 2.5 // um from microlens to photodiode
+// Approximate default_bsi_1um optical path below the microlens.
+// This mirrors PixelStack auto_cra: each layer bends the chief ray toward normal.
+const stackLayers = [
+  { thickness: 0.30, n: 1.46 }, // planarization
+  { thickness: 0.60, n: 1.62 }, // green color filter reference
+  { thickness: 0.010, n: 1.46 },
+  { thickness: 0.025, n: 2.00 },
+  { thickness: 0.015, n: 1.46 },
+  { thickness: 0.030, n: 2.02 },
+  { thickness: 2.50, n: 4.00 }, // silicon top to PD center
+]
 
 const craRad = computed(() => cra.value * Math.PI / 180)
 const halfAngleRad = computed(() => halfAngle.value * Math.PI / 180)
 
-// Microlens shift = stackHeight * tan(CRA) -- in um
-const mlShift = computed(() => stackHeight * Math.tan(craRad.value))
+function snellShiftUm(angleRad) {
+  const sinCra = Math.sin(angleRad)
+  return stackLayers.reduce((sum, layer) => {
+    const sinTheta = Math.min(0.999, Math.abs(sinCra) / layer.n)
+    const cosTheta = Math.sqrt(1 - sinTheta * sinTheta)
+    return sum + layer.thickness * sinTheta / cosTheta
+  }, 0)
+}
+
+// Microlens shift in um. Raw stackHeight*tan(CRA) overstates the offset because
+// the chief ray refracts toward normal in the high-index pixel stack.
+const mlShift = computed(() => snellShiftUm(craRad.value))
 
 // Microlens shift in SVG pixels (map um to pixels)
-// pixel pitch ~ 1.0um ~ pixelW px
-const mlShiftPx = computed(() => mlShift.value * (pixelW / 1.0))
+const mlShiftPx = computed(() => mlShift.value * svgUmScale)
 const mlCenterX = computed(() => pixelCenterX - mlShiftPx.value)
 
 // Microlens path (arc centered at mlCenterX)
@@ -213,14 +233,10 @@ const rays = computed(() => {
     const x1 = entryX - rayLength * Math.sin(angle)
     const y1 = entryY - rayLength * Math.cos(angle)
 
-    // Refracted ray after microlens (Snell-like bending toward center)
-    const nAir = 1.0
-    const nLens = 1.56
-    const sinRefracted = (nAir / nLens) * Math.sin(angle)
-    const refractedAngle = Math.abs(sinRefracted) < 1 ? Math.asin(sinRefracted) : angle * 0.6
-
-    const botLength = pdY + 6 - entryY
-    const xBot = entryX + botLength * Math.sin(refractedAngle)
+    // Schematic focusing after the shifted microlens. The chief ray lands at the
+    // compensated focus, while marginal cone rays form a finite spot around it.
+    const coneOffset = frac * focusSpotR.value * 0.65
+    const xBot = focusX.value + coneOffset
     const yBot = pdY + 6
 
     // Color based on position in cone
@@ -232,14 +248,8 @@ const rays = computed(() => {
   return result
 })
 
-// Focus spot position
-const focusX = computed(() => {
-  const nLens = 1.56
-  const sinRef = (1.0 / nLens) * Math.sin(craRad.value)
-  const refAngle = Math.abs(sinRef) < 1 ? Math.asin(sinRef) : craRad.value * 0.6
-  const dist = pdY + 6 - (mlY + mlH * 0.5)
-  return mlCenterX.value + dist * Math.sin(refAngle)
-})
+// Auto CRA compensation re-centers the chief-ray focus on the photodiode.
+const focusX = computed(() => pixelCenterX)
 
 const focusSpotR = computed(() => {
   return 4 + halfAngle.value * 0.3

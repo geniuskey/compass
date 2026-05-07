@@ -27,8 +27,8 @@ The side view above shows the cone geometry in cross-section. The **top view** p
 
 Key observations from the top view:
 
-- **Footprint diameter**: The cone footprint on the focal plane has diameter $d = 2 h \tan(\theta_{\text{half}})$, where $h$ is the pixel stack height. A lower F-number produces a wider footprint.
-- **CRA shift**: A nonzero CRA shifts the footprint center away from the pixel center. At CRA = 20° on a typical 5 um stack, the shift can exceed 1.5 um — comparable to the pixel pitch itself.
+- **Footprint diameter**: The cone footprint on the focal plane has diameter $d = 2 h \tan(\theta_{\text{half}})$, where $h$ is the effective propagation height used for the cone spread. A lower F-number produces a wider footprint.
+- **CRA shift**: A nonzero CRA shifts the footprint center away from the pixel center. In a real BSI stack this is not the raw air-path value $h \tan(\text{CRA})$; refraction in the color-filter, BARL, and silicon layers bends the chief ray toward normal, so the effective shift is smaller.
 - **Sampling coverage**: The interactive viewer above shows how fibonacci and grid sampling points distribute across the footprint. Fibonacci sampling provides more uniform angular coverage.
 - **Lens area**: The footprint area $A = \pi r^2$ where $r = h \tan(\theta_{\text{half}})$ determines how much of the neighboring pixel receives light from the cone, which directly affects crosstalk.
 
