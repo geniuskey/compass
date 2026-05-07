@@ -173,3 +173,16 @@ config["pixel"]["layers"]["microlens"]["enabled"] = False
 ```
 
 Compare QE with and without microlens to quantify its contribution.
+
+
+::: tip Reproducibility
+Numbers shown above are illustrative outputs from one specific run. They depend on solver version, materials, hardware (GPU vs CPU, fp32 vs fp64), and config. **Always re-run the recipe in your environment to validate** before drawing conclusions.
+:::
+
+## See also
+
+- [Analysis](/reference/analysis)
+- [SolverBase / runners](/reference/solver-base)
+- [API overview](/reference/api-overview)
+- [Glossary](/reference/glossary)
+- [Config reference](/reference/config-reference)

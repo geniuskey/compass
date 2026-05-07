@@ -1,11 +1,11 @@
 ---
 title: RCWA 솔버 실행
-description: COMPASS에서 torcwa, grcwa, meent RCWA 솔버를 설정하고 실행하는 방법. 솔버별 설정, 안정성 제어, 수렴 테스트를 포함합니다.
+description: COMPASS에서 torcwa, grcwa, meent, fmmax RCWA 솔버를 설정하고 실행하는 방법. 솔버별 설정, 안정성 제어, 수렴 테스트를 포함합니다.
 ---
 
 # RCWA 솔버(Solver) 실행
 
-COMPASS는 세 가지 RCWA 솔버 백엔드(torcwa, grcwa, meent)를 제공하며, 모두 동일한 `SolverFactory` 인터페이스를 통해 접근할 수 있습니다. 이 가이드에서는 솔버별 설정, 안정성 설정, 수렴(Convergence) 검증을 다룹니다.
+COMPASS는 네 가지 RCWA 솔버 백엔드(torcwa, grcwa, meent, fmmax)를 제공하며, 모두 동일한 `SolverFactory` 인터페이스를 통해 접근할 수 있습니다. 이 가이드에서는 솔버별 설정, 안정성 설정, 수렴(Convergence) 검증을 다룹니다.
 
 ## RCWA 솔버 생성
 

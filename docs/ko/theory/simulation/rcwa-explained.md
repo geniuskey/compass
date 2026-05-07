@@ -108,12 +108,13 @@ solver:
 
 ## COMPASS의 RCWA 솔버
 
-COMPASS는 세 개의 RCWA 라이브러리를 래핑합니다:
+COMPASS는 네 개의 RCWA 라이브러리를 래핑합니다:
 
 | 솔버 | 라이브러리 | GPU 지원 | 비고 |
 |--------|---------|-------------|-------|
 | `torcwa` | torcwa | CUDA (PyTorch) | 기본값. GPU 가속 스윕에 최적. |
 | `grcwa` | grcwa | CUDA (JAX/PyTorch) | 대안 GPU 백엔드. |
 | `meent` | meent | CUDA/CPU | 해석적 고유값 분해 지원. |
+| `fmmax` | fmmax | CUDA (JAX) | 4가지 정식화 선택 가능한 벡터 FMM. |
 
-세 솔버 모두 동일한 `SolverBase` 인터페이스를 구현하므로, 설정 파일에서 `solver.name`만 변경하면 솔버를 전환할 수 있습니다.
+네 솔버 모두 동일한 `SolverBase` 인터페이스를 구현하므로, 설정 파일에서 `solver.name`만 변경하면 솔버를 전환할 수 있습니다.

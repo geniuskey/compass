@@ -108,12 +108,13 @@ For a 1 um pitch pixel with a simple color filter pattern, order 9 is usually su
 
 ## RCWA solvers in COMPASS
 
-COMPASS wraps three RCWA libraries:
+COMPASS wraps four RCWA libraries:
 
 | Solver | Library | GPU support | Notes |
 |--------|---------|-------------|-------|
 | `torcwa` | torcwa | CUDA (PyTorch) | Default. Best for GPU-accelerated sweeps. |
 | `grcwa` | grcwa | CUDA (JAX/PyTorch) | Alternative GPU backend. |
 | `meent` | meent | CUDA/CPU | Supports analytic eigendecomposition. |
+| `fmmax` | fmmax | CUDA (JAX) | Vector FMM with 4 selectable formulations. |
 
-All three implement the same `SolverBase` interface, so switching between them requires only changing `solver.name` in the config.
+All four implement the same `SolverBase` interface, so switching between them requires only changing `solver.name` in the config.

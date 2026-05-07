@@ -1,10 +1,12 @@
 ---
 title: Quantum Efficiency
+redirect: /theory/sensor/quantum-efficiency
+aside: false
+outline: false
 ---
 
 <script setup>
 import { inBrowser, withBase } from 'vitepress'
-
 if (inBrowser) {
   window.location.replace(withBase('/theory/sensor/quantum-efficiency'))
 }
@@ -12,4 +14,4 @@ if (inBrowser) {
 
 # Page moved
 
-This compatibility page preserves the old URL. The new page is [Quantum Efficiency](/theory/sensor/quantum-efficiency).
+This page has moved. Redirecting to [Quantum Efficiency](/theory/sensor/quantum-efficiency).

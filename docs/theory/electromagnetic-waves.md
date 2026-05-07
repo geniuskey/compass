@@ -1,10 +1,12 @@
 ---
 title: Electromagnetic Waves
+redirect: /theory/optics/electromagnetic-waves
+aside: false
+outline: false
 ---
 
 <script setup>
 import { inBrowser, withBase } from 'vitepress'
-
 if (inBrowser) {
   window.location.replace(withBase('/theory/optics/electromagnetic-waves'))
 }
@@ -12,4 +14,4 @@ if (inBrowser) {
 
 # Page moved
 
-This compatibility page preserves the old URL. The new page is [Electromagnetic Waves](/theory/optics/electromagnetic-waves).
+This page has moved. Redirecting to [Electromagnetic Waves](/theory/optics/electromagnetic-waves).

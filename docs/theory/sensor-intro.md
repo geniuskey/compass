@@ -1,10 +1,12 @@
 ---
 title: Image Sensor Overview
+redirect: /theory/sensor/
+aside: false
+outline: false
 ---
 
 <script setup>
 import { inBrowser, withBase } from 'vitepress'
-
 if (inBrowser) {
   window.location.replace(withBase('/theory/sensor/'))
 }
@@ -12,4 +14,4 @@ if (inBrowser) {
 
 # Page moved
 
-This compatibility page preserves the old URL. The new page is [Image Sensor Overview](/theory/sensor/).
+This page has moved. Redirecting to [Image Sensor Overview](/theory/sensor/).

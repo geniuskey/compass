@@ -21,9 +21,15 @@ compass/
       torcwa_solver.py -- torcwa 백엔드 어댑터
       grcwa_solver.py  -- grcwa 백엔드 어댑터
       meent_solver.py  -- meent 백엔드 어댑터
+      fmmax_solver.py  -- fmmax (JAX FMM) 백엔드 어댑터
       stability.py     -- 수치 안정성 모듈
     fdtd/
       flaport_solver.py -- fdtd (flaport) 백엔드 어댑터
+      fdtdz_solver.py   -- fdtdz (JAX 2D z-불변) 백엔드 어댑터
+      fdtdx_solver.py   -- fdtdx (JAX 3D, 멀티 GPU) 백엔드 어댑터
+      meep_solver.py    -- Meep (C++/Python 3D FDTD) 백엔드 어댑터
+    tmm/
+      tmm_solver.py    -- TMM (1D 평면 전달 행렬) 백엔드
   sources/
     planewave.py       -- PlanewaveSource
     cone_illumination.py -- ConeIllumination
@@ -41,6 +47,7 @@ compass/
     single_run.py      -- SingleRunner
     sweep_runner.py    -- SweepRunner
     comparison_runner.py -- ComparisonRunner
+    cone_runner.py     -- ConeIlluminationRunner
     roi_sweep_runner.py -- ROISweepRunner
   io/
     hdf5_handler.py    -- HDF5 결과 저장소
@@ -86,6 +93,8 @@ graph LR
 | `SingleRunner.run(config)` | `compass.runners.single_run` | 설정 딕셔너리로 단일 시뮬레이션 실행 |
 | `SweepRunner.run(config)` | `compass.runners.sweep_runner` | 파장 스윕 실행 |
 | `ComparisonRunner` | `compass.runners.comparison_runner` | 여러 솔버 비교 |
+| `ConeIlluminationRunner.run(config)` | `compass.runners.cone_runner` | 출사동 각도에 걸친 콘 평균 시뮬레이션 |
+| `ROISweepRunner` | `compass.runners.roi_sweep_runner` | 센서 이미지면 위치 스윕 (CRA + 마이크로렌즈 시프트) |
 
 ### 지오메트리 구성
 

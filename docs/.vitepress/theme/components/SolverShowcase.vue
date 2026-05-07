@@ -168,6 +168,20 @@ const solvers = computed(() => [
     ),
   },
   {
+    name: 'fdtdx',
+    type: 'FDTD',
+    gpu: true,
+    diffable: true,
+    framework: 'JAX',
+    method: '3D FDTD',
+    library: 'fdtdx',
+    groupColor: '#8e44ad',
+    description: t(
+      'JAX-based 3D FDTD with multi-GPU support and full differentiability. MIT-licensed, well-suited for large-scale inverse design at full 3D fidelity.',
+      'JAX 기반 3D FDTD로 멀티 GPU 지원과 완전한 미분 가능성을 제공합니다. MIT 라이선스이며 본격적인 3D 정확도가 필요한 대규모 역설계에 적합합니다.'
+    ),
+  },
+  {
     name: 'TMM',
     type: 'TMM',
     gpu: false,

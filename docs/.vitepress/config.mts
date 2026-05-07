@@ -75,6 +75,27 @@ const guideSidebar = [
   ]}
 ]
 
+const cookbookSidebar = [
+  { text: 'Cookbook', collapsed: false, items: [
+    { text: 'BSI 2x2 Basic', link: '/cookbook/bsi-2x2-basic' },
+    { text: 'Metal Grid Effect', link: '/cookbook/metal-grid-effect' },
+    { text: 'Microlens & CRA', link: '/cookbook/microlens-optimization' },
+    { text: 'Wavelength Sweep', link: '/cookbook/wavelength-sweep' },
+    { text: 'Solver Comparison', link: '/cookbook/solver-benchmark' },
+    { text: 'BARL Design', link: '/cookbook/barl-design' },
+    { text: 'DTI Crosstalk', link: '/cookbook/dti-crosstalk' },
+    { text: 'Signal Chain Color Accuracy', link: '/cookbook/signal-chain-color-accuracy' },
+    { text: 'TMM Validation Results', link: '/cookbook/tmm-validation-results' },
+    { text: 'Convergence Study', link: '/cookbook/convergence-study' },
+  ]},
+  { text: 'Related guides', collapsed: true, items: [
+    { text: 'Quick Start', link: '/guide/quickstart' },
+    { text: 'Choosing a Solver', link: '/guide/choosing-solver' },
+    { text: 'Cross-Validation', link: '/guide/cross-validation' },
+    { text: 'Inverse Design', link: '/guide/inverse-design' },
+  ]},
+]
+
 const referenceSidebar = [
   { text: 'API Reference', items: [
     { text: 'Overview', link: '/reference/' },
@@ -191,6 +212,27 @@ const guideSidebarKo = [
     { text: 'TMM 검증 결과', link: '/ko/cookbook/tmm-validation-results' },
     { text: '수렴 연구', link: '/ko/cookbook/convergence-study' },
   ]}
+]
+
+const cookbookSidebarKo = [
+  { text: '쿡북', collapsed: false, items: [
+    { text: 'BSI 2x2 기본', link: '/ko/cookbook/bsi-2x2-basic' },
+    { text: '메탈 그리드 효과', link: '/ko/cookbook/metal-grid-effect' },
+    { text: '마이크로렌즈 & CRA', link: '/ko/cookbook/microlens-optimization' },
+    { text: '파장 스윕', link: '/ko/cookbook/wavelength-sweep' },
+    { text: '솔버 비교 가이드', link: '/ko/cookbook/solver-benchmark' },
+    { text: 'BARL 설계', link: '/ko/cookbook/barl-design' },
+    { text: 'DTI 크로스토크', link: '/ko/cookbook/dti-crosstalk' },
+    { text: '신호 체인 색 정확도', link: '/ko/cookbook/signal-chain-color-accuracy' },
+    { text: 'TMM 검증 결과', link: '/ko/cookbook/tmm-validation-results' },
+    { text: '수렴 연구', link: '/ko/cookbook/convergence-study' },
+  ]},
+  { text: '관련 가이드', collapsed: true, items: [
+    { text: '빠른 시작', link: '/ko/guide/quickstart' },
+    { text: '솔버 선택', link: '/ko/guide/choosing-solver' },
+    { text: '교차 검증', link: '/ko/guide/cross-validation' },
+    { text: '역설계', link: '/ko/guide/inverse-design' },
+  ]},
 ]
 
 const referenceSidebarKo = [
@@ -319,6 +361,20 @@ export default withMermaid(defineConfig({
   title: 'COMPASS',
   description: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation',
 
+  transformPageData(pageData) {
+    const redirect = pageData.frontmatter?.redirect
+    if (typeof redirect === 'string' && redirect.length > 0) {
+      const canonical = redirect.startsWith('/')
+        ? `/compass${redirect}`
+        : redirect
+      pageData.frontmatter.head = pageData.frontmatter.head || []
+      pageData.frontmatter.head.push(
+        ['meta', { name: 'robots', content: 'noindex' }],
+        ['link', { rel: 'canonical', href: canonical }],
+      )
+    }
+  },
+
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/compass/favicon.svg' }],
     ['meta', { property: 'og:title', content: 'COMPASS' }],
@@ -345,14 +401,20 @@ export default withMermaid(defineConfig({
             { text: 'API Reference', link: '/reference/' },
             { text: 'Research', link: '/research/' },
             { text: 'Reports', link: '/reports/' },
-            { text: 'About', link: '/about/references' },
+          ]},
+          { text: 'About', items: [
+            { text: 'References', link: '/about/references' },
+            { text: 'Changelog', link: '/about/changelog' },
+            { text: 'Roadmap', link: '/about/roadmap' },
+            { text: 'Contributing', link: '/about/contributing' },
+            { text: 'License', link: '/about/license' },
           ]},
         ],
         sidebar: {
           '/theory/': theorySidebar,
           '/guide/': guideSidebar,
           '/reference/': referenceSidebar,
-          '/cookbook/': guideSidebar,
+          '/cookbook/': cookbookSidebar,
           '/research/': researchSidebar,
           '/reports/': reportsSidebar,
           '/about/': aboutSidebar,
@@ -372,14 +434,20 @@ export default withMermaid(defineConfig({
             { text: 'API 레퍼런스', link: '/ko/reference/' },
             { text: '리서치', link: '/ko/research/' },
             { text: '리포트', link: '/ko/reports/' },
-            { text: '정보', link: '/ko/about/references' },
+          ]},
+          { text: '정보', items: [
+            { text: '참고 문헌', link: '/ko/about/references' },
+            { text: '변경 이력', link: '/ko/about/changelog' },
+            { text: '로드맵', link: '/ko/about/roadmap' },
+            { text: '기여 가이드', link: '/ko/about/contributing' },
+            { text: '라이선스', link: '/ko/about/license' },
           ]},
         ],
         sidebar: {
           '/ko/theory/': theorySidebarKo,
           '/ko/guide/': guideSidebarKo,
           '/ko/reference/': referenceSidebarKo,
-          '/ko/cookbook/': guideSidebarKo,
+          '/ko/cookbook/': cookbookSidebarKo,
           '/ko/research/': researchSidebarKo,
           '/ko/reports/': reportsSidebarKo,
           '/ko/about/': aboutSidebarKo,

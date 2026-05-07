@@ -259,3 +259,15 @@ plt.savefig("dti_crosstalk_heatmap.png", dpi=150)
 3. **Partial DTI**: Intermediate crosstalk reduction. Photons absorbed below the DTI depth can still cross over.
 4. **DTI width trade-off**: Wider DTI improves isolation but reduces the active silicon area per pixel, slightly lowering peak QE. The sweet spot for 1 um pitch is typically 80--100 nm.
 5. **Wavelength dependence**: Short wavelengths (blue, 400--500 nm) are absorbed near the surface and are less affected by DTI. Long wavelengths (red/NIR, 600--780 nm) benefit most from DTI because they penetrate deeper and have more opportunity for lateral diffusion.
+
+
+::: tip Reproducibility
+Numbers shown above are illustrative outputs from one specific run. They depend on solver version, materials, hardware (GPU vs CPU, fp32 vs fp64), and config. **Always re-run the recipe in your environment to validate** before drawing conclusions.
+:::
+
+## See also
+
+- [SolverBase / runners](/reference/solver-base)
+- [API overview](/reference/api-overview)
+- [Glossary](/reference/glossary)
+- [Config reference](/reference/config-reference)

@@ -1,10 +1,12 @@
 ---
 title: Diffraction
+redirect: /theory/optics/diffraction
+aside: false
+outline: false
 ---
 
 <script setup>
 import { inBrowser, withBase } from 'vitepress'
-
 if (inBrowser) {
   window.location.replace(withBase('/theory/optics/diffraction'))
 }
@@ -12,4 +14,4 @@ if (inBrowser) {
 
 # Page moved
 
-This compatibility page preserves the old URL. The new page is [Diffraction](/theory/optics/diffraction).
+This page has moved. Redirecting to [Diffraction](/theory/optics/diffraction).

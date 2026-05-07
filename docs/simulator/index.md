@@ -6,6 +6,10 @@ title: Simulator
 
 Explore CMOS image sensor pixel optics through browser-based simulators. Calculations run locally in the browser — no server required.
 
+::: tip Where these fit
+The simulators are **lightweight pedagogical tools**: TMM, geometric optics, analytical camera equations, and visualizers. They are for intuition, classroom use, and design-space scoping. For physically accurate per-pixel QE / crosstalk / field maps, run the [Python solver pipeline](/guide/quickstart) (RCWA/FDTD/Meep). See the scope table at the bottom for what each tool family does and does not cover.
+:::
+
 ## Available Simulators
 
 ### Optical Stack Analysis

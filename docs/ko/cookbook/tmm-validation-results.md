@@ -169,3 +169,15 @@ PyTorch     : 2.5.0 (사용 가능하지만 TMM에서는 미사용)
 | 전체 스윕 (380–780 nm, 20 nm 간격) | 21 | 2.8 ms |
 | 전체 스윕 (380–780 nm, 10 nm 간격) | 41 | ~4 ms |
 | CRA 스윕 (7 각도 × 2 설정) | 14 실행 | ~12 ms |
+
+
+::: tip 재현성 안내
+위에 표시된 수치는 특정 실행에서 얻은 예시 값입니다. 솔버 버전, 재료, 하드웨어(GPU/CPU, fp32/fp64), 설정에 따라 달라집니다. **결론을 내리기 전에 자신의 환경에서 직접 레시피를 다시 실행하여 검증하세요.**
+:::
+
+## 함께 보기
+
+- [MaterialDB](/ko/reference/material-db)
+- [API 개요](/ko/reference/api-overview)
+- [용어집](/ko/reference/glossary)
+- [설정 레퍼런스](/ko/reference/config-reference)

@@ -520,3 +520,17 @@ FDTD 정확도의 핵심 요소:
 | 역설계 최적화 | grcwa (autograd) | 반복당 수 분 |
 | 교차 검증 참조 | TMM + RCWA 솔버 2개 실행 | 결과 비교 |
 | 비주기 구조 | meep 또는 fdtdx | 수 분~수 시간 |
+
+
+::: tip 재현성 안내
+위에 표시된 수치는 특정 실행에서 얻은 예시 값입니다. 솔버 버전, 재료, 하드웨어(GPU/CPU, fp32/fp64), 설정에 따라 달라집니다. **결론을 내리기 전에 자신의 환경에서 직접 레시피를 다시 실행하여 검증하세요.**
+:::
+
+## 함께 보기
+
+- [분석(Analysis)](/ko/reference/analysis)
+- [SolverBase / 러너](/ko/reference/solver-base)
+- [광원(Sources)](/ko/reference/sources)
+- [API 개요](/ko/reference/api-overview)
+- [용어집](/ko/reference/glossary)
+- [설정 레퍼런스](/ko/reference/config-reference)
