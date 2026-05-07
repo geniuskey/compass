@@ -58,22 +58,9 @@ For most studies, the highest-value parameters are `pitch`, microlens `height`, 
 
 ## Coordinate system
 
-COMPASS uses a right-handed coordinate system where light propagates downward through the stack.
+COMPASS uses a right-handed coordinate system where light propagates downward through the stack. The compact sketch below is only for orientation; the detailed dimensional map is the next section.
 
-```mermaid
-graph TB
-    A["Air (z_max)"] -->|"light propagates in -z"| B["Microlens"]
-    B --> C["Planarization"]
-    C --> D["Color Filter + Metal Grid"]
-    D --> E["BARL (Anti-Reflection)"]
-    E --> F["Silicon + DTI + Photodiode (z_min)"]
-    style A fill:#f9f9f9,stroke:#333
-    style B fill:#dda0dd,stroke:#333
-    style C fill:#add8e6,stroke:#333
-    style D fill:#90ee90,stroke:#333
-    style E fill:#fffacd,stroke:#333
-    style F fill:#c0c0c0,stroke:#333
-```
+<CoordinateSystemMini />
 
 Key conventions:
 
@@ -109,6 +96,8 @@ pixel:
 
 The total simulation domain size is `pitch * unit_cell[1]` in x and `pitch * unit_cell[0]` in y. For a standard 2x2 Bayer pattern with 1.0 um pitch, the domain is 2.0 um x 2.0 um with periodic boundary conditions.
 
+<PixelSectionTopView variant="pixel" />
+
 ## Layer stack
 
 Layers live under `pixel.layers`. The examples list them in light-entry order for readability, but COMPASS recognizes the canonical layer keys and builds the physical BSI stack consistently: silicon at the bottom, then BARL, color filter, planarization, microlens, and air at the top. Add custom sub-layers inside `barl.layers`; do not invent arbitrary top-level layer names unless the geometry code supports them.
@@ -130,6 +119,8 @@ Use this order in your YAML files because it matches the way people think about 
 
 Simple dielectric layer above the microlens. This layer provides the medium from which light enters the pixel.
 
+<PixelSectionTopView variant="air" />
+
 ```yaml
 air:
   thickness: 1.0     # um
@@ -146,6 +137,8 @@ air:
 Curved focusing lens described by a superellipse profile. The microlens shape in 2D is defined as:
 
 Start with the defaults unless the study is specifically about focusing. The most common safe edits are `height`, `radius_x/y`, and `shift.cra_deg`. If you reduce `pitch`, scale the radius and gap with it; a lens radius larger than roughly `pitch / 2` will overlap neighboring lenses unless you are intentionally using multi-pixel OCL sharing.
+
+<PixelSectionTopView variant="microlens" />
 
 $$z(x, y) = h \cdot \left(1 - r(x,y)^2\right)^{1/(2\alpha)}$$
 
@@ -223,6 +216,8 @@ Typically SiO2 or a polymer. This layer acts as the propagation medium between t
 
 If you are not calibrating to a real cross-section, change this slowly. A planarization layer that is too thick can make the microlens focus too low; one that is too thin can make the CFA surface unrealistically close to the lens.
 
+<PixelSectionTopView variant="planarization" />
+
 ### color_filter
 
 Bayer CFA (Color Filter Array) with optional metal grid isolation.
@@ -230,6 +225,8 @@ Bayer CFA (Color Filter Array) with optional metal grid isolation.
 This block controls both color selectivity and lateral optical isolation. For ordinary Bayer simulations, keep `pattern: "bayer_rggb"` and change the per-channel `material` fields only when you have custom material data. For crosstalk studies, the first knobs are grid `enabled`, `width`, `thickness`, and `corner_radius`.
 
 For current BSI stacks, prefer the per-channel form below. Real color filters often rise above the metal grid and the red, green, and blue resists can have different heights. `contact_angle` controls the tapered protrusion above `grid.thickness`: `90` degrees is a vertical sidewall, while lower values make the top footprint smaller. The older `thickness`, `materials`, and `grid.height` fields still work as a legacy flat-slab fallback.
+
+<PixelSectionTopView variant="color_filter" />
 
 ```yaml
 color_filter:
@@ -300,6 +297,8 @@ pixel:
 
 Multi-layer dielectric stack for anti-reflection between the CFA and silicon. The purpose of the BARL is to minimize Fresnel reflection at the high-contrast interface between the color filter ($n \approx 1.55$) and silicon ($n \approx 4.0$).
 
+<PixelSectionTopView variant="barl" />
+
 Treat the BARL as a tunable thin-film recipe, not as a universal truth. The example stack is a reasonable starting point, but real products use vendor-specific material choices and thicknesses. When optimizing, change layer thicknesses in nanometer-scale increments and check the whole visible spectrum rather than a single wavelength.
 
 ```yaml
@@ -326,6 +325,8 @@ where $\lambda_0$ is the target wavelength and $n$ is the layer refractive index
 Absorbing substrate containing photodiode regions and DTI (Deep Trench Isolation).
 
 This is where QE becomes collected signal. Silicon `thickness` controls the absorption path, `photodiode.size` controls the collection volume, and `dti` controls how strongly neighboring pixels are isolated. For a first pass, change `photodiode.size` before moving `photodiode.position`.
+
+<PixelSectionTopView variant="silicon" />
 
 ```yaml
 silicon:

@@ -58,22 +58,9 @@ python scripts/run_simulation.py pixel=sample_p0p56um_4x4ocl solver=torcwa
 
 ## 좌표계
 
-COMPASS는 빛이 스택을 아래로 전파하는 오른손 좌표계를 사용합니다.
+COMPASS는 빛이 스택을 아래로 전파하는 오른손 좌표계를 사용합니다. 아래 그림은 방향만 잡기 위한 간단한 도식이고, 실제 치수와 파라미터 위치는 바로 다음 섹션의 상세 단면에서 확인합니다.
 
-```mermaid
-graph TB
-    A["Air (z_max)"] -->|"light propagates in -z"| B["Microlens"]
-    B --> C["Planarization"]
-    C --> D["Color Filter + Metal Grid"]
-    D --> E["BARL (Anti-Reflection)"]
-    E --> F["Silicon + DTI + Photodiode (z_min)"]
-    style A fill:#f9f9f9,stroke:#333
-    style B fill:#dda0dd,stroke:#333
-    style C fill:#add8e6,stroke:#333
-    style D fill:#90ee90,stroke:#333
-    style E fill:#fffacd,stroke:#333
-    style F fill:#c0c0c0,stroke:#333
-```
+<CoordinateSystemMini />
 
 주요 규칙:
 
@@ -109,6 +96,8 @@ pixel:
 
 전체 시뮬레이션 도메인 크기는 x 방향으로 `pitch * unit_cell[1]`, y 방향으로 `pitch * unit_cell[0]`입니다. 1.0 um 피치의 표준 2x2 베이어 패턴(Bayer Pattern)의 경우, 도메인은 주기적 경계 조건을 가진 2.0 um x 2.0 um입니다.
 
+<PixelSectionTopView variant="pixel" />
+
 ## 레이어 스택
 
 레이어는 `pixel.layers` 아래에 정의됩니다. 예시는 읽기 쉽도록 빛이 들어오는 순서로 나열하지만, COMPASS는 정해진 canonical layer key를 인식하고 물리적 BSI 스택을 일관되게 구성합니다: 하단의 silicon, 그 위의 BARL, color filter, planarization, microlens, 최상단의 air 순서입니다. 사용자 정의 하위 레이어는 `barl.layers` 안에 추가하세요. geometry 코드가 지원하지 않는 임의의 최상위 layer 이름을 새로 만드는 것은 피하는 것이 좋습니다.
@@ -130,6 +119,8 @@ YAML 파일에서는 이 순서를 쓰는 것이 광학 경로를 생각하기 �
 
 마이크로렌즈(Microlens) 위의 단순 유전체 레이어입니다. 이 레이어는 빛이 픽셀로 들어오는 매질을 제공합니다.
 
+<PixelSectionTopView variant="air" />
+
 ```yaml
 air:
   thickness: 1.0     # um
@@ -146,6 +137,8 @@ air:
 초타원(Superellipse) 프로파일로 기술되는 곡면 집광 렌즈입니다. 마이크로렌즈의 2D 형상은 다음과 같이 정의됩니다:
 
 집광 자체를 연구하는 경우가 아니라면 기본값에서 시작하세요. 가장 안전하고 흔한 수정 항목은 `height`, `radius_x/y`, `shift.cra_deg`입니다. `pitch`를 줄였다면 radius와 gap도 함께 스케일해야 합니다. 일반적인 픽셀당 렌즈에서 radius가 대략 `pitch / 2`보다 커지면 이웃 렌즈와 겹칠 수 있으며, 이는 multi-pixel OCL sharing을 의도한 경우가 아니라면 피해야 합니다.
+
+<PixelSectionTopView variant="microlens" />
 
 $$z(x, y) = h \cdot \left(1 - r(x,y)^2\right)^{1/(2\alpha)}$$
 
@@ -223,6 +216,8 @@ planarization:
 
 실제 단면에 맞춰 보정하는 것이 아니라면 이 값은 천천히 바꾸는 것이 좋습니다. 너무 두꺼우면 마이크로렌즈 초점이 너무 아래로 내려갈 수 있고, 너무 얇으면 CFA 표면이 렌즈에 비현실적으로 가까워질 수 있습니다.
 
+<PixelSectionTopView variant="planarization" />
+
 ### color_filter
 
 선택적 금속 격자(Metal Grid) 절연이 포함된 베이어 CFA(Color Filter Array)입니다.
@@ -230,6 +225,8 @@ planarization:
 이 블록은 색 선택성과 횡방향 광학 격리를 함께 제어합니다. 일반 Bayer 시뮬레이션에서는 `pattern: "bayer_rggb"`를 유지하고, 자체 재료 데이터가 있을 때만 색별 `material`을 바꾸세요. Crosstalk 연구에서는 grid `enabled`, `width`, `thickness`, `corner_radius`가 첫 번째 조정 대상입니다.
 
 현재 BSI 단면을 맞출 때는 아래처럼 색별 설정을 쓰는 것이 좋습니다. 실제 컬러 필터는 금속 grid보다 높게 솟는 경우가 많고, red/green/blue 레지스트 높이도 서로 다를 수 있습니다. `contact_angle`은 `grid.thickness` 위로 돌출된 부분의 사다리꼴 taper를 제어합니다. `90`도는 수직 sidewall, 더 낮은 값은 위쪽 footprint가 더 작아지는 형상입니다. 기존 `thickness`, `materials`, `grid.height`는 flat slab 하위호환 설정으로 계속 동작합니다.
+
+<PixelSectionTopView variant="color_filter" />
 
 ```yaml
 color_filter:
@@ -300,6 +297,8 @@ pixel:
 
 CFA와 실리콘 사이의 반사 방지를 위한 다층 유전체 스택입니다. BARL의 목적은 컬러 필터($n \approx 1.55$)와 실리콘($n \approx 4.0$) 사이의 높은 대비 계면에서 프레넬 반사(Fresnel Reflection)를 최소화하는 것입니다.
 
+<PixelSectionTopView variant="barl" />
+
 BARL은 보편적인 정답이 아니라 조정 가능한 박막 recipe로 보는 것이 맞습니다. 아래 예시는 좋은 시작점이지만, 실제 제품의 재료 선택과 두께는 벤더별 공정 recipe에 따라 다릅니다. 최적화할 때는 두께를 nm 단위로 조금씩 바꾸고, 단일 파장이 아니라 전체 가시광 스펙트럼을 확인하세요.
 
 ```yaml
@@ -326,6 +325,8 @@ $$t = \frac{\lambda_0}{4 n}$$
 포토다이오드 영역과 DTI(심층 트렌치 절연, Deep Trench Isolation)를 포함하는 흡수 기판입니다.
 
 여기서 QE가 수집 신호로 바뀝니다. Silicon `thickness`는 흡수 경로를, `photodiode.size`는 수집 체적을, `dti`는 이웃 픽셀과의 격리 강도를 제어합니다. 첫 수정에서는 `photodiode.position`을 움직이기보다 `photodiode.size`를 먼저 조정하는 것이 안전합니다.
+
+<PixelSectionTopView variant="silicon" />
 
 ```yaml
 silicon:
