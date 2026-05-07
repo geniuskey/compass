@@ -40,7 +40,7 @@ A clean five-stage pipeline takes you from YAML configuration to publication-rea
 
 ## Solver Backends
 
-COMPASS provides a unified interface to **8 solver backends** across three electromagnetic methods. Click any solver to see details.
+COMPASS provides a unified interface to **9 solver backends** across three electromagnetic methods. Click any solver to see details.
 
 <SolverShowcase />
 

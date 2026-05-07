@@ -1,11 +1,11 @@
 ---
 title: Running RCWA Solvers
-description: How to configure and run the torcwa, grcwa, and meent RCWA solvers in COMPASS, including solver-specific settings, stability controls, and convergence testing.
+description: How to configure and run the torcwa, grcwa, meent, and fmmax RCWA solvers in COMPASS, including solver-specific settings, stability controls, and convergence testing.
 ---
 
 # Running RCWA Solvers
 
-COMPASS provides three RCWA solver backends -- torcwa, grcwa, and meent -- all accessible through the same `SolverFactory` interface. This guide covers solver-specific configuration, stability settings, and convergence verification.
+COMPASS provides four RCWA solver backends -- torcwa, grcwa, meent, and fmmax -- all accessible through the same `SolverFactory` interface. This guide covers solver-specific configuration, stability settings, and convergence verification.
 
 ## Creating an RCWA solver
 

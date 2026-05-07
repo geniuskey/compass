@@ -21,9 +21,15 @@ compass/
       torcwa_solver.py -- torcwa backend adapter
       grcwa_solver.py  -- grcwa backend adapter
       meent_solver.py  -- meent backend adapter
+      fmmax_solver.py  -- fmmax (JAX FMM) backend adapter
       stability.py     -- Numerical stability modules
     fdtd/
       flaport_solver.py -- fdtd (flaport) backend adapter
+      fdtdz_solver.py   -- fdtdz (JAX 2D z-invariant) backend adapter
+      fdtdx_solver.py   -- fdtdx (JAX 3D, multi-GPU) backend adapter
+      meep_solver.py    -- Meep (C++/Python 3D FDTD) backend adapter
+    tmm/
+      tmm_solver.py    -- TMM (1D planar transfer matrix) backend
   sources/
     planewave.py       -- PlanewaveSource
     cone_illumination.py -- ConeIllumination
@@ -41,6 +47,7 @@ compass/
     single_run.py      -- SingleRunner
     sweep_runner.py    -- SweepRunner
     comparison_runner.py -- ComparisonRunner
+    cone_runner.py     -- ConeIlluminationRunner
     roi_sweep_runner.py -- ROISweepRunner
   io/
     hdf5_handler.py    -- HDF5 result storage
@@ -86,6 +93,8 @@ graph LR
 | `SingleRunner.run(config)` | `compass.runners.single_run` | Run one simulation from a config dict |
 | `SweepRunner.run(config)` | `compass.runners.sweep_runner` | Run wavelength sweep |
 | `ComparisonRunner` | `compass.runners.comparison_runner` | Compare multiple solvers |
+| `ConeIlluminationRunner.run(config)` | `compass.runners.cone_runner` | Cone-averaged simulation across exit-pupil angles |
+| `ROISweepRunner` | `compass.runners.roi_sweep_runner` | Sweep across sensor image-plane positions (CRA + microlens shift) |
 
 ### Building geometry
 

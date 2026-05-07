@@ -63,7 +63,7 @@ SolverFactory.register("torcwa", TorcwaSolver)  # in torcwa_solver.py
 solver = SolverFactory.create("torcwa", config, device)  # lazy import + instantiate
 ```
 
-**Available solvers** (10 total):
+**Available solvers** (9 total):
 
 | Name | Type | Module | Notes |
 |------|------|--------|-------|
