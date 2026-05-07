@@ -175,22 +175,56 @@ class GeometryBuilder:
         pitch: float,
         unit_cell: tuple[int, int],
         grid_width: float,
+        corner_radius: float = 0.0,
     ) -> np.ndarray:
         """Generate metal grid pattern between color filters.
 
-        Same geometry as DTI but for the color filter layer.
+        When ``corner_radius`` is 0, this delegates to :meth:`dti_grid` and
+        produces a sharp-cornered grid (lines along pixel boundaries).
+        When ``corner_radius > 0``, each pixel's CF region is modeled as a
+        rounded rectangle with the same radius ``r`` at all four corners,
+        and the metal grid is the complement within the unit cell.
 
         Args:
             nx: Grid resolution in x.
             ny: Grid resolution in y.
             pitch: Pixel pitch in um.
             unit_cell: (rows, cols) number of pixels.
-            grid_width: Metal grid width in um.
+            grid_width: Metal grid width in um (gap between adjacent CF rects).
+            corner_radius: Corner rounding radius r (um) applied identically
+                to all four corners of each CF rounded rectangle.
 
         Returns:
-            2D binary mask (1 = metal, 0 = color filter).
+            2D mask (1 = metal, 0 = color filter).
         """
-        return GeometryBuilder.dti_grid(nx, ny, pitch, unit_cell, grid_width)
+        if corner_radius <= 0.0:
+            return GeometryBuilder.dti_grid(nx, ny, pitch, unit_cell, grid_width)
+
+        rows, cols = unit_cell
+        lx = pitch * cols
+        ly = pitch * rows
+
+        x = np.linspace(0, lx, nx, endpoint=False)
+        y = np.linspace(0, ly, ny, endpoint=False)
+        xx, yy = np.meshgrid(x, y, indexing="xy")
+
+        inner_half = max((pitch - grid_width) / 2.0, 0.0)
+        r = min(corner_radius, inner_half)
+
+        inside_any = np.zeros((ny, nx), dtype=bool)
+        for ri in range(rows):
+            for ci in range(cols):
+                cx = (ci + 0.5) * pitch
+                cy = (ri + 0.5) * pitch
+                dx = np.abs(xx - cx)
+                dy = np.abs(yy - cy)
+                ex = np.maximum(dx - (inner_half - r), 0.0)
+                ey = np.maximum(dy - (inner_half - r), 0.0)
+                inside_any |= (
+                    (dx <= inner_half) & (dy <= inner_half) & (ex * ex + ey * ey <= r * r)
+                )
+
+        return (~inside_any).astype(np.float64)
 
     @staticmethod
     def photodiode_mask_3d(

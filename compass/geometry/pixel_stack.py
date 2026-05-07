@@ -498,11 +498,17 @@ class PixelStack:
         if grid_cfg.get("enabled", False):
             grid_width = grid_cfg.get("width", 0.05)
             grid_material = grid_cfg.get("material", "tungsten")
+            corner_radius = float(grid_cfg.get("corner_radius", 0.0))
             eps_grid_metal = self.material_db.get_epsilon(grid_material, wavelength)
             cache_key = (nx, ny)
             if cache_key not in self._metal_grid_cache:
                 self._metal_grid_cache[cache_key] = GeometryBuilder.metal_grid(
-                    nx, ny, self.pitch, self.unit_cell, grid_width
+                    nx,
+                    ny,
+                    self.pitch,
+                    self.unit_cell,
+                    grid_width,
+                    corner_radius=corner_radius,
                 )
             metal_mask = self._metal_grid_cache[cache_key]
             eps_grid[metal_mask > 0.5] = eps_grid_metal
