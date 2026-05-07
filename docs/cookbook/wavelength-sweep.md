@@ -193,3 +193,9 @@ For NIR (near-infrared) applications, increase silicon thickness to 5-6 um and e
 :::
 
 <QESpectrumChart />
+
+## See also
+
+- [SolverBase / runners](/reference/solver-base)
+- [API overview](/reference/api-overview)
+- [Config reference](/reference/config-reference)

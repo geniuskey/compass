@@ -273,3 +273,9 @@ plt.savefig("barl_reflectance.png", dpi=150)
 | Optimization metric    | Broadband average QE across all channels             |
 
 For production designs, combine BARL optimization with microlens and color filter optimization in a joint parameter sweep.
+
+## See also
+
+- [SolverBase / runners](/reference/solver-base)
+- [API overview](/reference/api-overview)
+- [Config reference](/reference/config-reference)

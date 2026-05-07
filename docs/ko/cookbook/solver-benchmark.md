@@ -520,3 +520,11 @@ FDTD 정확도의 핵심 요소:
 | 역설계 최적화 | grcwa (autograd) | 반복당 수 분 |
 | 교차 검증 참조 | TMM + RCWA 솔버 2개 실행 | 결과 비교 |
 | 비주기 구조 | meep 또는 fdtdx | 수 분~수 시간 |
+
+## 함께 보기
+
+- [분석(Analysis)](/ko/reference/analysis)
+- [SolverBase / 러너](/ko/reference/solver-base)
+- [광원(Sources)](/ko/reference/sources)
+- [API 개요](/ko/reference/api-overview)
+- [설정 레퍼런스](/ko/reference/config-reference)

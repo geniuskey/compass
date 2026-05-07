@@ -401,7 +401,13 @@ export default withMermaid(defineConfig({
             { text: 'API Reference', link: '/reference/' },
             { text: 'Research', link: '/research/' },
             { text: 'Reports', link: '/reports/' },
-            { text: 'About', link: '/about/references' },
+          ]},
+          { text: 'About', items: [
+            { text: 'References', link: '/about/references' },
+            { text: 'Changelog', link: '/about/changelog' },
+            { text: 'Roadmap', link: '/about/roadmap' },
+            { text: 'Contributing', link: '/about/contributing' },
+            { text: 'License', link: '/about/license' },
           ]},
         ],
         sidebar: {
@@ -428,7 +434,13 @@ export default withMermaid(defineConfig({
             { text: 'API 레퍼런스', link: '/ko/reference/' },
             { text: '리서치', link: '/ko/research/' },
             { text: '리포트', link: '/ko/reports/' },
-            { text: '정보', link: '/ko/about/references' },
+          ]},
+          { text: '정보', items: [
+            { text: '참고 문헌', link: '/ko/about/references' },
+            { text: '변경 이력', link: '/ko/about/changelog' },
+            { text: '로드맵', link: '/ko/about/roadmap' },
+            { text: '기여 가이드', link: '/ko/about/contributing' },
+            { text: '라이선스', link: '/ko/about/license' },
           ]},
         ],
         sidebar: {

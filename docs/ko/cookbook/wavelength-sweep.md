@@ -193,3 +193,9 @@ plt.savefig("si_thickness_comparison.png", dpi=150)
 :::
 
 <QESpectrumChart />
+
+## 함께 보기
+
+- [SolverBase / 러너](/ko/reference/solver-base)
+- [API 개요](/ko/reference/api-overview)
+- [설정 레퍼런스](/ko/reference/config-reference)

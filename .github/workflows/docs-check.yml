@@ -1,0 +1,47 @@
+name: Docs Check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'CLAUDE.md'
+      - 'scripts/sync_solver_tables.py'
+      - '.github/workflows/docs-check.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install docs dependencies
+        run: npm install
+        working-directory: docs
+
+      # VitePress fails the build on unresolved internal markdown links by default.
+      - name: Build VitePress (dead-link check)
+        run: npx vitepress build
+        working-directory: docs
+
+  link-and-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Both scripts are pure-stdlib -- no deps needed.
+      - name: Quick dead-link scan (absolute paths in docs/)
+        run: python scripts/check_doc_links.py
+
+      - name: Verify solver tables in sync with manifest
+        run: python scripts/sync_solver_tables.py --check

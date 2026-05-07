@@ -273,3 +273,9 @@ plt.savefig("barl_reflectance.png", dpi=150)
 | 최적화 지표           | 모든 채널에 걸친 광대역 평균 QE                          |
 
 양산 설계에서는 BARL 최적화를 마이크로렌즈 및 컬러 필터 최적화와 결합하여 통합 파라미터 스윕을 수행하십시오.
+
+## 함께 보기
+
+- [SolverBase / 러너](/ko/reference/solver-base)
+- [API 개요](/ko/reference/api-overview)
+- [설정 레퍼런스](/ko/reference/config-reference)

@@ -169,3 +169,9 @@ PyTorch     : 2.5.0 (사용 가능하지만 TMM에서는 미사용)
 | 전체 스윕 (380–780 nm, 20 nm 간격) | 21 | 2.8 ms |
 | 전체 스윕 (380–780 nm, 10 nm 간격) | 41 | ~4 ms |
 | CRA 스윕 (7 각도 × 2 설정) | 14 실행 | ~12 ms |
+
+## 함께 보기
+
+- [MaterialDB](/ko/reference/material-db)
+- [API 개요](/ko/reference/api-overview)
+- [설정 레퍼런스](/ko/reference/config-reference)

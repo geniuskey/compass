@@ -173,3 +173,10 @@ config["pixel"]["layers"]["microlens"]["enabled"] = False
 ```
 
 Compare QE with and without microlens to quantify its contribution.
+
+## See also
+
+- [Analysis](/reference/analysis)
+- [SolverBase / runners](/reference/solver-base)
+- [API overview](/reference/api-overview)
+- [Config reference](/reference/config-reference)

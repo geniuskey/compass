@@ -299,3 +299,10 @@ plt.savefig("ml_2d_optimization.png", dpi=150)
 - **청색 채널**은 CRA에 가장 민감합니다. 표면 근처에서 흡수가 이루어지므로 마이크로렌즈 집속 정확도가 가장 중요하기 때문입니다.
 - **적색 채널**은 가장 덜 민감합니다. 광자가 집속 품질과 관계없이 실리콘 깊숙이 침투하기 때문입니다.
 - **CRA 시프트**는 센서 가장자리 픽셀에 대한 가장 효과적인 단일 보상 방법입니다. 자동 CRA 시프트를 적용하면 렌즈가 보상하여 15-20도까지 QE를 유지한 후 감소합니다.
+
+## 함께 보기
+
+- [분석(Analysis)](/ko/reference/analysis)
+- [SolverBase / 러너](/ko/reference/solver-base)
+- [API 개요](/ko/reference/api-overview)
+- [설정 레퍼런스](/ko/reference/config-reference)

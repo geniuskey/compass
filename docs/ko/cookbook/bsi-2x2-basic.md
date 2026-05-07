@@ -173,3 +173,10 @@ config["pixel"]["layers"]["microlens"]["enabled"] = False
 ```
 
 마이크로렌즈 유무에 따른 QE를 비교하여 마이크로렌즈의 기여도를 정량화할 수 있습니다.
+
+## 함께 보기
+
+- [분석(Analysis)](/ko/reference/analysis)
+- [SolverBase / 러너](/ko/reference/solver-base)
+- [API 개요](/ko/reference/api-overview)
+- [설정 레퍼런스](/ko/reference/config-reference)

@@ -497,3 +497,11 @@ Choose the specific RCWA solver based on your needs:
 | Inverse design optimization | grcwa (autograd) | Minutes per iteration |
 | Cross-validation reference | Run TMM + 2 RCWA solvers | Compare results |
 | Non-periodic structure | meep or fdtdx | Minutes to hours |
+
+## See also
+
+- [Analysis](/reference/analysis)
+- [SolverBase / runners](/reference/solver-base)
+- [Sources](/reference/sources)
+- [API overview](/reference/api-overview)
+- [Config reference](/reference/config-reference)

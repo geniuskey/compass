@@ -259,3 +259,9 @@ plt.savefig("dti_crosstalk_heatmap.png", dpi=150)
 3. **부분 DTI**: 중간 수준의 크로스토크 감소. DTI 깊이 아래에서 흡수된 광자는 여전히 넘어갈 수 있습니다.
 4. **DTI 폭 트레이드오프**: 넓은 DTI는 격리를 개선하지만 픽셀당 활성 실리콘 면적을 줄여 피크 QE를 약간 낮춥니다. 1 um 피치에서의 최적점은 일반적으로 80--100 nm입니다.
 5. **파장 의존성**: 짧은 파장(청색, 400--500 nm)은 표면 근처에서 흡수되므로 DTI의 영향을 덜 받습니다. 긴 파장(적색/NIR, 600--780 nm)은 더 깊이 침투하여 측면 확산 기회가 많으므로 DTI의 이점이 가장 큽니다.
+
+## 함께 보기
+
+- [SolverBase / 러너](/ko/reference/solver-base)
+- [API 개요](/ko/reference/api-overview)
+- [설정 레퍼런스](/ko/reference/config-reference)

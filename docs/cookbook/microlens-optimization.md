@@ -299,3 +299,10 @@ plt.savefig("ml_2d_optimization.png", dpi=150)
 - **Blue channel** is most sensitive to CRA because it absorbs near the surface where microlens focusing accuracy matters most.
 - **Red channel** is least sensitive because photons penetrate deep into silicon regardless of focus quality.
 - **CRA shift** is the single most impactful compensation for edge-of-sensor pixels. With auto CRA shift, the lens compensates and maintains QE up to 15-20 degrees before declining.
+
+## See also
+
+- [Analysis](/reference/analysis)
+- [SolverBase / runners](/reference/solver-base)
+- [API overview](/reference/api-overview)
+- [Config reference](/reference/config-reference)
