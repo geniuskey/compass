@@ -5,9 +5,56 @@ description: Complete reference for configuring BSI pixel structures in YAML, in
 
 # Pixel Stack Configuration
 
-The pixel structure is the central input to any COMPASS simulation. It is defined in a YAML file under the `pixel:` key and describes a Back-Side Illuminated (BSI) CMOS image sensor pixel as a vertical stack of optical layers. This page documents every parameter with its type, default value, and physical meaning.
+The pixel structure is the central input to any COMPASS simulation. It is defined in a YAML file under the `pixel:` key and describes a Back-Side Illuminated (BSI) CMOS image sensor pixel as a vertical stack of optical layers.
+
+This page is meant to be read in two passes. First, use the fast path and decision tables to find the few parameters you actually need. Then use the layer reference when you need the exact YAML field name.
 
 <PixelStackBuilder />
+
+## Fast path: edit a pixel in five minutes
+
+Do not start from a blank YAML file. Start from one of the known-good configs in `configs/pixel/`, change one physical idea at a time, and visualize the stack before launching a long solver run.
+
+```bash
+# Baseline 1.0 um BSI pixel
+python scripts/run_simulation.py pixel=default_bsi_1um solver=torcwa source=wavelength_sweep
+
+# Recent sample structures are listed in docs/guide/sample-pixels.md
+python scripts/run_simulation.py pixel=sample_p0p56um_4x4ocl solver=torcwa
+```
+
+A practical edit loop looks like this:
+
+1. Pick the closest starting file: `default_bsi_1um.yaml` for a generic Bayer pixel, or a `sample_*.yaml` file for a recent architecture.
+2. Change only one family of parameters: pitch, microlens, CFA/grid, BARL, silicon/PD/DTI, or CRA shift.
+3. Use the visual parameter map below to check whether the geometry still looks plausible.
+4. Run a low-cost single-wavelength simulation.
+5. Only after the geometry and one wavelength look sane, run a wavelength sweep or convergence study.
+
+## Mental model
+
+A pixel config answers four questions:
+
+| Question | YAML block | First knob to inspect |
+| --- | --- | --- |
+| How large is the repeated simulation tile? | `pixel.pitch`, `pixel.unit_cell`, `pixel.bayer_map` | `pitch` and `unit_cell` |
+| How does light enter and focus? | `layers.air`, `layers.microlens`, `layers.planarization` | microlens `height`, `radius_x/y`, `shift` |
+| Which color and isolation structure does each pixel see? | `layers.color_filter`, `grid`, `bayer_map` | CFA `materials`, grid `width`, `corner_radius` |
+| Where is light absorbed and collected? | `layers.barl`, `layers.silicon`, `photodiode`, `dti` | silicon `thickness`, PD `size`, DTI `width/depth` |
+
+For most studies, the highest-value parameters are `pitch`, microlens `height`, microlens `radius_x/y`, CRA `shift.cra_deg`, color-filter `thickness`, grid `width`, BARL layer `thickness`, silicon `thickness`, photodiode `size`, and DTI `width/depth`.
+
+## Which parameter should I change?
+
+| Goal | Change these first | Keep an eye on |
+| --- | --- | --- |
+| Model a smaller or larger pixel | `pitch`, then scale microlens radius, grid width, PD size, and DTI width | Tiny features need finer RCWA/FDTD grids |
+| Study corner shading or sensor-edge behavior | `microlens.shift.mode: "auto_cra"` and `shift.cra_deg` | CRA also changes source angle; do not compare to normal incidence blindly |
+| Reduce optical crosstalk | Increase `grid.width`, enable/deepen `dti`, adjust PD footprint | More isolation can reduce fill factor or transmission |
+| Improve peak QE | Tune microlens height/radius, BARL thicknesses, silicon thickness | A stack optimized for green may hurt blue or red |
+| Compare Bayer, Quad Bayer, or 4x4 binning | `unit_cell`, `bayer_map`, `color_filter.pattern`, `microlens.sharing` | `bayer_map` dimensions must match `unit_cell` |
+| Test fabrication-like rounded CFA corners | `color_filter.grid.corner_radius` | Radius is clamped by pitch and grid width |
+| Make a faster debug run | Use a smaller `unit_cell`, simpler stack, lower solver order/grid | Do not treat debug results as converged physics |
 
 ## Coordinate system
 
@@ -35,7 +82,7 @@ Key conventions:
 - **z**: vertical stack direction. Silicon sits at the bottom ($z_\text{min}$), air at the top ($z_\text{max}$)
 - Light propagates in **-z** (from air toward silicon), consistent with BSI illumination
 - The origin of the x-y plane is at the lower-left corner of the unit cell
-- The `position` and `size` for photodiodes are relative to each pixel center
+- For photodiodes, `position[0]` and `position[1]` are lateral offsets from each pixel center. Most users should leave `position` unchanged and tune `size` first.
 
 ## Parameter map (visual reference)
 
@@ -64,18 +111,20 @@ The total simulation domain size is `pitch * unit_cell[1]` in x and `pitch * uni
 
 ## Layer stack
 
-Layers are defined top-to-bottom under `pixel.layers`. The ordering of keys in the YAML dictionary determines the physical stacking order from top (air) to bottom (silicon).
+Layers live under `pixel.layers`. The examples list them in light-entry order for readability, but COMPASS recognizes the canonical layer keys and builds the physical BSI stack consistently: silicon at the bottom, then BARL, color filter, planarization, microlens, and air at the top. Add custom sub-layers inside `barl.layers`; do not invent arbitrary top-level layer names unless the geometry code supports them.
 
 ```yaml
 pixel:
   layers:
-    air:             # Superstrate (top)
+    air:             # Superstrate, light-entry side
     microlens:       # Curved focusing lens
     planarization:   # Flat dielectric spacer
     color_filter:    # Bayer CFA with optional metal grid
     barl:            # Bottom anti-reflection layers
-    silicon:         # Photodiode substrate (bottom)
+    silicon:         # Photodiode substrate
 ```
+
+Use this order in your YAML files because it matches the way people think about the optical path. Internally, the solver receives the corresponding bottom-to-top z stack.
 
 ### air
 
@@ -95,6 +144,8 @@ air:
 ### microlens
 
 Curved focusing lens described by a superellipse profile. The microlens shape in 2D is defined as:
+
+Start with the defaults unless the study is specifically about focusing. The most common safe edits are `height`, `radius_x/y`, and `shift.cra_deg`. If you reduce `pitch`, scale the radius and gap with it; a lens radius larger than roughly `pitch / 2` will overlap neighboring lenses unless you are intentionally using multi-pixel OCL sharing.
 
 $$z(x, y) = h \cdot \left(1 - r(x,y)^2\right)^{1/(2\alpha)}$$
 
@@ -170,9 +221,13 @@ planarization:
 
 Typically SiO2 or a polymer. This layer acts as the propagation medium between the microlens and the color filter. Adjust thickness to control where the microlens focuses light relative to the photodiode. The effective focal length of the microlens-planarization system determines optical crosstalk.
 
+If you are not calibrating to a real cross-section, change this slowly. A planarization layer that is too thick can make the microlens focus too low; one that is too thin can make the CFA surface unrealistically close to the lens.
+
 ### color_filter
 
 Bayer CFA (Color Filter Array) with optional metal grid isolation.
+
+This block controls both color selectivity and lateral optical isolation. For ordinary Bayer simulations, keep `pattern: "bayer_rggb"` and change `materials` only when you have custom material data. For crosstalk studies, the first knobs are grid `enabled`, `width`, `height`, and `corner_radius`.
 
 ```yaml
 color_filter:
@@ -231,6 +286,8 @@ pixel:
 
 Multi-layer dielectric stack for anti-reflection between the CFA and silicon. The purpose of the BARL is to minimize Fresnel reflection at the high-contrast interface between the color filter ($n \approx 1.55$) and silicon ($n \approx 4.0$).
 
+Treat the BARL as a tunable thin-film recipe, not as a universal truth. The example stack is a reasonable starting point, but real products use vendor-specific material choices and thicknesses. When optimizing, change layer thicknesses in nanometer-scale increments and check the whole visible spectrum rather than a single wavelength.
+
 ```yaml
 barl:
   layers:
@@ -254,15 +311,18 @@ where $\lambda_0$ is the target wavelength and $n$ is the layer refractive index
 
 Absorbing substrate containing photodiode regions and DTI (Deep Trench Isolation).
 
+This is where QE becomes collected signal. Silicon `thickness` controls the absorption path, `photodiode.size` controls the collection volume, and `dti` controls how strongly neighboring pixels are isolated. For a first pass, change `photodiode.size` before moving `photodiode.position`.
+
 ```yaml
 silicon:
   thickness: 3.0
   material: "silicon"
   photodiode:
-    position: [0.0, 0.0, 0.5]   # Offset from pixel center [x, y, z] in um
+    position: [0.0, 0.0, 0.5]   # PD center placement [x offset, y offset, z] in um
     size: [0.7, 0.7, 2.0]        # Photodiode extent [dx, dy, dz] in um
   dti:
     enabled: true
+    mode: "fdti"                  # "fdti" or "bdti"
     width: 0.1                    # Trench width in um
     depth: 3.0                    # Trench depth in um (from top of silicon)
     material: "sio2"              # Fill material
@@ -272,14 +332,31 @@ silicon:
 |-----------------------|-------------------------|------------------|----------------------------------------------|
 | `thickness`           | float                   | `3.0`            | Total silicon thickness in um.               |
 | `material`            | str                     | `"silicon"`      | Substrate material.                          |
-| `photodiode.position` | [float, float, float]   | `[0, 0, 0.5]`   | PD offset from pixel center (x, y, z) in um. |
+| `photodiode.position` | [float, float, float]   | `[0, 0, 0.5]`   | PD center placement. x/y are lateral offsets from each pixel center; the z value controls vertical placement in silicon. Leave this at the default unless you are intentionally shifting the collection window. |
 | `photodiode.size`     | [float, float, float]   | `[0.7, 0.7, 2.0]` | PD extent (dx, dy, dz) in um.              |
 | `dti.enabled`         | bool                    | `true`           | Enable deep trench isolation.                |
+| `dti.mode`            | str                     | `"fdti"`         | Trench direction model: `"fdti"` or `"bdti"`. |
 | `dti.width`           | float                   | `0.1`            | DTI trench width in um.                     |
 | `dti.depth`           | float                   | `3.0`            | DTI depth in um (from top of Si).           |
 | `dti.material`        | str                     | `"sio2"`         | DTI fill material.                          |
 
-DTI trenches are placed at pixel boundaries in the silicon layer. They serve as optical barriers that reduce crosstalk by reflecting light back into the intended pixel. Full-depth DTI (`depth == thickness`) provides the best isolation.
+DTI trenches are placed at pixel boundaries in the silicon layer. They serve as optical barriers that reduce crosstalk by reflecting light back into the intended pixel. Full-depth DTI (`depth == thickness`) provides the strongest isolation in this simplified geometry.
+
+## Safe editing checklist
+
+Before trusting a result, check the geometry against these simple rules:
+
+| Check | Why it matters |
+| --- | --- |
+| `bayer_map` shape matches `unit_cell` | A `[4, 4]` unit cell needs four rows and four columns in the map |
+| Microlens radius is plausible | Per-pixel lenses usually stay just below `pitch / 2`; shared OCL lenses scale with `sharing` |
+| Grid, DTI, and corner radius are not smaller than the simulation grid cell | Sub-grid features can disappear or converge slowly |
+| BARL thicknesses are in realistic thin-film ranges | Typical values are tens of nanometers, written as `0.010` to `0.050` um |
+| Silicon is thick enough for the wavelength range | Red/NIR light needs more silicon than blue light |
+| PD size fits inside the pixel | `photodiode.size[0]` and `[1]` should usually be smaller than `pitch` |
+| CRA shift is used consistently | If source CRA changes, update `microlens.shift.cra_deg` or intentionally set `shift.mode: "none"` for a no-compensation comparison |
+
+When something looks wrong, simplify the config first: disable the microlens, disable the metal grid, or use a single wavelength. Reintroduce features one at a time.
 
 ## Example configurations
 
