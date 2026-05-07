@@ -20,9 +20,10 @@ config = {
             "microlens": {"enabled": True, "height": 0.6, "radius_x": 0.48, "radius_y": 0.48},
             "planarization": {"thickness": 0.3, "material": "sio2"},
             "color_filter": {
-                "thickness": 0.6,
-                "materials": {"R": "cf_red", "G": "cf_green", "B": "cf_blue"},
-                "grid": {"enabled": True, "width": 0.05, "material": "tungsten"},
+                "red": {"material": "cf_red", "thickness": 0.62},
+                "green": {"material": "cf_green", "thickness": 0.60},
+                "blue": {"material": "cf_blue", "thickness": 0.65},
+                "grid": {"enabled": True, "width": 0.05, "thickness": 0.47, "material": "tungsten"},
             },
             "barl": {"layers": [
                 {"thickness": 0.010, "material": "sio2"},

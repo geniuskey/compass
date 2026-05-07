@@ -213,10 +213,18 @@ After registering a custom material, reference it by name in your pixel configur
 
 ```yaml
 color_filter:
-  materials:
-    R: "my_custom_red"
-    G: "cf_green"
-    B: "cf_blue"
+  red:
+    material: "my_custom_red"
+    thickness: 0.62
+    contact_angle: 66.0
+  green:
+    material: "cf_green"
+    thickness: 0.60
+    contact_angle: 72.0
+  blue:
+    material: "cf_blue"
+    thickness: 0.65
+    contact_angle: 62.0
 ```
 
 Ensure the material is registered before calling `GeometryBuilder`:

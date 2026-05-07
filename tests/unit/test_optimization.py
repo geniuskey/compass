@@ -335,6 +335,24 @@ class TestColorFilterThickness:
         p.set_value(np.array([0.8]))
         assert cfg["pixel"]["layers"]["color_filter"]["thickness"] == pytest.approx(0.8)
 
+    def test_get_set_updates_channel_thicknesses(self):
+        cfg = _base_config()
+        cf_cfg = cfg["pixel"]["layers"]["color_filter"]
+        cf_cfg.update({
+            "red": {"thickness": 0.64},
+            "green": {"thickness": 0.60},
+            "blue": {"thickness": 0.68},
+        })
+
+        p = ColorFilterThickness(cfg)
+        assert p.get_value() == pytest.approx([0.64])
+        p.set_value(np.array([0.75]))
+
+        assert cf_cfg["thickness"] == pytest.approx(0.75)
+        assert cf_cfg["red"]["thickness"] == pytest.approx(0.75)
+        assert cf_cfg["green"]["thickness"] == pytest.approx(0.75)
+        assert cf_cfg["blue"]["thickness"] == pytest.approx(0.75)
+
 
 class TestMicrolensRadii:
     """Tests for MicrolensRadii parameter."""

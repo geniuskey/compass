@@ -39,7 +39,7 @@ A pixel config answers four questions:
 | --- | --- | --- |
 | How large is the repeated simulation tile? | `pixel.pitch`, `pixel.unit_cell`, `pixel.bayer_map` | `pitch` and `unit_cell` |
 | How does light enter and focus? | `layers.air`, `layers.microlens`, `layers.planarization` | microlens `height`, `radius_x/y`, `shift` |
-| Which color and isolation structure does each pixel see? | `layers.color_filter`, `grid`, `bayer_map` | CFA `materials`, grid `width`, `corner_radius` |
+| Which color and isolation structure does each pixel see? | `layers.color_filter`, `grid`, `bayer_map` | CFA channel `material/thickness/contact_angle`, grid `width`, `corner_radius` |
 | Where is light absorbed and collected? | `layers.barl`, `layers.silicon`, `photodiode`, `dti` | silicon `thickness`, PD `size`, DTI `width/depth` |
 
 For most studies, the highest-value parameters are `pitch`, microlens `height`, microlens `radius_x/y`, CRA `shift.cra_deg`, color-filter `thickness`, grid `width`, BARL layer `thickness`, silicon `thickness`, photodiode `size`, and DTI `width/depth`.
@@ -227,34 +227,48 @@ If you are not calibrating to a real cross-section, change this slowly. A planar
 
 Bayer CFA (Color Filter Array) with optional metal grid isolation.
 
-This block controls both color selectivity and lateral optical isolation. For ordinary Bayer simulations, keep `pattern: "bayer_rggb"` and change `materials` only when you have custom material data. For crosstalk studies, the first knobs are grid `enabled`, `width`, `height`, and `corner_radius`.
+This block controls both color selectivity and lateral optical isolation. For ordinary Bayer simulations, keep `pattern: "bayer_rggb"` and change the per-channel `material` fields only when you have custom material data. For crosstalk studies, the first knobs are grid `enabled`, `width`, `thickness`, and `corner_radius`.
+
+For current BSI stacks, prefer the per-channel form below. Real color filters often rise above the metal grid and the red, green, and blue resists can have different heights. `contact_angle` controls the tapered protrusion above `grid.thickness`: `90` degrees is a vertical sidewall, while lower values make the top footprint smaller. The older `thickness`, `materials`, and `grid.height` fields still work as a legacy flat-slab fallback.
 
 ```yaml
 color_filter:
-  thickness: 0.6
   pattern: "bayer_rggb"
-  materials:
-    R: "cf_red"
-    G: "cf_green"
-    B: "cf_blue"
+  red:
+    material: "cf_red"
+    thickness: 0.62
+    contact_angle: 66.0
+  green:
+    material: "cf_green"
+    thickness: 0.60
+    contact_angle: 72.0
+  blue:
+    material: "cf_blue"
+    thickness: 0.65
+    contact_angle: 62.0
   grid:
     enabled: true
     width: 0.05          # Grid line width in um
-    height: 0.6          # Grid height (usually = CFA thickness)
-    material: "tungsten"  # Metal grid material
+    thickness: 0.47      # Grid thickness in um; usually lower than the CF
+    material: "tungsten" # Metal grid material
     corner_radius: 0.0   # Optional: round CF corners by r (um). 0 = sharp.
 ```
 
 | Parameter            | Type | Default          | Description                            |
 |---------------------|------|------------------|----------------------------------------|
-| `thickness`         | float | `0.6`           | Color filter thickness in um.          |
+| `thickness`         | float | `0.6`           | Legacy flat color filter thickness in um. Used when per-channel thickness is absent. |
 | `pattern`           | str  | `"bayer_rggb"`   | CFA pattern name.                      |
-| `materials`         | dict | R/G/B mapping    | Maps color keys to material names.     |
+| `materials`         | dict | R/G/B mapping    | Legacy color-key to material mapping.  |
+| `red/green/blue.material` | str | `cf_*` | Per-channel material name.             |
+| `red/green/blue.thickness` | float | `thickness` | Per-channel CF height in um.           |
+| `red/green/blue.contact_angle` | float | `90.0` | Sidewall angle in degrees for the protrusion above the grid. |
 | `grid.enabled`      | bool | `true`           | Enable metal isolation grid.           |
 | `grid.width`        | float | `0.05`          | Grid line width in um.                 |
-| `grid.height`       | float | `0.6`           | Grid line height in um.               |
+| `grid.thickness`    | float | `thickness`     | Metal grid height in um.               |
+| `grid.height`       | float | `0.6`           | Legacy alias for `grid.thickness`.     |
 | `grid.material`     | str  | `"tungsten"`     | Grid material.                         |
 | `grid.corner_radius`| float | `0.0`           | Rounded-rectangle corner radius `r` (um), applied identically at all four corners of each CF cell. `0` keeps the sharp-cornered grid; values `> 0` model each CF as a rounded rectangle and the grid as its complement. Auto-clamped to `(pitch - grid.width) / 2`. |
+| `n_slices`          | int  | `8` when tapered | Number of z-slices used to staircase a tapered CF surface. |
 
 **Supported Bayer patterns:**
 
@@ -268,7 +282,7 @@ color_filter:
 | `nonacell`                | 3×3              | 6×6         | 9-cell binning (early 108 MP-class sensors)      |
 | `tetra2cell` / `hexadeca` | 4×4              | 8×8         | 16-cell binning (200 MP-class sub-µm pixels)     |
 
-The `bayer_map` at the top level determines which material each pixel receives. The keys in `materials` must match the characters used in `bayer_map`. Custom patterns beyond standard Bayer (e.g., RGBW quad-pixel) can be defined by enlarging the `unit_cell` and `bayer_map`:
+The `bayer_map` at the top level determines which channel each pixel receives. `R`, `G`, and `B` resolve to the `red`, `green`, and `blue` channel blocks; custom material mappings can still use the legacy `materials` dictionary. Custom patterns beyond standard Bayer (e.g., RGBW quad-pixel) can be defined by enlarging the `unit_cell` and `bayer_map`:
 
 ```yaml
 # 4x4 Quad-Bayer pattern
@@ -374,8 +388,10 @@ pixel:
       radius_y: 0.38
     planarization: {thickness: 0.25, material: "sio2"}
     color_filter:
-      thickness: 0.5
-      grid: {width: 0.05, height: 0.5}
+      red: {material: "cf_red", thickness: 0.52, contact_angle: 66.0}
+      green: {material: "cf_green", thickness: 0.50, contact_angle: 72.0}
+      blue: {material: "cf_blue", thickness: 0.54, contact_angle: 62.0}
+      grid: {width: 0.05, thickness: 0.39}
     barl:
       layers:
         - {thickness: 0.010, material: "sio2"}
@@ -405,8 +421,10 @@ pixel:
       profile: {n: 3.0, alpha: 1.2}
     planarization: {thickness: 0.4, material: "sio2"}
     color_filter:
-      thickness: 0.8
-      grid: {width: 0.06, height: 0.8}
+      red: {material: "cf_red", thickness: 0.83, contact_angle: 66.0}
+      green: {material: "cf_green", thickness: 0.80, contact_angle: 72.0}
+      blue: {material: "cf_blue", thickness: 0.86, contact_angle: 62.0}
+      grid: {width: 0.06, thickness: 0.62}
     barl:
       layers:
         - {thickness: 0.010, material: "sio2"}
@@ -437,7 +455,9 @@ pixel:
       enabled: false
     planarization: {thickness: 0.3, material: "sio2"}
     color_filter:
-      thickness: 0.6
+      red: {material: "cf_red", thickness: 0.62}
+      green: {material: "cf_green", thickness: 0.60}
+      blue: {material: "cf_blue", thickness: 0.65}
     silicon:
       thickness: 3.0
 ```

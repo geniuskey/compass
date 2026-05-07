@@ -41,15 +41,27 @@ class MicrolensConfig(BaseModel):
 class GridConfig(BaseModel):
     enabled: bool = True
     width: float = 0.05
+    thickness: float | None = None
     height: float = 0.6
     material: str = "tungsten"
+    corner_radius: float = 0.0
+
+
+class ColorFilterChannelConfig(BaseModel):
+    material: str | None = None
+    thickness: float | None = None
+    contact_angle: float = 90.0
 
 
 class ColorFilterConfig(BaseModel):
     thickness: float = 0.6
     pattern: str = "bayer_rggb"
     materials: dict[str, str] = Field(default_factory=lambda: {"R": "cf_red", "G": "cf_green", "B": "cf_blue"})
+    red: ColorFilterChannelConfig | None = None
+    green: ColorFilterChannelConfig | None = None
+    blue: ColorFilterChannelConfig | None = None
     grid: GridConfig = Field(default_factory=GridConfig)
+    n_slices: int = 8
 
 
 class BarlLayerConfig(BaseModel):

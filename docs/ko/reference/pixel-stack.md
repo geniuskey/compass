@@ -28,7 +28,11 @@ config = {
         "unit_cell": [2, 2],
         "layers": {
             "silicon": {"thickness": 3.0, "material": "silicon"},
-            "color_filter": {"thickness": 0.6},
+            "color_filter": {
+                "red": {"material": "cf_red", "thickness": 0.62},
+                "green": {"material": "cf_green", "thickness": 0.60},
+                "blue": {"material": "cf_blue", "thickness": 0.65},
+            },
         },
     }
 }

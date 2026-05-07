@@ -96,6 +96,33 @@ def _make_box_mesh(
     return vx, vy, vz, ti, tj, tk
 
 
+def _make_frustum_mesh(
+    x0: float, x1: float,
+    y0: float, y1: float,
+    z0: float, z1: float,
+    top_inset: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Generate a truncated-pyramid mesh for protruding color filters."""
+    max_inset = max(0.0, min((x1 - x0) / 2.0, (y1 - y0) / 2.0) - 1e-9)
+    inset = min(max(top_inset, 0.0), max_inset)
+    if inset <= 0.0:
+        return _make_box_mesh(x0, x1, y0, y1, z0, z1)
+
+    vx = np.array([
+        x0, x1, x1, x0,
+        x0 + inset, x1 - inset, x1 - inset, x0 + inset,
+    ])
+    vy = np.array([
+        y0, y0, y1, y1,
+        y0 + inset, y0 + inset, y1 - inset, y1 - inset,
+    ])
+    vz = np.array([z0, z0, z0, z0, z1, z1, z1, z1])
+    ti = np.array([0, 0, 4, 4, 0, 0, 1, 1, 0, 0, 2, 2])
+    tj = np.array([1, 2, 5, 6, 1, 4, 2, 6, 3, 4, 3, 3])
+    tk = np.array([2, 3, 6, 7, 5, 5, 6, 5, 7, 7, 7, 6])
+    return vx, vy, vz, ti, tj, tk
+
+
 def _make_lens_surface(
     center_x: float,
     center_y: float,
@@ -381,37 +408,62 @@ def _add_color_filter_traces(
     """
     pitch = pixel_stack.pitch
     legend_shown = set()
+    cf_cfg = pixel_stack._layer_configs.get("color_filter", {})
+    grid_cfg = cf_cfg.get("grid", {}) or {}
+    grid_enabled = grid_cfg.get("enabled", False)
+    grid_width = float(grid_cfg.get("width", 0.0)) if grid_enabled else 0.0
+    grid_t = min(pixel_stack._grid_thickness(cf_cfg), layer.thickness)
 
     for r in range(pixel_stack.unit_cell[0]):
         for c in range(pixel_stack.unit_cell[1]):
             color_char = pixel_stack.bayer_map[r][c]
-            cf_material = f"cf_{color_char.lower()}"
+            spec = pixel_stack._color_filter_spec(cf_cfg, color_char)
+            cf_material = spec["material"]
+            cf_thickness = min(float(spec["thickness"]), layer.thickness)
+            if cf_thickness <= 0.0:
+                continue
             rgb = _resolve_color_3d(cf_material)
-
-            x0 = c * pitch
-            x1 = (c + 1) * pitch
-            y0 = r * pitch
-            y1 = (r + 1) * pitch
-
-            vx, vy, vz, ti, tj, tk = _make_box_mesh(
-                x0, x1, y0, y1, layer.z_start, layer.z_end
-            )
 
             color_str = f"rgb({rgb[0]},{rgb[1]},{rgb[2]})"
             show_legend = color_char not in legend_shown
             legend_shown.add(color_char)
 
-            traces.append(
-                go.Mesh3d(
-                    x=vx, y=vy, z=vz,
-                    i=ti, j=tj, k=tk,
-                    color=color_str,
-                    opacity=0.7,
-                    name=f"CF_{color_char}",
-                    showlegend=show_legend,
-                    hoverinfo="name",
+            x0 = c * pitch + grid_width / 2.0
+            x1 = (c + 1) * pitch - grid_width / 2.0
+            y0 = r * pitch + grid_width / 2.0
+            y1 = (r + 1) * pitch - grid_width / 2.0
+            z_bottom = layer.z_start
+            z_grid_top = layer.z_start + min(grid_t, cf_thickness)
+            z_top = layer.z_start + cf_thickness
+
+            segments = []
+            if z_grid_top > z_bottom:
+                segments.append((
+                    _make_box_mesh(x0, x1, y0, y1, z_bottom, z_grid_top),
+                    show_legend,
+                ))
+                show_legend = False
+            if z_top > z_grid_top:
+                inset = pixel_stack._cf_lateral_inset(
+                    cf_thickness, grid_t, float(spec["contact_angle"])
                 )
-            )
+                segments.append((
+                    _make_frustum_mesh(x0, x1, y0, y1, z_grid_top, z_top, inset),
+                    show_legend,
+                ))
+
+            for (vx, vy, vz, ti, tj, tk), segment_legend in segments:
+                traces.append(
+                    go.Mesh3d(
+                        x=vx, y=vy, z=vz,
+                        i=ti, j=tj, k=tk,
+                        color=color_str,
+                        opacity=0.7,
+                        name=f"CF_{color_char}",
+                        showlegend=segment_legend,
+                        hoverinfo="name",
+                    )
+                )
 
 
 def _add_photodiode_traces(

@@ -131,7 +131,9 @@ cfg = derive_parameters(
     sample="sample_p0p56um_4x4ocl",
     overrides={
         "layers.silicon.thickness": 1.85,       # 측정 Si 두께
-        "layers.color_filter.thickness": 0.42,  # 측정 CF 두께
+        "layers.color_filter.red.thickness": 0.43,
+        "layers.color_filter.green.thickness": 0.42,
+        "layers.color_filter.blue.thickness": 0.45,
         "layers.silicon.dti.width": 0.075,
     },
 )

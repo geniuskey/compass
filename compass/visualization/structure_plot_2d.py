@@ -157,6 +157,11 @@ def _plot_vertical_cross_section(
             n_pixels = (pixel_stack.unit_cell[1] if plane == "xz"
                         else pixel_stack.unit_cell[0])
             pitch = pixel_stack.pitch
+            cf_cfg = pixel_stack._layer_configs.get("color_filter", {})
+            grid_cfg = cf_cfg.get("grid", {}) or {}
+            grid_enabled = grid_cfg.get("enabled", False)
+            grid_width = float(grid_cfg.get("width", 0.0)) if grid_enabled else 0.0
+            grid_t = min(pixel_stack._grid_thickness(cf_cfg), thickness)
 
             for idx in range(n_pixels):
                 if plane == "xz":
@@ -180,15 +185,40 @@ def _plot_vertical_cross_section(
                 ][
                     col_idx % len(pixel_stack.bayer_map[0])
                 ]
-                cf_material = f"cf_{color_char.lower()}"
+                spec = pixel_stack._color_filter_spec(cf_cfg, color_char)
+                cf_material = spec["material"]
                 face_color = _resolve_color(cf_material)
 
-                x0 = idx * pitch
-                rect = mpatches.Rectangle(
-                    (x0, z_start), pitch, thickness,
-                )
-                rect_patches.append(rect)
-                rect_colors.append(face_color)
+                cf_thickness = min(float(spec["thickness"]), thickness)
+                if cf_thickness <= 0.0:
+                    continue
+
+                x0 = idx * pitch + grid_width / 2.0
+                x1 = (idx + 1) * pitch - grid_width / 2.0
+                z_grid_top = z_start + min(grid_t, cf_thickness)
+                z_top = z_start + cf_thickness
+
+                if z_grid_top > z_start:
+                    rect = mpatches.Rectangle(
+                        (x0, z_start), x1 - x0, z_grid_top - z_start,
+                    )
+                    rect_patches.append(rect)
+                    rect_colors.append(face_color)
+
+                if z_top > z_grid_top:
+                    inset = pixel_stack._cf_lateral_inset(
+                        cf_thickness, grid_t, float(spec["contact_angle"])
+                    )
+                    x0_top = min(x0 + inset, (x0 + x1) / 2.0)
+                    x1_top = max(x1 - inset, (x0 + x1) / 2.0)
+                    poly = mpatches.Polygon([
+                        (x0, z_grid_top),
+                        (x1, z_grid_top),
+                        (x1_top, z_top),
+                        (x0_top, z_top),
+                    ])
+                    rect_patches.append(poly)
+                    rect_colors.append(face_color)
         else:
             face_color = _resolve_color(layer.base_material, layer.name)
             rect = mpatches.Rectangle(

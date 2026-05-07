@@ -33,7 +33,11 @@ base_config = {
         "unit_cell": [2, 2],
         "layers": {
             "microlens": {"height": 0.6, "profile": {"n": 2.5}},
-            "color_filter": {"thickness": 0.6},
+            "color_filter": {
+                "red": {"material": "cf_red", "thickness": 0.62},
+                "green": {"material": "cf_green", "thickness": 0.60},
+                "blue": {"material": "cf_blue", "thickness": 0.65},
+            },
         },
     },
     "solver": {"name": "meent"},
@@ -106,7 +110,7 @@ optimization:
 | `microlens_squareness` | `MicrolensSquareness` | 1 | Superellipse exponent n |
 | `microlens_radii` | `MicrolensRadii` | 2 | Lens semi-axes (radius_x, radius_y) |
 | `barl_thicknesses` | `BARLThicknesses` | N | One value per BARL layer |
-| `color_filter_thickness` | `ColorFilterThickness` | 1 | Color filter layer thickness (um) |
+| `color_filter_thickness` | `ColorFilterThickness` | 1 | Mean color filter thickness; updates all existing channel thicknesses together |
 
 Each parameter class accepts `min_val` and `max_val` arguments for bound constraints.
 

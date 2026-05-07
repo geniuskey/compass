@@ -238,6 +238,10 @@ def derive_parameters(
     ml_h = _ml_height(p)
     ml_r = _ml_radius(p, gap, sharing)
     cf_t = _cf_thickness(p)
+    cf_grid_t = round(max(0.05, cf_t * 0.78), 3)
+    cf_red_t = round(cf_t * 1.04, 3)
+    cf_green_t = round(cf_t, 3)
+    cf_blue_t = round(cf_t * 1.08, 3)
     plan_t = _planarization(p)
     dti_w = _dti_width(p)
     si_t = _si_thickness(p)
@@ -288,13 +292,26 @@ def derive_parameters(
             },
             "planarization": {"thickness": plan_t, "material": "sio2"},
             "color_filter": {
-                "thickness": cf_t,
                 "pattern": pattern,
-                "materials": {"R": "cf_red", "G": "cf_green", "B": "cf_blue"},
+                "red": {
+                    "material": "cf_red",
+                    "thickness": cf_red_t,
+                    "contact_angle": 66.0,
+                },
+                "green": {
+                    "material": "cf_green",
+                    "thickness": cf_green_t,
+                    "contact_angle": 72.0,
+                },
+                "blue": {
+                    "material": "cf_blue",
+                    "thickness": cf_blue_t,
+                    "contact_angle": 62.0,
+                },
                 "grid": {
                     "enabled": True,
                     "width": round(min(0.10, 0.05 + 0.03 * p), 3),
-                    "height": cf_t,
+                    "thickness": cf_grid_t,
                     "material": "tungsten",
                 },
             },

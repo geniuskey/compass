@@ -17,6 +17,9 @@ from compass.materials.database import MaterialDB
 
 logger = logging.getLogger(__name__)
 
+_CF_CHANNEL_NAMES = {"R": "red", "G": "green", "B": "blue"}
+_DEFAULT_CF_MATERIALS = {"R": "cf_red", "G": "cf_green", "B": "cf_blue"}
+
 
 class PixelStack:
     """Solver-agnostic pixel stack representation.
@@ -49,7 +52,7 @@ class PixelStack:
         self._meshgrid_cache: dict[tuple[int, int], tuple[np.ndarray, np.ndarray]] = {}
         self._height_map_cache: dict[tuple[int, int], np.ndarray] = {}
         self._dti_mask_cache: dict[tuple[int, int], np.ndarray] = {}
-        self._metal_grid_cache: dict[tuple[int, int], np.ndarray] = {}
+        self._metal_grid_cache: dict[tuple, np.ndarray] = {}
 
         self._build_from_config(pixel_cfg)
 
@@ -130,8 +133,7 @@ class PixelStack:
 
         # 3. Color filter layer
         cf_cfg = layers_cfg.get("color_filter", {})
-        cf_thickness = cf_cfg.get("thickness", 0.6)
-        _has_grid = cf_cfg.get("grid", {}).get("enabled", False)
+        cf_thickness = self._color_filter_stack_thickness(cf_cfg)
         self.layers.append(Layer(
             name="color_filter",
             z_start=z_cursor,
@@ -265,8 +267,9 @@ class PixelStack:
 
         # Color filter (use cf_green as reference)
         cf_cfg = layers_cfg.get("color_filter", {})
-        cf_t = cf_cfg.get("thickness", 0.6)
-        n_cf, _ = self.material_db.get_nk("cf_green", ref_wavelength)
+        cf_t = self._color_filter_stack_thickness(cf_cfg)
+        cf_ref_material = self._color_filter_spec(cf_cfg, "G")["material"]
+        n_cf, _ = self.material_db.get_nk(cf_ref_material, ref_wavelength)
         layer_entries.append((cf_t, n_cf))
 
         # BARL sub-layers
@@ -340,14 +343,8 @@ class PixelStack:
 
             elif layer.name == "color_filter":
                 # Patterned layer with Bayer color filter + optional metal grid
-                eps_grid = self._build_cf_layer(wavelength, nx, ny, cf_cfg)
-                slices.append(LayerSlice(
-                    z_start=layer.z_start,
-                    z_end=layer.z_end,
-                    thickness=layer.thickness,
-                    eps_grid=eps_grid,
-                    name="color_filter",
-                    material="bayer_pattern",
+                slices.extend(self._build_color_filter_slices(
+                    layer, wavelength, nx, ny, cf_cfg
                 ))
 
             elif layer.name == "silicon":
@@ -457,6 +454,168 @@ class PixelStack:
 
         return slices
 
+    def _cf_channel_config(self, cf_cfg: dict, color: str) -> dict:
+        """Return per-channel color filter config for a Bayer color code."""
+        color_code = str(color).upper()
+        channel_name = _CF_CHANNEL_NAMES.get(color_code, str(color).lower())
+        merged: dict = {}
+        for key in (channel_name, color_code):
+            raw = cf_cfg.get(key)
+            if hasattr(raw, "model_dump"):
+                raw = raw.model_dump(exclude_none=True)
+            if isinstance(raw, dict):
+                merged.update({k: v for k, v in raw.items() if v is not None})
+        return merged
+
+    def _has_cf_channel_overrides(self, cf_cfg: dict) -> bool:
+        """Whether any color filter channel uses the new per-color schema."""
+        for color in _CF_CHANNEL_NAMES:
+            if self._cf_channel_config(cf_cfg, color):
+                return True
+        return False
+
+    def _color_filter_spec(self, cf_cfg: dict, color: str) -> dict:
+        """Resolve material, height, and contact angle for one CF channel."""
+        color_code = str(color).upper()
+        channel_name = _CF_CHANNEL_NAMES.get(color_code, str(color).lower())
+
+        cf_materials = dict(_DEFAULT_CF_MATERIALS)
+        cf_materials.update(cf_cfg.get("materials", {}) or {})
+
+        default_thickness = float(cf_cfg.get("thickness", 0.6))
+        default_contact_angle = float(cf_cfg.get("contact_angle", 90.0))
+        channel_cfg = self._cf_channel_config(cf_cfg, color_code)
+
+        return {
+            "name": channel_name,
+            "material": channel_cfg.get(
+                "material",
+                cf_materials.get(color_code, f"cf_{channel_name}"),
+            ),
+            "thickness": max(
+                0.0,
+                float(channel_cfg.get("thickness", default_thickness)),
+            ),
+            "contact_angle": float(
+                channel_cfg.get("contact_angle", default_contact_angle)
+            ),
+        }
+
+    def _color_filter_specs(self, cf_cfg: dict) -> dict[str, dict]:
+        """Resolve the standard RGB color filter channel specifications."""
+        return {
+            color: self._color_filter_spec(cf_cfg, color)
+            for color in _CF_CHANNEL_NAMES
+        }
+
+    def _grid_thickness(self, cf_cfg: dict) -> float:
+        """Resolve metal grid thickness, accepting legacy grid.height."""
+        grid_cfg = cf_cfg.get("grid", {}) or {}
+        if not grid_cfg.get("enabled", False):
+            return 0.0
+
+        if grid_cfg.get("thickness") is not None:
+            return max(0.0, float(grid_cfg.get("thickness", 0.0)))
+        if grid_cfg.get("height") is not None:
+            return max(0.0, float(grid_cfg.get("height", 0.0)))
+        return max(0.0, float(cf_cfg.get("thickness", 0.6)))
+
+    def _color_filter_stack_thickness(self, cf_cfg: dict) -> float:
+        """Return the z-span needed by color filters and their metal grid."""
+        grid_t = self._grid_thickness(cf_cfg)
+        if self._has_cf_channel_overrides(cf_cfg):
+            cf_t = max(
+                spec["thickness"]
+                for spec in self._color_filter_specs(cf_cfg).values()
+            )
+        else:
+            cf_t = max(0.0, float(cf_cfg.get("thickness", 0.6)))
+        return max(cf_t, grid_t)
+
+    def _uses_color_filter_relief(self, cf_cfg: dict, layer: Layer) -> bool:
+        """Whether the CF stack needs z-aware slices instead of one flat slab."""
+        specs = self._color_filter_specs(cf_cfg)
+        thicknesses = [spec["thickness"] for spec in specs.values()]
+        grid_enabled = (cf_cfg.get("grid", {}) or {}).get("enabled", False)
+        grid_t = min(self._grid_thickness(cf_cfg), layer.thickness)
+
+        if any(not np.isclose(t, thicknesses[0]) for t in thicknesses[1:]):
+            return True
+        if not np.isclose(thicknesses[0], layer.thickness):
+            return True
+        if grid_enabled and not np.isclose(grid_t, layer.thickness):
+            return True
+
+        for spec in specs.values():
+            contact_angle = float(spec["contact_angle"])
+            if contact_angle < 89.999 and spec["thickness"] > grid_t:
+                return True
+
+        return False
+
+    def _color_filter_slice_breaks(self, layer: Layer, cf_cfg: dict) -> list[float]:
+        """Build local z breakpoints for the color filter relief profile."""
+        specs = self._color_filter_specs(cf_cfg)
+        grid_t = min(self._grid_thickness(cf_cfg), layer.thickness)
+        has_sloped_surface = any(
+            float(spec["contact_angle"]) < 89.999 and spec["thickness"] > grid_t
+            for spec in specs.values()
+        )
+
+        points = {0.0, layer.thickness}
+        if 0.0 < grid_t < layer.thickness:
+            points.add(grid_t)
+        for spec in specs.values():
+            t = min(float(spec["thickness"]), layer.thickness)
+            if 0.0 < t < layer.thickness:
+                points.add(t)
+
+        if has_sloped_surface:
+            n_slices = max(1, int(cf_cfg.get("n_slices", 8)))
+            points.update(np.linspace(0.0, layer.thickness, n_slices + 1))
+
+        return sorted(points)
+
+    def _build_color_filter_slices(
+        self,
+        layer: Layer,
+        wavelength: float,
+        nx: int,
+        ny: int,
+        cf_cfg: dict,
+    ) -> list[LayerSlice]:
+        """Build flat or z-aware color filter slices."""
+        if not self._uses_color_filter_relief(cf_cfg, layer):
+            eps_grid = self._build_cf_layer(wavelength, nx, ny, cf_cfg)
+            return [LayerSlice(
+                z_start=layer.z_start,
+                z_end=layer.z_end,
+                thickness=layer.thickness,
+                eps_grid=eps_grid,
+                name="color_filter",
+                material="bayer_pattern",
+            )]
+
+        slices = []
+        breaks = self._color_filter_slice_breaks(layer, cf_cfg)
+        for i, (z0_rel, z1_rel) in enumerate(zip(breaks[:-1], breaks[1:])):
+            thickness = z1_rel - z0_rel
+            if thickness <= 0.0:
+                continue
+            z_mid_rel = 0.5 * (z0_rel + z1_rel)
+            eps_grid = self._build_cf_layer_at_z(
+                wavelength, nx, ny, cf_cfg, z_mid_rel
+            )
+            slices.append(LayerSlice(
+                z_start=layer.z_start + z0_rel,
+                z_end=layer.z_start + z1_rel,
+                thickness=thickness,
+                eps_grid=eps_grid,
+                name=f"color_filter_slice_{i}",
+                material="bayer_pattern",
+            ))
+        return slices
+
     def _build_cf_layer(
         self,
         wavelength: float,
@@ -465,42 +624,57 @@ class PixelStack:
         cf_cfg: dict,
     ) -> np.ndarray:
         """Build color filter layer with Bayer pattern and optional metal grid."""
-        _lx, _ly = self.domain_size
-        eps_grid = np.zeros((ny, nx), dtype=complex)
+        return self._build_cf_layer_at_z(
+            wavelength, nx, ny, cf_cfg, z_rel=0.0, flat=True
+        )
 
-        # Assign color filter materials per pixel
-        cf_materials = cf_cfg.get("materials", {"R": "cf_red", "G": "cf_green", "B": "cf_blue"})
+    def _build_cf_layer_at_z(
+        self,
+        wavelength: float,
+        nx: int,
+        ny: int,
+        cf_cfg: dict,
+        z_rel: float,
+        flat: bool = False,
+    ) -> np.ndarray:
+        """Build the CF permittivity grid at a relative z height."""
+        eps_air = self.material_db.get_epsilon("air", wavelength)
+        eps_grid = np.full((ny, nx), eps_air, dtype=np.complex128)
 
-        # Use cached meshgrid coordinates
-        xx, yy = self._get_meshgrid(nx, ny)
-        x = xx[0, :]  # 1D x coords from first row
-        y = yy[:, 0]  # 1D y coords from first column
+        grid_cfg = cf_cfg.get("grid", {}) or {}
+        grid_enabled = grid_cfg.get("enabled", False)
+        grid_width = float(grid_cfg.get("width", 0.05)) if grid_enabled else 0.0
+        corner_radius = float(grid_cfg.get("corner_radius", 0.0)) if grid_enabled else 0.0
+        grid_t = self._grid_thickness(cf_cfg)
 
         for r in range(self.unit_cell[0]):
             for c in range(self.unit_cell[1]):
                 color = self.bayer_map[r][c]
-                mat_name = cf_materials.get(color, f"cf_{color.lower()}")
+                spec = self._color_filter_spec(cf_cfg, color)
+                if not flat and z_rel >= spec["thickness"]:
+                    continue
+                mat_name = spec["material"]
                 eps = self.material_db.get_epsilon(mat_name, wavelength)
 
-                # Pixel region
-                x_lo = c * self.pitch
-                x_hi = (c + 1) * self.pitch
-                y_lo = r * self.pitch
-                y_hi = (r + 1) * self.pitch
-
-                x_mask = (x >= x_lo) & (x < x_hi)
-                y_mask = (y >= y_lo) & (y < y_hi)
-                mask_2d = np.outer(y_mask, x_mask)
+                inset = 0.0 if flat else self._cf_lateral_inset(
+                    z_rel, grid_t, spec["contact_angle"]
+                )
+                mask_2d = self._color_filter_pixel_mask(
+                    nx,
+                    ny,
+                    r,
+                    c,
+                    grid_width,
+                    corner_radius,
+                    inset,
+                )
                 eps_grid[mask_2d] = eps
 
         # Metal grid overlay (mask is geometry-only, cache it)
-        grid_cfg = cf_cfg.get("grid", {})
-        if grid_cfg.get("enabled", False):
-            grid_width = grid_cfg.get("width", 0.05)
+        if grid_enabled and (flat or z_rel < grid_t):
             grid_material = grid_cfg.get("material", "tungsten")
-            corner_radius = float(grid_cfg.get("corner_radius", 0.0))
             eps_grid_metal = self.material_db.get_epsilon(grid_material, wavelength)
-            cache_key = (nx, ny)
+            cache_key = (nx, ny, grid_width, corner_radius)
             if cache_key not in self._metal_grid_cache:
                 self._metal_grid_cache[cache_key] = GeometryBuilder.metal_grid(
                     nx,
@@ -514,6 +688,53 @@ class PixelStack:
             eps_grid[metal_mask > 0.5] = eps_grid_metal
 
         return eps_grid
+
+    def _cf_lateral_inset(
+        self,
+        z_rel: float,
+        grid_thickness: float,
+        contact_angle: float,
+    ) -> float:
+        """Inset the CF sidewall above the grid using contact angle in degrees."""
+        protrusion = max(0.0, z_rel - grid_thickness)
+        if protrusion <= 0.0 or contact_angle >= 89.999:
+            return 0.0
+
+        theta = np.deg2rad(np.clip(contact_angle, 1.0, 89.999))
+        return float(protrusion / np.tan(theta))
+
+    def _color_filter_pixel_mask(
+        self,
+        nx: int,
+        ny: int,
+        row: int,
+        col: int,
+        grid_width: float,
+        corner_radius: float,
+        inset: float,
+    ) -> np.ndarray:
+        """Mask one color-filter cell as a rectangular/trapezoidal z slice."""
+        inner_half = (self.pitch - grid_width) / 2.0 - inset
+        if inner_half <= 0.0:
+            return np.zeros((ny, nx), dtype=bool)
+
+        xx, yy = self._get_meshgrid(nx, ny)
+        cx = (col + 0.5) * self.pitch
+        cy = (row + 0.5) * self.pitch
+        dx = np.abs(xx - cx)
+        dy = np.abs(yy - cy)
+
+        if corner_radius <= 0.0:
+            return (dx <= inner_half) & (dy <= inner_half)
+
+        radius = min(corner_radius, inner_half)
+        ex = np.maximum(dx - (inner_half - radius), 0.0)
+        ey = np.maximum(dy - (inner_half - radius), 0.0)
+        return (
+            (dx <= inner_half)
+            & (dy <= inner_half)
+            & (ex * ex + ey * ey <= radius * radius)
+        )
 
     def _build_silicon_slices(
         self,

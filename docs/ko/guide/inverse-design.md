@@ -33,7 +33,11 @@ base_config = {
         "unit_cell": [2, 2],
         "layers": {
             "microlens": {"height": 0.6, "profile": {"n": 2.5}},
-            "color_filter": {"thickness": 0.6},
+            "color_filter": {
+                "red": {"material": "cf_red", "thickness": 0.62},
+                "green": {"material": "cf_green", "thickness": 0.60},
+                "blue": {"material": "cf_blue", "thickness": 0.65},
+            },
         },
     },
     "solver": {"name": "meent"},
@@ -106,7 +110,7 @@ optimization:
 | `microlens_squareness` | `MicrolensSquareness` | 1 | 초타원 지수 n |
 | `microlens_radii` | `MicrolensRadii` | 2 | 렌즈 반축 (radius_x, radius_y) |
 | `barl_thicknesses` | `BARLThicknesses` | N | BARL 레이어당 하나의 값 |
-| `color_filter_thickness` | `ColorFilterThickness` | 1 | 컬러 필터 레이어 두께 (um) |
+| `color_filter_thickness` | `ColorFilterThickness` | 1 | 평균 컬러 필터 두께. 존재하는 색별 두께를 함께 업데이트 |
 
 각 매개변수 클래스는 경계 제약을 위한 `min_val` 및 `max_val` 인수를 받습니다.
 

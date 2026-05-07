@@ -72,14 +72,19 @@ layers:
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `thickness` | float | `0.6` | CFA thickness (um) |
+| `thickness` | float | `0.6` | Legacy flat CFA thickness (um), used when per-channel thickness is absent |
 | `pattern` | str | `"bayer_rggb"` | Filter pattern |
-| `materials` | dict | `{"R":"cf_red","G":"cf_green","B":"cf_blue"}` | Color-to-material mapping |
+| `materials` | dict | `{"R":"cf_red","G":"cf_green","B":"cf_blue"}` | Legacy color-to-material mapping |
+| `red.material`, `green.material`, `blue.material` | str | `cf_*` | Per-channel material name |
+| `red.thickness`, `green.thickness`, `blue.thickness` | float | `thickness` | Per-channel CFA height (um) |
+| `red.contact_angle`, `green.contact_angle`, `blue.contact_angle` | float | `90.0` | Sidewall angle in degrees for the trapezoid above the grid |
 | `grid.enabled` | bool | `true` | Enable metal grid |
 | `grid.width` | float | `0.05` | Grid line width (um) |
-| `grid.height` | float | `0.6` | Grid height (um) |
+| `grid.thickness` | float | `thickness` | Metal grid height (um) |
+| `grid.height` | float | `0.6` | Legacy alias for `grid.thickness` |
 | `grid.material` | str | `"tungsten"` | Grid material |
 | `grid.corner_radius` | float | `0.0` | Rounded-rectangle corner radius `r` (um) for each CF cell, identical at all four corners. `0` = sharp; `> 0` models the CF as a rounded rectangle and the grid as its complement. Clamped to `(pitch - grid.width) / 2`. |
+| `n_slices` | int | `8` for tapered surfaces | Number of z-slices used to staircase the tapered color-filter relief |
 
 ### pixel.layers.barl: BarlConfig
 

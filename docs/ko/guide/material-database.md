@@ -213,10 +213,18 @@ CSV를 찾을 수 없으면 근사 내장 폴백 데이터가 사용됩니다.
 
 ```yaml
 color_filter:
-  materials:
-    R: "my_custom_red"
-    G: "cf_green"
-    B: "cf_blue"
+  red:
+    material: "my_custom_red"
+    thickness: 0.62
+    contact_angle: 66.0
+  green:
+    material: "cf_green"
+    thickness: 0.60
+    contact_angle: 72.0
+  blue:
+    material: "cf_blue"
+    thickness: 0.65
+    contact_angle: 62.0
 ```
 
 `GeometryBuilder`를 호출하기 전에 재료가 등록되어 있는지 확인하십시오:

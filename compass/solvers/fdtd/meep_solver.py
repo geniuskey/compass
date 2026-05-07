@@ -491,14 +491,15 @@ class MeepSolver(SolverBase):
             if layer.name == "color_filter":
                 # Create per-pixel color filter blocks
                 cf_cfg = self._pixel_stack._layer_configs.get("color_filter", {})
-                cf_materials = cf_cfg.get(
-                    "materials", {"R": "cf_red", "G": "cf_green", "B": "cf_blue"}
-                )
 
                 for r in range(self._pixel_stack.unit_cell[0]):
                     for c in range(self._pixel_stack.unit_cell[1]):
                         color = self._pixel_stack.bayer_map[r][c]
-                        mat_name = cf_materials.get(color, f"cf_{color.lower()}")
+                        cf_spec = self._pixel_stack._color_filter_spec(cf_cfg, color)
+                        mat_name = cf_spec["material"]
+                        cf_thickness = min(float(cf_spec["thickness"]), layer.thickness)
+                        if cf_thickness <= 0.0:
+                            continue
                         meep_mat = self._get_meep_material(
                             mp, mat_name, wavelength, use_dispersive
                         )
@@ -506,14 +507,15 @@ class MeepSolver(SolverBase):
                         # Pixel center in meep coordinates
                         px = (c + 0.5) * self._pixel_stack.pitch - lx / 2.0
                         py = (r + 0.5) * self._pixel_stack.pitch - ly / 2.0
+                        pz = layer.z_start + cf_thickness / 2.0 - z_center
 
                         geometry.append(
                             mp.Block(
-                                center=mp.Vector3(px, py, layer_z_center),
+                                center=mp.Vector3(px, py, pz),
                                 size=mp.Vector3(
                                     self._pixel_stack.pitch,
                                     self._pixel_stack.pitch,
-                                    layer.thickness,
+                                    cf_thickness,
                                 ),
                                 material=meep_mat,
                             )
@@ -523,6 +525,13 @@ class MeepSolver(SolverBase):
                 grid_cfg = cf_cfg.get("grid", {})
                 if grid_cfg.get("enabled", False):
                     grid_width = grid_cfg.get("width", 0.05)
+                    grid_thickness = min(
+                        self._pixel_stack._grid_thickness(cf_cfg),
+                        layer.thickness,
+                    )
+                    if grid_thickness <= 0.0:
+                        continue
+                    grid_z_center = layer.z_start + grid_thickness / 2.0 - z_center
                     grid_mat_name = grid_cfg.get("material", "tungsten")
                     grid_meep_mat = self._get_meep_material(
                         mp, grid_mat_name, wavelength, use_dispersive
@@ -533,9 +542,9 @@ class MeepSolver(SolverBase):
                         gx = c * self._pixel_stack.pitch - lx / 2.0
                         geometry.append(
                             mp.Block(
-                                center=mp.Vector3(gx, 0, layer_z_center),
+                                center=mp.Vector3(gx, 0, grid_z_center),
                                 size=mp.Vector3(
-                                    grid_width, ly, layer.thickness
+                                    grid_width, ly, grid_thickness
                                 ),
                                 material=grid_meep_mat,
                             )
@@ -546,9 +555,9 @@ class MeepSolver(SolverBase):
                         gy = r * self._pixel_stack.pitch - ly / 2.0
                         geometry.append(
                             mp.Block(
-                                center=mp.Vector3(0, gy, layer_z_center),
+                                center=mp.Vector3(0, gy, grid_z_center),
                                 size=mp.Vector3(
-                                    lx, grid_width, layer.thickness
+                                    lx, grid_width, grid_thickness
                                 ),
                                 material=grid_meep_mat,
                             )

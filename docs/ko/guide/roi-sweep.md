@@ -36,8 +36,9 @@ config = {
             },
             "planarization": {"thickness": 0.3, "material": "sio2"},
             "color_filter": {
-                "thickness": 0.6,
-                "materials": {"R": "cf_red", "G": "cf_green", "B": "cf_blue"},
+                "red": {"material": "cf_red", "thickness": 0.62},
+                "green": {"material": "cf_green", "thickness": 0.60},
+                "blue": {"material": "cf_blue", "thickness": 0.65},
             },
             "barl": {"layers": [
                 {"thickness": 0.010, "material": "sio2"},

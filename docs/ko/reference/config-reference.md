@@ -72,14 +72,19 @@ layers:
 
 | 필드 | 타입 | 기본값 | 설명 |
 |------|------|--------|------|
-| `thickness` | float | `0.6` | CFA 두께 (um) |
+| `thickness` | float | `0.6` | legacy flat CFA 두께(um), 색별 두께가 없을 때 사용 |
 | `pattern` | str | `"bayer_rggb"` | 필터 패턴 |
-| `materials` | dict | `{"R":"cf_red","G":"cf_green","B":"cf_blue"}` | 색상-재료 매핑 |
+| `materials` | dict | `{"R":"cf_red","G":"cf_green","B":"cf_blue"}` | legacy 색상-재료 매핑 |
+| `red.material`, `green.material`, `blue.material` | str | `cf_*` | 색별 재료명 |
+| `red.thickness`, `green.thickness`, `blue.thickness` | float | `thickness` | 색별 CFA 높이(um) |
+| `red.contact_angle`, `green.contact_angle`, `blue.contact_angle` | float | `90.0` | grid 위 사다리꼴 돌출부 sidewall 각도(deg) |
 | `grid.enabled` | bool | `true` | 금속 그리드 활성화 |
 | `grid.width` | float | `0.05` | 그리드 선 폭 (um) |
-| `grid.height` | float | `0.6` | 그리드 높이 (um) |
+| `grid.thickness` | float | `thickness` | 금속 grid 높이(um) |
+| `grid.height` | float | `0.6` | `grid.thickness`의 legacy alias |
 | `grid.material` | str | `"tungsten"` | 그리드 재료 |
 | `grid.corner_radius` | float | `0.0` | 각 CF 셀의 rounded rectangle 모서리 반경 `r`(um). 네 모서리 모두 동일. `0` = 직각, `> 0`이면 CF를 rounded rectangle로 모델링하고 격자는 그 보집합. `(pitch - grid.width) / 2`로 클램프. |
+| `n_slices` | int | taper 시 `8` | taper된 컬러 필터 relief를 계단 근사할 z-slice 수 |
 
 ### pixel.layers.barl: BarlConfig
 

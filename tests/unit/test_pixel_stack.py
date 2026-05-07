@@ -1,5 +1,7 @@
 """Unit tests for PixelStack."""
 
+import copy
+
 import numpy as np
 import pytest
 
@@ -144,6 +146,69 @@ class TestPixelStack:
         # Should have at least 2 distinct epsilon values (different CF colors + grid)
         unique_eps = len(np.unique(np.round(np.real(eps), 4)))
         assert unique_eps >= 2, f"Expected patterned CF, got {unique_eps} unique values"
+
+    def test_color_filter_relief_uses_per_color_height(self, default_config):
+        """Per-color CF thickness should create z-aware slices."""
+        cfg = copy.deepcopy(default_config)
+        cf_cfg = cfg["pixel"]["layers"]["color_filter"]
+        cf_cfg.update({
+            "red": {"material": "cf_red", "thickness": 0.70, "contact_angle": 80.0},
+            "green": {"material": "cf_green", "thickness": 0.50, "contact_angle": 90.0},
+            "blue": {"material": "cf_blue", "thickness": 0.80, "contact_angle": 70.0},
+            "grid": {
+                "enabled": True,
+                "width": 0.10,
+                "thickness": 0.40,
+                "material": "tungsten",
+            },
+        })
+
+        stack = PixelStack(cfg)
+        cf_layer = next(layer for layer in stack.layers if layer.name == "color_filter")
+        assert cf_layer.thickness == pytest.approx(0.80)
+
+        slices = stack.get_layer_slices(wavelength=0.55, nx=80, ny=80)
+        cf_slices = [s for s in slices if s.name.startswith("color_filter")]
+        assert len(cf_slices) > 1
+
+        above_green = next(
+            s for s in cf_slices
+            if 0.50 < ((s.z_start + s.z_end) / 2.0 - cf_layer.z_start) < 0.70
+        )
+        eps_air = stack.material_db.get_epsilon("air", 0.55)
+        eps_blue = stack.material_db.get_epsilon("cf_blue", 0.55)
+
+        # RGGB map: green at row 0 col 1, blue at row 1 col 1.
+        assert above_green.eps_grid[20, 60] == pytest.approx(eps_air)
+        assert above_green.eps_grid[60, 60] == pytest.approx(eps_blue)
+
+    def test_color_filter_contact_angle_shrinks_top_area(self, default_config):
+        """A contact angle below 90 degrees should taper the protruding CF."""
+        cfg = copy.deepcopy(default_config)
+        cf_cfg = cfg["pixel"]["layers"]["color_filter"]
+        cf_cfg.update({
+            "red": {"material": "cf_red", "thickness": 0.80, "contact_angle": 60.0},
+            "green": {"material": "cf_green", "thickness": 0.80, "contact_angle": 60.0},
+            "blue": {"material": "cf_blue", "thickness": 0.80, "contact_angle": 60.0},
+            "grid": {
+                "enabled": True,
+                "width": 0.08,
+                "thickness": 0.35,
+                "material": "tungsten",
+            },
+        })
+        stack = PixelStack(cfg)
+        eps_blue = stack.material_db.get_epsilon("cf_blue", 0.55)
+        cf_slices = [
+            s for s in stack.get_layer_slices(wavelength=0.55, nx=96, ny=96)
+            if s.name.startswith("color_filter")
+        ]
+
+        blue_area = [
+            int(np.count_nonzero(np.isclose(s.eps_grid, eps_blue)))
+            for s in cf_slices
+        ]
+        assert blue_area[0] > blue_area[-1]
 
     def test_silicon_dti_pattern(self, pixel_stack):
         """Si layer should show DTI pattern (different epsilon)."""

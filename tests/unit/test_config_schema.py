@@ -3,6 +3,7 @@
 
 from compass.core.config_schema import (
     CompassConfig,
+    ColorFilterConfig,
     PixelConfig,
     SolverConfig,
     SourceConfig,
@@ -48,6 +49,29 @@ class TestConfigSchema:
     def test_bayer_map_default(self):
         cfg = PixelConfig()
         assert cfg.bayer_map == [["R", "G"], ["G", "B"]]
+
+    def test_color_filter_channel_schema(self):
+        cfg = ColorFilterConfig(
+            red={"material": "cf_red", "thickness": 0.68, "contact_angle": 64.0},
+            green={"material": "cf_green", "thickness": 0.62, "contact_angle": 70.0},
+            blue={"material": "cf_blue", "thickness": 0.74, "contact_angle": 58.0},
+            grid={
+                "enabled": True,
+                "width": 0.05,
+                "thickness": 0.45,
+                "material": "tungsten",
+                "corner_radius": 0.02,
+            },
+        )
+
+        assert cfg.red is not None
+        assert cfg.red.thickness == 0.68
+        assert cfg.green is not None
+        assert cfg.green.contact_angle == 70.0
+        assert cfg.grid.thickness == 0.45
+        assert cfg.grid.height == 0.6
+        assert cfg.grid.corner_radius == 0.02
+        assert cfg.n_slices == 8
 
     def test_full_config_serialization(self):
         """Config should be serializable to dict."""

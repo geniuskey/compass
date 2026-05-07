@@ -50,16 +50,23 @@ pixel:
       material: "sio2"
 
     color_filter:
-      thickness: 0.40
       pattern: "tetra2cell"   # 4x4 same-color super-cell (16-cell binning)
-      materials:
-        R: "cf_red"
-        G: "cf_green"
-        B: "cf_blue"
+      red:
+        material: "cf_red"
+        thickness: 0.42
+        contact_angle: 66.0
+      green:
+        material: "cf_green"
+        thickness: 0.40
+        contact_angle: 72.0
+      blue:
+        material: "cf_blue"
+        thickness: 0.43
+        contact_angle: 62.0
       grid:
         enabled: true
         width: 0.06
-        height: 0.40
+        thickness: 0.31
         material: "tungsten"
         corner_radius: 0.05    # rounded-rectangle CF corners (process rounding)
 

@@ -187,6 +187,8 @@ class ColorFilterThickness(OptimizableParameter):
     """Optimize color filter thickness (um).
 
     Modifies ``config["pixel"]["layers"]["color_filter"]["thickness"]``.
+    When the newer per-channel schema is present, existing
+    ``red/green/blue.thickness`` values are updated together.
 
     Args:
         config: Full COMPASS config dict.
@@ -207,13 +209,29 @@ class ColorFilterThickness(OptimizableParameter):
             .setdefault("color_filter", {}),
         )
 
+    def _channel_thicknesses(self) -> list[float]:
+        cf_cfg = self._cf_cfg()
+        values = []
+        for channel in ("red", "green", "blue"):
+            channel_cfg = cf_cfg.get(channel)
+            if isinstance(channel_cfg, dict) and "thickness" in channel_cfg:
+                values.append(float(channel_cfg["thickness"]))
+        return values
+
     def get_value(self) -> np.ndarray:
+        channel_values = self._channel_thicknesses()
+        if channel_values:
+            return np.array([float(np.mean(channel_values))])
         return np.array([self._cf_cfg().get("thickness", 0.6)])
 
     def set_value(self, value: np.ndarray) -> None:
-        self._cf_cfg()["thickness"] = float(
-            np.clip(value[0], self.min_val, self.max_val)
-        )
+        clipped = float(np.clip(value[0], self.min_val, self.max_val))
+        cf_cfg = self._cf_cfg()
+        cf_cfg["thickness"] = clipped
+        for channel in ("red", "green", "blue"):
+            channel_cfg = cf_cfg.get(channel)
+            if isinstance(channel_cfg, dict) and "thickness" in channel_cfg:
+                channel_cfg["thickness"] = clipped
 
     def get_bounds(self) -> tuple[np.ndarray, np.ndarray]:
         return np.array([self.min_val]), np.array([self.max_val])

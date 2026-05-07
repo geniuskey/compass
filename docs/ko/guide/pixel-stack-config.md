@@ -39,7 +39,7 @@ python scripts/run_simulation.py pixel=sample_p0p56um_4x4ocl solver=torcwa
 | --- | --- | --- |
 | 반복되는 시뮬레이션 타일은 얼마나 큰가? | `pixel.pitch`, `pixel.unit_cell`, `pixel.bayer_map` | `pitch`, `unit_cell` |
 | 빛은 어떻게 들어오고 집광되는가? | `layers.air`, `layers.microlens`, `layers.planarization` | microlens `height`, `radius_x/y`, `shift` |
-| 각 픽셀은 어떤 색과 격리 구조를 보는가? | `layers.color_filter`, `grid`, `bayer_map` | CFA `materials`, grid `width`, `corner_radius` |
+| 각 픽셀은 어떤 색과 격리 구조를 보는가? | `layers.color_filter`, `grid`, `bayer_map` | CFA 색별 `material/thickness/contact_angle`, grid `width`, `corner_radius` |
 | 빛은 어디에서 흡수되고 수집되는가? | `layers.barl`, `layers.silicon`, `photodiode`, `dti` | silicon `thickness`, PD `size`, DTI `width/depth` |
 
 대부분의 연구에서 가장 중요한 파라미터는 `pitch`, microlens `height`, microlens `radius_x/y`, CRA `shift.cra_deg`, color-filter `thickness`, grid `width`, BARL layer `thickness`, silicon `thickness`, photodiode `size`, DTI `width/depth`입니다.
@@ -227,34 +227,48 @@ planarization:
 
 선택적 금속 격자(Metal Grid) 절연이 포함된 베이어 CFA(Color Filter Array)입니다.
 
-이 블록은 색 선택성과 횡방향 광학 격리를 함께 제어합니다. 일반 Bayer 시뮬레이션에서는 `pattern: "bayer_rggb"`를 유지하고, 자체 재료 데이터가 있을 때만 `materials`를 바꾸세요. Crosstalk 연구에서는 grid `enabled`, `width`, `height`, `corner_radius`가 첫 번째 조정 대상입니다.
+이 블록은 색 선택성과 횡방향 광학 격리를 함께 제어합니다. 일반 Bayer 시뮬레이션에서는 `pattern: "bayer_rggb"`를 유지하고, 자체 재료 데이터가 있을 때만 색별 `material`을 바꾸세요. Crosstalk 연구에서는 grid `enabled`, `width`, `thickness`, `corner_radius`가 첫 번째 조정 대상입니다.
+
+현재 BSI 단면을 맞출 때는 아래처럼 색별 설정을 쓰는 것이 좋습니다. 실제 컬러 필터는 금속 grid보다 높게 솟는 경우가 많고, red/green/blue 레지스트 높이도 서로 다를 수 있습니다. `contact_angle`은 `grid.thickness` 위로 돌출된 부분의 사다리꼴 taper를 제어합니다. `90`도는 수직 sidewall, 더 낮은 값은 위쪽 footprint가 더 작아지는 형상입니다. 기존 `thickness`, `materials`, `grid.height`는 flat slab 하위호환 설정으로 계속 동작합니다.
 
 ```yaml
 color_filter:
-  thickness: 0.6
   pattern: "bayer_rggb"
-  materials:
-    R: "cf_red"
-    G: "cf_green"
-    B: "cf_blue"
+  red:
+    material: "cf_red"
+    thickness: 0.62
+    contact_angle: 66.0
+  green:
+    material: "cf_green"
+    thickness: 0.60
+    contact_angle: 72.0
+  blue:
+    material: "cf_blue"
+    thickness: 0.65
+    contact_angle: 62.0
   grid:
     enabled: true
     width: 0.05          # Grid line width in um
-    height: 0.6          # Grid height (usually = CFA thickness)
+    thickness: 0.47      # Grid thickness in um; usually lower than the CF
     material: "tungsten"  # Metal grid material
     corner_radius: 0.0   # 선택: CF 모서리 반경 r(um). 0 = 직각.
 ```
 
 | 파라미터              | 타입  | 기본값           | 설명                                   |
 |----------------------|------|------------------|----------------------------------------|
-| `thickness`          | float | `0.6`           | 컬러 필터 두께(um).                      |
+| `thickness`          | float | `0.6`           | legacy flat 컬러 필터 두께(um). 색별 두께가 없을 때 사용. |
 | `pattern`            | str  | `"bayer_rggb"`   | CFA 패턴명.                             |
-| `materials`          | dict | R/G/B 매핑       | 색상 키를 재료명에 매핑합니다.             |
+| `materials`          | dict | R/G/B 매핑       | legacy 색상 키-재료명 매핑.               |
+| `red/green/blue.material` | str | `cf_*` | 색별 재료명.                              |
+| `red/green/blue.thickness` | float | `thickness` | 색별 CF 높이(um).                         |
+| `red/green/blue.contact_angle` | float | `90.0` | grid 위 돌출부 sidewall 각도(deg).         |
 | `grid.enabled`       | bool | `true`           | 금속 절연 격자 활성화.                    |
 | `grid.width`         | float | `0.05`          | 격자 선 너비(um).                        |
-| `grid.height`        | float | `0.6`           | 격자 선 높이(um).                        |
+| `grid.thickness`     | float | `thickness`     | 금속 grid 높이(um).                      |
+| `grid.height`        | float | `0.6`           | `grid.thickness`의 legacy alias.          |
 | `grid.material`      | str  | `"tungsten"`     | 격자 재료.                               |
 | `grid.corner_radius` | float | `0.0`           | rounded rectangle 모서리 반경 `r`(um). 네 모서리 모두 동일하게 적용. `0`이면 기존 직각 격자 유지, `> 0`이면 각 CF 셀을 rounded rectangle로 모델링하고 그 보집합을 메탈 격자로 채움. `(pitch - grid.width) / 2`로 자동 클램프. |
+| `n_slices`           | int  | taper 시 `8`     | taper된 CF 표면을 계단 근사할 z-slice 수. |
 
 **지원되는 베이어 패턴:**
 
@@ -268,7 +282,7 @@ color_filter:
 | `nonacell`                | 3×3          | 6×6      | 9-cell 비닝 (초기 108 MP 급 센서)              |
 | `tetra2cell` / `hexadeca` | 4×4          | 8×8      | 16-cell 비닝 (200 MP 급 sub-µm 픽셀)            |
 
-최상위 수준의 `bayer_map`은 각 픽셀이 받는 재료를 결정합니다. `materials`의 키는 `bayer_map`에서 사용된 문자와 일치해야 합니다. 표준 베이어를 넘어선 사용자 정의 패턴(예: RGBW 쿼드 픽셀)은 `unit_cell`과 `bayer_map`을 확장하여 정의할 수 있습니다:
+최상위 수준의 `bayer_map`은 각 픽셀이 받는 채널을 결정합니다. `R`, `G`, `B`는 각각 `red`, `green`, `blue` 채널 블록으로 해석되고, 사용자 정의 재료 매핑은 legacy `materials` 딕셔너리도 계속 사용할 수 있습니다. 표준 베이어를 넘어선 사용자 정의 패턴(예: RGBW 쿼드 픽셀)은 `unit_cell`과 `bayer_map`을 확장하여 정의할 수 있습니다:
 
 ```yaml
 # 4x4 Quad-Bayer pattern
@@ -374,8 +388,10 @@ pixel:
       radius_y: 0.38
     planarization: {thickness: 0.25, material: "sio2"}
     color_filter:
-      thickness: 0.5
-      grid: {width: 0.05, height: 0.5}
+      red: {material: "cf_red", thickness: 0.52, contact_angle: 66.0}
+      green: {material: "cf_green", thickness: 0.50, contact_angle: 72.0}
+      blue: {material: "cf_blue", thickness: 0.54, contact_angle: 62.0}
+      grid: {width: 0.05, thickness: 0.39}
     barl:
       layers:
         - {thickness: 0.010, material: "sio2"}
@@ -405,8 +421,10 @@ pixel:
       profile: {n: 3.0, alpha: 1.2}
     planarization: {thickness: 0.4, material: "sio2"}
     color_filter:
-      thickness: 0.8
-      grid: {width: 0.06, height: 0.8}
+      red: {material: "cf_red", thickness: 0.83, contact_angle: 66.0}
+      green: {material: "cf_green", thickness: 0.80, contact_angle: 72.0}
+      blue: {material: "cf_blue", thickness: 0.86, contact_angle: 62.0}
+      grid: {width: 0.06, thickness: 0.62}
     barl:
       layers:
         - {thickness: 0.010, material: "sio2"}
@@ -437,7 +455,9 @@ pixel:
       enabled: false
     planarization: {thickness: 0.3, material: "sio2"}
     color_filter:
-      thickness: 0.6
+      red: {material: "cf_red", thickness: 0.62}
+      green: {material: "cf_green", thickness: 0.60}
+      blue: {material: "cf_blue", thickness: 0.65}
     silicon:
       thickness: 3.0
 ```
