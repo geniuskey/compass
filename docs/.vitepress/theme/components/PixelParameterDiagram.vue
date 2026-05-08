@@ -16,8 +16,8 @@
 
     <p class="hint">
       {{ t(
-        'Hover a parameter row in the legend below to highlight it on the diagram. Dimensions follow the default 1.0 µm BSI pixel (configs/pixel/default_bsi_1um.yaml); the photodiode is drawn slightly above center so its label does not overlap the silicon-thickness callout.',
-        '아래 범례의 파라미터 행에 마우스를 올리면 다이어그램에서 해당 위치가 강조됩니다. 치수는 기본 1.0 µm BSI 픽셀(configs/pixel/default_bsi_1um.yaml) 기준이며, 라벨이 silicon.thickness 라벨과 겹치지 않도록 포토다이오드는 중앙보다 약간 위에 그려집니다.'
+        'Hover a parameter row in the legend below to highlight it on the diagram. Dimensions follow the default 1.0 µm BSI pixel (configs/pixel/default_bsi_1um.yaml), including per-channel color-filter relief and metal-grid thickness.',
+        '아래 범례의 파라미터 행에 마우스를 올리면 다이어그램에서 해당 위치가 강조됩니다. 치수는 기본 1.0 µm BSI 픽셀(configs/pixel/default_bsi_1um.yaml) 기준이며, 색별 color-filter relief와 metal-grid thickness를 포함합니다.'
       ) }}
     </p>
 
@@ -46,6 +46,8 @@
       class="diagram-svg"
       role="img"
       :aria-label="t('XZ cross-section with parameter annotations', 'XZ 단면 파라미터 주석')"
+      font-family="Arial, sans-serif"
+      font-size="11"
     >
       <!-- Layer fills (bottom→top) -->
       <rect
@@ -87,16 +89,15 @@
         :stroke-width="highlight === 'dti' ? 1.5 : 0.5"
       />
 
-      <!-- CF Bayer columns -->
-      <rect
-        v-for="(cf, i) in cfCols"
-        :key="'CF-' + i"
-        :x="xToSvg(cf.x0)"
-        :y="zToY(cfZTop)"
-        :width="xToSvg(cf.x1) - xToSvg(cf.x0)"
-        :height="zToY(cfZBot) - zToY(cfZTop)"
+      <!-- CF Bayer relief: channel top can rise above the metal grid and taper by contact angle. -->
+      <path
+        v-for="cf in cfProfiles"
+        :key="'CF-' + cf.id"
+        :d="cfProfilePath(cf)"
         :fill="cf.color"
-        :opacity="dimLayer('color_filter') ? 0.25 : 0.7"
+        :opacity="dimLayer('color_filter') ? 0.25 : 0.72"
+        :stroke="highlight === 'cf_t' || highlight === 'cf_angle' ? '#e74c3c' : '#1f6f45'"
+        :stroke-width="highlight === 'cf_t' || highlight === 'cf_angle' ? 1.4 : 0.5"
       />
 
       <!-- Metal grid pillars at pixel boundaries -->
@@ -104,13 +105,13 @@
         v-for="dx in dtiX"
         :key="'MG-' + dx"
         :x="xToSvg(dx) - mgHalfWPx"
-        :y="zToY(cfZTop)"
+        :y="zToY(cfGridZTop)"
         :width="mgHalfWPx * 2"
-        :height="zToY(cfZBot) - zToY(cfZTop)"
+        :height="zToY(cfZBot) - zToY(cfGridZTop)"
         fill="#555"
-        :opacity="highlight === 'grid' ? 1 : 0.85"
-        :stroke="highlight === 'grid' ? '#e74c3c' : '#333'"
-        :stroke-width="highlight === 'grid' ? 1.5 : 0.3"
+        :opacity="highlight === 'grid' || highlight === 'grid_t' ? 1 : 0.85"
+        :stroke="highlight === 'grid' || highlight === 'grid_t' ? '#e74c3c' : '#333'"
+        :stroke-width="highlight === 'grid' || highlight === 'grid_t' ? 1.5 : 0.3"
       />
 
       <!-- Photodiodes (dashed) -->
@@ -270,13 +271,13 @@
       <!-- color_filter.grid.width: leader to metal pillar -->
       <g class="dim-group">
         <line
-          :x1="xToSvg(1.0) - mgHalfWPx" :y1="zToY((cfZTop + cfZBot) / 2)"
-          :x2="xToSvg(1.0) + mgHalfWPx" :y2="zToY((cfZTop + cfZBot) / 2)"
+          :x1="xToSvg(1.0) - mgHalfWPx" :y1="zToY((cfGridZTop + cfZBot) / 2)"
+          :x2="xToSvg(1.0) + mgHalfWPx" :y2="zToY((cfGridZTop + cfZBot) / 2)"
           :stroke="dimColor('grid_w')"
           :stroke-width="highlight === 'grid_w' ? 2 : 1"
         />
         <line
-          :x1="xToSvg(1.0)" :y1="zToY((cfZTop + cfZBot) / 2)"
+          :x1="xToSvg(1.0)" :y1="zToY((cfGridZTop + cfZBot) / 2)"
           :x2="xToSvg(1.4)" :y2="zToY(cfZBot) - 18"
           :stroke="dimColor('grid_w')"
           stroke-width="0.7" stroke-dasharray="2 2"
@@ -287,6 +288,40 @@
           class="dim-text" text-anchor="start"
           :font-weight="highlight === 'grid_w' ? '700' : '500'"
         >grid.width</text>
+      </g>
+
+      <!-- color_filter.grid.thickness: vertical height of the metal grid only -->
+      <g class="dim-group">
+        <line
+          :x1="xToSvg(0.92)" :y1="zToY(cfZBot)"
+          :x2="xToSvg(0.92)" :y2="zToY(cfGridZTop)"
+          :stroke="dimColor('grid_t')"
+          :stroke-width="highlight === 'grid_t' ? 2 : 1"
+          marker-start="url(#arr-d)" marker-end="url(#arr-u)"
+        />
+        <text
+          :x="xToSvg(0.89)" :y="(zToY(cfZBot) + zToY(cfGridZTop)) / 2 + 3"
+          :fill="dimColor('grid_t')"
+          class="dim-text" text-anchor="end"
+          :font-weight="highlight === 'grid_t' ? '700' : '500'"
+        >grid.t</text>
+      </g>
+
+      <!-- color_filter.contact_angle: taper control above the grid top -->
+      <g class="dim-group">
+        <line
+          :x1="xToSvg(1.86)" :y1="zToY(cfGridZTop + 0.1)"
+          :x2="xToSvg(1.48)" :y2="zToY(cfZTop) - 18"
+          :stroke="dimColor('cf_angle')"
+          :stroke-width="highlight === 'cf_angle' ? 1.4 : 0.8"
+          stroke-dasharray="2 2"
+        />
+        <text
+          :x="xToSvg(1.46)" :y="zToY(cfZTop) - 19"
+          :fill="dimColor('cf_angle')"
+          class="dim-text" text-anchor="end"
+          :font-weight="highlight === 'cf_angle' ? '700' : '500'"
+        >contact_angle</text>
       </g>
 
       <!-- DTI width + depth -->
@@ -394,6 +429,7 @@
       <text
         :x="pad.left + plotW / 2" :y="pad.top - 12"
         class="section-title" text-anchor="middle"
+        font-size="16" font-weight="700"
       >{{ t('XZ Cross-Section (parameter map)', 'XZ 단면 (파라미터 맵)') }}</text>
 
       <!-- Arrow markers -->
@@ -420,76 +456,70 @@
       class="diagram-svg"
       role="img"
       :aria-label="t('XY top view with parameter annotations', 'XY 평면 파라미터 주석')"
+      font-family="Arial, sans-serif"
+      font-size="11"
     >
-      <!-- 2x2 Bayer cells (background) -->
+      <!-- 2x2 Bayer cells: solid area is the footprint at grid top, dashed area is the tapered top. -->
       <template v-if="xyVisible.color_filter">
         <rect
-          v-for="cell in bayerCells"
+          v-for="cell in colorFilterFootprints"
           :key="'BY-' + cell.label + cell.cx + cell.cy"
-          :x="xyToSvg(cell.cx - 0.5)"
-          :y="xyToSvg(cell.cy - 0.5)"
-          :width="xyToSvg(1) - xyToSvg(0)"
-          :height="xyToSvg(1) - xyToSvg(0)"
+          :x="xyRectX(cell.base.x0)"
+          :y="xyRectY(cell.base.y1)"
+          :width="xyRectW(cell.base.x0, cell.base.x1)"
+          :height="xyRectH(cell.base.y0, cell.base.y1)"
           :fill="cell.fill"
-          :opacity="dimLayer('color_filter') ? 0.2 : 0.55"
+          :opacity="dimLayer('color_filter') ? 0.2 : 0.62"
+        />
+        <rect
+          v-for="cell in colorFilterFootprints"
+          :key="'BYT-' + cell.label + cell.cx + cell.cy"
+          :x="xyRectX(cell.top.x0)"
+          :y="xyRectY(cell.top.y1)"
+          :width="xyRectW(cell.top.x0, cell.top.x1)"
+          :height="xyRectH(cell.top.y0, cell.top.y1)"
+          :fill="cell.fill"
+          fill-opacity="0.16"
+          :stroke="highlight === 'cf_angle' || highlight === 'cf_t' ? '#e74c3c' : '#1f2937'"
+          :stroke-width="highlight === 'cf_angle' || highlight === 'cf_t' ? 1.6 : 1.2"
+          stroke-dasharray="5 4"
         />
         <text
           v-for="cell in bayerCells"
           :key="'BL-' + cell.label + cell.cx + cell.cy"
-          :x="xyToSvg(cell.cx)"
-          :y="xyToSvg(cell.cy) + 6"
+          :x="xyX(cell.cx)"
+          :y="xyY(cell.cy) + 6"
           class="bayer-letter"
           text-anchor="middle"
+          font-size="18"
+          font-weight="700"
         >{{ cell.label }}</text>
       </template>
 
       <!-- Metal grid lines (CF boundaries) -->
       <g v-if="xyVisible.grid">
         <rect
-          v-for="x in [0, 1, 2]"
-          :key="'mgv-' + x"
-          :x="xyToSvg(x) - mgHalfXY"
-          :y="xyToSvg(0)"
-          :width="mgHalfXY * 2"
-          :height="xyToSvg(2) - xyToSvg(0)"
+          v-for="grid in metalGridRects"
+          :key="'mg-' + grid.id"
+          :x="xyRectX(grid.x0)"
+          :y="xyRectY(grid.y1)"
+          :width="xyRectW(grid.x0, grid.x1)"
+          :height="xyRectH(grid.y0, grid.y1)"
           fill="#555"
-          :opacity="highlight === 'grid_w' ? 1 : 0.55"
-          :stroke="highlight === 'grid_w' ? '#e74c3c' : 'none'"
-        />
-        <rect
-          v-for="y in [0, 1, 2]"
-          :key="'mgh-' + y"
-          :x="xyToSvg(0)"
-          :y="xyToSvg(y) - mgHalfXY"
-          :width="xyToSvg(2) - xyToSvg(0)"
-          :height="mgHalfXY * 2"
-          fill="#555"
-          :opacity="highlight === 'grid_w' ? 1 : 0.55"
-          :stroke="highlight === 'grid_w' ? '#e74c3c' : 'none'"
+          :opacity="highlight === 'grid_w' || highlight === 'grid_t' ? 1 : 0.72"
+          :stroke="highlight === 'grid_w' || highlight === 'grid_t' ? '#e74c3c' : 'none'"
         />
       </g>
 
       <!-- DTI grid (slightly wider, dashed-blue) -->
       <g v-if="xyVisible.dti">
         <rect
-          v-for="x in [0, 1, 2]"
-          :key="'dtv-' + x"
-          :x="xyToSvg(x) - dtiHalfXY"
-          :y="xyToSvg(0)"
-          :width="dtiHalfXY * 2"
-          :height="xyToSvg(2) - xyToSvg(0)"
-          fill="#aed6f1"
-          :opacity="highlight === 'dti_w' ? 1 : 0.6"
-          :stroke="highlight === 'dti_w' ? '#e74c3c' : '#7fb3d3'"
-          :stroke-width="highlight === 'dti_w' ? 1.6 : 0.5"
-        />
-        <rect
-          v-for="y in [0, 1, 2]"
-          :key="'dth-' + y"
-          :x="xyToSvg(0)"
-          :y="xyToSvg(y) - dtiHalfXY"
-          :width="xyToSvg(2) - xyToSvg(0)"
-          :height="dtiHalfXY * 2"
+          v-for="dti in dtiRects"
+          :key="'dt-' + dti.id"
+          :x="xyRectX(dti.x0)"
+          :y="xyRectY(dti.y1)"
+          :width="xyRectW(dti.x0, dti.x1)"
+          :height="xyRectH(dti.y0, dti.y1)"
           fill="#aed6f1"
           :opacity="highlight === 'dti_w' ? 1 : 0.6"
           :stroke="highlight === 'dti_w' ? '#e74c3c' : '#7fb3d3'"
@@ -502,10 +532,10 @@
         <rect
           v-for="(pd, i) in pdFootprints"
           :key="'pdxy-' + i"
-          :x="xyToSvg(pd.x0)"
-          :y="xyToSvg(pd.y0)"
-          :width="xyToSvg(pd.x1) - xyToSvg(pd.x0)"
-          :height="xyToSvg(pd.y1) - xyToSvg(pd.y0)"
+          :x="xyRectX(pd.x0)"
+          :y="xyRectY(pd.y1)"
+          :width="xyRectW(pd.x0, pd.x1)"
+          :height="xyRectH(pd.y0, pd.y1)"
           fill="#b85c5c"
           :opacity="highlight === 'pd' || highlight === 'pd_dxdy' ? 0.4 : 0.18"
           :stroke="highlight === 'pd' || highlight === 'pd_dxdy' ? '#e74c3c' : '#b85c5c'"
@@ -519,8 +549,8 @@
         <ellipse
           v-for="(ml, i) in mlFootprints"
           :key="'mlxy-' + i"
-          :cx="xyToSvg(ml.cx)"
-          :cy="xyToSvg(ml.cy)"
+          :cx="xyX(ml.cx)"
+          :cy="xyY(ml.cy)"
           :rx="ml.rx * xyScale"
           :ry="ml.ry * xyScale"
           fill="#dda0dd"
@@ -533,14 +563,14 @@
       <!-- pitch arrow (bottom) -->
       <g class="dim-group">
         <line
-          :x1="xyToSvg(0)" :y1="xyToSvg(2) + 18"
-          :x2="xyToSvg(1)" :y2="xyToSvg(2) + 18"
+          :x1="xyX(0)" :y1="xyBottom + 18"
+          :x2="xyX(1)" :y2="xyBottom + 18"
           :stroke="dimColor('pitch')"
           :stroke-width="highlight === 'pitch' ? 2 : 1"
           marker-start="url(#xy-arr-l)" marker-end="url(#xy-arr-r)"
         />
         <text
-          :x="xyToSvg(0.5)" :y="xyToSvg(2) + 32"
+          :x="xyX(0.5)" :y="xyBottom + 32"
           :fill="dimColor('pitch')"
           class="dim-text" text-anchor="middle"
           :font-weight="highlight === 'pitch' ? '700' : '500'"
@@ -550,14 +580,14 @@
       <!-- unit_cell arrow (bottom, full 2 µm) -->
       <g class="dim-group">
         <line
-          :x1="xyToSvg(0)" :y1="xyToSvg(2) + 42"
-          :x2="xyToSvg(2)" :y2="xyToSvg(2) + 42"
+          :x1="xyX(0)" :y1="xyBottom + 42"
+          :x2="xyX(2)" :y2="xyBottom + 42"
           :stroke="dimColor('unit_cell')"
           :stroke-width="highlight === 'unit_cell' ? 2 : 1"
           marker-start="url(#xy-arr-l)" marker-end="url(#xy-arr-r)"
         />
         <text
-          :x="xyToSvg(1)" :y="xyToSvg(2) + 56"
+          :x="xyX(1)" :y="xyBottom + 56"
           :fill="dimColor('unit_cell')"
           class="dim-text" text-anchor="middle"
           :font-weight="highlight === 'unit_cell' ? '700' : '500'"
@@ -567,14 +597,14 @@
       <!-- microlens.radius_x (horizontal across one ML) -->
       <g class="dim-group" v-if="xyVisible.microlens">
         <line
-          :x1="xyToSvg(0.5 - mlR)" :y1="xyToSvg(0.5)"
-          :x2="xyToSvg(0.5 + mlR)" :y2="xyToSvg(0.5)"
+          :x1="xyX(0.5 - mlR)" :y1="xyY(0.5)"
+          :x2="xyX(0.5 + mlR)" :y2="xyY(0.5)"
           :stroke="dimColor('ml_rx')"
           :stroke-width="highlight === 'ml_rx' ? 2 : 1"
           marker-start="url(#xy-arr-l)" marker-end="url(#xy-arr-r)"
         />
         <text
-          :x="xyToSvg(0.5)" :y="xyToSvg(0.5) - 6"
+          :x="xyX(0.5)" :y="xyY(0.5) - 6"
           :fill="dimColor('ml_rx')"
           class="dim-text" text-anchor="middle"
           :font-weight="highlight === 'ml_rx' ? '700' : '500'"
@@ -584,14 +614,14 @@
       <!-- microlens.radius_y (vertical across one ML) -->
       <g class="dim-group" v-if="xyVisible.microlens">
         <line
-          :x1="xyToSvg(1.5)" :y1="xyToSvg(0.5 - mlR)"
-          :x2="xyToSvg(1.5)" :y2="xyToSvg(0.5 + mlR)"
+          :x1="xyX(1.5)" :y1="xyY(0.5 + mlR)"
+          :x2="xyX(1.5)" :y2="xyY(0.5 - mlR)"
           :stroke="dimColor('ml_ry')"
           :stroke-width="highlight === 'ml_ry' ? 2 : 1"
           marker-start="url(#xy-arr-u)" marker-end="url(#xy-arr-d)"
         />
         <text
-          :x="xyToSvg(1.5) + 6" :y="xyToSvg(0.5) + 3"
+          :x="xyX(1.5) + 6" :y="xyY(0.5) + 3"
           :fill="dimColor('ml_ry')"
           class="dim-text" text-anchor="start"
           :font-weight="highlight === 'ml_ry' ? '700' : '500'"
@@ -601,28 +631,28 @@
       <!-- photodiode size dx/dy on bottom-right pixel -->
       <g class="dim-group" v-if="xyVisible.photodiode">
         <line
-          :x1="xyToSvg(1.5 - pdHalf)" :y1="xyToSvg(1.5) + pdHalfPx + 6"
-          :x2="xyToSvg(1.5 + pdHalf)" :y2="xyToSvg(1.5) + pdHalfPx + 6"
+          :x1="xyX(1.5 - pdHalf)" :y1="xyY(0.5 - pdHalf) + 6"
+          :x2="xyX(1.5 + pdHalf)" :y2="xyY(0.5 - pdHalf) + 6"
           :stroke="dimColor('pd_dxdy')"
           :stroke-width="highlight === 'pd_dxdy' ? 2 : 1"
           marker-start="url(#xy-arr-l)" marker-end="url(#xy-arr-r)"
         />
         <text
-          :x="xyToSvg(1.5)" :y="xyToSvg(1.5) + pdHalfPx + 18"
+          :x="xyX(1.5)" :y="xyY(0.5 - pdHalf) + 18"
           :fill="dimColor('pd_dxdy')"
           class="dim-text" text-anchor="middle"
           :font-weight="highlight === 'pd_dxdy' ? '700' : '500'"
         >photodiode.size[dx]</text>
 
         <line
-          :x1="xyToSvg(1.5) + pdHalfPx + 6" :y1="xyToSvg(1.5 - pdHalf)"
-          :x2="xyToSvg(1.5) + pdHalfPx + 6" :y2="xyToSvg(1.5 + pdHalf)"
+          :x1="xyX(1.5 + pdHalf) + 6" :y1="xyY(0.5 + pdHalf)"
+          :x2="xyX(1.5 + pdHalf) + 6" :y2="xyY(0.5 - pdHalf)"
           :stroke="dimColor('pd_dxdy')"
           :stroke-width="highlight === 'pd_dxdy' ? 2 : 1"
           marker-start="url(#xy-arr-u)" marker-end="url(#xy-arr-d)"
         />
         <text
-          :x="xyToSvg(1.5) + pdHalfPx + 10" :y="xyToSvg(1.5) + 3"
+          :x="xyX(1.5 + pdHalf) + 10" :y="xyY(0.5) + 3"
           :fill="dimColor('pd_dxdy')"
           class="dim-text" text-anchor="start"
           :font-weight="highlight === 'pd_dxdy' ? '700' : '500'"
@@ -632,19 +662,19 @@
       <!-- DTI width leader -->
       <g class="dim-group" v-if="xyVisible.dti">
         <line
-          :x1="xyToSvg(1) - dtiHalfXY" :y1="xyToSvg(1.7)"
-          :x2="xyToSvg(1) + dtiHalfXY" :y2="xyToSvg(1.7)"
+          :x1="xyX(1) - dtiHalfXY" :y1="xyY(1.7)"
+          :x2="xyX(1) + dtiHalfXY" :y2="xyY(1.7)"
           :stroke="dimColor('dti_w')"
           :stroke-width="highlight === 'dti_w' ? 2 : 1"
         />
         <line
-          :x1="xyToSvg(1)" :y1="xyToSvg(1.7)"
-          :x2="xyToSvg(0.45)" :y2="xyToSvg(1.95)"
+          :x1="xyX(1)" :y1="xyY(1.7)"
+          :x2="xyX(0.45)" :y2="xyY(1.95)"
           :stroke="dimColor('dti_w')"
           stroke-width="0.7" stroke-dasharray="2 2"
         />
         <text
-          :x="xyToSvg(0.43)" :y="xyToSvg(1.95) + 4"
+          :x="xyX(0.43)" :y="xyY(1.95) + 4"
           :fill="dimColor('dti_w')"
           class="dim-text" text-anchor="end"
           :font-weight="highlight === 'dti_w' ? '700' : '500'"
@@ -654,19 +684,19 @@
       <!-- grid.width leader -->
       <g class="dim-group" v-if="xyVisible.grid">
         <line
-          :x1="xyToSvg(2) - mgHalfXY" :y1="xyToSvg(0.3)"
-          :x2="xyToSvg(2) + mgHalfXY" :y2="xyToSvg(0.3)"
+          :x1="xyX(2) - mgHalfXY" :y1="xyY(0.3)"
+          :x2="xyX(2) + mgHalfXY" :y2="xyY(0.3)"
           :stroke="dimColor('grid_w')"
           :stroke-width="highlight === 'grid_w' ? 2 : 1"
         />
         <line
-          :x1="xyToSvg(2)" :y1="xyToSvg(0.3)"
-          :x2="xyToSvg(2.2)" :y2="xyToSvg(0.1)"
+          :x1="xyX(2)" :y1="xyY(0.3)"
+          :x2="xyX(2.2)" :y2="xyY(0.1)"
           :stroke="dimColor('grid_w')"
           stroke-width="0.7" stroke-dasharray="2 2"
         />
         <text
-          :x="xyToSvg(2.22)" :y="xyToSvg(0.1) + 3"
+          :x="xyX(2.22)" :y="xyY(0.1) + 3"
           :fill="dimColor('grid_w')"
           class="dim-text" text-anchor="start"
           :font-weight="highlight === 'grid_w' ? '700' : '500'"
@@ -675,10 +705,10 @@
 
       <!-- Domain border -->
       <rect
-        :x="xyToSvg(0)"
-        :y="xyToSvg(0)"
-        :width="xyToSvg(2) - xyToSvg(0)"
-        :height="xyToSvg(2) - xyToSvg(0)"
+        :x="xyX(0)"
+        :y="xyY(2)"
+        :width="xyPlot"
+        :height="xyPlot"
         fill="none"
         stroke="var(--vp-c-divider)"
         stroke-width="1"
@@ -686,20 +716,21 @@
 
       <!-- Axes -->
       <text
-        :x="xyToSvg(1)" :y="xyH - 6"
+        :x="xyX(1)" :y="xyH - 6"
         class="axis-label" text-anchor="middle"
       >x (µm)</text>
       <text
-        :x="14" :y="xyToSvg(1)"
+        :x="14" :y="xyY(1)"
         class="axis-label" text-anchor="middle"
-        :transform="`rotate(-90, 14, ${xyToSvg(1)})`"
+        :transform="`rotate(-90, 14, ${xyY(1)})`"
       >y (µm)</text>
 
       <!-- Title -->
       <text
-        :x="(xyToSvg(0) + xyToSvg(2)) / 2" :y="xyPadTop - 12"
+        :x="(xyX(0) + xyX(2)) / 2" :y="xyPadTop - 12"
         class="section-title" text-anchor="middle"
-      >{{ t('XY Top View — at silicon level (z ≈ 1.5 µm)', 'XY 평면도 — 실리콘 내부 (z ≈ 1.5 µm)') }}</text>
+        font-size="16" font-weight="700"
+      >{{ t('XY Top View — stack footprints (lower-left origin)', 'XY 평면도 — stack footprint (좌하단 원점)') }}</text>
 
       <!-- Markers -->
       <defs>
@@ -787,7 +818,7 @@ const xyToggleOptions: { key: XyLayerKey; labelEn: string; labelKo: string; colo
 
 // ===== XZ geometry (matches default_bsi_1um.yaml) =====
 // Axis equal: 100 svg-pixels per µm in both x and z.
-const totalZ = 5.58
+const totalZ = 5.63
 const totalX = 2.0  // two pixels of pitch 1 µm
 const xzScale = 100
 const plotW = totalX * xzScale       // 200
@@ -799,10 +830,10 @@ const xzH = pad.top  + plotH + pad.bottom   // 648
 const layers = [
   { id: 'silicon', label: 'silicon', color: '#5d6d7e', zBot: 0,    zTop: 3.0 },
   { id: 'barl',    label: 'barl',    color: '#8e44ad', zBot: 3.0,  zTop: 3.08 },
-  { id: 'color_filter', label: 'color_filter', color: '#27ae60', zBot: 3.08, zTop: 3.68 },
-  { id: 'planarization', label: 'planarization', color: '#d5dbdb', zBot: 3.68, zTop: 3.98 },
-  { id: 'microlens', label: 'microlens', color: '#dda0dd', zBot: 3.98, zTop: 4.58 },
-  { id: 'air',     label: 'air',     color: '#d6eaf8', zBot: 4.58, zTop: 5.58 },
+  { id: 'color_filter', label: 'color_filter', color: '#27ae60', zBot: 3.08, zTop: 3.73 },
+  { id: 'planarization', label: 'planarization', color: '#d5dbdb', zBot: 3.73, zTop: 4.03 },
+  { id: 'microlens', label: 'microlens', color: '#dda0dd', zBot: 4.03, zTop: 4.63 },
+  { id: 'air',     label: 'air',     color: '#d6eaf8', zBot: 4.63, zTop: 5.63 },
 ]
 
 const barlSublayers = [
@@ -813,13 +844,15 @@ const barlSublayers = [
 ]
 
 const cfZBot = 3.08
-const cfZTop = 3.68
+const cfZTop = 3.73
+const cfGridThickness = 0.47
+const cfGridZTop = cfZBot + cfGridThickness
 const siBot = 0.0
 const siTop = 3.0
 const dtiDepth = 3.0
 const dtiWidth = 0.1
 const mgWidth = 0.05
-const mlZBot = 3.98
+const mlZBot = 4.03
 const mlH = 0.6
 const mlR = 0.48
 const mlGap = 0.04
@@ -840,10 +873,53 @@ const pdRectsXZ = [
   { x0: 1.5 - pdSizeXY / 2, x1: 1.5 + pdSizeXY / 2, zTop: pdZTop, zBot: pdZBot },
 ]
 
-const cfCols = [
-  { x0: 0.0, x1: 1.0, color: '#27ae60' }, // G
-  { x0: 1.0, x1: 2.0, color: '#3498db' }, // B
+type CfProfile = {
+  id: string
+  x0: number
+  x1: number
+  topZ: number
+  topInset: number
+  color: string
+}
+
+const cfChannelSpecs: Record<string, { thickness: number; contactAngle: number }> = {
+  R: { thickness: 0.62, contactAngle: 66 },
+  G: { thickness: 0.60, contactAngle: 72 },
+  B: { thickness: 0.65, contactAngle: 62 },
+}
+
+const cfProfiles: CfProfile[] = [
+  makeCfProfile('G', 0.0, 1.0, cfChannelSpecs.G.thickness, cfChannelSpecs.G.contactAngle, '#27ae60'),
+  makeCfProfile('B', 1.0, 2.0, cfChannelSpecs.B.thickness, cfChannelSpecs.B.contactAngle, '#3498db'),
 ]
+
+function makeCfProfile(id: string, x0: number, x1: number, thickness: number, contactAngle: number, color: string): CfProfile {
+  const baseInset = mgWidth / 2
+  const protrusion = Math.max(0, thickness - cfGridThickness)
+  const theta = (Math.PI / 180) * Math.max(1, Math.min(89.999, contactAngle))
+  return {
+    id,
+    x0: x0 + baseInset,
+    x1: x1 - baseInset,
+    topZ: cfZBot + thickness,
+    topInset: protrusion / Math.tan(theta),
+    color,
+  }
+}
+
+function cfProfilePath(cf: CfProfile) {
+  const topLeft = Math.min(cf.x0 + cf.topInset, (cf.x0 + cf.x1) / 2)
+  const topRight = Math.max(cf.x1 - cf.topInset, (cf.x0 + cf.x1) / 2)
+  return [
+    `M ${xToSvg(cf.x0)} ${zToY(cfZBot)}`,
+    `L ${xToSvg(cf.x1)} ${zToY(cfZBot)}`,
+    `L ${xToSvg(cf.x1)} ${zToY(cfGridZTop)}`,
+    `L ${xToSvg(topRight)} ${zToY(cf.topZ)}`,
+    `L ${xToSvg(topLeft)} ${zToY(cf.topZ)}`,
+    `L ${xToSvg(cf.x0)} ${zToY(cfGridZTop)}`,
+    'Z',
+  ].join(' ')
+}
 
 // Pixel-pitch DTI lines at boundaries x = 0, 1, 2
 const dtiX = [0.0, 1.0, 2.0]
@@ -859,10 +935,11 @@ const zTicks = [0, 1, 2, 3, 4, 5]
 
 // Right-side dimension callouts (layers + sub-features)
 const rightDims = [
-  { id: 'air',     param: 'air_t',    zTop: 5.58, zBot: 4.58, offset: 14, label: 'air.thickness = 1.0 µm' },
-  { id: 'ml',      param: 'ml_h',     zTop: 4.58, zBot: 3.98, offset: 14, label: 'microlens (height = 0.6)' },
-  { id: 'plan',    param: 'plan_t',   zTop: 3.98, zBot: 3.68, offset: 14, label: 'planarization.thickness = 0.3' },
-  { id: 'cf',      param: 'cf_t',     zTop: 3.68, zBot: 3.08, offset: 14, label: 'color_filter.thickness = 0.6' },
+  { id: 'air',     param: 'air_t',    zTop: 5.63, zBot: 4.63, offset: 14, label: 'air.thickness = 1.0 µm' },
+  { id: 'ml',      param: 'ml_h',     zTop: 4.63, zBot: 4.03, offset: 14, label: 'microlens (height = 0.6)' },
+  { id: 'plan',    param: 'plan_t',   zTop: 4.03, zBot: 3.73, offset: 14, label: 'planarization.thickness = 0.3' },
+  { id: 'cf',      param: 'cf_t',     zTop: 3.73, zBot: 3.08, offset: 14, label: 'CF height = 0.60-0.65' },
+  { id: 'cf-grid', param: 'grid_t',   zTop: 3.55, zBot: 3.08, offset: 54, label: 'grid.t = 0.47' },
   { id: 'barl',    param: 'barl_t',   zTop: 3.08, zBot: 3.00, offset: 14, label: 'barl Σ thickness ≈ 0.08' },
   { id: 'si',      param: 'si_t',     zTop: 3.00, zBot: 0.00, offset: 14, label: 'silicon.thickness = 3.0' },
 ]
@@ -898,7 +975,13 @@ const xyPadLeft = 50
 const xyPadTop = 40
 const xyPlot = 380
 const xyScale = xyPlot / 2.0
-function xyToSvg(v: number) { return xyPadLeft + v * xyScale }
+const xyBottom = xyPadTop + xyPlot
+function xyX(v: number) { return xyPadLeft + v * xyScale }
+function xyY(v: number) { return xyPadTop + (2.0 - v) * xyScale }
+function xyRectX(x0: number) { return xyX(x0) }
+function xyRectY(y1: number) { return xyY(y1) }
+function xyRectW(x0: number, x1: number) { return (x1 - x0) * xyScale }
+function xyRectH(y0: number, y1: number) { return (y1 - y0) * xyScale }
 
 const dtiHalfXY = (dtiWidth / 2) * xyScale
 const mgHalfXY = (mgWidth / 2) * xyScale
@@ -906,11 +989,67 @@ const pdHalf = pdSizeXY / 2
 const pdHalfPx = pdHalf * xyScale
 
 const bayerCells = [
-  { cx: 0.5, cy: 0.5, label: 'R', fill: '#e74c3c' },
-  { cx: 1.5, cy: 0.5, label: 'G', fill: '#27ae60' },
-  { cx: 0.5, cy: 1.5, label: 'G', fill: '#27ae60' },
-  { cx: 1.5, cy: 1.5, label: 'B', fill: '#3498db' },
+  { x0: 0, x1: 1, y0: 0, y1: 1, cx: 0.5, cy: 0.5, label: 'R', fill: '#e74c3c' },
+  { x0: 1, x1: 2, y0: 0, y1: 1, cx: 1.5, cy: 0.5, label: 'G', fill: '#27ae60' },
+  { x0: 0, x1: 1, y0: 1, y1: 2, cx: 0.5, cy: 1.5, label: 'G', fill: '#27ae60' },
+  { x0: 1, x1: 2, y0: 1, y1: 2, cx: 1.5, cy: 1.5, label: 'B', fill: '#3498db' },
 ]
+
+type XyRect = { id: string; x0: number; x1: number; y0: number; y1: number }
+
+const metalGridRects = boundaryRects(mgWidth, 'metal')
+const dtiRects = boundaryRects(dtiWidth, 'dti')
+
+const colorFilterFootprints = bayerCells.map((cell) => {
+  const baseInset = mgWidth / 2
+  const topInset = baseInset + cfTopInsetFor(cell.label)
+  return {
+    ...cell,
+    base: {
+      x0: cell.x0 + baseInset,
+      x1: cell.x1 - baseInset,
+      y0: cell.y0 + baseInset,
+      y1: cell.y1 - baseInset,
+    },
+    top: {
+      x0: cell.x0 + topInset,
+      x1: cell.x1 - topInset,
+      y0: cell.y0 + topInset,
+      y1: cell.y1 - topInset,
+    },
+  }
+})
+
+function boundaryRects(width: number, prefix: string): XyRect[] {
+  const half = width / 2
+  const rects: XyRect[] = []
+  for (const x of [0, 1, 2]) {
+    rects.push({
+      id: `${prefix}-v-${x}`,
+      x0: Math.max(0, x - half),
+      x1: Math.min(2, x + half),
+      y0: 0,
+      y1: 2,
+    })
+  }
+  for (const y of [0, 1, 2]) {
+    rects.push({
+      id: `${prefix}-h-${y}`,
+      x0: 0,
+      x1: 2,
+      y0: Math.max(0, y - half),
+      y1: Math.min(2, y + half),
+    })
+  }
+  return rects
+}
+
+function cfTopInsetFor(label: string) {
+  const spec = cfChannelSpecs[label]
+  const protrusion = Math.max(0, spec.thickness - cfGridThickness)
+  const theta = (Math.PI / 180) * Math.max(1, Math.min(89.999, spec.contactAngle))
+  return protrusion / Math.tan(theta)
+}
 
 const pdFootprints = [
   { x0: 0.5 - pdHalf, y0: 0.5 - pdHalf, x1: 0.5 + pdHalf, y1: 0.5 + pdHalf },
@@ -938,7 +1077,9 @@ const groupColors: Record<string, string> = {
   shift: '#9b59b6',
   plan_t: '#7f8c8d',
   cf_t: '#27ae60',
+  cf_angle: '#1f8a5b',
   grid_w: '#34495e',
+  grid_t: '#34495e',
   barl_t: '#16a085',
   si_t: '#5d6d7e',
   dti_w: '#2980b9',
@@ -958,7 +1099,7 @@ function dimLayer(layerId: string) {
   // Dim non-target layers when a parameter is hovered (keep target visible)
   const map: Record<string, string[]> = {
     ml_h: ['microlens'], ml_rx: ['microlens'], ml_ry: ['microlens'], ml_gap: ['microlens'], shift: ['microlens'],
-    cf_t: ['color_filter'], grid_w: ['color_filter'], grid: ['color_filter'],
+    cf_t: ['color_filter'], cf_angle: ['color_filter'], grid_w: ['color_filter'], grid_t: ['color_filter'], grid: ['color_filter'],
     plan_t: ['planarization'], air_t: ['air'], barl_t: ['barl'],
     si_t: ['silicon'], dti_w: ['silicon'], dti_d: ['silicon'], dti: ['silicon'],
     pd_dz: ['silicon'], pd_pz: ['silicon'], pd_dxdy: ['silicon'], pd: ['silicon'],
@@ -988,10 +1129,14 @@ const legendRows = [
     meaningEn: 'Lateral lens offset (CRA correction)',    meaningKo: '주광선각(CRA) 보정용 횡방향 오프셋' },
   { id: 'plan_t',    param: 'planarization.thickness',    value: '0.3 µm',          color: '#7f8c8d',
     meaningEn: 'Spacer thickness between ML and CF',      meaningKo: '마이크로렌즈와 컬러 필터 사이 스페이서 두께' },
-  { id: 'cf_t',      param: 'color_filter.thickness',     value: '0.6 µm',          color: '#27ae60',
-    meaningEn: 'Color-filter (Bayer) layer thickness',    meaningKo: '컬러 필터(베이어) 레이어 두께' },
+  { id: 'cf_t',      param: 'color_filter.{red,green,blue}.thickness', value: '0.60-0.65 µm', color: '#27ae60',
+    meaningEn: 'Per-channel color-filter height above the CFA base', meaningKo: 'CFA base 위 색별 컬러 필터 높이' },
+  { id: 'cf_angle',  param: 'color_filter.{red,green,blue}.contact_angle', value: '62-72°', color: '#1f8a5b',
+    meaningEn: 'Sidewall taper above the metal-grid top', meaningKo: 'metal-grid top 위로 솟은 필터의 sidewall taper' },
   { id: 'grid_w',    param: 'color_filter.grid.width',    value: '0.05 µm',         color: '#34495e',
     meaningEn: 'Metal grid line width at pixel borders',  meaningKo: '픽셀 경계 금속 격자 선 너비' },
+  { id: 'grid_t',    param: 'color_filter.grid.thickness', value: '0.47 µm',        color: '#34495e',
+    meaningEn: 'Metal grid height from the CFA base',      meaningKo: 'CFA base 기준 metal grid 높이' },
   { id: 'barl_t',    param: 'barl.layers[i].thickness',   value: '0.01–0.03 µm',    color: '#16a085',
     meaningEn: 'Per-layer thickness of the AR stack',     meaningKo: '반사 방지 스택의 레이어별 두께' },
   { id: 'si_t',      param: 'silicon.thickness',          value: '3.0 µm',          color: '#5d6d7e',
