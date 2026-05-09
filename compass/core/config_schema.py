@@ -169,6 +169,7 @@ class ConeSamplingConfig(BaseModel):
         "sunflower",
         "rings",
         "halton",
+        "hammersley",
         "gauss",
         "gaussian_quadrature",
         "grid",

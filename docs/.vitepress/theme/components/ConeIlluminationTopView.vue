@@ -288,6 +288,7 @@ const samplingMethods = [
   { id: 'fibonacci', labelEn: 'Fibonacci', labelKo: '피보나치' },
   { id: 'rings', labelEn: 'Rings', labelKo: '링' },
   { id: 'halton', labelEn: 'Halton', labelKo: '할튼' },
+  { id: 'hammersley', labelEn: 'Hammersley', labelKo: '해머슬리' },
   { id: 'gauss', labelEn: 'Gauss', labelKo: '가우스' },
   { id: 'grid', labelEn: 'Grid legacy', labelKo: '격자 legacy' },
 ]
@@ -305,6 +306,10 @@ const methodHint = computed(() => {
     halton: t(
       'Low-discrepancy sequence: good for convergence checks without regular angular symmetry.',
       'Low-discrepancy sequence: 규칙적인 각도 대칭 없이 수렴 확인에 유리합니다.'
+    ),
+    hammersley: t(
+      'Fixed-budget low-discrepancy set: often cleaner than Halton when n_points is known upfront.',
+      '고정 sample budget용 low-discrepancy set: n_points를 미리 알 때 Halton보다 더 깔끔한 분포가 나옵니다.'
     ),
     gauss: t(
       'Gauss-Legendre radial quadrature: best when the goal is angular integration accuracy.',
@@ -392,6 +397,8 @@ const samplingPoints = computed(() => {
     samples = ringSamples(n, ha)
   } else if (samplingMethod.value === 'halton') {
     samples = haltonSamples(n, ha)
+  } else if (samplingMethod.value === 'hammersley') {
+    samples = hammersleySamples(n, ha)
   } else if (samplingMethod.value === 'gauss') {
     samples = gaussSamples(n, ha)
   } else if (samplingMethod.value === 'grid') {
@@ -467,6 +474,15 @@ function haltonSamples(n, ha) {
   return Array.from({ length: count }, (_, i) => {
     const theta = thetaFromCapFraction(radicalInverse(i + 1, 2), ha)
     const phi = 2 * Math.PI * radicalInverse(i + 1, 3)
+    return projectedSample(theta, phi, angularWeight(theta))
+  })
+}
+
+function hammersleySamples(n, ha) {
+  const count = Math.max(1, n)
+  return Array.from({ length: count }, (_, i) => {
+    const theta = thetaFromCapFraction((i + 0.5) / count, ha)
+    const phi = 2 * Math.PI * radicalInverse(i + 1, 2)
     return projectedSample(theta, phi, angularWeight(theta))
   })
 }

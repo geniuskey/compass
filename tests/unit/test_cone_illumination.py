@@ -145,14 +145,14 @@ class TestGaussianQuadratureSampling:
 class TestAdditionalSamplingMethods:
     """Tests for production alternatives to polar grid sampling."""
 
-    @pytest.mark.parametrize("sampling", ["rings", "halton", "sunflower"])
+    @pytest.mark.parametrize("sampling", ["rings", "halton", "hammersley", "sunflower"])
     def test_exact_point_count(self, sampling):
         """Low-discrepancy and ring methods honor n_points exactly."""
         ci = ConeIllumination(n_points=37, sampling=sampling)
         points = ci.get_sampling_points()
         assert len(points) == 37
 
-    @pytest.mark.parametrize("sampling", ["rings", "halton", "sunflower"])
+    @pytest.mark.parametrize("sampling", ["rings", "halton", "hammersley", "sunflower"])
     def test_weights_sum_to_one(self, sampling):
         """New sampling methods normalize weights."""
         ci = ConeIllumination(n_points=37, sampling=sampling)
@@ -160,7 +160,7 @@ class TestAdditionalSamplingMethods:
         total = sum(w for _, _, w in points)
         assert total == pytest.approx(1.0, abs=1e-10)
 
-    @pytest.mark.parametrize("sampling", ["rings", "halton", "sunflower"])
+    @pytest.mark.parametrize("sampling", ["rings", "halton", "hammersley", "sunflower"])
     def test_all_weights_positive(self, sampling):
         """New sampling methods produce non-negative weights."""
         ci = ConeIllumination(n_points=37, sampling=sampling)

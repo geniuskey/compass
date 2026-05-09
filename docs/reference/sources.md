@@ -104,7 +104,7 @@ class ConeIllumination:
 - `cra_deg` -- Chief Ray Angle in degrees. The central direction of the illumination cone.
 - `f_number` -- Lens f-number. Determines the cone half-angle: $\theta_{half} = \arcsin(1 / 2F)$.
 - `n_points` -- Number of angular sampling points within the cone.
-- `sampling` -- Sampling method: `"fibonacci"` (default), `"rings"`, `"halton"`, `"gauss"` / `"gaussian_quadrature"`, or `"grid"`.
+- `sampling` -- Sampling method: `"fibonacci"` (default), `"rings"`, `"halton"`, `"hammersley"`, `"gauss"` / `"gaussian_quadrature"`, or `"grid"`.
 - `weighting` -- Angular weighting: `"uniform"`, `"cosine"` (default), `"cos4"`, or `"gaussian"`.
 
 <ConeIlluminationViewer />
@@ -141,6 +141,8 @@ Returns a list of `(theta_deg, phi_deg, weight)` tuples representing the angular
 **Equal-area rings**: Divides the cone cap into concentric bands and allocates more azimuth samples to the larger outer rings. Useful when you want a deterministic pattern that is easy to inspect.
 
 **Halton**: Low-discrepancy sampling over the cone cap. Useful for deterministic convergence checks without obvious angular symmetry.
+
+**Hammersley**: Fixed-budget low-discrepancy point set over the cone cap. Use when `n_points` is known before the simulation starts.
 
 **Gauss-Legendre**: Quadrature nodes in radial angle with uniform azimuth samples. Use when integration accuracy matters more than matching `n_points` exactly.
 

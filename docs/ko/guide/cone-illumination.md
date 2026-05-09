@@ -29,7 +29,7 @@ description: COMPASS에서 렌즈 사출 동공으로부터의 원뿔 조명 설
 
 - **풋프린트 직경**: 초점면에서의 원뿔 풋프린트 직경은 $d = 2 h \tan(\theta_{\text{half}})$이며, 여기서 $h$는 원뿔 확산에 사용하는 유효 전파 높이입니다. F 넘버가 낮을수록 더 넓은 풋프린트가 생성됩니다.
 - **CRA 시프트**: CRA가 0이 아닌 경우 풋프린트 중심이 픽셀 중심에서 벗어납니다. 실제 BSI 스택에서는 단순한 공기 중 경로 값 $h \tan(\text{CRA})$를 그대로 쓰지 않습니다. 컬러 필터, BARL, 실리콘의 굴절 때문에 주광선이 법선 방향으로 꺾이므로 유효 시프트는 더 작습니다.
-- **샘플링 커버리지**: 위의 인터랙티브 뷰어에서 피보나치, 동일 면적 ring, Halton low-discrepancy, Gauss-Legendre, legacy polar grid 샘플링을 비교할 수 있습니다. `grid`는 기준 비교에는 유용하지만, 보통 production 선택지로는 적합하지 않습니다.
+- **샘플링 커버리지**: 위의 인터랙티브 뷰어에서 피보나치, 동일 면적 ring, Halton/Hammersley low-discrepancy set, Gauss-Legendre, legacy polar grid 샘플링을 비교할 수 있습니다. `grid`는 기준 비교에는 유용하지만, 보통 production 선택지로는 적합하지 않습니다.
 - **렌즈 면적**: 풋프린트 면적 $A = \pi r^2$ (여기서 $r = h \tan(\theta_{\text{half}})$)는 인접 픽셀이 원뿔로부터 얼마나 많은 빛을 받는지를 결정하며, 이는 크로스토크에 직접적으로 영향을 미칩니다.
 
 ## ConeIllumination 인스턴스 생성
@@ -41,7 +41,7 @@ cone = ConeIllumination(
     cra_deg=15.0,          # Chief Ray Angle in degrees
     f_number=2.0,          # F-number of the lens
     n_points=37,           # Number of angular sample points
-    sampling="fibonacci",  # "fibonacci", "rings", "halton", "gauss", or "grid"
+    sampling="fibonacci",  # "fibonacci", "rings", "halton", "hammersley", "gauss", or "grid"
     weighting="cosine",    # "uniform", "cosine", "cos4", or "gaussian"
 )
 
@@ -91,6 +91,20 @@ cone = ConeIllumination(
     cra_deg=10.0, f_number=2.8, n_points=37, sampling="halton"
 )
 ```
+
+Halton은 incremental sequence입니다. 샘플 수를 늘려도 앞쪽 sequence가 유지되므로, progressive convergence check에 편리합니다.
+
+### Hammersley 샘플링
+
+Hammersley 샘플링도 low-discrepancy point set이지만, 전체 샘플 수를 미리 알고 있다는 가정에서 점을 배치합니다. 고정된 sample budget으로 한 번 계산할 때는 같은 `n_points`에서 Halton보다 더 깔끔한 분포가 나오는 경우가 많습니다.
+
+```python
+cone = ConeIllumination(
+    cra_deg=10.0, f_number=2.8, n_points=37, sampling="hammersley"
+)
+```
+
+샘플 수 하나를 정해서 실행할 때는 Hammersley, 샘플 수를 점진적으로 키우며 수렴성을 볼 때는 Halton을 선택하는 것이 실용적입니다.
 
 ### Gauss-Legendre 샘플링
 

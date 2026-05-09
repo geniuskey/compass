@@ -39,6 +39,8 @@ class ConeIllumination:
             return self._ring_sampling()
         elif sampling in {"halton", "low_discrepancy"}:
             return self._halton_sampling()
+        elif sampling in {"hammersley", "hammersley_point_set"}:
+            return self._hammersley_sampling()
         else:
             return self._fibonacci_sampling()
 
@@ -136,6 +138,20 @@ class ConeIllumination:
         for i in range(n_points):
             u = self._radical_inverse(i + 1, 2)
             v = self._radical_inverse(i + 1, 3)
+            theta_local = np.arccos(1.0 - u * cap)
+            phi = 2 * np.pi * v
+            weight = self._compute_weight(theta_local)
+            points.append((*self._global_angles_deg(theta_local, phi), weight))
+        return self._normalize(points)
+
+    def _hammersley_sampling(self) -> list[tuple[float, float, float]]:
+        """Fixed-budget Hammersley point-set sampling on the cone cap."""
+        points: list[tuple[float, float, float]] = []
+        n_points = max(1, int(self.n_points))
+        cap = 1.0 - np.cos(self.half_cone_rad)
+        for i in range(n_points):
+            u = (i + 0.5) / n_points
+            v = self._radical_inverse(i + 1, 2)
             theta_local = np.arccos(1.0 - u * cap)
             phi = 2 * np.pi * v
             weight = self._compute_weight(theta_local)

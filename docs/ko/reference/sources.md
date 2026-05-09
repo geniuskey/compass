@@ -104,7 +104,7 @@ class ConeIllumination:
 - `cra_deg` -- 주광선각(Chief Ray Angle) (도 단위). 조명 콘의 중심 방향입니다.
 - `f_number` -- 렌즈 f-넘버. 콘 반각을 결정합니다: $\theta_{half} = \arcsin(1 / 2F)$.
 - `n_points` -- 콘 내부의 각도 샘플링 포인트 수.
-- `sampling` -- 샘플링 방법: `"fibonacci"` (기본값), `"rings"`, `"halton"`, `"gauss"` / `"gaussian_quadrature"`, 또는 `"grid"`.
+- `sampling` -- 샘플링 방법: `"fibonacci"` (기본값), `"rings"`, `"halton"`, `"hammersley"`, `"gauss"` / `"gaussian_quadrature"`, 또는 `"grid"`.
 - `weighting` -- 각도 가중치: `"uniform"`, `"cosine"` (기본값), `"cos4"`, 또는 `"gaussian"`.
 
 <ConeIlluminationViewer />
@@ -141,6 +141,8 @@ def get_sampling_points(self) -> List[Tuple[float, float, float]]:
 **동일 면적 ring(Equal-area rings)**: cone cap을 동심 band로 나누고, 둘레가 큰 바깥 ring에 더 많은 방위각 샘플을 배치합니다. 눈으로 검토하기 쉬운 deterministic 패턴이 필요할 때 유용합니다.
 
 **Halton**: cone cap 위의 low-discrepancy 샘플링입니다. 눈에 띄는 각도 대칭 없이 deterministic 수렴 확인을 할 때 유용합니다.
+
+**Hammersley**: cone cap 위의 fixed-budget low-discrepancy point set입니다. 시뮬레이션 전에 `n_points`를 정하고 실행할 때 사용합니다.
 
 **Gauss-Legendre**: radial angle 방향 quadrature node와 균일 방위각 샘플을 사용합니다. `n_points`를 정확히 맞추는 것보다 적분 정확도가 중요할 때 사용합니다.
 

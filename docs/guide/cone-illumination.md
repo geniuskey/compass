@@ -29,7 +29,7 @@ Key observations from the top view:
 
 - **Footprint diameter**: The cone footprint on the focal plane has diameter $d = 2 h \tan(\theta_{\text{half}})$, where $h$ is the effective propagation height used for the cone spread. A lower F-number produces a wider footprint.
 - **CRA shift**: A nonzero CRA shifts the footprint center away from the pixel center. In a real BSI stack this is not the raw air-path value $h \tan(\text{CRA})$; refraction in the color-filter, BARL, and silicon layers bends the chief ray toward normal, so the effective shift is smaller.
-- **Sampling coverage**: The interactive viewer above compares fibonacci, equal-area rings, Halton low-discrepancy, Gauss-Legendre, and legacy polar-grid sampling. `grid` is useful as a baseline, but it is usually not the best production choice.
+- **Sampling coverage**: The interactive viewer above compares fibonacci, equal-area rings, Halton and Hammersley low-discrepancy sets, Gauss-Legendre, and legacy polar-grid sampling. `grid` is useful as a baseline, but it is usually not the best production choice.
 - **Lens area**: The footprint area $A = \pi r^2$ where $r = h \tan(\theta_{\text{half}})$ determines how much of the neighboring pixel receives light from the cone, which directly affects crosstalk.
 
 ## Creating a ConeIllumination instance
@@ -41,7 +41,7 @@ cone = ConeIllumination(
     cra_deg=15.0,          # Chief Ray Angle in degrees
     f_number=2.0,          # F-number of the lens
     n_points=37,           # Number of angular sample points
-    sampling="fibonacci",  # "fibonacci", "rings", "halton", "gauss", or "grid"
+    sampling="fibonacci",  # "fibonacci", "rings", "halton", "hammersley", "gauss", or "grid"
     weighting="cosine",    # "uniform", "cosine", "cos4", or "gaussian"
 )
 
@@ -91,6 +91,20 @@ cone = ConeIllumination(
     cra_deg=10.0, f_number=2.8, n_points=37, sampling="halton"
 )
 ```
+
+Halton is incremental: adding more samples preserves the earlier sequence. This makes it convenient for progressive convergence checks.
+
+### Hammersley sampling
+
+Hammersley sampling is also a low-discrepancy point set, but it assumes the total sample count is known in advance. For fixed-budget simulations, this usually gives a cleaner spread than Halton for the same `n_points`.
+
+```python
+cone = ConeIllumination(
+    cra_deg=10.0, f_number=2.8, n_points=37, sampling="hammersley"
+)
+```
+
+Use Hammersley when you will run one chosen sample count, and use Halton when you plan to grow the sample count progressively.
 
 ### Gauss-Legendre sampling
 
