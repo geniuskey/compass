@@ -29,7 +29,7 @@ Key observations from the top view:
 
 - **Footprint diameter**: The cone footprint on the focal plane has diameter $d = 2 h \tan(\theta_{\text{half}})$, where $h$ is the effective propagation height used for the cone spread. A lower F-number produces a wider footprint.
 - **CRA shift**: A nonzero CRA shifts the footprint center away from the pixel center. In a real BSI stack this is not the raw air-path value $h \tan(\text{CRA})$; refraction in the color-filter, BARL, and silicon layers bends the chief ray toward normal, so the effective shift is smaller.
-- **Sampling coverage**: The interactive viewer above shows how fibonacci and grid sampling points distribute across the footprint. Fibonacci sampling provides more uniform angular coverage.
+- **Sampling coverage**: The interactive viewer above compares fibonacci, equal-area rings, Halton low-discrepancy, Gauss-Legendre, and legacy polar-grid sampling. `grid` is useful as a baseline, but it is usually not the best production choice.
 - **Lens area**: The footprint area $A = \pi r^2$ where $r = h \tan(\theta_{\text{half}})$ determines how much of the neighboring pixel receives light from the cone, which directly affects crosstalk.
 
 ## Creating a ConeIllumination instance
@@ -41,7 +41,7 @@ cone = ConeIllumination(
     cra_deg=15.0,          # Chief Ray Angle in degrees
     f_number=2.0,          # F-number of the lens
     n_points=37,           # Number of angular sample points
-    sampling="fibonacci",  # "fibonacci" or "grid"
+    sampling="fibonacci",  # "fibonacci", "rings", "halton", "gauss", or "grid"
     weighting="cosine",    # "uniform", "cosine", "cos4", or "gaussian"
 )
 
@@ -69,7 +69,42 @@ for i, (theta, phi, w) in enumerate(points[:5]):
 
 Fibonacci sampling is recommended for most cases. Use 19-37 points for quick estimates and 61-91 points for production results.
 
-### Grid sampling
+### Equal-area rings
+
+Concentric ring sampling divides the cone cap into equal-area radial bands and allocates more azimuth samples to larger outer rings. It is deterministic and easy to inspect visually, which makes it a good alternative when a regular polar grid looks too structured.
+
+```python
+cone = ConeIllumination(
+    cra_deg=10.0, f_number=2.8, n_points=37, sampling="rings"
+)
+
+points = cone.get_sampling_points()
+print(f"Ring sampling: {len(points)} points")
+```
+
+### Halton sampling
+
+Halton sampling uses a low-discrepancy sequence over the cone cap. It avoids obvious ring or spoke symmetry and is useful for convergence checks where you want a deterministic quasi-random pattern.
+
+```python
+cone = ConeIllumination(
+    cra_deg=10.0, f_number=2.8, n_points=37, sampling="halton"
+)
+```
+
+### Gauss-Legendre sampling
+
+Gauss-Legendre sampling uses quadrature nodes in the radial angle and uniform azimuth samples. It is the best choice when angular integration accuracy matters more than having exactly `n_points` samples.
+
+```python
+cone = ConeIllumination(
+    cra_deg=10.0, f_number=2.8, n_points=36, sampling="gauss"
+)
+```
+
+`sampling="gaussian_quadrature"` is accepted as an alias for compatibility with YAML configs.
+
+### Legacy grid sampling
 
 Grid sampling uses a uniform $(\theta, \phi)$ grid. It is straightforward but less efficient than Fibonacci for the same number of points.
 
@@ -83,6 +118,8 @@ print(f"Grid sampling: {len(points)} points")
 ```
 
 Grid sampling produces `n_theta x n_phi` points where `n_theta = sqrt(n_points)` and `n_phi = n_points / n_theta`.
+
+Use `grid` mainly as a diagnostic baseline. It oversamples the cone center and creates strong radial/azimuthal structure, so it can make convergence look better or worse than it really is.
 
 ## Weighting functions
 

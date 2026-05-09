@@ -164,7 +164,15 @@ class AngleConfig(BaseModel):
 
 
 class ConeSamplingConfig(BaseModel):
-    type: Literal["grid", "fibonacci", "gaussian_quadrature"] = "fibonacci"
+    type: Literal[
+        "fibonacci",
+        "sunflower",
+        "rings",
+        "halton",
+        "gauss",
+        "gaussian_quadrature",
+        "grid",
+    ] = "fibonacci"
     n_points: int = 37
 
 

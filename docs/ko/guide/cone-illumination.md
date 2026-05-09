@@ -29,7 +29,7 @@ description: COMPASS에서 렌즈 사출 동공으로부터의 원뿔 조명 설
 
 - **풋프린트 직경**: 초점면에서의 원뿔 풋프린트 직경은 $d = 2 h \tan(\theta_{\text{half}})$이며, 여기서 $h$는 원뿔 확산에 사용하는 유효 전파 높이입니다. F 넘버가 낮을수록 더 넓은 풋프린트가 생성됩니다.
 - **CRA 시프트**: CRA가 0이 아닌 경우 풋프린트 중심이 픽셀 중심에서 벗어납니다. 실제 BSI 스택에서는 단순한 공기 중 경로 값 $h \tan(\text{CRA})$를 그대로 쓰지 않습니다. 컬러 필터, BARL, 실리콘의 굴절 때문에 주광선이 법선 방향으로 꺾이므로 유효 시프트는 더 작습니다.
-- **샘플링 커버리지**: 위의 인터랙티브 뷰어에서 피보나치와 격자 샘플링 포인트가 풋프린트에 어떻게 분포하는지 확인할 수 있습니다. 피보나치 샘플링이 더 균일한 각도 커버리지를 제공합니다.
+- **샘플링 커버리지**: 위의 인터랙티브 뷰어에서 피보나치, 동일 면적 ring, Halton low-discrepancy, Gauss-Legendre, legacy polar grid 샘플링을 비교할 수 있습니다. `grid`는 기준 비교에는 유용하지만, 보통 production 선택지로는 적합하지 않습니다.
 - **렌즈 면적**: 풋프린트 면적 $A = \pi r^2$ (여기서 $r = h \tan(\theta_{\text{half}})$)는 인접 픽셀이 원뿔로부터 얼마나 많은 빛을 받는지를 결정하며, 이는 크로스토크에 직접적으로 영향을 미칩니다.
 
 ## ConeIllumination 인스턴스 생성
@@ -41,7 +41,7 @@ cone = ConeIllumination(
     cra_deg=15.0,          # Chief Ray Angle in degrees
     f_number=2.0,          # F-number of the lens
     n_points=37,           # Number of angular sample points
-    sampling="fibonacci",  # "fibonacci" or "grid"
+    sampling="fibonacci",  # "fibonacci", "rings", "halton", "gauss", or "grid"
     weighting="cosine",    # "uniform", "cosine", "cos4", or "gaussian"
 )
 
@@ -69,7 +69,42 @@ for i, (theta, phi, w) in enumerate(points[:5]):
 
 피보나치 샘플링은 대부분의 경우에 권장됩니다. 빠른 추정에는 19-37점, 프로덕션 결과에는 61-91점을 사용하십시오.
 
-### 격자 샘플링(Grid Sampling)
+### 동일 면적 ring 샘플링(Equal-area rings)
+
+동심 ring 샘플링은 cone cap을 동일 면적 radial band로 나누고, 바깥 ring처럼 둘레가 긴 영역에 더 많은 방위각 샘플을 배치합니다. 결정론적이고 눈으로 검토하기 쉬워, regular polar grid가 너무 구조적으로 보일 때 좋은 대안입니다.
+
+```python
+cone = ConeIllumination(
+    cra_deg=10.0, f_number=2.8, n_points=37, sampling="rings"
+)
+
+points = cone.get_sampling_points()
+print(f"Ring sampling: {len(points)} points")
+```
+
+### Halton 샘플링
+
+Halton 샘플링은 cone cap 위의 low-discrepancy sequence를 사용합니다. 눈에 띄는 ring 또는 spoke 대칭을 피하므로, deterministic quasi-random 패턴으로 수렴성을 확인할 때 유용합니다.
+
+```python
+cone = ConeIllumination(
+    cra_deg=10.0, f_number=2.8, n_points=37, sampling="halton"
+)
+```
+
+### Gauss-Legendre 샘플링
+
+Gauss-Legendre 샘플링은 radial angle 방향으로 quadrature node를 사용하고, 방위각은 균일하게 나눕니다. 정확히 `n_points`개를 맞추는 것보다 각도 적분 정확도가 더 중요할 때 가장 적합합니다.
+
+```python
+cone = ConeIllumination(
+    cra_deg=10.0, f_number=2.8, n_points=36, sampling="gauss"
+)
+```
+
+YAML 호환성을 위해 `sampling="gaussian_quadrature"`도 alias로 허용됩니다.
+
+### Legacy 격자 샘플링(Grid Sampling)
 
 격자 샘플링은 균일한 $(\theta, \phi)$ 격자를 사용합니다. 간단하지만 동일한 점 수에서 피보나치보다 효율이 떨어집니다.
 
@@ -83,6 +118,8 @@ print(f"Grid sampling: {len(points)} points")
 ```
 
 격자 샘플링은 `n_theta x n_phi`개의 점을 생성하며, `n_theta = sqrt(n_points)`, `n_phi = n_points / n_theta`입니다.
+
+`grid`는 주로 진단용 기준선으로 쓰는 것이 좋습니다. cone 중심을 과샘플링하고 강한 radial/azimuthal 구조를 만들기 때문에, 실제 수렴성이 좋거나 나쁜 것처럼 보이게 만들 수 있습니다.
 
 ## 가중 함수
 

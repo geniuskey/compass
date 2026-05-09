@@ -30,23 +30,21 @@
       <div class="toggle-group">
         <label class="toggle-label">{{ t('Sampling method', '샘플링 방식') }}:</label>
         <div class="toggle-buttons">
-          <button type="button"
-            :class="['toggle-btn', { active: samplingMethod === 'fibonacci' }]"
-            :aria-pressed="samplingMethod === 'fibonacci'"
-            @click="samplingMethod = 'fibonacci'"
+          <button
+            v-for="method in samplingMethods"
+            :key="method.id"
+            type="button"
+            :class="['toggle-btn', { active: samplingMethod === method.id }]"
+            :aria-pressed="samplingMethod === method.id"
+            @click="samplingMethod = method.id"
           >
-            {{ t('Fibonacci', '피보나치') }}
-          </button>
-          <button type="button"
-            :class="['toggle-btn', { active: samplingMethod === 'grid' }]"
-            :aria-pressed="samplingMethod === 'grid'"
-            @click="samplingMethod = 'grid'"
-          >
-            {{ t('Grid', '격자') }}
+            {{ t(method.labelEn, method.labelKo) }}
           </button>
         </div>
       </div>
     </div>
+
+    <p class="method-hint">{{ methodHint }}</p>
 
     <div class="info-row">
       <div class="info-card">
@@ -64,6 +62,10 @@
       <div class="info-card">
         <span class="info-label">{{ t('Coverage ratio', '커버리지 비율') }}:</span>
         <span class="info-value">{{ (coverageRatio * 100).toFixed(1) }}%</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">{{ t('Rendered samples', '표시 샘플') }}:</span>
+        <span class="info-value">{{ samplingPoints.length }}</span>
       </div>
     </div>
 
@@ -282,6 +284,40 @@ const fNumber = ref(2.8)
 const nPoints = ref(37)
 const samplingMethod = ref('fibonacci')
 
+const samplingMethods = [
+  { id: 'fibonacci', labelEn: 'Fibonacci', labelKo: '피보나치' },
+  { id: 'rings', labelEn: 'Rings', labelKo: '링' },
+  { id: 'halton', labelEn: 'Halton', labelKo: '할튼' },
+  { id: 'gauss', labelEn: 'Gauss', labelKo: '가우스' },
+  { id: 'grid', labelEn: 'Grid legacy', labelKo: '격자 legacy' },
+]
+
+const methodHint = computed(() => {
+  const hints = {
+    fibonacci: t(
+      'Recommended default: golden-angle, near-uniform coverage without ring artifacts.',
+      '권장 기본값: 황금각 기반으로 ring artifact 없이 준균일하게 덮습니다.'
+    ),
+    rings: t(
+      'Equal-area concentric rings: easy to inspect and more balanced than a polar grid.',
+      '동일 면적 동심 ring: 눈으로 검토하기 쉽고 polar grid보다 균형이 좋습니다.'
+    ),
+    halton: t(
+      'Low-discrepancy sequence: good for convergence checks without regular angular symmetry.',
+      'Low-discrepancy sequence: 규칙적인 각도 대칭 없이 수렴 확인에 유리합니다.'
+    ),
+    gauss: t(
+      'Gauss-Legendre radial quadrature: best when the goal is angular integration accuracy.',
+      'Gauss-Legendre radial quadrature: 각도 적분 정확도가 목표일 때 유리합니다.'
+    ),
+    grid: t(
+      'Legacy polar grid: useful as a baseline, but it clusters poorly for the same sample budget.',
+      'Legacy polar grid: 기준 비교용으로만 유용하며 같은 sample budget에서 분포가 좋지 않습니다.'
+    ),
+  }
+  return hints[samplingMethod.value]
+})
+
 // --- Constants ---
 const svgSize = 400
 const pixelPitch = 1.0   // um
@@ -350,58 +386,178 @@ const GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2
 const samplingPoints = computed(() => {
   const ha = halfAngle.value
   const n = nPoints.value
-  const points = []
+  let samples = []
 
-  if (samplingMethod.value === 'fibonacci') {
-    for (let i = 0; i < n; i++) {
-      const thetaFrac = n > 1 ? i / (n - 1) : 0
-      const theta = ha * Math.sqrt(thetaFrac)
-      const phi = 2 * Math.PI * i / GOLDEN_RATIO
-
-      // Project onto pixel plane
-      const rProj = stackHeight * Math.tan(theta)
-      const xUm = rProj * Math.cos(phi)
-      const yUm = rProj * Math.sin(phi)
-
-      // Weight: points near center have higher weight (uniform area weighting)
-      const weight = n > 1 ? 1 - 0.5 * thetaFrac : 1
-
-      points.push({
-        svgX: coneCenterSvgX.value + xUm * scale,
-        svgY: coneCenterSvgY.value + yUm * scale,
-        color: interpolateColor(weight),
-        opacity: 0.4 + 0.5 * weight
-      })
-    }
+  if (samplingMethod.value === 'rings') {
+    samples = ringSamples(n, ha)
+  } else if (samplingMethod.value === 'halton') {
+    samples = haltonSamples(n, ha)
+  } else if (samplingMethod.value === 'gauss') {
+    samples = gaussSamples(n, ha)
+  } else if (samplingMethod.value === 'grid') {
+    samples = gridSamples(n, ha)
   } else {
-    // Grid sampling
-    const nTheta = Math.max(1, Math.floor(Math.sqrt(n)))
-    const nPhi = Math.max(1, Math.floor(n / nTheta))
+    samples = fibonacciSamples(n, ha)
+  }
 
-    for (let it = 0; it < nTheta; it++) {
-      const theta = nTheta > 1 ? ha * (it / (nTheta - 1)) : 0
-      for (let ip = 0; ip < nPhi; ip++) {
-        const phi = nPhi > 1 ? 2 * Math.PI * (ip / nPhi) : 0
+  return finalizeSamples(samples)
+})
 
-        const rProj = stackHeight * Math.tan(theta)
-        const xUm = rProj * Math.cos(phi)
-        const yUm = rProj * Math.sin(phi)
+function thetaFromCapFraction(u, ha) {
+  return Math.acos(1 - u * (1 - Math.cos(ha)))
+}
 
-        const thetaFrac = nTheta > 1 ? it / (nTheta - 1) : 0
-        const weight = 1 - 0.5 * thetaFrac
+function projectedSample(theta, phi, weight) {
+  const rProj = stackHeight * Math.tan(theta)
+  const xUm = rProj * Math.cos(phi)
+  const yUm = rProj * Math.sin(phi)
+  return {
+    svgX: coneCenterSvgX.value + xUm * scale,
+    svgY: coneCenterSvgY.value + yUm * scale,
+    weight,
+  }
+}
 
-        points.push({
-          svgX: coneCenterSvgX.value + xUm * scale,
-          svgY: coneCenterSvgY.value + yUm * scale,
-          color: interpolateColor(weight),
-          opacity: 0.4 + 0.5 * weight
-        })
+function angularWeight(theta) {
+  return Math.max(0.05, Math.cos(theta))
+}
+
+function finalizeSamples(samples) {
+  const maxWeight = Math.max(...samples.map((sample) => sample.weight), 1e-9)
+  return samples.map((sample) => {
+    const relativeWeight = sample.weight / maxWeight
+    return {
+      svgX: sample.svgX,
+      svgY: sample.svgY,
+      color: interpolateColor(relativeWeight),
+      opacity: 0.35 + 0.55 * relativeWeight,
+    }
+  })
+}
+
+function fibonacciSamples(n, ha) {
+  const count = Math.max(1, n)
+  return Array.from({ length: count }, (_, i) => {
+    const theta = thetaFromCapFraction((i + 0.5) / count, ha)
+    const phi = 2 * Math.PI * i / GOLDEN_RATIO
+    return projectedSample(theta, phi, angularWeight(theta))
+  })
+}
+
+function ringSamples(n, ha) {
+  const count = Math.max(1, n)
+  const nRings = Math.max(1, Math.round(Math.sqrt(count)))
+  const counts = ringCounts(count, nRings)
+  const samples = []
+  for (let ring = 0; ring < nRings; ring++) {
+    const uInner = ring / nRings
+    const uOuter = (ring + 1) / nRings
+    const theta = thetaFromCapFraction((uInner + uOuter) / 2, ha)
+    const ringWeight = (uOuter - uInner) * angularWeight(theta) / counts[ring]
+    const offset = ring % 2 === 0 ? 0 : 0.5
+    for (let i = 0; i < counts[ring]; i++) {
+      samples.push(projectedSample(theta, 2 * Math.PI * ((i + offset) / counts[ring]), ringWeight))
+    }
+  }
+  return samples
+}
+
+function haltonSamples(n, ha) {
+  const count = Math.max(1, n)
+  return Array.from({ length: count }, (_, i) => {
+    const theta = thetaFromCapFraction(radicalInverse(i + 1, 2), ha)
+    const phi = 2 * Math.PI * radicalInverse(i + 1, 3)
+    return projectedSample(theta, phi, angularWeight(theta))
+  })
+}
+
+function gaussSamples(n, ha) {
+  const nTheta = Math.max(2, Math.round(Math.sqrt(n)))
+  const nPhi = Math.max(4, Math.floor(n / nTheta))
+  const { nodes, weights } = gaussLegendre(nTheta)
+  const samples = []
+  for (let it = 0; it < nTheta; it++) {
+    const theta = 0.5 * ha * (nodes[it] + 1)
+    const radialWeight = 0.5 * ha * weights[it] * Math.sin(theta) * angularWeight(theta)
+    for (let ip = 0; ip < nPhi; ip++) {
+      samples.push(projectedSample(theta, 2 * Math.PI * (ip / nPhi), radialWeight / nPhi))
+    }
+  }
+  return samples
+}
+
+function gridSamples(n, ha) {
+  const nTheta = Math.max(2, Math.floor(Math.sqrt(n)))
+  const nPhi = Math.max(4, Math.floor(n / nTheta))
+  const samples = []
+  for (let it = 0; it < nTheta; it++) {
+    const theta = nTheta > 1 ? ha * (it / (nTheta - 1)) : 0
+    for (let ip = 0; ip < nPhi; ip++) {
+      samples.push(projectedSample(theta, 2 * Math.PI * (ip / nPhi), angularWeight(theta) * Math.sin(theta + 1e-6)))
+    }
+  }
+  return samples
+}
+
+function ringCounts(n, nRings) {
+  const weights = Array.from({ length: nRings }, (_, i) => i + 1)
+  const total = weights.reduce((sum, weight) => sum + weight, 0)
+  const counts = weights.map((weight) => Math.max(1, Math.round(n * weight / total)))
+  while (counts.reduce((sum, value) => sum + value, 0) < n) counts[counts.length - 1] += 1
+  while (counts.reduce((sum, value) => sum + value, 0) > n) {
+    for (let i = counts.length - 1; i >= 0; i--) {
+      if (counts[i] > 1) {
+        counts[i] -= 1
+        break
       }
     }
   }
+  return counts
+}
 
-  return points
-})
+function radicalInverse(index, base) {
+  let result = 0
+  let fraction = 1 / base
+  while (index > 0) {
+    result += fraction * (index % base)
+    index = Math.floor(index / base)
+    fraction /= base
+  }
+  return result
+}
+
+function gaussLegendre(n) {
+  const nodes = new Array(n)
+  const weights = new Array(n)
+  const m = Math.floor((n + 1) / 2)
+  const eps = 1e-12
+  for (let i = 0; i < m; i++) {
+    let z = Math.cos(Math.PI * (i + 0.75) / (n + 0.5))
+    let zPrev
+    let p1 = 1
+    let p2 = 0
+    let pp = 0
+    do {
+      p1 = 1
+      p2 = 0
+      for (let j = 1; j <= n; j++) {
+        const p3 = p2
+        p2 = p1
+        p1 = ((2 * j - 1) * z * p2 - (j - 1) * p3) / j
+      }
+      pp = n * (z * p1 - p2) / (z * z - 1)
+      zPrev = z
+      z = zPrev - p1 / pp
+    } while (Math.abs(z - zPrev) > eps)
+
+    nodes[i] = -z
+    nodes[n - 1 - i] = z
+    const weight = 2 / ((1 - z * z) * pp * pp)
+    weights[i] = weight
+    weights[n - 1 - i] = weight
+  }
+  return { nodes, weights }
+}
 
 // Color interpolation: high weight = deep blue, low weight = light blue
 function interpolateColor(weight) {
@@ -474,7 +630,8 @@ function interpolateColor(weight) {
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 .toggle-group {
-  min-width: 160px;
+  min-width: 280px;
+  flex: 1.2;
 }
 .toggle-label {
   display: block;
@@ -483,16 +640,15 @@ function interpolateColor(weight) {
 }
 .toggle-buttons {
   display: flex;
-  gap: 0;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 6px;
-  overflow: hidden;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 .toggle-btn {
-  flex: 1;
+  flex: 0 0 auto;
   padding: 4px 12px;
   font-size: 0.82em;
-  border: none;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
   background: var(--vp-c-bg);
   color: var(--vp-c-text-2);
   cursor: pointer;
@@ -507,6 +663,11 @@ function interpolateColor(weight) {
 }
 .toggle-btn:hover:not(.active) {
   background: var(--vp-c-bg-soft);
+}
+.method-hint {
+  margin: -4px 0 14px 0;
+  color: var(--vp-c-text-2);
+  font-size: 0.86em;
 }
 .info-row {
   display: flex;
