@@ -159,6 +159,55 @@ for wf in ["uniform", "cosine", "cos4", "gaussian"]:
     print(f"{wf:10s}: max_w={max(weights):.4f}, min_w={min(weights):.4f}")
 ```
 
+## Ray file 기반 cone averaging
+
+`ConeIllumination`은 cone을 CRA, F-number, analytic pupil weighting으로 표현할 수 있을 때 간결한 모델입니다. Lens-design workflow에서는 더 명시적인 입력이 나오는 경우가 많습니다. 여러 sensor position에 대해 ray file을 만들고, 각 ray가 보통 다음 정보를 가집니다:
+
+| Field | 의미 |
+|---|---|
+| `image_x`, `image_y` | ray bundle이 도달하는 sensor position |
+| `pupil_x`, `pupil_y` | pupil coordinate. chief ray는 pupil center |
+| `theta_deg`, `phi_deg` | sensor에서의 입사각 |
+| `intensity` | lens transmission / Fresnel / vignetting factor |
+| `weight` | pupil area 또는 quadrature weight |
+
+한 sensor position의 ray bundle에 대한 cone-averaged QE는 다음과 같습니다:
+
+$$\text{QE}_\text{cone}(\lambda) =
+\frac{\sum_r \text{QE}(\lambda,\theta_r,\phi_r)\,I_r\,w_r}
+{\sum_r I_r w_r}$$
+
+여기서 $I_r$은 ray intensity, $w_r$은 pupil weight입니다. 전기적 collection을 포함한다면 $\text{QE}$ 대신 optical generation map과 collection weighting function으로 계산한 pixel EQE를 넣습니다.
+
+각도 응답 값을 얻는 방법은 두 가지입니다:
+
+| 전략 | 쓰는 경우 | trade-off |
+|---|---|---|
+| Direct ray simulation | sensor position 또는 ray sample이 적음 | 정확한 ray에서 계산하지만 sensor 전체로 반복하면 비쌈 |
+| Angular-grid interpolation | position과 lens ray가 많음 | 구조적인 $(\theta,\phi)$ grid를 한 번 계산하고 각 ray bundle로 보간 |
+
+Camera-level characterization에서는 angular-grid interpolation이 보통 더 확장성이 좋습니다. Angular grid는 lens의 전체 CRA/MRA 범위를 덮어야 하며, $\text{QE}(\theta,\phi)$가 빠르게 변하는 영역에서는 더 촘촘해야 합니다.
+
+```python
+def cone_average_from_ray_bundle(qe_lookup, rays, wavelength):
+    numerator = 0.0
+    denominator = 0.0
+    for ray in rays:
+        qe = qe_lookup.interpolate(
+            wavelength=wavelength,
+            theta_deg=ray["theta_deg"],
+            phi_deg=ray["phi_deg"],
+        )
+        ray_weight = ray["intensity"] * ray["weight"]
+        numerator += qe * ray_weight
+        denominator += ray_weight
+    return numerator / max(denominator, 1e-12)
+```
+
+::: info
+Ray-file workflow는 Zemax/OpticStudio, custom Python ray tracer, measured CRA/MRA map과 모두 개념적으로 호환됩니다. COMPASS는 특정 lens-design tool에 의존하기보다 ray angle과 weight를 받는 optical interface로 다루는 것이 좋습니다.
+:::
+
 ## 평면파 솔버와의 통합
 
 원뿔 조명 QE를 계산하려면, 각 샘플링된 각도에서 평면파 시뮬레이션을 실행하고 가중합을 계산합니다:

@@ -21,11 +21,43 @@ description: COMPASS의 양자 효율 공식 기준 문서로 흡수 전력 적�
 
 $$\text{QE}(\lambda) = \frac{\text{수집된 전자-정공 쌍의 수}}{\text{입사 광자의 수}}$$
 
-광학 전력으로 등가 표현하면:
+대부분의 COMPASS 예제에서 사용하는 optical-only 근사에서는 광학 전력으로 다음처럼 표현합니다:
 
 $$\text{QE}(\lambda) = \frac{P_\text{absorbed in PD}(\lambda)}{P_\text{incident}(\lambda)}$$
 
 여기서 $P_\text{absorbed in PD}$는 포토다이오드 체적 내에서 흡수된 전력이고, $P_\text{incident}$는 총 입사 전력입니다. QE는 무차원량으로, 0에서 1 사이(0% ~ 100%)의 값을 가집니다.
+
+이 근사는 optical design에는 유용하지만, 완전한 sensor characterization에서는 광학 흡수와 전기적 charge collection을 분리해서 봐야 합니다.
+
+## OE, IQE, EQE
+
+실무적인 characterization에서는 세 가지 값을 구분하는 편이 안전합니다:
+
+| 값 | 의미 | 답하는 질문 |
+|---|---|---|
+| OE | Optical efficiency: 입사 photon 중 active silicon에서 carrier를 생성한 비율 | optical stack이 빛을 유용한 silicon으로 보냈는가? |
+| IQE | Internal quantum efficiency: 생성된 carrier 중 target node에 수집된 비율 | 전기적 pixel이 charge를 제대로 수집했는가? |
+| EQE | External quantum efficiency: 입사 photon 중 최종 collected charge가 된 비율 | camera pixel이 실제로 어떤 signal을 내는가? |
+
+$G(\mathbf{r},\lambda,\theta,\phi)$를 optical solver가 계산한 silicon 내부 carrier-generation density라고 하겠습니다. 이는 incident photon flux로 정규화되어 있다고 둡니다. $W_i(\mathbf{r})$는 pixel $i$의 electrical collection weighting function, 즉 $\mathbf{r}$에서 생성된 carrier가 해당 pixel에 수집될 확률입니다. 그러면:
+
+$$\text{EQE}_i(\lambda,\theta,\phi) =
+\int_{V_\text{Si}} G(\mathbf{r},\lambda,\theta,\phi) W_i(\mathbf{r})\,dV$$
+
+이고:
+
+$$\text{OE}(\lambda,\theta,\phi) =
+\int_{V_\text{Si}} G(\mathbf{r},\lambda,\theta,\phi)\,dV$$
+
+$\text{OE} > 0$이면 internal efficiency는 다음처럼 보고할 수 있습니다:
+
+$$\text{IQE}_i = \frac{\text{EQE}_i}{\text{OE}}$$
+
+COMPASS의 일반적인 photodiode absorption model은 $W_i(\mathbf{r})$를 photodiode integration volume 안에서는 1, 밖에서는 0으로 둔 특수한 경우입니다. 이는 실용적인 optical proxy이지, electrical crosstalk가 중요한 최종 비교에서 charge-transport 해석을 대체하지는 않습니다.
+
+::: tip 실무 규칙
+Stack tuning, BARL tuning, microlens focusing, solver convergence에는 optical QE를 사용하세요. 최종 sensor performance, color crosstalk, pixel-to-pixel charge collection을 비교할 때는 electrical weighting function을 포함한 EQE가 필요합니다.
+:::
 
 ## QE에 영향을 미치는 요소
 
@@ -55,6 +87,13 @@ $$p_\text{abs}(\mathbf{r}) = \frac{1}{2} \omega \varepsilon_0 \text{Im}(\varepsi
 특정 픽셀(포토다이오드 영역 $V_\text{PD}$)에 대한 QE는:
 
 $$\text{QE} = \frac{\int_{V_\text{PD}} p_\text{abs} \, dV}{P_\text{incident}}$$
+
+전기적 collection model을 포함할 때는 hard photodiode volume 대신 weighting function을 곱합니다:
+
+$$\text{EQE}_i =
+\frac{\int_{V_\text{Si}} p_\text{abs}(\mathbf{r}) W_i(\mathbf{r})\,dV}{P_\text{incident}}$$
+
+이 weighting function은 device simulator에서 가져오거나 measured collection map에서 근사할 수 있습니다. 전기적 crosstalk를 잡으려면 target pixel뿐 아니라 충분한 neighbor pixel 영역까지 포함해야 합니다.
 
 ### 방법 2: 포인팅 플럭스 차이
 

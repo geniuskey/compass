@@ -21,11 +21,43 @@ The external quantum efficiency at wavelength $\lambda$ is:
 
 $$\text{QE}(\lambda) = \frac{\text{Number of electron-hole pairs collected}}{\text{Number of incident photons}}$$
 
-Equivalently, in terms of optical power:
+Equivalently, in the optical-only approximation used by most COMPASS examples:
 
 $$\text{QE}(\lambda) = \frac{P_\text{absorbed in PD}(\lambda)}{P_\text{incident}(\lambda)}$$
 
 where $P_\text{absorbed in PD}$ is the power absorbed within the photodiode volume and $P_\text{incident}$ is the total incident power. QE is dimensionless and ranges from 0 to 1 (0% to 100%).
+
+This approximation is useful for optical design, but a full sensor characterization separates optical absorption from electrical charge collection.
+
+## OE, IQE, and EQE
+
+For a production-style characterization, it is better to keep three quantities separate:
+
+| Quantity | Meaning | What it answers |
+|---|---|---|
+| OE | Optical efficiency: incident photons that generate carriers in the active silicon volume | Did the optical stack deliver light into useful silicon? |
+| IQE | Internal quantum efficiency: generated carriers that are collected by the target node | Did the electrical pixel collect the generated charge? |
+| EQE | External quantum efficiency: incident photons that become collected charge | What signal does the camera pixel produce? |
+
+Let $G(\mathbf{r},\lambda,\theta,\phi)$ be the carrier-generation density in silicon from the optical solver, normalized to the incident photon flux. Let $W_i(\mathbf{r})$ be the electrical collection weighting function for pixel $i$: the probability that a carrier generated at $\mathbf{r}$ is collected by that pixel. Then:
+
+$$\text{EQE}_i(\lambda,\theta,\phi) =
+\int_{V_\text{Si}} G(\mathbf{r},\lambda,\theta,\phi) W_i(\mathbf{r})\,dV$$
+
+and:
+
+$$\text{OE}(\lambda,\theta,\phi) =
+\int_{V_\text{Si}} G(\mathbf{r},\lambda,\theta,\phi)\,dV$$
+
+If $\text{OE} > 0$, a corresponding internal efficiency can be reported as:
+
+$$\text{IQE}_i = \frac{\text{EQE}_i}{\text{OE}}$$
+
+The common COMPASS photodiode-absorption model is the special case where $W_i(\mathbf{r})$ is treated as 1 inside the photodiode integration volume and 0 elsewhere. That is a practical optical proxy, not a replacement for a charge-transport solve when electrical crosstalk matters.
+
+::: tip Practical rule
+Use optical QE for stack tuning, BARL tuning, microlens focusing, and solver convergence. Use EQE with an electrical weighting function when comparing final sensor performance, color crosstalk, or pixel-to-pixel charge collection.
+:::
 
 ## Factors affecting QE
 
@@ -55,6 +87,13 @@ $$p_\text{abs}(\mathbf{r}) = \frac{1}{2} \omega \varepsilon_0 \text{Im}(\varepsi
 The QE for a specific pixel (photodiode region $V_\text{PD}$) is:
 
 $$\text{QE} = \frac{\int_{V_\text{PD}} p_\text{abs} \, dV}{P_\text{incident}}$$
+
+With an electrical collection model, replace the hard photodiode volume by a weighting function:
+
+$$\text{EQE}_i =
+\frac{\int_{V_\text{Si}} p_\text{abs}(\mathbf{r}) W_i(\mathbf{r})\,dV}{P_\text{incident}}$$
+
+The weighting function can be imported from a device simulator or approximated from measured collection maps. It should cover the target pixel and enough neighboring pixels to capture electrical crosstalk.
 
 ### Method 2: Poynting flux difference
 

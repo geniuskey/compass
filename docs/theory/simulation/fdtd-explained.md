@@ -144,6 +144,22 @@ FDTD results depend heavily on source and monitor setup.
 | Planewave/TFSF | Incident plane wave on a finite scatterer | Source box must not intersect scatterers or PML |
 | Bloch-periodic planewave | Periodic pixel array at oblique CRA | Boundary phase must match the incident wavevector |
 
+### Broadband oblique incidence
+
+Oblique broadband planewaves need extra care. With Bloch-periodic boundaries, the lateral phase is tied to the incident wavevector. If a short pulse spans many wavelengths, the same nominal source setup can represent slightly different polar angles across the spectrum unless the backend explicitly handles broadband oblique injection.
+
+There are three common strategies:
+
+| Strategy | Use when | Caveat |
+|---|---|---|
+| Single-frequency Bloch sweep | Highest accuracy per angle/wavelength | Many runs |
+| Broadband Bloch run plus interpolation | Moderate bandwidth and smooth angular response | Must interpolate angular response carefully |
+| Specialized broadband oblique source | Backend supports it directly | Backend-specific assumptions must be documented |
+
+For image-sensor angular response, a robust workflow is to solve a structured angular grid, store $\text{QE}(\lambda,\theta,\phi)$, and interpolate that data to the CRA/MRA or ray-file angles used by the camera model. This avoids pretending that a sparse, nonuniform set of lens rays is itself a good FDTD sweep grid.
+
+When reporting broadband oblique FDTD, include the angular grid, wavelength grid, source type, boundary phase convention, and interpolation method.
+
 ### Monitors
 
 Flux monitors measure the Poynting vector through a surface:

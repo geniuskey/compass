@@ -159,6 +159,55 @@ for wf in ["uniform", "cosine", "cos4", "gaussian"]:
     print(f"{wf:10s}: max_w={max(weights):.4f}, min_w={min(weights):.4f}")
 ```
 
+## Ray-file cone averaging
+
+`ConeIllumination` is a compact model when the cone can be described by CRA, F-number, and an analytic pupil weighting. A lens-design workflow often provides something more explicit: a ray file for multiple sensor positions. Each ray usually carries:
+
+| Field | Meaning |
+|---|---|
+| `image_x`, `image_y` | Sensor position where the ray bundle lands |
+| `pupil_x`, `pupil_y` | Pupil coordinate, with the chief ray at the pupil center |
+| `theta_deg`, `phi_deg` | Incident angle at the sensor |
+| `intensity` | Lens transmission / Fresnel / vignetting factor |
+| `weight` | Pupil-area or quadrature weight |
+
+For a ray bundle at one sensor position, cone-averaged QE is:
+
+$$\text{QE}_\text{cone}(\lambda) =
+\frac{\sum_r \text{QE}(\lambda,\theta_r,\phi_r)\,I_r\,w_r}
+{\sum_r I_r w_r}$$
+
+where $I_r$ is the ray intensity and $w_r$ is the pupil weight. If electrical collection is included, replace $\text{QE}$ with the pixel EQE computed from the optical generation map and collection weighting function.
+
+There are two practical ways to get the angular response values:
+
+| Strategy | Use when | Trade-off |
+|---|---|---|
+| Direct ray simulation | Few positions or few ray samples | Accurate at the exact rays, expensive when repeated across the sensor |
+| Angular-grid interpolation | Many positions, many lens rays | Run a structured $(\theta,\phi)$ grid once, then interpolate to each ray bundle |
+
+Angular-grid interpolation is usually the scalable choice for camera-level characterization. The angular grid should cover the full CRA/MRA range of the lens and should be refined wherever $\text{QE}(\theta,\phi)$ changes quickly.
+
+```python
+def cone_average_from_ray_bundle(qe_lookup, rays, wavelength):
+    numerator = 0.0
+    denominator = 0.0
+    for ray in rays:
+        qe = qe_lookup.interpolate(
+            wavelength=wavelength,
+            theta_deg=ray["theta_deg"],
+            phi_deg=ray["phi_deg"],
+        )
+        ray_weight = ray["intensity"] * ray["weight"]
+        numerator += qe * ray_weight
+        denominator += ray_weight
+    return numerator / max(denominator, 1e-12)
+```
+
+::: info
+A ray-file workflow is conceptually compatible with Zemax/OpticStudio, custom Python ray tracers, or measured CRA/MRA maps. COMPASS should treat the file as an optical interface: it needs ray angles and weights, not a dependency on any specific lens-design tool.
+:::
+
 ## Integrating with planewave solvers
 
 To compute cone-illuminated QE, run a planewave simulation at each sampled angle and compute the weighted sum:

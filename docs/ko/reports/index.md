@@ -17,10 +17,24 @@ Python benchmark 산출물과 geometry 감사 스크립트에서 생성한 publi
 | 우선순위 | 리포트 | 필요한 근거 |
 | --- | --- | --- |
 | 1 | RCWA backend parity | torcwa/grcwa/meent/fmmax QE, R/T/A, runtime table |
-| 2 | CRA cone illumination sweep | CRA/F-number/corner sampling map과 수렴 table |
+| 2 | Angular response characterization | 구조적인 $(\theta,\phi,\lambda)$ QE/EQE grid, ray-file cone averaging, CRA/F-number/corner sampling map |
 | 3 | BARL optimization benchmark | 로컬 output에서 승격한 thickness/material sweep |
 | 4 | DTI crosstalk benchmark | FDTI/BDTI width/depth/material sweep과 crosstalk matrix |
 | 5 | Performance benchmark | CPU/GPU runtime, memory, wavelength-sweep cost |
+
+## Characterization report template
+
+다음 angular-response report는 근거를 세 층으로 분리하는 것이 좋습니다:
+
+| Layer | 필요한 output | 중요한 이유 |
+| --- | --- | --- |
+| Optical angular grid | pixel별 $\text{QE}(\lambda,\theta,\phi)$ 또는 $\text{OE}(\lambda,\theta,\phi)$ | 여러 lens position에서 재사용 가능한 lookup table |
+| Cone/ray averaging | 각 ray bundle의 `intensity * weight`를 사용한 weighted average | angular response를 sensor-position response로 변환 |
+| Electrical collection, 사용 가능한 경우 | $W_i(\mathbf{r})$ map 또는 문서화된 approximation | optical absorption과 collected charge를 구분 |
+
+Angular grid와 weighting convention 없이 cone-averaged curve 하나만 공개하지 마세요. 그렇지 않으면 solver, lens file, sensor position 간 비교가 어려워집니다.
+
+외부 workflow 참고: Ansys Optics의 [CMOS Sensor Camera - Sensor Characterization](https://optics.ansys.com/hc/en-us/articles/360062131614-CMOS-Sensor-Camera-Sensor-Characterization)는 angular optical simulation, electrical weighting, ray 기반 cone averaging을 분리해서 다루는 좋은 예입니다. COMPASS는 특정 상용 tool chain에 의존하지 않고 이 workflow 개념만 재사용하는 방향이 맞습니다.
 
 ## 이 섹션에 들어갈 내용
 

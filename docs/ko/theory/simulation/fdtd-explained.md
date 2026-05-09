@@ -144,6 +144,22 @@ FDTD 결과는 source와 monitor 배치에 크게 의존합니다.
 | Planewave/TFSF | finite scatterer에 평면파 입사 | source box가 scatterer/PML과 겹치면 안 됨 |
 | Bloch-periodic planewave | CRA가 있는 periodic pixel array | boundary phase가 incident wavevector와 맞아야 함 |
 
+### Broadband oblique incidence
+
+사입사 broadband planewave는 추가 주의가 필요합니다. Bloch-periodic boundary에서는 lateral phase가 incident wavevector에 묶입니다. 짧은 pulse가 여러 wavelength를 포함하면, backend가 broadband oblique injection을 명시적으로 처리하지 않는 한 같은 nominal source setup이 spectrum 전체에서 조금씩 다른 polar angle을 나타낼 수 있습니다.
+
+일반적인 전략은 세 가지입니다:
+
+| 전략 | 쓰는 경우 | 주의점 |
+|---|---|---|
+| Single-frequency Bloch sweep | 각 angle/wavelength에서 가장 높은 정확도 필요 | run 수가 많음 |
+| Broadband Bloch run + interpolation | bandwidth가 중간이고 angular response가 smooth함 | angular response 보간을 신중히 해야 함 |
+| Specialized broadband oblique source | backend가 직접 지원함 | backend-specific assumption을 문서화해야 함 |
+
+Image-sensor angular response에서는 구조적인 angular grid를 먼저 풀고, $\text{QE}(\lambda,\theta,\phi)$를 저장한 뒤, camera model이 사용하는 CRA/MRA 또는 ray-file angle로 보간하는 workflow가 견고합니다. Sparse하고 nonuniform한 lens ray set을 그대로 FDTD sweep grid로 취급하는 것은 피하는 편이 좋습니다.
+
+Broadband oblique FDTD를 report할 때는 angular grid, wavelength grid, source type, boundary phase convention, interpolation method를 함께 적어야 합니다.
+
 ### Monitor
 
 Flux monitor는 표면을 지나는 Poynting vector를 측정합니다.
