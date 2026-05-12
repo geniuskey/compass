@@ -19,6 +19,16 @@ description: COMPASS에서 렌즈 사출 동공으로부터의 원뿔 조명 설
 
 원뿔 조명 결과는 원뿔 내 샘플링된 각도에서 여러 평면파 시뮬레이션(Simulation)을 실행한 다음 QE의 가중 평균을 계산하여 얻습니다.
 
+::: info 컬러 필터 관점에서 cone illumination이 중요한 이유
+얇은 막 컬러 필터(또는 스택 내부의 Fabry-Pérot 공진기)는 경사 입사 시 투과 피크가 더 짧은 파장 쪽으로 이동합니다 — 대략 $\lambda(\theta) \approx \lambda_0\sqrt{1 - (\sin\theta / n_\text{eff})^2}$. 따라서 CRA 한 점에서의 평면파 한 번만으로는 실제 유한 조리개 렌즈가 만드는 피크 broadening과 centroid blue-shift를 과소평가하게 됩니다. Goossens 외 (2018)는 이 효과에 대한 합성곱 모델과 중심파장 보정식을 유도했으며, 그 파라미터는 이 페이지에서 사용하는 CRA·F 넘버 그대로입니다. 즉, 본 페이지의 각도 샘플링이 그 모델과 일치하도록 만들어 주는 핵심이며, 샘플 수가 부족하면 피크 broadening이 충분히 해상되지 않습니다. 자세한 내용은 [Key Papers § 6.4](/research/key-papers#_6-4-goossens-et-al-2018-finite-aperture-correction-for-fabry-perot-filters)와 [Thin Film Optics](/theory/optics/thin-film-optics#angle-induced-peak-shift)를 참조하세요.
+:::
+
+### 인터랙티브: Fabry-Perot 원뿔 적분
+
+아래 시뮬레이터는 Goossens 외 (2018)의 핵심 결과를 페이지 안에서 직접 재현합니다. CRA와 F 넘버를 조정해 보면, 적분된 투과 곡선이 평면파 곡선에 비해 단파장 쪽으로 이동하고 동시에 broadening되는 모습을 볼 수 있습니다. 파장 윈도와 샘플 수는 코드에서 `ConeIllumination(cra_deg=..., f_number=..., n_points=...)`를 통해 그대로 제어할 수 있습니다.
+
+<FabryPerotConeSimulator />
+
 ## 상면도: 픽셀 어레이 위의 풋프린트
 
 <ConeIlluminationTopView />

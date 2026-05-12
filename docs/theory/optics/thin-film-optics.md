@@ -99,6 +99,14 @@ For a 3 um silicon layer at 600 nm, $\Delta\lambda \approx 15$ nm. This means yo
 If your QE spectrum looks jagged or shows unexpected oscillations, check that your wavelength step is fine enough to resolve thin-film fringes. A step of 10 nm or smaller is recommended.
 :::
 
+### Angle-induced peak shift
+
+For a Fabry-Perot-like resonator (such as a color filter or a thin-film bandpass filter integrated on a sensor), the transmission peak at wavelength $\lambda_0$ shifts to shorter wavelengths under oblique incidence approximately as
+
+$$\lambda(\theta) \approx \lambda_0 \sqrt{1 - \left(\frac{\sin\theta}{n_\text{eff}}\right)^2}$$
+
+where $n_\text{eff}$ is the effective index of the cavity mode. When a real lens focuses light onto the pixel, the simulation must therefore integrate over the cone of incidence angles set by the f-number and the chief-ray angle (CRA); the measured peak both broadens and blue-shifts relative to the plane-wave result. Goossens et al. (2018) derive a closed-form convolution model and a compact correction formula for this shift -- see [Key Papers § 6.4](/research/key-papers#_6-4-goossens-et-al-2018-finite-aperture-correction-for-fabry-perot-filters). In COMPASS this effect is captured by the `cone_illumination` source.
+
 ## COMPASS implementation
 
 COMPASS handles thin films differently depending on the solver:
