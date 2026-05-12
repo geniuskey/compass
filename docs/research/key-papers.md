@@ -197,6 +197,13 @@ Papers on microlenses and color filters, key elements of image sensor optical st
 - **Summary**: This paper analyzed the optical performance of integrated color pixels fabricated in a 0.18um CMOS process using FDTD. It presented electromagnetic simulation methodology for actual pixel structures including color filter arrays, microlenses, and metal interconnects. This is prior work for the full-stack pixel simulation approach in COMPASS.
 - **Tags**: [CIS] [Color Filter] [FDTD]
 
+### 6.4 Goossens et al. (2018) -- Finite Aperture Correction for Fabry-Perot Filters
+
+- **Citation**: T. Goossens, B. Geelen, J. Pichette, A. Lambrechts, and C. Van Hoof, "Finite aperture correction for spectral cameras with integrated thin-film Fabry-Perot filters," *Appl. Opt.*, vol. 57, no. 26, pp. 7539--7549, 2018. DOI: [10.1364/AO.57.007539](https://doi.org/10.1364/AO.57.007539)
+- **Summary**: This paper derives an analytical model for the spectral shift and peak broadening that occur when a thin-film Fabry-Perot filter, integrated directly on the image sensor, is illuminated by a focused cone of light rather than a single plane wave. The transmittance of an oblique-incidence Fabry-Perot filter shifts to shorter wavelengths approximately as $\lambda(\theta) \approx \lambda_0 \sqrt{1 - (\sin\theta / n_\text{eff})^2}$, so any finite-aperture (low f-number) or off-axis (large chief ray angle, CRA) illumination integrates over a distribution of incidence angles, broadening and blue-shifting the transmission peak. The authors express the measured transmittance as a convolution of the plane-wave transmittance with an angle-dependent kernel determined by the f-number and CRA, and provide a compact closed-form correction for the central wavelength of each pixel as a function of its position on the sensor. The companion paper (Goossens et al. 2019, [10.1364/AO.58.001789](https://doi.org/10.1364/AO.58.001789)) extends the model to vignetted apertures.
+- **Relevance to COMPASS**: Directly motivates the `cone_illumination` source and per-pixel CRA shift handled by `GeometryBuilder`. The same angle-induced peak shift mechanism produces the Fabry-Perot fringes discussed in [Thin Film Optics](/theory/optics/thin-film-optics) and the off-axis QE asymmetry covered by [Hwang & Kim (2023)](#_4-5-hwang-kim-2023-optical-stack-alignment-for-off-axis-pixels). When validating COMPASS against a measured spectral camera or color filter, the convolution kernel from this paper sets the angular bandwidth that must be sampled (number of plane waves in the cone) for the simulated transmittance to match the measurement.
+- **Tags**: [Fabry-Perot] [Color Filter] [Cone Illumination] [CRA] [Spectral Camera]
+
 ---
 
 ## 7. Inverse Design & Optimization
