@@ -52,6 +52,23 @@
         </label>
         <input type="range" min="7" max="201" step="2" v-model.number="nSamples" class="ctrl-range" />
       </div>
+      <div class="slider-group">
+        <label>{{ t('Sampling pattern', '샘플링 패턴') }}</label>
+        <select v-model="samplingMode" class="ctrl-select">
+          <option value="rings">{{ t('Concentric rings', '동심 ring') }}</option>
+          <option value="fibonacci">{{ t('Fibonacci spiral', '피보나치 나선') }}</option>
+          <option value="grid">{{ t('Polar grid', '극좌표 격자') }}</option>
+        </select>
+      </div>
+      <div class="slider-group">
+        <label>{{ t('Pupil weighting', '동공 가중치') }}</label>
+        <select v-model="weightingMode" class="ctrl-select">
+          <option value="uniform">{{ t('Uniform', '균일') }}</option>
+          <option value="cosine">cos &theta;<sub>local</sub></option>
+          <option value="cos4">cos&#8308; &theta;<sub>local</sub></option>
+          <option value="gaussian">{{ t('Gaussian', '가우시안') }}</option>
+        </select>
+      </div>
     </div>
 
     <!-- Top view of cone samples -->
@@ -80,6 +97,10 @@
         <!-- Cone outline (projected ellipse) -->
         <path :d="coneOutlinePath" fill="none" stroke="var(--vp-c-brand-1)" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7" />
 
+        <!-- Ring arcs (only for ring sampling: connect points on the same pupil ring) -->
+        <path v-for="(arc, i) in ringArcPaths" :key="'arc' + i"
+              :d="arc" fill="none" stroke="var(--vp-c-brand-1)" stroke-width="0.8" opacity="0.28" />
+
         <!-- Chief ray marker -->
         <circle :cx="chiefScreen.x" :cy="chiefScreen.y" r="4"
                 fill="none" stroke="var(--vp-c-brand-1)" stroke-width="1.5" />
@@ -93,22 +114,39 @@
                 :cx="p.x" :cy="p.y" :r="p.r"
                 :fill="p.color" :opacity="p.opacity" stroke="var(--vp-c-bg)" stroke-width="0.5" />
 
+        <!-- Weight colorbar -->
+        <g :transform="`translate(${tvW - 36}, ${tvH - 158})`">
+          <defs>
+            <linearGradient :id="colorbarGradientId" x1="0" y1="1" x2="0" y2="0">
+              <stop v-for="(s, i) in colorbarStops" :key="'stop' + i"
+                    :offset="(i / (colorbarStops.length - 1) * 100).toFixed(1) + '%'"
+                    :stop-color="s" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="10" height="120" :fill="`url(#${colorbarGradientId})`"
+                stroke="var(--vp-c-divider)" stroke-width="0.5" />
+          <text x="14" y="6" class="tick-label">w<sub>max</sub></text>
+          <text x="14" y="64" class="tick-label">w</text>
+          <text x="14" y="122" class="tick-label">0</text>
+          <text x="-2" y="-6" class="legend-label">{{ t('weight', '가중치') }}</text>
+        </g>
+
         <!-- Legend -->
-        <g :transform="`translate(${tvW - 132}, 10)`">
-          <rect x="-6" y="-6" width="132" height="56" rx="4"
+        <g :transform="`translate(10, ${tvH - 56})`">
+          <rect x="-6" y="-6" width="148" height="56" rx="4"
                 fill="var(--vp-c-bg)" opacity="0.85" stroke="var(--vp-c-divider)" />
-          <circle cx="8" cy="6" r="3" fill="#e74c3c" />
-          <text x="18" y="9" class="legend-label">{{ t('sample point', '샘플 점') }}</text>
-          <line x1="2" y1="22" x2="14" y2="22" stroke="var(--vp-c-brand-1)" stroke-width="1.5" stroke-dasharray="5,3" />
-          <text x="18" y="25" class="legend-label">{{ t('cone outline', '원뿔 외곽') }}</text>
+          <line x1="2" y1="6" x2="14" y2="6" stroke="var(--vp-c-brand-1)" stroke-width="1.5" stroke-dasharray="5,3" />
+          <text x="18" y="9" class="legend-label">{{ t('cone outline', '원뿔 외곽') }}</text>
+          <line x1="2" y1="22" x2="14" y2="22" stroke="var(--vp-c-brand-1)" stroke-width="0.8" opacity="0.6" />
+          <text x="18" y="25" class="legend-label">{{ t('pupil ring (constant r)', '동공 ring (등반경)') }}</text>
           <circle cx="8" cy="38" r="3" fill="none" stroke="var(--vp-c-brand-1)" stroke-width="1.5" />
           <text x="18" y="41" class="legend-label">{{ t('chief ray', '주광선') }}</text>
         </g>
       </svg>
       <div class="topview-caption">
         {{ t(
-          'Each dot is one plane-wave sample fed into the cone integration. Axes are direction cosines (sin&theta; cos&phi;, sin&theta; sin&phi;) in the sensor frame; point size and color reflect the aplanatic cos&theta;_local weight. Sweep "Cone samples" to see the Fibonacci spiral fill in, and CRA to watch the disk slide off-axis.',
-          '각 점은 원뿔 적분에 들어가는 평면파 샘플입니다. 축은 센서 좌표계의 방향코사인 (sin&theta; cos&phi;, sin&theta; sin&phi;)이며, 점의 크기와 색은 aplanatic cos&theta;_local 가중치를 반영합니다. "원뿔 샘플 수"를 조정하면 피보나치 나선이 채워지는 모습을, CRA를 조정하면 원반이 광축에서 벗어나는 모습을 볼 수 있습니다.'
+          'Each dot is one plane-wave sample fed into the cone integration. Axes are direction cosines (sin&theta; cos&phi;, sin&theta; sin&phi;) in the sensor frame; thin arcs connect samples on the same pupil-ring (equal r_pupil) and show how concentric pupil rings tilt into small circles on the sphere when CRA is nonzero. The colorbar maps the pupil weighting w(&theta;_local); switch the weighting selector to see how uniform vs cos&theta; vs cos&#8308;&theta; vs Gaussian weighting redistributes the integrand.',
+          '각 점은 원뿔 적분에 들어가는 평면파 샘플입니다. 축은 센서 좌표계의 방향코사인 (sin&theta; cos&phi;, sin&theta; sin&phi;)이며, 가는 호는 동일 동공 반경(equal r_pupil)을 가지는 샘플들을 잇습니다 — CRA가 0이 아니면 동심 동공 ring이 구면 위에서 기울어진 소원(small circle)이 되어 호처럼 보입니다. 컬러바는 동공 가중치 w(&theta;_local)을 표현하며, 가중치 셀렉터를 바꾸면 uniform / cos&theta; / cos&#8308;&theta; / Gaussian이 적분에 어떻게 다르게 기여하는지 비교할 수 있습니다.'
         ) }}
       </div>
     </div>
@@ -272,6 +310,41 @@ const mirrorR = ref(0.90)
 const craDeg = ref(15.0)
 const fNumber = ref(2.0)
 const nSamples = ref(61)
+const samplingMode = ref<'rings' | 'fibonacci' | 'grid'>('rings')
+const weightingMode = ref<'uniform' | 'cosine' | 'cos4' | 'gaussian'>('cos4')
+
+const colorbarGradientId = 'fpcs-cb-' + Math.random().toString(36).slice(2, 9)
+
+// Viridis-like colormap (sampled 7 stops, dark purple -> teal -> yellow)
+const colormap = [
+  '#440154', '#46337e', '#365c8d', '#277f8e', '#1fa187', '#4ac16d', '#a0da39', '#fde725',
+]
+function colorAt(t: number): string {
+  // t in [0, 1]
+  const c = Math.max(0, Math.min(1, t))
+  const idx = c * (colormap.length - 1)
+  const lo = Math.floor(idx)
+  const hi = Math.min(colormap.length - 1, lo + 1)
+  const f = idx - lo
+  // Interpolate hex colors
+  const a = colormap[lo]
+  const b = colormap[hi]
+  const ar = parseInt(a.slice(1, 3), 16)
+  const ag = parseInt(a.slice(3, 5), 16)
+  const ab = parseInt(a.slice(5, 7), 16)
+  const br = parseInt(b.slice(1, 3), 16)
+  const bg = parseInt(b.slice(3, 5), 16)
+  const bb = parseInt(b.slice(5, 7), 16)
+  const r = Math.round(ar + (br - ar) * f)
+  const g = Math.round(ag + (bg - ag) * f)
+  const bl = Math.round(ab + (bb - ab) * f)
+  return `rgb(${r},${g},${bl})`
+}
+const colorbarStops = computed(() => {
+  const stops: string[] = []
+  for (let i = 0; i <= 12; i++) stops.push(colorAt(i / 12))
+  return stops
+})
 
 // Chart geometry
 const chartW = 720
@@ -302,45 +375,157 @@ const wlMax = computed(() => lambda0.value + 0.35 * windowHalfWidth.value)
 
 const halfConeDeg = computed(() => (Math.asin(1 / (2 * fNumber.value)) * 180) / Math.PI)
 
-// Fibonacci-spiral cone samples over the disk r in [0, 1] mapped to theta_local in [0, theta_h]
-type Sample = { theta: number; weight: number; dx: number; dy: number; thetaLocal: number }
+// Cone samples in pupil coordinates -> sensor-frame direction (dx, dy)
+// Each sample also carries its theta_local (radial pupil coordinate) and a ring index
+// (for ring-pattern sampling; -1 otherwise) so we can draw arcs connecting same-ring samples.
+type Sample = {
+  theta: number
+  weight: number
+  dx: number
+  dy: number
+  thetaLocal: number
+  ring: number
+  ringSize: number
+}
+
+function pupilWeight(thetaLocal: number, thetaH: number): number {
+  switch (weightingMode.value) {
+    case 'uniform':
+      return 1
+    case 'cosine':
+      return Math.cos(thetaLocal)
+    case 'cos4': {
+      const c = Math.cos(thetaLocal)
+      return c * c * c * c
+    }
+    case 'gaussian': {
+      const sigma = thetaH / 1.5
+      return Math.exp(-(thetaLocal * thetaLocal) / (2 * sigma * sigma))
+    }
+  }
+}
+
 const coneSamples = computed<Sample[]>(() => {
   const samples: Sample[] = []
   const N = nSamples.value
   const thetaH = (halfConeDeg.value * Math.PI) / 180
   const craRad = (craDeg.value * Math.PI) / 180
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5))
-
-  // Pre-compute chief-ray rotation around y-axis (rotate vector around y by CRA)
   const cosA = Math.cos(craRad)
   const sinA = Math.sin(craRad)
 
-  for (let i = 0; i < N; i++) {
-    // Equal-area radial mapping
-    const r = N === 1 ? 0 : Math.sqrt((i + 0.5) / N)
-    const phi = i * goldenAngle
-    // Local ray direction (filter-aligned, before CRA tilt)
-    const thetaLocal = r * thetaH
+  const pushSample = (thetaLocal: number, phi: number, ring: number, ringSize: number) => {
     const sinL = Math.sin(thetaLocal)
     const cosL = Math.cos(thetaLocal)
     const dx = sinL * Math.cos(phi)
     const dy = sinL * Math.sin(phi)
     const dz = cosL
-    // Rotate around y by CRA -> direction in sensor frame
     const dxs = cosA * dx + sinA * dz
     const dys = dy
     const dzs = -sinA * dx + cosA * dz
-    // Polar angle on sensor (filter normal = +z)
     const cosTheta = Math.max(-1, Math.min(1, dzs))
     const theta = Math.acos(cosTheta)
-    // Aplanatic (cosine) pupil weighting on local angle
-    const w = Math.cos(thetaLocal)
-    samples.push({ theta, weight: Math.max(0, w), dx: dxs, dy: dys, thetaLocal })
+    const w = Math.max(0, pupilWeight(thetaLocal, thetaH))
+    samples.push({ theta, weight: w, dx: dxs, dy: dys, thetaLocal, ring, ringSize })
   }
+
+  if (samplingMode.value === 'fibonacci') {
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5))
+    for (let i = 0; i < N; i++) {
+      const r = N === 1 ? 0 : Math.sqrt((i + 0.5) / N)
+      const phi = i * goldenAngle
+      pushSample(r * thetaH, phi, -1, 0)
+    }
+  } else if (samplingMode.value === 'rings') {
+    // Equal-area concentric-ring sampling. Choose ring count so the *average*
+    // ring has ~uniform angular spacing comparable to the radial step.
+    const nRings = Math.max(1, Math.round(Math.sqrt(N / Math.PI) + 0.5))
+    // Number of azimuth points per ring proportional to ring area annulus (~ 2k+1)
+    const ringPoints: number[] = []
+    let total = 0
+    for (let k = 0; k < nRings; k++) {
+      const annulusWeight = 2 * k + 1
+      ringPoints.push(annulusWeight)
+      total += annulusWeight
+    }
+    // Scale so sum ~ N
+    const scale = N / total
+    let actualTotal = 0
+    for (let k = 0; k < nRings; k++) {
+      ringPoints[k] = Math.max(1, Math.round(ringPoints[k] * scale))
+      actualTotal += ringPoints[k]
+    }
+    // Add center point as ring 0 if not present
+    if (ringPoints[0] !== 1) {
+      ringPoints[0] = 1
+    }
+    for (let k = 0; k < nRings; k++) {
+      // Equal-area radial: r_norm = sqrt((k + 0.5) / nRings)
+      const rNorm = Math.sqrt((k + 0.5) / nRings)
+      const thetaLocal = rNorm * thetaH
+      const m = ringPoints[k]
+      // Stagger azimuth between rings to avoid spoke artifacts
+      const phi0 = (k * Math.PI) / Math.max(1, nRings)
+      for (let j = 0; j < m; j++) {
+        const phi = phi0 + (2 * Math.PI * j) / m
+        pushSample(thetaLocal, phi, k, m)
+      }
+    }
+    void actualTotal
+  } else {
+    // Polar grid: structured (n_theta x n_phi)
+    const nTheta = Math.max(1, Math.round(Math.sqrt(N)))
+    const nPhi = Math.max(1, Math.round(N / nTheta))
+    for (let i = 0; i < nTheta; i++) {
+      const rNorm = (i + 0.5) / nTheta
+      const thetaLocal = rNorm * thetaH
+      for (let j = 0; j < nPhi; j++) {
+        const phi = (2 * Math.PI * j) / nPhi
+        pushSample(thetaLocal, phi, i, nPhi)
+      }
+    }
+  }
+
   // Normalize weights
   const wSum = samples.reduce((s, x) => s + x.weight, 0) || 1
   for (const s of samples) s.weight /= wSum
   return samples
+})
+
+// Build smooth arcs connecting samples on the same ring (for visualization)
+const ringArcPaths = computed<string[]>(() => {
+  if (samplingMode.value !== 'rings') return []
+  const samples = coneSamples.value
+  const thetaH = (halfConeDeg.value * Math.PI) / 180
+  const craRad = (craDeg.value * Math.PI) / 180
+  const cosA = Math.cos(craRad)
+  const sinA = Math.sin(craRad)
+  // Collect unique ring indices and their theta_local
+  const ringMap = new Map<number, number>()
+  for (const s of samples) {
+    if (s.ring >= 0 && !ringMap.has(s.ring)) ringMap.set(s.ring, s.thetaLocal)
+  }
+  const paths: string[] = []
+  for (const [, thetaLocal] of ringMap) {
+    if (thetaLocal <= 1e-4) continue
+    // Trace full ring (phi 0..2pi) at fixed thetaLocal, transformed to screen
+    let d = ''
+    const Nphi = 96
+    const sinL = Math.sin(thetaLocal)
+    const cosL = Math.cos(thetaLocal)
+    for (let i = 0; i <= Nphi; i++) {
+      const phi = (2 * Math.PI * i) / Nphi
+      const dx = sinL * Math.cos(phi)
+      const dy = sinL * Math.sin(phi)
+      const dz = cosL
+      const dxs = cosA * dx + sinA * dz
+      const dys = dy
+      const x = tvCx + (dxs / tvRangeSin.value) * tvR
+      const y = tvCy - (dys / tvRangeSin.value) * tvR
+      d += (i === 0 ? 'M ' : ' L ') + x.toFixed(2) + ' ' + y.toFixed(2)
+    }
+    paths.push(d)
+  }
+  return paths
 })
 
 // Top-view geometry (sensor-frame direction cosines)
@@ -420,14 +605,11 @@ const samplePoints = computed(() => {
     const x = tvCx + (s.dx / tvRangeSin.value) * tvR
     const y = tvCy - (s.dy / tvRangeSin.value) * tvR
     const rel = s.weight / wMax
-    // Size 1.6-4.2 px, opacity 0.45-0.95
-    const r = 1.6 + 2.6 * rel
-    const opacity = 0.45 + 0.5 * rel
-    // Color: deep red at high weight, fade toward orange at low
-    const hue = 6 + 22 * (1 - rel)
-    const sat = 70 + 15 * rel
-    const light = 38 + 18 * (1 - rel)
-    const color = `hsl(${hue.toFixed(0)}, ${sat.toFixed(0)}%, ${light.toFixed(0)}%)`
+    // Size 1.8-4.6 px to give a clearly visible weight cue
+    const r = 1.8 + 2.8 * rel
+    const opacity = 0.85
+    // Viridis colormap by relative weight
+    const color = colorAt(rel)
     return { x, y, r, opacity, color }
   })
 })
@@ -606,6 +788,15 @@ const xTicks = computed(() => {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.ctrl-select {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 0.85em;
+  border-radius: 4px;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
 }
 .topview-section {
   margin: 4px 0 16px;
