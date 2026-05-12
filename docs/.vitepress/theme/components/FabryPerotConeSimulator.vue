@@ -54,6 +54,65 @@
       </div>
     </div>
 
+    <!-- Top view of cone samples -->
+    <div class="topview-section">
+      <h5 class="panel-title">{{ t('Cone samples (top view, sensor frame)', '원뿔 샘플 (위에서 본 모습, 센서 좌표계)') }}</h5>
+      <svg :viewBox="`0 0 ${tvW} ${tvH}`" class="topview-svg">
+        <!-- Concentric reference circles at fixed polar angles -->
+        <template v-for="ang in tvRefAngles" :key="'rc' + ang">
+          <circle
+            :cx="tvCx" :cy="tvCy" :r="tvAngleToR(ang)"
+            fill="none" stroke="var(--vp-c-divider)" stroke-width="0.5" stroke-dasharray="3,3"
+          />
+          <text
+            :x="tvCx + tvAngleToR(ang) + 3" :y="tvCy + 3"
+            class="tick-label"
+          >{{ ang }}&deg;</text>
+        </template>
+        <!-- Axes -->
+        <line :x1="tvCx - tvR" :y1="tvCy" :x2="tvCx + tvR" :y2="tvCy"
+              stroke="var(--vp-c-divider)" stroke-width="0.5" />
+        <line :x1="tvCx" :y1="tvCy - tvR" :x2="tvCx" :y2="tvCy + tvR"
+              stroke="var(--vp-c-divider)" stroke-width="0.5" />
+        <text :x="tvCx + tvR + 12" :y="tvCy + 4" text-anchor="middle" class="tick-label">x</text>
+        <text :x="tvCx - 6" :y="tvCy - tvR - 4" text-anchor="middle" class="tick-label">y</text>
+
+        <!-- Cone outline (projected ellipse) -->
+        <path :d="coneOutlinePath" fill="none" stroke="var(--vp-c-brand-1)" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7" />
+
+        <!-- Chief ray marker -->
+        <circle :cx="chiefScreen.x" :cy="chiefScreen.y" r="4"
+                fill="none" stroke="var(--vp-c-brand-1)" stroke-width="1.5" />
+        <line :x1="chiefScreen.x - 5" :y1="chiefScreen.y" :x2="chiefScreen.x + 5" :y2="chiefScreen.y"
+              stroke="var(--vp-c-brand-1)" stroke-width="1" />
+        <line :x1="chiefScreen.x" :y1="chiefScreen.y - 5" :x2="chiefScreen.x" :y2="chiefScreen.y + 5"
+              stroke="var(--vp-c-brand-1)" stroke-width="1" />
+
+        <!-- Sample points -->
+        <circle v-for="(p, i) in samplePoints" :key="'p' + i"
+                :cx="p.x" :cy="p.y" :r="p.r"
+                :fill="p.color" :opacity="p.opacity" stroke="var(--vp-c-bg)" stroke-width="0.5" />
+
+        <!-- Legend -->
+        <g :transform="`translate(${tvW - 132}, 10)`">
+          <rect x="-6" y="-6" width="132" height="56" rx="4"
+                fill="var(--vp-c-bg)" opacity="0.85" stroke="var(--vp-c-divider)" />
+          <circle cx="8" cy="6" r="3" fill="#e74c3c" />
+          <text x="18" y="9" class="legend-label">{{ t('sample point', '샘플 점') }}</text>
+          <line x1="2" y1="22" x2="14" y2="22" stroke="var(--vp-c-brand-1)" stroke-width="1.5" stroke-dasharray="5,3" />
+          <text x="18" y="25" class="legend-label">{{ t('cone outline', '원뿔 외곽') }}</text>
+          <circle cx="8" cy="38" r="3" fill="none" stroke="var(--vp-c-brand-1)" stroke-width="1.5" />
+          <text x="18" y="41" class="legend-label">{{ t('chief ray', '주광선') }}</text>
+        </g>
+      </svg>
+      <div class="topview-caption">
+        {{ t(
+          'Each dot is one plane-wave sample fed into the cone integration. Axes are direction cosines (sin&theta; cos&phi;, sin&theta; sin&phi;) in the sensor frame; point size and color reflect the aplanatic cos&theta;_local weight. Sweep "Cone samples" to see the Fibonacci spiral fill in, and CRA to watch the disk slide off-axis.',
+          '각 점은 원뿔 적분에 들어가는 평면파 샘플입니다. 축은 센서 좌표계의 방향코사인 (sin&theta; cos&phi;, sin&theta; sin&phi;)이며, 점의 크기와 색은 aplanatic cos&theta;_local 가중치를 반영합니다. "원뿔 샘플 수"를 조정하면 피보나치 나선이 채워지는 모습을, CRA를 조정하면 원반이 광축에서 벗어나는 모습을 볼 수 있습니다.'
+        ) }}
+      </div>
+    </div>
+
     <!-- Spectrum chart -->
     <div class="chart-section">
       <svg :viewBox="`0 0 ${chartW} ${chartH}`" class="chart-svg">
@@ -244,7 +303,7 @@ const wlMax = computed(() => lambda0.value + 0.35 * windowHalfWidth.value)
 const halfConeDeg = computed(() => (Math.asin(1 / (2 * fNumber.value)) * 180) / Math.PI)
 
 // Fibonacci-spiral cone samples over the disk r in [0, 1] mapped to theta_local in [0, theta_h]
-type Sample = { theta: number; weight: number }
+type Sample = { theta: number; weight: number; dx: number; dy: number; thetaLocal: number }
 const coneSamples = computed<Sample[]>(() => {
   const samples: Sample[] = []
   const N = nSamples.value
@@ -276,14 +335,101 @@ const coneSamples = computed<Sample[]>(() => {
     const theta = Math.acos(cosTheta)
     // Aplanatic (cosine) pupil weighting on local angle
     const w = Math.cos(thetaLocal)
-    samples.push({ theta, weight: Math.max(0, w) })
-    // Numerical guard for dx2+dy2
-    void dxs; void dys
+    samples.push({ theta, weight: Math.max(0, w), dx: dxs, dy: dys, thetaLocal })
   }
   // Normalize weights
   const wSum = samples.reduce((s, x) => s + x.weight, 0) || 1
   for (const s of samples) s.weight /= wSum
   return samples
+})
+
+// Top-view geometry (sensor-frame direction cosines)
+const tvW = 320
+const tvH = 320
+const tvCx = tvW / 2
+const tvCy = tvH / 2
+const tvR = 138 // outer radius in px
+
+// Half-angle range that the top view should accommodate (sin theta units)
+const tvRangeSin = computed(() => {
+  const craRad = (craDeg.value * Math.PI) / 180
+  const thetaH = (halfConeDeg.value * Math.PI) / 180
+  // Outer envelope: chief ray sin + half-cone sin, with small margin
+  const v = Math.sin(craRad) + Math.sin(thetaH)
+  return Math.max(0.05, v * 1.15)
+})
+
+function tvSinToR(sinVal: number): number {
+  return (Math.abs(sinVal) / tvRangeSin.value) * tvR
+}
+
+function tvAngleToR(angDeg: number): number {
+  return tvSinToR(Math.sin((angDeg * Math.PI) / 180))
+}
+
+// Reference angle rings: pick a sensible step from the range
+const tvRefAngles = computed(() => {
+  const maxDeg = (Math.asin(tvRangeSin.value) * 180) / Math.PI
+  const step = maxDeg > 30 ? 10 : maxDeg > 15 ? 5 : maxDeg > 6 ? 2 : 1
+  const angles: number[] = []
+  for (let a = step; a <= maxDeg + 0.001; a += step) angles.push(a)
+  return angles
+})
+
+// Chief ray projected onto the (x, y) sensor plane
+const chiefScreen = computed(() => {
+  const craRad = (craDeg.value * Math.PI) / 180
+  const x = tvCx + tvSinToR(Math.sin(craRad))
+  const y = tvCy // chief ray rotates around y -> dys = 0
+  return { x, y }
+})
+
+// Outline of the cone in the sensor frame: parameterize phi_local in [0, 2pi)
+// and trace (dxs, dys) at theta_local = theta_h
+const coneOutlinePath = computed(() => {
+  const thetaH = (halfConeDeg.value * Math.PI) / 180
+  const craRad = (craDeg.value * Math.PI) / 180
+  const cosA = Math.cos(craRad)
+  const sinA = Math.sin(craRad)
+  const sinL = Math.sin(thetaH)
+  const cosL = Math.cos(thetaH)
+  let d = ''
+  const N = 96
+  for (let i = 0; i <= N; i++) {
+    const phi = (2 * Math.PI * i) / N
+    const dx = sinL * Math.cos(phi)
+    const dy = sinL * Math.sin(phi)
+    const dz = cosL
+    const dxs = cosA * dx + sinA * dz
+    const dys = dy
+    const x = tvCx + (dxs / tvRangeSin.value) * tvR
+    const y = tvCy - (dys / tvRangeSin.value) * tvR
+    d += (i === 0 ? 'M ' : ' L ') + x.toFixed(2) + ' ' + y.toFixed(2)
+  }
+  return d + ' Z'
+})
+
+// Sample point screen positions + visual encoding by weight
+const samplePoints = computed(() => {
+  const samples = coneSamples.value
+  if (samples.length === 0) return []
+  let wMax = 0
+  for (const s of samples) if (s.weight > wMax) wMax = s.weight
+  wMax = wMax || 1
+  return samples.map(s => {
+    const x = tvCx + (s.dx / tvRangeSin.value) * tvR
+    const y = tvCy - (s.dy / tvRangeSin.value) * tvR
+    const rel = s.weight / wMax
+    // Size 1.6-4.2 px, opacity 0.45-0.95
+    const r = 1.6 + 2.6 * rel
+    const opacity = 0.45 + 0.5 * rel
+    // Color: deep red at high weight, fade toward orange at low
+    const hue = 6 + 22 * (1 - rel)
+    const sat = 70 + 15 * rel
+    const light = 38 + 18 * (1 - rel)
+    const color = `hsl(${hue.toFixed(0)}, ${sat.toFixed(0)}%, ${light.toFixed(0)}%)`
+    return { x, y, r, opacity, color }
+  })
 })
 
 // Airy transmittance at given wavelength and angle (radians)
@@ -460,6 +606,29 @@ const xTicks = computed(() => {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.topview-section {
+  margin: 4px 0 16px;
+  text-align: center;
+}
+.panel-title {
+  margin: 0 0 6px;
+  font-size: 0.92em;
+  color: var(--vp-c-text-2);
+  font-weight: 600;
+}
+.topview-svg {
+  width: 100%;
+  max-width: 320px;
+  display: block;
+  margin: 0 auto;
+}
+.topview-caption {
+  max-width: 560px;
+  margin: 6px auto 0;
+  font-size: 0.8em;
+  color: var(--vp-c-text-3);
+  line-height: 1.5;
 }
 .chart-section {
   margin: 8px 0 16px;
