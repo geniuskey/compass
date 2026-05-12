@@ -436,41 +436,30 @@ const coneSamples = computed<Sample[]>(() => {
       pushSample(r * thetaH, phi, -1, 0)
     }
   } else if (samplingMode.value === 'rings') {
-    // Equal-area concentric-ring sampling. Choose ring count so the *average*
-    // ring has ~uniform angular spacing comparable to the radial step.
-    const nRings = Math.max(1, Math.round(Math.sqrt(N / Math.PI) + 0.5))
-    // Number of azimuth points per ring proportional to ring area annulus (~ 2k+1)
-    const ringPoints: number[] = []
-    let total = 0
-    for (let k = 0; k < nRings; k++) {
-      const annulusWeight = 2 * k + 1
-      ringPoints.push(annulusWeight)
-      total += annulusWeight
-    }
-    // Scale so sum ~ N
-    const scale = N / total
-    let actualTotal = 0
-    for (let k = 0; k < nRings; k++) {
-      ringPoints[k] = Math.max(1, Math.round(ringPoints[k] * scale))
-      actualTotal += ringPoints[k]
-    }
-    // Add center point as ring 0 if not present
-    if (ringPoints[0] !== 1) {
-      ringPoints[0] = 1
-    }
-    for (let k = 0; k < nRings; k++) {
-      // Equal-area radial: r_norm = sqrt((k + 0.5) / nRings)
-      const rNorm = Math.sqrt((k + 0.5) / nRings)
-      const thetaLocal = rNorm * thetaH
-      const m = ringPoints[k]
-      // Stagger azimuth between rings to avoid spoke artifacts
-      const phi0 = (k * Math.PI) / Math.max(1, nRings)
-      for (let j = 0; j < m; j++) {
-        const phi = phi0 + (2 * Math.PI * j) / m
-        pushSample(thetaLocal, phi, k, m)
+    // 1 center sample at theta_local = 0 + nRings concentric outer rings with
+    // equal-area centroid radii. Sample count per ring is proportional to ring
+    // index so the total comes out close to N. The center sample avoids the
+    // asymmetric "single off-center point" that proportional scaling produces
+    // for the innermost ring.
+    pushSample(0, 0, 0, 1)
+    const remaining = N - 1
+    if (remaining > 0) {
+      const nRings = Math.max(1, Math.round(Math.sqrt(N / Math.PI)))
+      const totalWeight = (nRings * (nRings + 1)) / 2
+      let assigned = 0
+      for (let k = 1; k <= nRings; k++) {
+        let m = Math.max(1, Math.round((k * remaining) / totalWeight))
+        if (k === nRings) m = Math.max(1, remaining - assigned)
+        assigned += m
+        const rNorm = Math.sqrt((k - 0.5) / nRings) // equal-area annulus centroid
+        const thetaLocal = rNorm * thetaH
+        const phi0 = (k * Math.PI) / Math.max(1, nRings)
+        for (let j = 0; j < m; j++) {
+          const phi = phi0 + (2 * Math.PI * j) / m
+          pushSample(thetaLocal, phi, k, m)
+        }
       }
     }
-    void actualTotal
   } else {
     // Polar grid: structured (n_theta x n_phi)
     const nTheta = Math.max(1, Math.round(Math.sqrt(N)))
