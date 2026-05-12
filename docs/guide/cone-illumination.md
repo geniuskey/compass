@@ -23,6 +23,12 @@ The cone illumination result is obtained by running multiple planewave simulatio
 A thin-film color filter (or any Fabry-Perot-like cavity in the stack) shifts its transmission peak to shorter wavelengths under oblique incidence -- approximately $\lambda(\theta) \approx \lambda_0\sqrt{1 - (\sin\theta / n_\text{eff})^2}$. A single plane wave at the CRA therefore underestimates both the peak broadening and the centroid blue-shift seen by a real lens with finite aperture. Goossens et al. (2018) derive a convolution model and a closed-form correction for this effect, parameterized exactly by the CRA and F-number used here. The angular sampling on this page is what makes the simulated transmittance match that model -- coarse sampling will under-resolve the peak broadening. See [Key Papers § 6.4](/research/key-papers#_6-4-goossens-et-al-2018-finite-aperture-correction-for-fabry-perot-filters) and the [Thin Film Optics](/theory/optics/thin-film-optics#angle-induced-peak-shift) page.
 :::
 
+### Interactive: Fabry-Perot cone-integration
+
+The simulator below reproduces the central result of Goossens et al. (2018) inline. Sweep CRA and F-number to watch the integrated transmittance peak blue-shift and broaden away from the plane-wave curve. The wavelength window and sample count are the same knobs you control in `ConeIllumination(cra_deg=..., f_number=..., n_points=...)`.
+
+<FabryPerotConeSimulator />
+
 ## Top view: footprint on the pixel array
 
 <ConeIlluminationTopView />

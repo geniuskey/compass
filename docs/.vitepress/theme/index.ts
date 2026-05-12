@@ -55,6 +55,7 @@ const globalComponents = [
   ['PixelDesignPlayground', () => import('./components/PixelDesignPlayground.vue')],
   ['SiliconAbsorptionDepth', () => import('./components/SiliconAbsorptionDepth.vue')],
   ['FabryPerotVisualizer', () => import('./components/FabryPerotVisualizer.vue')],
+  ['FabryPerotConeSimulator', () => import('./components/FabryPerotConeSimulator.vue')],
   ['MicrolensRayTrace', () => import('./components/MicrolensRayTrace.vue')],
   ['DiffractionPsfViewer', () => import('./components/DiffractionPsfViewer.vue')],
   ['FdtiPixelSimulator', () => import('./components/FdtiPixelSimulator.vue')],
