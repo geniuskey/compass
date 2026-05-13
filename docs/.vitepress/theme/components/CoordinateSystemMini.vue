@@ -49,7 +49,7 @@
         />
         <rect x="0" y="72" width="238" height="24" fill="#d9edf7" class="layer" />
         <g>
-          <rect x="0" y="96" width="238" height="38" fill="#111827" opacity="0.12" />
+          <rect x="0" y="96" width="238" height="38" fill="#d9edf7" opacity="0.82" class="layer patterned-envelope" />
           <path d="M14 134 L48 134 L43 98 L19 98 Z" fill="#f87171" />
           <path d="M70 134 L104 134 L101 98 L73 98 Z" fill="#4ade80" />
           <path d="M126 134 L160 134 L153 98 L133 98 Z" fill="#60a5fa" />
@@ -146,6 +146,10 @@ const { t } = useLocale()
 .layer {
   stroke: rgba(17, 24, 39, 0.28);
   stroke-width: 1;
+}
+
+.patterned-envelope {
+  stroke-dasharray: 5 4;
 }
 
 .silicon {

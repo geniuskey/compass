@@ -2,7 +2,7 @@
   <div class="pixel-stack-container">
     <h4>{{ t('Interactive Pixel Stack Builder', '인터랙티브 픽셀 스택 빌더') }}</h4>
     <p class="component-description">
-      {{ t('Adjust the thickness of each layer in a BSI pixel cross-section. The visualization shows the vertical stack with refractive indices and a scale bar.', 'BSI 픽셀 단면의 각 층 두께를 조정하세요. 시각화는 굴절률과 스케일 바가 포함된 수직 스택을 보여줍니다.') }}
+      {{ t('Adjust the thickness of each layer in a BSI pixel cross-section. Patterned layers show their z envelope separately from the actual microlens, color filter, grid, and DTI material.', 'BSI 픽셀 단면의 각 층 두께를 조정하세요. 패턴 레이어는 z envelope와 실제 마이크로렌즈, 컬러 필터, grid, DTI 재료 영역을 분리해서 표시합니다.') }}
     </p>
 
     <div class="layout-row">
@@ -49,6 +49,13 @@
 
       <div class="svg-wrapper">
         <svg :viewBox="`0 0 ${svgW} ${svgH}`" class="stack-svg">
+          <defs>
+            <linearGradient id="stackLensGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#f5fbff" />
+              <stop offset="100%" stop-color="#dda0dd" />
+            </linearGradient>
+          </defs>
+
           <!-- Scale bar on left -->
           <line :x1="scaleBarX" :y1="stackTop" :x2="scaleBarX" :y2="stackTop + stackPxH" stroke="var(--vp-c-text-2)" stroke-width="1" />
           <template v-for="tick in scaleTicks" :key="tick.um">
@@ -56,16 +63,17 @@
             <text :x="scaleBarX - 8" :y="tick.y + 3" text-anchor="end" class="scale-label">{{ tick.label }}</text>
           </template>
 
-          <!-- Layer rectangles -->
+          <!-- Layer z envelopes. Patterned layers use the surrounding medium as the fill. -->
           <template v-for="(layer, idx) in layers" :key="idx">
             <rect
               :x="layerX"
               :y="layer.y"
               :width="layerW"
               :height="Math.max(layer.h, 1)"
-              :fill="layer.color"
+              :fill="layer.fill"
               stroke="var(--vp-c-divider)"
               stroke-width="0.5"
+              :stroke-dasharray="layer.patterned ? '5 4' : undefined"
             />
             <!-- Layer label (centered) -->
             <text
@@ -89,6 +97,15 @@
               class="layer-n"
             >n={{ layer.n }}</text>
           </template>
+
+          <!-- Actual color-filter body. The surrounding fill remains planarization. -->
+          <path
+            :d="colorFilterProfilePath"
+            fill="#79d779"
+            opacity="0.86"
+            stroke="#2f855a"
+            stroke-width="0.8"
+          />
 
           <!-- DTI trenches (in silicon layer) -->
           <template v-if="showDTI">
@@ -120,48 +137,31 @@
             >DTI</text>
           </template>
 
-          <!-- Metal grid (within color filter z-range, shorter than CF — planarization fills above grid) -->
+          <!-- Metal grid sits at pixel boundaries and is usually shorter than the CF. -->
           <template v-if="showGrid">
-            <!-- Planarization fill above grid -->
             <rect
               :x="layerX"
-              :y="cfLayer.y"
-              :width="5"
-              :height="cfLayer.h * (1 - gridHeightFrac)"
-              fill="#add8e6"
-              opacity="0.7"
-            />
-            <rect
-              :x="layerX + layerW - 5"
-              :y="cfLayer.y"
-              :width="5"
-              :height="cfLayer.h * (1 - gridHeightFrac)"
-              fill="#add8e6"
-              opacity="0.7"
-            />
-            <!-- Grid walls (sit at the bottom of the CF region) -->
-            <rect
-              :x="layerX"
-              :y="cfLayer.y + cfLayer.h * (1 - gridHeightFrac)"
-              :width="5"
-              :height="cfLayer.h * gridHeightFrac"
+              :y="cfGridTopY"
+              :width="gridWallPx"
+              :height="cfGridHeightPx"
               fill="#707070"
               opacity="0.8"
             />
             <rect
-              :x="layerX + layerW - 5"
-              :y="cfLayer.y + cfLayer.h * (1 - gridHeightFrac)"
-              :width="5"
-              :height="cfLayer.h * gridHeightFrac"
+              :x="layerX + layerW - gridWallPx"
+              :y="cfGridTopY"
+              :width="gridWallPx"
+              :height="cfGridHeightPx"
               fill="#707070"
               opacity="0.8"
             />
           </template>
 
-          <!-- Microlens curved top -->
+          <!-- Actual microlens material. Empty area in the envelope is air. -->
           <path
-            :d="microlensArc"
-            fill="none"
+            :d="microlensProfilePath"
+            fill="url(#stackLensGradient)"
+            opacity="0.78"
             stroke="#9b59b6"
             stroke-width="1.5"
           />
@@ -183,8 +183,8 @@ const barl = ref(0.08)
 const silicon = ref(3.0)
 const showDTI = ref(true)
 const showGrid = ref(true)
-// Metal grid is typically shorter than the color filter; planarization fills above.
-const gridHeightFrac = 0.65
+const gridThicknessUm = 0.47
+const gridWallPx = 7
 
 const totalHeight = computed(() => microlens.value + planarization.value + colorFilter.value + barl.value + silicon.value)
 
@@ -204,11 +204,11 @@ function umToPx(um) {
 }
 
 const layerDefs = computed(() => [
-  { name: t('Microlens', '마이크로렌즈'), thickness: microlens.value, color: '#dda0dd', n: '1.56' },
-  { name: t('Planarization', '평탄화층'), thickness: planarization.value, color: '#add8e6', n: '1.46' },
-  { name: t('Color Filter', '컬러 필터'), thickness: colorFilter.value, color: '#90ee90', n: '1.55' },
-  { name: 'BARL', thickness: barl.value, color: '#fffacd', n: '1.8' },
-  { name: t('Silicon', '실리콘'), thickness: silicon.value, color: '#c0c0c0', n: '3.5' },
+  { key: 'microlens', name: t('Microlens', '마이크로렌즈'), thickness: microlens.value, fill: '#e8f2ff', n: '1.00 / 1.56', patterned: true },
+  { key: 'planarization', name: t('Planarization', '평탄화층'), thickness: planarization.value, fill: '#add8e6', n: '1.46', patterned: false },
+  { key: 'color_filter', name: t('Color Filter', '컬러 필터'), thickness: colorFilter.value, fill: '#add8e6', n: '1.46 / 1.55', patterned: true },
+  { key: 'barl', name: 'BARL', thickness: barl.value, fill: '#fffacd', n: '1.8', patterned: false },
+  { key: 'silicon', name: t('Silicon', '실리콘'), thickness: silicon.value, fill: '#c0c0c0', n: '3.5', patterned: false },
 ])
 
 const layers = computed(() => {
@@ -216,10 +216,12 @@ const layers = computed(() => {
   return layerDefs.value.map(def => {
     const h = umToPx(def.thickness)
     const layer = {
+      key: def.key,
       name: def.name,
       thickness: def.thickness < 0.1 ? def.thickness.toFixed(3) : def.thickness.toFixed(2),
-      color: def.color,
+      fill: def.fill,
       n: def.n,
+      patterned: def.patterned,
       y: yPos,
       h,
     }
@@ -228,8 +230,11 @@ const layers = computed(() => {
   })
 })
 
-const siliconLayer = computed(() => layers.value[4])
-const cfLayer = computed(() => layers.value[2])
+const siliconLayer = computed(() => layers.value.find(layer => layer.key === 'silicon'))
+const cfLayer = computed(() => layers.value.find(layer => layer.key === 'color_filter'))
+const microlensLayer = computed(() => layers.value.find(layer => layer.key === 'microlens'))
+const cfGridHeightPx = computed(() => Math.min(cfLayer.value.h, umToPx(Math.min(gridThicknessUm, colorFilter.value))))
+const cfGridTopY = computed(() => cfLayer.value.y + cfLayer.value.h - cfGridHeightPx.value)
 
 // Scale bar ticks
 const scaleTicks = computed(() => {
@@ -245,14 +250,34 @@ const scaleTicks = computed(() => {
   return ticks
 })
 
-// Microlens arc
-const microlensArc = computed(() => {
-  const ly = layers.value[0]
+const colorFilterProfilePath = computed(() => {
+  const cf = cfLayer.value
+  const yTop = cf.y
+  const yBot = cf.y + cf.h
+  const gridTop = showGrid.value ? cfGridTopY.value : yTop
+  const x0 = layerX + (showGrid.value ? gridWallPx : 0)
+  const x1 = layerX + layerW - (showGrid.value ? gridWallPx : 0)
+  const protrusionPx = Math.max(0, gridTop - yTop)
+  const topInset = showGrid.value ? Math.min((x1 - x0) * 0.18, protrusionPx * 0.45) : 0
+  return [
+    `M ${x0} ${yBot}`,
+    `L ${x1} ${yBot}`,
+    `L ${x1} ${gridTop}`,
+    `L ${x1 - topInset} ${yTop}`,
+    `L ${x0 + topInset} ${yTop}`,
+    `L ${x0} ${gridTop}`,
+    'Z',
+  ].join(' ')
+})
+
+const microlensProfilePath = computed(() => {
+  const ly = microlensLayer.value
   const cx = layerX + layerW / 2
-  const topY = ly.y
+  const topY = ly.y + ly.h * 0.04
   const botY = ly.y + ly.h
-  const halfW = layerW / 2
-  return `M ${layerX} ${botY} Q ${cx} ${topY - ly.h * 0.3} ${layerX + layerW} ${botY}`
+  const x0 = layerX + 5
+  const x1 = layerX + layerW - 5
+  return `M ${x0} ${botY} Q ${cx} ${topY} ${x1} ${botY} Z`
 })
 </script>
 

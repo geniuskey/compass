@@ -880,12 +880,9 @@ const mlGap = 0.04
 const shiftXIllustrative = 0.12
 
 // Photodiode (1µm pixel default): position [0,0,0.5] from pixel center, size [0.7,0.7,2.0].
-// In the parameter diagram we draw PD slightly biased upward (position[z] = 0.2 µm) so the
-// rotated `size[dz]` label inside the PD does not align vertically with the silicon.thickness
-// label on the right margin.
 const pdSizeXY = 0.7
 const pdSizeZ = 2.0
-const pdPosZ = 0.2          // illustrative: PD top sits 0.2 µm below top of Si
+const pdPosZ = 0.5
 const pdZTop = siTop - pdPosZ
 const pdZBot = pdZTop - pdSizeZ
 
@@ -1170,7 +1167,7 @@ const legendRows = [
     meaningEn: 'PD lateral footprint per pixel',          meaningKo: '픽셀당 PD 횡방향 면적' },
   { id: 'pd_dz',     param: 'silicon.photodiode.size[dz]',     value: '2.0 µm',     color: '#c0392b',
     meaningEn: 'PD depth (z extent inside Si)',           meaningKo: '실리콘 내부 PD 깊이(z 방향 길이)' },
-  { id: 'pd_pz',     param: 'silicon.photodiode.position[z]',  value: '0.5 µm (default; 0.2 shown)', color: '#c0392b',
+  { id: 'pd_pz',     param: 'silicon.photodiode.position[z]',  value: '0.5 µm', color: '#c0392b',
     meaningEn: 'PD top below top of Si',                  meaningKo: '실리콘 상단 기준 PD 상단까지의 거리' },
 ]
 </script>

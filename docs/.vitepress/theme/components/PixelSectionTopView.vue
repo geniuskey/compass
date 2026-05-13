@@ -84,7 +84,7 @@
           </template>
 
           <template v-else-if="variant === 'color_filter'">
-            <rect x="0" y="0" :width="plot.size" :height="plot.size" fill="#f8fafc" />
+            <rect x="0" y="0" :width="plot.size" :height="plot.size" fill="#d8edf8" opacity="0.72" />
             <rect
               v-for="cell in colorFilterCells"
               :key="'cf-base-' + cell.id"
@@ -276,7 +276,7 @@ const cells = [
 ]
 
 const visibleLabels = computed(() => {
-  if (['air', 'planarization', 'barl', 'silicon'].includes(variant.value)) return []
+  if (!['pixel', 'color_filter'].includes(variant.value)) return []
   return cells
 })
 
