@@ -12,16 +12,6 @@ Compute the signal-to-noise ratio for a CMOS image sensor pixel under various op
 Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
 :::
 
-## Noise Sources
-
-| Source | Formula | Dominant Regime |
-|--------|---------|-----------------|
-| Shot noise | √(signal) | Bright scenes |
-| Dark current | √(I_dark × t_int) | Long exposures |
-| Read noise | constant | Low light |
-
-**Total noise** = √(shot² + dark² + read²)
-
-### Key Metrics
-- **SNR (dB)** = 20 × log₁₀(signal / total_noise)
-- **Dynamic range** = 20 × log₁₀(full_well / read_noise) — the ratio between the brightest and dimmest signals a pixel can capture
+::: tip Learn more
+[Noise, SNR, and Dynamic Range](/theory/sensor/noise-and-snr)
+:::

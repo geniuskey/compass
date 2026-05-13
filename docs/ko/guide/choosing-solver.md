@@ -7,11 +7,13 @@ description: COMPASS에서 RCWA 및 FDTD 솔버를 선택하고 설정하는 가
 
 COMPASS는 통합된 인터페이스를 통해 여러 전자기 솔버(Solver) 백엔드를 지원합니다. 이 가이드에서는 사용 가능한 솔버, 각 솔버의 사용 시점, 설정 방법, 수렴(Convergence) 검증 방법을 다룹니다.
 
+::: tip 이론 배경
+각 방법의 물리 — RCWA와 FDTD가 실제로 무엇을 계산하고 어떤 가정을 사용하는지 — 는 [RCWA 설명](/ko/theory/simulation/rcwa-explained), [FDTD 설명](/ko/theory/simulation/fdtd-explained), [RCWA vs FDTD](/ko/theory/simulation/rcwa-vs-fdtd)를 참고하세요. 이 페이지는 운영 측면을 다룹니다: 어떤 솔버를 고르고, 어떻게 설정하며, 결과를 어떻게 검증할지.
+:::
+
 ## 사용 가능한 솔버
 
 ### RCWA 솔버
-
-RCWA(엄밀 결합파 해석, Rigorous Coupled-Wave Analysis)는 장(Field)과 유전율(Permittivity)을 푸리에 고조파(Fourier Harmonics)로 전개하여 주기적 구조에 대한 맥스웰 방정식(Maxwell's Equations)을 풀는 주파수 영역 방법입니다. 픽셀이 주기적으로 반복되기 때문에 픽셀 배열에 자연스럽게 적합합니다.
 
 | 이름     | 라이브러리 | 백엔드     | GPU     | 상태             |
 |----------|---------|------------|---------|-------------|
@@ -20,8 +22,6 @@ RCWA(엄밀 결합파 해석, Rigorous Coupled-Wave Analysis)는 장(Field)과 �
 | `meent`  | meent   | NumPy/JAX/PyTorch | CUDA/CPU | 멀티 백엔드, 검증에 적합 |
 
 ### FDTD 솔버
-
-FDTD(유한차분 시간영역법, Finite-Difference Time-Domain)는 공간 격자에서 시간 스테핑을 통해 맥스웰 방정식을 풉니다. 단일 실행으로 광대역 결과를 제공하며 임의의(비주기적) 지오메트리를 처리할 수 있습니다.
 
 | 이름             | 라이브러리 | 백엔드    | GPU           | 상태        |
 |-----------------|---------|-----------|---------------|------------|

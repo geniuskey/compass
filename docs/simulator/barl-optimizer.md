@@ -4,7 +4,7 @@ title: Thin Film Stack Designer
 
 # Thin Film Stack Designer
 
-Design arbitrary multilayer thin film coatings with full control over layer count, order, materials, and thickness. Visualize both reflectance and transmittance spectra in real time.
+Design arbitrary multilayer thin-film coatings with full control over layer count, order, materials, and thickness. Visualize reflectance and transmittance spectra in real time.
 
 <BarlOptimizer />
 
@@ -12,24 +12,6 @@ Design arbitrary multilayer thin film coatings with full control over layer coun
 Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
 :::
 
-## Supported Materials (20+)
-
-| Category | Materials |
-|----------|-----------|
-| Low-n dielectrics | SiO₂, MgF₂, CaF₂, Al₂O₃ |
-| High-n dielectrics | Si₃N₄, HfO₂, TiO₂, Ta₂O₅, ZrO₂, Nb₂O₅, AlN |
-| Semiconductors | Silicon, Ge, SiC, ZnS, ZnSe |
-| Conductors / TCO | Tungsten, ITO |
-| Polymers / Glass | Polymer (n=1.56), BK7 Glass |
-
-## Built-in Presets
-
-- **BARL 4-layer (illustrative)**: Example BSI pixel anti-reflection stack (SiO₂/HfO₂/SiO₂/Si₃N₄). Real BARL recipes vary substantially by vendor; treat this as a starting point and re-optimize for your target band.
-- **2-layer AR**: Simple MgF₂/TiO₂ anti-reflection coating
-- **Broadband AR**: 4-layer design for wide spectral coverage
-- **HR Blue mirror**: 6-layer high-reflectance stack for blue wavelengths
-- **NIR-cut filter**: 5-layer near-infrared rejection filter on glass
-
-::: tip
-Use the "Auto Optimize" button to find thickness combinations that minimize average reflectance in your target wavelength band. You can freely add, remove, and reorder layers before optimizing.
+::: tip Learn more
+[Thin Film Optics](/theory/optics/thin-film-optics) · [BARL Design recipe](/cookbook/barl-design)
 :::
