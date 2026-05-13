@@ -26,7 +26,11 @@ jobs:
 
       # VitePress fails the build on unresolved internal markdown links by default.
       - name: Build VitePress (dead-link check)
-        run: npx vitepress build
+        run: npm run docs:build
+        working-directory: docs
+
+      - name: Pixel stack visual smoke check
+        run: npm run docs:visual-check
         working-directory: docs
 
   link-and-sync:

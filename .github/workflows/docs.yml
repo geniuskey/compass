@@ -43,6 +43,10 @@ jobs:
         run: npm run docs:build
         working-directory: docs
 
+      - name: Pixel stack visual smoke check
+        run: npm run docs:visual-check
+        working-directory: docs
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

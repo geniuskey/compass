@@ -54,6 +54,7 @@
       <rect
         v-for="layer in layers"
         :key="'L-' + layer.id"
+        :data-visual-id="'xz-layer-' + layer.id"
         :x="pad.left"
         :y="zToY(layer.zTop)"
         :width="plotW"
@@ -66,6 +67,7 @@
       <rect
         v-for="extent in patternedLayerExtents"
         :key="'E-' + extent.id"
+        :data-visual-id="'xz-pattern-extent-' + extent.id"
         :x="pad.left"
         :y="zToY(extent.zTop)"
         :width="plotW"
@@ -81,6 +83,7 @@
       <rect
         v-for="(sub, i) in barlSublayers"
         :key="'B-' + i"
+        data-visual-id="xz-barl-sublayer"
         :x="pad.left"
         :y="zToY(sub.zTop)"
         :width="plotW"
@@ -95,6 +98,7 @@
       <rect
         v-for="dx in dtiX"
         :key="'D-' + dx"
+        data-visual-id="xz-dti-wall"
         :x="xToSvg(dx) - dtiHalfWPx"
         :y="zToY(siTop)"
         :width="dtiHalfWPx * 2"
@@ -109,6 +113,7 @@
       <path
         v-for="cf in cfProfiles"
         :key="'CF-' + cf.id"
+        data-visual-id="xz-cf-relief"
         :d="cfProfilePath(cf)"
         :fill="cf.color"
         :opacity="dimLayer('color_filter') ? 0.25 : 0.72"
@@ -120,6 +125,7 @@
       <rect
         v-for="dx in dtiX"
         :key="'MG-' + dx"
+        data-visual-id="xz-metal-grid"
         :x="xToSvg(dx) - mgHalfWPx"
         :y="zToY(cfGridZTop)"
         :width="mgHalfWPx * 2"
@@ -134,6 +140,7 @@
       <rect
         v-for="(pd, i) in pdRectsXZ"
         :key="'PD-' + i"
+        data-visual-id="xz-photodiode"
         :x="xToSvg(pd.x0)"
         :y="zToY(pd.zTop)"
         :width="xToSvg(pd.x1) - xToSvg(pd.x0)"
@@ -149,6 +156,7 @@
       <path
         v-for="(d, i) in mlPaths"
         :key="'ML-' + i"
+        data-visual-id="xz-microlens-dome"
         :d="d.path"
         fill="#dda0dd"
         :opacity="dimLayer('microlens') ? 0.3 : 0.7"

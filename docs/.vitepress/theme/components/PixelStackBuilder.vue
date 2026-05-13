@@ -68,6 +68,7 @@
             <rect
               :x="layerX"
               :y="layer.y"
+              :data-visual-id="'stack-layer-envelope-' + layer.key"
               :width="layerW"
               :height="Math.max(layer.h, 1)"
               :fill="layer.fill"
@@ -101,6 +102,7 @@
           <!-- Actual color-filter body. The surrounding fill remains planarization. -->
           <path
             :d="colorFilterProfilePath"
+            data-visual-id="stack-cf-relief"
             fill="#79d779"
             opacity="0.86"
             stroke="#2f855a"
@@ -112,6 +114,7 @@
             <rect
               :x="layerX"
               :y="siliconLayer.y"
+              data-visual-id="stack-dti-wall"
               :width="8"
               :height="siliconLayer.h"
               fill="#b0c4de"
@@ -122,6 +125,7 @@
             <rect
               :x="layerX + layerW - 8"
               :y="siliconLayer.y"
+              data-visual-id="stack-dti-wall"
               :width="8"
               :height="siliconLayer.h"
               fill="#b0c4de"
@@ -142,6 +146,7 @@
             <rect
               :x="layerX"
               :y="cfGridTopY"
+              data-visual-id="stack-metal-grid"
               :width="gridWallPx"
               :height="cfGridHeightPx"
               fill="#707070"
@@ -150,6 +155,7 @@
             <rect
               :x="layerX + layerW - gridWallPx"
               :y="cfGridTopY"
+              data-visual-id="stack-metal-grid"
               :width="gridWallPx"
               :height="cfGridHeightPx"
               fill="#707070"
@@ -160,6 +166,7 @@
           <!-- Actual microlens material. Empty area in the envelope is air. -->
           <path
             :d="microlensProfilePath"
+            data-visual-id="stack-microlens-material"
             fill="url(#stackLensGradient)"
             opacity="0.78"
             stroke="#9b59b6"
