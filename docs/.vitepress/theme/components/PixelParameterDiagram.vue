@@ -49,7 +49,8 @@
       font-family="Arial, sans-serif"
       font-size="11"
     >
-      <!-- Layer fills (bottom→top) -->
+      <!-- Background media fills (bottom-to-top). Patterned layers use the surrounding medium here;
+           the actual microlens, CFA relief, metal grid, DTI, and PD shapes are drawn below. -->
       <rect
         v-for="layer in layers"
         :key="'L-' + layer.id"
@@ -57,8 +58,23 @@
         :y="zToY(layer.zTop)"
         :width="plotW"
         :height="zToY(layer.zBot) - zToY(layer.zTop)"
-        :fill="layer.color"
+        :fill="layer.fill"
         :opacity="dimLayer(layer.id) ? 0.25 : 0.85"
+      />
+
+      <!-- Patterned-layer z extents: outline only, so empty regions are not mistaken for material. -->
+      <rect
+        v-for="extent in patternedLayerExtents"
+        :key="'E-' + extent.id"
+        :x="pad.left"
+        :y="zToY(extent.zTop)"
+        :width="plotW"
+        :height="zToY(extent.zBot) - zToY(extent.zTop)"
+        fill="none"
+        :stroke="highlight && extent.params.includes(highlight) ? '#e74c3c' : extent.stroke"
+        :stroke-width="highlight && extent.params.includes(highlight) ? 1.4 : 0.8"
+        stroke-dasharray="5 4"
+        opacity="0.85"
       />
 
       <!-- BARL sublayers -->
@@ -828,12 +844,17 @@ const xzW = pad.left + plotW + pad.right    // 530
 const xzH = pad.top  + plotH + pad.bottom   // 648
 
 const layers = [
-  { id: 'silicon', label: 'silicon', color: '#5d6d7e', zBot: 0,    zTop: 3.0 },
-  { id: 'barl',    label: 'barl',    color: '#8e44ad', zBot: 3.0,  zTop: 3.08 },
-  { id: 'color_filter', label: 'color_filter', color: '#27ae60', zBot: 3.08, zTop: 3.73 },
-  { id: 'planarization', label: 'planarization', color: '#d5dbdb', zBot: 3.73, zTop: 4.03 },
-  { id: 'microlens', label: 'microlens', color: '#dda0dd', zBot: 4.03, zTop: 4.63 },
-  { id: 'air',     label: 'air',     color: '#d6eaf8', zBot: 4.63, zTop: 5.63 },
+  { id: 'silicon', label: 'silicon', fill: '#5d6d7e', zBot: 0,    zTop: 3.0 },
+  { id: 'barl',    label: 'barl',    fill: '#8e44ad', zBot: 3.0,  zTop: 3.08 },
+  { id: 'color_filter', label: 'color_filter', fill: '#d5dbdb', zBot: 3.08, zTop: 3.73 },
+  { id: 'planarization', label: 'planarization', fill: '#d5dbdb', zBot: 3.73, zTop: 4.03 },
+  { id: 'microlens', label: 'microlens', fill: '#d6eaf8', zBot: 4.03, zTop: 4.63 },
+  { id: 'air',     label: 'air',     fill: '#d6eaf8', zBot: 4.63, zTop: 5.63 },
+]
+
+const patternedLayerExtents = [
+  { id: 'color_filter', zBot: 3.08, zTop: 3.73, stroke: '#27ae60', params: ['cf_t', 'cf_angle', 'grid_w', 'grid_t', 'grid'] },
+  { id: 'microlens', zBot: 4.03, zTop: 4.63, stroke: '#8e44ad', params: ['ml_h', 'ml_rx', 'ml_ry', 'ml_gap', 'shift'] },
 ]
 
 const barlSublayers = [
