@@ -11,6 +11,7 @@ Python benchmark 산출물과 geometry 감사 스크립트에서 생성한 publi
 - [RCWA/FDTD 수렴 분석](./convergence-analysis.md) (생성일 2026-05-07)
 - [픽셀 스택 Geometry 감사](./pixel-stack-geometry-audit.md) (생성일 2026-05-08)
 - [컬러 필터 Relief 민감도](./color-filter-relief-sensitivity.md) (생성일 2026-05-08)
+- [가이드 인터랙티브 컴포넌트 감사](./guide-interactive-audit.md) (생성일 2026-05-13)
 
 ## 리포트 대기열
 

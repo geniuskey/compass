@@ -11,6 +11,7 @@ Publication-style reports generated from Python benchmark artifacts and geometry
 - [RCWA/FDTD Convergence Analysis](./convergence-analysis.md) (generated 2026-05-07)
 - [Pixel Stack Geometry Audit](./pixel-stack-geometry-audit.md) (generated 2026-05-08)
 - [Color Filter Relief Sensitivity](./color-filter-relief-sensitivity.md) (generated 2026-05-08)
+- [Guide Interactive Component Audit](./guide-interactive-audit.md) (generated 2026-05-13)
 
 ## Report queue
 

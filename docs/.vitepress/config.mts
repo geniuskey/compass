@@ -135,6 +135,9 @@ const reportsSidebar = [
   { text: 'Geometry Validation', collapsed: false, items: [
     { text: 'Pixel Stack Geometry Audit', link: '/reports/pixel-stack-geometry-audit' },
     { text: 'Color Filter Relief Sensitivity', link: '/reports/color-filter-relief-sensitivity' },
+  ]},
+  { text: 'Documentation Validation', collapsed: false, items: [
+    { text: 'Guide Interactive Audit', link: '/reports/guide-interactive-audit' },
   ]}
 ]
 
@@ -283,6 +286,9 @@ const reportsSidebarKo = [
   { text: 'Geometry 검증', collapsed: false, items: [
     { text: '픽셀 스택 Geometry 감사', link: '/ko/reports/pixel-stack-geometry-audit' },
     { text: '컬러 필터 Relief 민감도', link: '/ko/reports/color-filter-relief-sensitivity' },
+  ]},
+  { text: '문서 검증', collapsed: false, items: [
+    { text: '가이드 인터랙티브 감사', link: '/ko/reports/guide-interactive-audit' },
   ]}
 ]
 
