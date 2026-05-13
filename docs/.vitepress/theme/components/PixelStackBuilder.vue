@@ -174,16 +174,18 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { pixelStackDefaults } from '../composables/pixelStackDefaults'
 const { t } = useLocale()
 
-const microlens = ref(0.6)
-const planarization = ref(0.3)
-const colorFilter = ref(0.6)
-const barl = ref(0.08)
-const silicon = ref(3.0)
+const defaults = pixelStackDefaults
+const microlens = ref(defaults.microlens.height)
+const planarization = ref(defaults.planarization.thickness)
+const colorFilter = ref(defaults.colorFilter.channels.G.thickness)
+const barl = ref(defaults.barl.layers.reduce((total, layer) => total + layer.thickness, 0))
+const silicon = ref(defaults.silicon.thickness)
 const showDTI = ref(true)
 const showGrid = ref(true)
-const gridThicknessUm = 0.47
+const gridThicknessUm = defaults.colorFilter.grid.thickness
 const gridWallPx = 7
 
 const totalHeight = computed(() => microlens.value + planarization.value + colorFilter.value + barl.value + silicon.value)

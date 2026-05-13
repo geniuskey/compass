@@ -218,7 +218,7 @@
           :fill="dimColor('pitch')"
           class="dim-text" text-anchor="middle"
           :font-weight="highlight === 'pitch' ? '700' : '500'"
-        >pitch = 1.0 µm</text>
+        >pitch = {{ pitch.toFixed(1) }} µm</text>
       </g>
 
       <!-- ===== Internal callouts ===== -->
@@ -394,20 +394,20 @@
           marker-start="url(#arr-d)" marker-end="url(#arr-u)"
         />
 
-        <!-- pd.position z: top of Si to top of PD, label inside silicon gap above PD -->
+        <!-- pd.position z: depth from Si top to PD center. -->
         <line
           :x1="xToSvg(0.5)" :y1="zToY(siTop)"
-          :x2="xToSvg(0.5)" :y2="zToY(pdZTop)"
+          :x2="xToSvg(0.5)" :y2="zToY(pdCenterZ)"
           :stroke="dimColor('pd_pz')"
           :stroke-width="highlight === 'pd_pz' ? 2 : 1"
           marker-start="url(#arr-d)" marker-end="url(#arr-u)"
         />
         <text
-          :x="xToSvg(0.5) + 6" :y="(zToY(siTop) + zToY(pdZTop)) / 2 + 4"
+          :x="xToSvg(0.5) + 6" :y="(zToY(siTop) + zToY(pdCenterZ)) / 2 + 4"
           :fill="dimColor('pd_pz')"
           class="dim-text" text-anchor="start"
           :font-weight="highlight === 'pd_pz' ? '700' : '500'"
-        >position[z]</text>
+        >position[z] center</text>
       </g>
 
       <!-- Layer name labels on left -->
@@ -800,6 +800,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { bayerCells2x2, pixelStackDefaults, type BayerChannel } from '../composables/pixelStackDefaults'
 
 const { t } = useLocale()
 
@@ -834,57 +835,82 @@ const xyToggleOptions: { key: XyLayerKey; labelEn: string; labelKo: string; colo
 
 // ===== XZ geometry (matches default_bsi_1um.yaml) =====
 // Axis equal: 100 svg-pixels per µm in both x and z.
-const totalZ = 5.63
-const totalX = 2.0  // two pixels of pitch 1 µm
+const defaults = pixelStackDefaults
+const pitch = defaults.pitch
+const unitRows = defaults.unitCell[0]
+const unitCols = defaults.unitCell[1]
+const cfChannelSpecs = defaults.colorFilter.channels
+const cfThicknessValues = Object.values(cfChannelSpecs).map((spec) => spec.thickness)
+const cfContactValues = Object.values(cfChannelSpecs).map((spec) => spec.contactAngle)
+const cfMinThickness = Math.min(...cfThicknessValues)
+const cfMaxThickness = Math.max(...cfThicknessValues)
+const cfMinContact = Math.min(...cfContactValues)
+const cfMaxContact = Math.max(...cfContactValues)
+const barlThicknessValues = defaults.barl.layers.map((layer) => layer.thickness)
+const barlMinThickness = Math.min(...barlThicknessValues)
+const barlMaxThickness = Math.max(...barlThicknessValues)
+const barlTotal = defaults.barl.layers.reduce((total, layer) => total + layer.thickness, 0)
+
+const siBot = 0.0
+const siTop = defaults.silicon.thickness
+const barlZBot = siTop
+const barlZTop = barlZBot + barlTotal
+const cfZBot = barlZTop
+const cfZTop = cfZBot + cfMaxThickness
+const cfGridThickness = defaults.colorFilter.grid.thickness
+const cfGridZTop = cfZBot + cfGridThickness
+const planZBot = cfZTop
+const planZTop = planZBot + defaults.planarization.thickness
+const mlZBot = planZTop
+const mlH = defaults.microlens.height
+const mlZTop = mlZBot + mlH
+const airZBot = mlZTop
+const airZTop = airZBot + defaults.air.thickness
+
+const totalZ = airZTop
+const totalX = pitch * unitCols
+const totalY = pitch * unitRows
 const xzScale = 100
-const plotW = totalX * xzScale       // 200
-const plotH = totalZ * xzScale       // 558
+const plotW = totalX * xzScale
+const plotH = totalZ * xzScale
 const pad = { left: 110, right: 220, top: 30, bottom: 60 }
-const xzW = pad.left + plotW + pad.right    // 530
-const xzH = pad.top  + plotH + pad.bottom   // 648
+const xzW = pad.left + plotW + pad.right
+const xzH = pad.top  + plotH + pad.bottom
 
 const layers = [
-  { id: 'silicon', label: 'silicon', fill: '#5d6d7e', zBot: 0,    zTop: 3.0 },
-  { id: 'barl',    label: 'barl',    fill: '#8e44ad', zBot: 3.0,  zTop: 3.08 },
-  { id: 'color_filter', label: 'color_filter', fill: '#d5dbdb', zBot: 3.08, zTop: 3.73 },
-  { id: 'planarization', label: 'planarization', fill: '#d5dbdb', zBot: 3.73, zTop: 4.03 },
-  { id: 'microlens', label: 'microlens', fill: '#d6eaf8', zBot: 4.03, zTop: 4.63 },
-  { id: 'air',     label: 'air',     fill: '#d6eaf8', zBot: 4.63, zTop: 5.63 },
+  { id: 'silicon', label: 'silicon', fill: '#5d6d7e', zBot: siBot, zTop: siTop },
+  { id: 'barl',    label: 'barl',    fill: '#8e44ad', zBot: barlZBot, zTop: barlZTop },
+  { id: 'color_filter', label: 'color_filter', fill: '#d5dbdb', zBot: cfZBot, zTop: cfZTop },
+  { id: 'planarization', label: 'planarization', fill: '#d5dbdb', zBot: planZBot, zTop: planZTop },
+  { id: 'microlens', label: 'microlens', fill: '#d6eaf8', zBot: mlZBot, zTop: mlZTop },
+  { id: 'air',     label: 'air',     fill: '#d6eaf8', zBot: airZBot, zTop: airZTop },
 ]
 
 const patternedLayerExtents = [
-  { id: 'color_filter', zBot: 3.08, zTop: 3.73, stroke: '#27ae60', params: ['cf_t', 'cf_angle', 'grid_w', 'grid_t', 'grid'] },
-  { id: 'microlens', zBot: 4.03, zTop: 4.63, stroke: '#8e44ad', params: ['ml_h', 'ml_rx', 'ml_ry', 'ml_gap', 'shift'] },
+  { id: 'color_filter', zBot: cfZBot, zTop: cfZTop, stroke: '#27ae60', params: ['cf_t', 'cf_angle', 'grid_w', 'grid_t', 'grid'] },
+  { id: 'microlens', zBot: mlZBot, zTop: mlZTop, stroke: '#8e44ad', params: ['ml_h', 'ml_rx', 'ml_ry', 'ml_gap', 'shift'] },
 ]
 
-const barlSublayers = [
-  { color: '#7fb3d8', zBot: 3.0,   zTop: 3.01,  material: 'SiO2' },
-  { color: '#6c71c4', zBot: 3.01,  zTop: 3.035, material: 'HfO2' },
-  { color: '#e8d44d', zBot: 3.035, zTop: 3.05,  material: 'SiO2' },
-  { color: '#2aa198', zBot: 3.05,  zTop: 3.08,  material: 'Si3N4' },
-]
+const barlSublayers = defaults.barl.layers.reduce((items, layer) => {
+  const zBot = items.length === 0 ? barlZBot : items[items.length - 1].zTop
+  const zTop = zBot + layer.thickness
+  items.push({ color: layer.fill, zBot, zTop, material: layer.material })
+  return items
+}, [] as { color: string; zBot: number; zTop: number; material: string }[])
 
-const cfZBot = 3.08
-const cfZTop = 3.73
-const cfGridThickness = 0.47
-const cfGridZTop = cfZBot + cfGridThickness
-const siBot = 0.0
-const siTop = 3.0
-const dtiDepth = 3.0
-const dtiWidth = 0.1
-const mgWidth = 0.05
-const mlZBot = 4.03
-const mlH = 0.6
-const mlR = 0.48
-const mlGap = 0.04
+const dtiDepth = defaults.silicon.dti.depth
+const dtiWidth = defaults.silicon.dti.width
+const mgWidth = defaults.colorFilter.grid.width
+const mlR = defaults.microlens.radiusX
+const mlGap = defaults.microlens.gap
 const shiftXIllustrative = 0.12
 
-// Photodiode (1µm pixel default): position [0,0,0.5] from pixel center, size [0.7,0.7,2.0].
-const pdSizeXY = 0.7
-const pdSizeZ = 2.0
-const pdPosZ = 0.5
-const pdZTop = siTop - pdPosZ
-const pdZBot = pdZTop - pdSizeZ
+const pdSizeXY = defaults.silicon.photodiode.sizeX
+const pdSizeZ = defaults.silicon.photodiode.sizeZ
+const pdCenterDepth = defaults.silicon.photodiode.centerDepth
+const pdCenterZ = siTop - pdCenterDepth
+const pdZTop = Math.min(siTop, pdCenterZ + pdSizeZ / 2)
+const pdZBot = Math.max(siBot, pdCenterZ - pdSizeZ / 2)
 
 const pdRectsXZ = [
   { x0: 0.5 - pdSizeXY / 2, x1: 0.5 + pdSizeXY / 2, zTop: pdZTop, zBot: pdZBot },
@@ -900,16 +926,14 @@ type CfProfile = {
   color: string
 }
 
-const cfChannelSpecs: Record<string, { thickness: number; contactAngle: number }> = {
-  R: { thickness: 0.62, contactAngle: 66 },
-  G: { thickness: 0.60, contactAngle: 72 },
-  B: { thickness: 0.65, contactAngle: 62 },
-}
-
-const cfProfiles: CfProfile[] = [
-  makeCfProfile('G', 0.0, 1.0, cfChannelSpecs.G.thickness, cfChannelSpecs.G.contactAngle, '#27ae60'),
-  makeCfProfile('B', 1.0, 2.0, cfChannelSpecs.B.thickness, cfChannelSpecs.B.contactAngle, '#3498db'),
-]
+const xzBayerRow = unitRows - 1
+const cfProfiles: CfProfile[] = bayerCells2x2
+  .filter((cell) => cell.row === xzBayerRow)
+  .sort((a, b) => a.col - b.col)
+  .map((cell) => {
+    const spec = cfChannelSpecs[cell.key]
+    return makeCfProfile(cell.key, cell.x0, cell.x1, spec.thickness, spec.contactAngle, spec.diagramFill)
+  })
 
 function makeCfProfile(id: string, x0: number, x1: number, thickness: number, contactAngle: number, color: string): CfProfile {
   const baseInset = mgWidth / 2
@@ -939,13 +963,12 @@ function cfProfilePath(cf: CfProfile) {
   ].join(' ')
 }
 
-// Pixel-pitch DTI lines at boundaries x = 0, 1, 2
-const dtiX = [0.0, 1.0, 2.0]
+const dtiX = Array.from({ length: unitCols + 1 }, (_, i) => i * pitch)
 
-// pixel-units → svg pixels (XZ uses x∈[0,2])
-function xToSvg(x: number) { return pad.left + (x / 2.0) * plotW }
+// pixel-units -> svg pixels
+function xToSvg(x: number) { return pad.left + (x / totalX) * plotW }
 function zToY(z: number) { return pad.top + plotH - (z / totalZ) * plotH }
-const pxPerUm = plotW / 2.0
+const pxPerUm = plotW / totalX
 const dtiHalfWPx = (dtiWidth / 2) * pxPerUm
 const mgHalfWPx = (mgWidth / 2) * pxPerUm
 
@@ -953,13 +976,13 @@ const zTicks = [0, 1, 2, 3, 4, 5]
 
 // Right-side dimension callouts (layers + sub-features)
 const rightDims = [
-  { id: 'air',     param: 'air_t',    zTop: 5.63, zBot: 4.63, offset: 14, label: 'air.thickness = 1.0 µm' },
-  { id: 'ml',      param: 'ml_h',     zTop: 4.63, zBot: 4.03, offset: 14, label: 'microlens (height = 0.6)' },
-  { id: 'plan',    param: 'plan_t',   zTop: 4.03, zBot: 3.73, offset: 14, label: 'planarization.thickness = 0.3' },
-  { id: 'cf',      param: 'cf_t',     zTop: 3.73, zBot: 3.08, offset: 14, label: 'CF height = 0.60-0.65' },
-  { id: 'cf-grid', param: 'grid_t',   zTop: 3.55, zBot: 3.08, offset: 54, label: 'grid.t = 0.47' },
-  { id: 'barl',    param: 'barl_t',   zTop: 3.08, zBot: 3.00, offset: 14, label: 'barl Σ thickness ≈ 0.08' },
-  { id: 'si',      param: 'si_t',     zTop: 3.00, zBot: 0.00, offset: 14, label: 'silicon.thickness = 3.0' },
+  { id: 'air',     param: 'air_t',    zTop: airZTop, zBot: airZBot, offset: 14, label: `air.thickness = ${defaults.air.thickness.toFixed(1)} µm` },
+  { id: 'ml',      param: 'ml_h',     zTop: mlZTop, zBot: mlZBot, offset: 14, label: `microlens (height = ${mlH.toFixed(1)})` },
+  { id: 'plan',    param: 'plan_t',   zTop: planZTop, zBot: planZBot, offset: 14, label: `planarization.thickness = ${defaults.planarization.thickness.toFixed(1)}` },
+  { id: 'cf',      param: 'cf_t',     zTop: cfZTop, zBot: cfZBot, offset: 14, label: `CF height = ${cfMinThickness.toFixed(2)}-${cfMaxThickness.toFixed(2)}` },
+  { id: 'cf-grid', param: 'grid_t',   zTop: cfGridZTop, zBot: cfZBot, offset: 54, label: `grid.t = ${cfGridThickness.toFixed(2)}` },
+  { id: 'barl',    param: 'barl_t',   zTop: barlZTop, zBot: barlZBot, offset: 14, label: `barl Σ thickness ≈ ${barlTotal.toFixed(2)}` },
+  { id: 'si',      param: 'si_t',     zTop: siTop, zBot: siBot, offset: 14, label: `silicon.thickness = ${siTop.toFixed(1)}` },
 ]
 
 // Microlens dome paths
@@ -992,10 +1015,10 @@ const xyH = 540
 const xyPadLeft = 50
 const xyPadTop = 40
 const xyPlot = 380
-const xyScale = xyPlot / 2.0
+const xyScale = xyPlot / totalX
 const xyBottom = xyPadTop + xyPlot
 function xyX(v: number) { return xyPadLeft + v * xyScale }
-function xyY(v: number) { return xyPadTop + (2.0 - v) * xyScale }
+function xyY(v: number) { return xyPadTop + (totalY - v) * xyScale }
 function xyRectX(x0: number) { return xyX(x0) }
 function xyRectY(y1: number) { return xyY(y1) }
 function xyRectW(x0: number, x1: number) { return (x1 - x0) * xyScale }
@@ -1006,12 +1029,11 @@ const mgHalfXY = (mgWidth / 2) * xyScale
 const pdHalf = pdSizeXY / 2
 const pdHalfPx = pdHalf * xyScale
 
-const bayerCells = [
-  { x0: 0, x1: 1, y0: 0, y1: 1, cx: 0.5, cy: 0.5, label: 'R', fill: '#e74c3c' },
-  { x0: 1, x1: 2, y0: 0, y1: 1, cx: 1.5, cy: 0.5, label: 'G', fill: '#27ae60' },
-  { x0: 0, x1: 1, y0: 1, y1: 2, cx: 0.5, cy: 1.5, label: 'G', fill: '#27ae60' },
-  { x0: 1, x1: 2, y0: 1, y1: 2, cx: 1.5, cy: 1.5, label: 'B', fill: '#3498db' },
-]
+const bayerCells = bayerCells2x2.map((cell) => ({
+  ...cell,
+  label: cell.key,
+  fill: cfChannelSpecs[cell.key].diagramFill,
+}))
 
 type XyRect = { id: string; x0: number; x1: number; y0: number; y1: number }
 
@@ -1041,47 +1063,42 @@ const colorFilterFootprints = bayerCells.map((cell) => {
 function boundaryRects(width: number, prefix: string): XyRect[] {
   const half = width / 2
   const rects: XyRect[] = []
-  for (const x of [0, 1, 2]) {
+  for (const x of Array.from({ length: unitCols + 1 }, (_, i) => i * pitch)) {
     rects.push({
       id: `${prefix}-v-${x}`,
       x0: Math.max(0, x - half),
-      x1: Math.min(2, x + half),
+      x1: Math.min(totalX, x + half),
       y0: 0,
-      y1: 2,
+      y1: totalY,
     })
   }
-  for (const y of [0, 1, 2]) {
+  for (const y of Array.from({ length: unitRows + 1 }, (_, i) => i * pitch)) {
     rects.push({
       id: `${prefix}-h-${y}`,
       x0: 0,
-      x1: 2,
+      x1: totalX,
       y0: Math.max(0, y - half),
-      y1: Math.min(2, y + half),
+      y1: Math.min(totalY, y + half),
     })
   }
   return rects
 }
 
-function cfTopInsetFor(label: string) {
+function cfTopInsetFor(label: BayerChannel) {
   const spec = cfChannelSpecs[label]
   const protrusion = Math.max(0, spec.thickness - cfGridThickness)
   const theta = (Math.PI / 180) * Math.max(1, Math.min(89.999, spec.contactAngle))
   return protrusion / Math.tan(theta)
 }
 
-const pdFootprints = [
-  { x0: 0.5 - pdHalf, y0: 0.5 - pdHalf, x1: 0.5 + pdHalf, y1: 0.5 + pdHalf },
-  { x0: 1.5 - pdHalf, y0: 0.5 - pdHalf, x1: 1.5 + pdHalf, y1: 0.5 + pdHalf },
-  { x0: 0.5 - pdHalf, y0: 1.5 - pdHalf, x1: 0.5 + pdHalf, y1: 1.5 + pdHalf },
-  { x0: 1.5 - pdHalf, y0: 1.5 - pdHalf, x1: 1.5 + pdHalf, y1: 1.5 + pdHalf },
-]
+const pdFootprints = bayerCells.map((cell) => ({
+  x0: cell.cx - pdHalf,
+  y0: cell.cy - pdHalf,
+  x1: cell.cx + pdHalf,
+  y1: cell.cy + pdHalf,
+}))
 
-const mlFootprints = [
-  { cx: 0.5, cy: 0.5, rx: mlR, ry: mlR },
-  { cx: 1.5, cy: 0.5, rx: mlR, ry: mlR },
-  { cx: 0.5, cy: 1.5, rx: mlR, ry: mlR },
-  { cx: 1.5, cy: 1.5, rx: mlR, ry: mlR },
-]
+const mlFootprints = bayerCells.map((cell) => ({ cx: cell.cx, cy: cell.cy, rx: mlR, ry: defaults.microlens.radiusY }))
 
 // ===== Highlighting helpers =====
 const groupColors: Record<string, string> = {
@@ -1129,46 +1146,46 @@ function dimLayer(layerId: string) {
 
 // ===== Legend rows =====
 const legendRows = [
-  { id: 'pitch',     param: 'pixel.pitch',                value: '1.0 µm',          color: '#1d70b8',
+  { id: 'pitch',     param: 'pixel.pitch',                value: `${pitch.toFixed(1)} µm`, color: '#1d70b8',
     meaningEn: 'In-plane pixel pitch (x and y)',          meaningKo: '면내 픽셀 피치 (x, y 모두)' },
-  { id: 'unit_cell', param: 'pixel.unit_cell',            value: '[2, 2]',          color: '#1d70b8',
+  { id: 'unit_cell', param: 'pixel.unit_cell',            value: `[${unitRows}, ${unitCols}]`, color: '#1d70b8',
     meaningEn: 'Number of pixels in the periodic unit',   meaningKo: '주기 단위 셀의 픽셀 수' },
-  { id: 'air_t',     param: 'air.thickness',              value: '1.0 µm',          color: '#7f8c8d',
+  { id: 'air_t',     param: 'air.thickness',              value: `${defaults.air.thickness.toFixed(1)} µm`, color: '#7f8c8d',
     meaningEn: 'Air gap above the microlens',             meaningKo: '마이크로렌즈 위의 공기층 두께' },
-  { id: 'ml_h',      param: 'microlens.height',           value: '0.6 µm',          color: '#8e44ad',
+  { id: 'ml_h',      param: 'microlens.height',           value: `${mlH.toFixed(1)} µm`, color: '#8e44ad',
     meaningEn: 'Maximum lens sag (peak height)',          meaningKo: '렌즈 새그(최대 높이)' },
-  { id: 'ml_rx',     param: 'microlens.radius_x',         value: '0.48 µm',         color: '#8e44ad',
+  { id: 'ml_rx',     param: 'microlens.radius_x',         value: `${defaults.microlens.radiusX.toFixed(2)} µm`, color: '#8e44ad',
     meaningEn: 'Lens semi-axis in x',                     meaningKo: 'x 방향 반축' },
-  { id: 'ml_ry',     param: 'microlens.radius_y',         value: '0.48 µm',         color: '#8e44ad',
+  { id: 'ml_ry',     param: 'microlens.radius_y',         value: `${defaults.microlens.radiusY.toFixed(2)} µm`, color: '#8e44ad',
     meaningEn: 'Lens semi-axis in y',                     meaningKo: 'y 방향 반축' },
-  { id: 'ml_gap',    param: 'microlens.gap',              value: '0.04 µm',         color: '#8e44ad',
+  { id: 'ml_gap',    param: 'microlens.gap',              value: `${mlGap.toFixed(2)} µm`, color: '#8e44ad',
     meaningEn: 'Gap between adjacent microlens bases',    meaningKo: '인접 렌즈 사이 간격' },
   { id: 'shift',     param: 'microlens.shift.shift_x/y',  value: '0 (auto_cra)',    color: '#9b59b6',
     meaningEn: 'Lateral lens offset (CRA correction)',    meaningKo: '주광선각(CRA) 보정용 횡방향 오프셋' },
-  { id: 'plan_t',    param: 'planarization.thickness',    value: '0.3 µm',          color: '#7f8c8d',
+  { id: 'plan_t',    param: 'planarization.thickness',    value: `${defaults.planarization.thickness.toFixed(1)} µm`, color: '#7f8c8d',
     meaningEn: 'Spacer thickness between ML and CF',      meaningKo: '마이크로렌즈와 컬러 필터 사이 스페이서 두께' },
-  { id: 'cf_t',      param: 'color_filter.{red,green,blue}.thickness', value: '0.60-0.65 µm', color: '#27ae60',
+  { id: 'cf_t',      param: 'color_filter.{red,green,blue}.thickness', value: `${cfMinThickness.toFixed(2)}-${cfMaxThickness.toFixed(2)} µm`, color: '#27ae60',
     meaningEn: 'Per-channel color-filter height above the CFA base', meaningKo: 'CFA base 위 색별 컬러 필터 높이' },
-  { id: 'cf_angle',  param: 'color_filter.{red,green,blue}.contact_angle', value: '62-72°', color: '#1f8a5b',
+  { id: 'cf_angle',  param: 'color_filter.{red,green,blue}.contact_angle', value: `${cfMinContact}-${cfMaxContact}°`, color: '#1f8a5b',
     meaningEn: 'Sidewall taper above the metal-grid top', meaningKo: 'metal-grid top 위로 솟은 필터의 sidewall taper' },
-  { id: 'grid_w',    param: 'color_filter.grid.width',    value: '0.05 µm',         color: '#34495e',
+  { id: 'grid_w',    param: 'color_filter.grid.width',    value: `${mgWidth.toFixed(2)} µm`, color: '#34495e',
     meaningEn: 'Metal grid line width at pixel borders',  meaningKo: '픽셀 경계 금속 격자 선 너비' },
-  { id: 'grid_t',    param: 'color_filter.grid.thickness', value: '0.47 µm',        color: '#34495e',
+  { id: 'grid_t',    param: 'color_filter.grid.thickness', value: `${cfGridThickness.toFixed(2)} µm`, color: '#34495e',
     meaningEn: 'Metal grid height from the CFA base',      meaningKo: 'CFA base 기준 metal grid 높이' },
-  { id: 'barl_t',    param: 'barl.layers[i].thickness',   value: '0.01–0.03 µm',    color: '#16a085',
+  { id: 'barl_t',    param: 'barl.layers[i].thickness',   value: `${barlMinThickness.toFixed(3)}-${barlMaxThickness.toFixed(3)} µm`, color: '#16a085',
     meaningEn: 'Per-layer thickness of the AR stack',     meaningKo: '반사 방지 스택의 레이어별 두께' },
-  { id: 'si_t',      param: 'silicon.thickness',          value: '3.0 µm',          color: '#5d6d7e',
+  { id: 'si_t',      param: 'silicon.thickness',          value: `${siTop.toFixed(1)} µm`, color: '#5d6d7e',
     meaningEn: 'Total silicon substrate thickness',       meaningKo: '전체 실리콘 기판 두께' },
-  { id: 'dti_w',     param: 'silicon.dti.width',          value: '0.1 µm',          color: '#2980b9',
+  { id: 'dti_w',     param: 'silicon.dti.width',          value: `${dtiWidth.toFixed(1)} µm`, color: '#2980b9',
     meaningEn: 'Trench width at pixel boundaries',        meaningKo: '픽셀 경계 트렌치 너비' },
-  { id: 'dti_d',     param: 'silicon.dti.depth',          value: '3.0 µm',          color: '#2980b9',
+  { id: 'dti_d',     param: 'silicon.dti.depth',          value: `${dtiDepth.toFixed(1)} µm`, color: '#2980b9',
     meaningEn: 'Trench depth from top of Si',             meaningKo: '실리콘 상단 기준 트렌치 깊이' },
-  { id: 'pd_dxdy',   param: 'silicon.photodiode.size[dx,dy]', value: '0.7 × 0.7 µm', color: '#c0392b',
+  { id: 'pd_dxdy',   param: 'silicon.photodiode.size[dx,dy]', value: `${pdSizeXY.toFixed(1)} × ${pdSizeXY.toFixed(1)} µm`, color: '#c0392b',
     meaningEn: 'PD lateral footprint per pixel',          meaningKo: '픽셀당 PD 횡방향 면적' },
-  { id: 'pd_dz',     param: 'silicon.photodiode.size[dz]',     value: '2.0 µm',     color: '#c0392b',
+  { id: 'pd_dz',     param: 'silicon.photodiode.size[dz]',     value: `${pdSizeZ.toFixed(1)} µm`, color: '#c0392b',
     meaningEn: 'PD depth (z extent inside Si)',           meaningKo: '실리콘 내부 PD 깊이(z 방향 길이)' },
-  { id: 'pd_pz',     param: 'silicon.photodiode.position[z]',  value: '0.5 µm', color: '#c0392b',
-    meaningEn: 'PD top below top of Si',                  meaningKo: '실리콘 상단 기준 PD 상단까지의 거리' },
+  { id: 'pd_pz',     param: 'silicon.photodiode.position[z]',  value: `${pdCenterDepth.toFixed(1)} µm`, color: '#c0392b',
+    meaningEn: 'PD center depth below top of Si',         meaningKo: '실리콘 상단 기준 PD 중심 깊이' },
 ]
 </script>
 

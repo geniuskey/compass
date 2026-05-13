@@ -230,6 +230,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { bayerCells2x2, pixelStackDefaults } from '../composables/pixelStackDefaults'
 
 type Variant = 'pixel' | 'air' | 'microlens' | 'planarization' | 'color_filter' | 'barl' | 'silicon'
 type Rect = { id: string; x0: number; x1: number; y0: number; y1: number }
@@ -248,32 +249,26 @@ const filmPatternId = computed(() => `sectionFilmPattern-${idSuffix.value}`)
 const clipId = computed(() => `sectionClip-${idSuffix.value}`)
 const arrowRef = computed(() => `url(#${arrowId.value})`)
 
+const defaults = pixelStackDefaults
 const plot = { x: 56, y: 38, size: 172, cell: 86 }
-const unitSize = 2.0
+const unitSize = defaults.pitch * defaults.unitCell[1]
 const scale = plot.size / unitSize
 
-const gridWidth = 0.05
-const dtiWidth = 0.10
-const pdSize = 0.70
+const gridWidth = defaults.colorFilter.grid.width
+const dtiWidth = defaults.silicon.dti.width
+const pdSize = defaults.silicon.photodiode.sizeX
 const pdSizePx = pdSize * scale
-const mlRadiusX = 0.48
-const mlRadiusY = 0.48
-const mlN = 2.5
+const mlRadiusX = defaults.microlens.radiusX
+const mlRadiusY = defaults.microlens.radiusY
+const mlN = defaults.microlens.profileN
 const illustrativeCraShift = 0.16
-const colorFilterGridThickness = 0.47
+const colorFilterGridThickness = defaults.colorFilter.grid.thickness
 
-const channelSpecs: Record<string, { thickness: number; contactAngle: number }> = {
-  R: { thickness: 0.62, contactAngle: 66 },
-  G: { thickness: 0.60, contactAngle: 72 },
-  B: { thickness: 0.65, contactAngle: 62 },
-}
-
-const cells = [
-  { id: 'r0c0', key: 'R', row: 0, col: 0, x0: 0, x1: 1, y0: 0, y1: 1, cx: 0.5, cy: 0.5, fill: '#f87171' },
-  { id: 'r0c1', key: 'G', row: 0, col: 1, x0: 1, x1: 2, y0: 0, y1: 1, cx: 1.5, cy: 0.5, fill: '#4ade80' },
-  { id: 'r1c0', key: 'G', row: 1, col: 0, x0: 0, x1: 1, y0: 1, y1: 2, cx: 0.5, cy: 1.5, fill: '#4ade80' },
-  { id: 'r1c1', key: 'B', row: 1, col: 1, x0: 1, x1: 2, y0: 1, y1: 2, cx: 1.5, cy: 1.5, fill: '#60a5fa' },
-]
+const channelSpecs = defaults.colorFilter.channels
+const cells = bayerCells2x2.map((cell) => ({
+  ...cell,
+  fill: channelSpecs[cell.key].sectionFill,
+}))
 
 const visibleLabels = computed(() => {
   if (!['pixel', 'color_filter'].includes(variant.value)) return []
@@ -397,7 +392,7 @@ const meta = computed(() => {
       note: t('pitch, unit_cell, bayer_map', 'pitch, unit_cell, bayer_map'),
       calloutTitle: t('Top-level scope', '최상위 범위'),
       lines: [
-        t('2 x 2 periodic tile, 1.0 um pitch', '2 x 2 periodic tile, 1.0 um pitch'),
+        t(`${defaults.unitCell[0]} x ${defaults.unitCell[1]} periodic tile, ${defaults.pitch.toFixed(1)} um pitch`, `${defaults.unitCell[0]} x ${defaults.unitCell[1]} periodic tile, ${defaults.pitch.toFixed(1)} um pitch`),
         t('origin is the lower-left corner', 'origin은 좌측 하단 모서리'),
         t('row index maps to increasing y', 'row index는 +y 방향으로 증가'),
       ],
@@ -419,7 +414,7 @@ const meta = computed(() => {
       note: t('radius, gap, sharing, CRA shift', 'radius, gap, sharing, CRA shift'),
       calloutTitle: t('Footprint controls', 'footprint 제어'),
       lines: [
-        t('solid footprints use radius_x/y = 0.48 um', '실선 footprint는 radius_x/y = 0.48 um'),
+        t(`solid footprints use radius_x/y = ${mlRadiusX.toFixed(2)} um`, `실선 footprint는 radius_x/y = ${mlRadiusX.toFixed(2)} um`),
         t('dashed footprints show optional CRA shift', '점선은 optional CRA shift'),
         t('outer dashed outline shows sharing > 1', '외곽 점선은 sharing > 1 예'),
       ],
@@ -463,7 +458,7 @@ const meta = computed(() => {
       note: t('photodiode footprint and DTI grid', 'photodiode footprint와 DTI grid'),
       calloutTitle: t('Collection controls', '수광부 제어'),
       lines: [
-        t('PD windows are 0.7 x 0.7 um', 'PD window는 0.7 x 0.7 um'),
+        t(`PD windows are ${pdSize.toFixed(1)} x ${pdSize.toFixed(1)} um`, `PD window는 ${pdSize.toFixed(1)} x ${pdSize.toFixed(1)} um`),
         t('DTI lines include periodic outer edges', 'DTI line은 주기 외곽 edge 포함'),
         t('position offsets from pixel center', 'position은 pixel center 기준'),
       ],
