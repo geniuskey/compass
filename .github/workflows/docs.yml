@@ -47,6 +47,10 @@ jobs:
         run: npm run docs:visual-check
         working-directory: docs
 
+      - name: Guide interactive component check
+        run: npm run docs:guide-check
+        working-directory: docs
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

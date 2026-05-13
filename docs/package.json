@@ -6,7 +6,8 @@
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview",
-    "docs:visual-check": "node scripts/check-pixel-stack-visuals.mjs"
+    "docs:visual-check": "node scripts/check-pixel-stack-visuals.mjs",
+    "docs:guide-check": "node scripts/check-guide-interactives.mjs"
   },
   "devDependencies": {
     "@types/three": "^0.160.0",

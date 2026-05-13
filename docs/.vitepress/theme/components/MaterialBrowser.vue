@@ -73,7 +73,7 @@
 
         <!-- X-axis ticks -->
         <template v-for="wl in [400, 450, 500, 550, 600, 650, 700, 750]" :key="'xwl' + wl">
-          <line :x1="wlToX(wl)" y1="" :y1="plotBottom" :x2="wlToX(wl)" :y2="plotBottom + 4" stroke="var(--vp-c-text-3)" stroke-width="1" />
+          <line :x1="wlToX(wl)" :y1="plotBottom" :x2="wlToX(wl)" :y2="plotBottom + 4" stroke="var(--vp-c-text-3)" stroke-width="1" />
           <text :x="wlToX(wl)" :y="plotBottom + 22" text-anchor="middle" class="tick-label">{{ wl }}</text>
         </template>
         <text :x="padL + plotW / 2" :y="H - 4" text-anchor="middle" class="axis-label">Wavelength (nm)</text>
