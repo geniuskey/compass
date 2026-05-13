@@ -5,19 +5,17 @@ description: COMPASS에서 렌즈 사출 동공으로부터의 원뿔 조명 설
 
 # 원뿔 조명(Cone Illumination)
 
-실제 카메라 시스템에서 각 픽셀에 도달하는 빛은 단일 방향이 아닌 렌즈 사출 동공(Exit Pupil)의 전체 영역에서 옵니다. `ConeIllumination` 클래스는 조명 원뿔을 가중 평면파(Planewave)로 분해하고 결과를 적분하여 이를 모델링합니다.
+실제 카메라 시스템에서 각 픽셀에 도달하는 빛은 단일 방향이 아닌 렌즈 사출 동공(Exit Pupil)의 전체 영역에서 옵니다. `ConeIllumination` 클래스는 조명 원뿔을 가중 평면파(Planewave)로 분해하고 결과를 적분하여 이를 모델링합니다. 이 가이드는 실용적·코드 중심의 워크스루입니다.
 
-## 물리적 배경
+::: tip 이론 배경
+기저 물리 — CRA, F 넘버와 원뿔 각도 관계, 동공 가중, 박막 필터 응답의 각도 의존 이동 — 은 [픽셀 광학 효과](/ko/theory/sensor/pixel-optical-effects)와 [박막 광학](/ko/theory/optics/thin-film-optics#angle-induced-peak-shift)을 참고하세요.
+:::
+
+## 원뿔 파라미터
 
 <ConeIlluminationViewer />
 
-조명 원뿔은 다음으로 특성화됩니다:
-
-- **CRA(주광선 각도, Chief Ray Angle)**: 광축과 사출 동공에서 픽셀까지의 중심 광선 사이의 각도. CRA는 센서 중심에서 0이고 가장자리로 갈수록 증가합니다.
-- **F 넘버(F-number)**: $\theta_{\text{half}} = \arcsin(1 / 2F)$를 통해 조명의 반원뿔 각도를 결정합니다. F/2.0 렌즈는 약 14.5도의 반원뿔을 제공합니다.
-- **가중(Weighting)**: 원뿔 전체에 걸친 강도 분포. 원뿔 가장자리 근처의 빛은 일반적으로 중심보다 약합니다(예: 코사인 또는 cos^4 가중).
-
-원뿔 조명 결과는 원뿔 내 샘플링된 각도에서 여러 평면파 시뮬레이션(Simulation)을 실행한 다음 QE의 가중 평균을 계산하여 얻습니다.
+원뿔은 세 가지 제어값으로 기술됩니다: **CRA**(픽셀까지의 주광선각), **F 넘버**($\theta_{\text{half}} = \arcsin(1/2F)$로 반원뿔각을 결정 — F/2.0 ≈ 14.5°), 그리고 **동공 가중** 함수. 원뿔 조명 QE는 원뿔 내 샘플링 방향의 평면파 QE를 가중 평균한 값입니다.
 
 ::: info 컬러 필터 관점에서 cone illumination이 중요한 이유
 얇은 막 컬러 필터(또는 스택 내부의 Fabry-Pérot 공진기)는 경사 입사 시 투과 피크가 더 짧은 파장 쪽으로 이동합니다 — 대략 $\lambda(\theta) \approx \lambda_0\sqrt{1 - (\sin\theta / n_\text{eff})^2}$. 따라서 CRA 한 점에서의 평면파 한 번만으로는 실제 유한 조리개 렌즈가 만드는 피크 broadening과 centroid blue-shift를 과소평가하게 됩니다. Goossens 외 (2018)는 이 효과에 대한 합성곱 모델과 중심파장 보정식을 유도했으며, 그 파라미터는 이 페이지에서 사용하는 CRA·F 넘버 그대로입니다. 즉, 본 페이지의 각도 샘플링이 그 모델과 일치하도록 만들어 주는 핵심이며, 샘플 수가 부족하면 피크 broadening이 충분히 해상되지 않습니다. 자세한 내용은 [Key Papers § 6.4](/research/key-papers#_6-4-goossens-et-al-2018-finite-aperture-correction-for-fabry-perot-filters)와 [Thin Film Optics](/theory/optics/thin-film-optics#angle-induced-peak-shift)를 참조하세요.

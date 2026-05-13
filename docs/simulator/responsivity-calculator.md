@@ -12,32 +12,6 @@ Calculate spectral responsivity from TMM-based quantum efficiency. Compare per-c
 Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
 :::
 
-## Responsivity
-
-Spectral responsivity converts QE to an electrical output metric:
-
-**R(λ) = QE(λ) × qλ / (hc) = QE(λ) × λ_nm / 1240 [A/W]**
-
-Where:
-- **q** — electron charge (1.602 × 10⁻¹⁹ C)
-- **h** — Planck's constant (6.626 × 10⁻³⁴ J·s)
-- **c** — speed of light (2.998 × 10⁸ m/s)
-- **λ_nm** — wavelength in nanometers
-
-### Per-Channel Response
-
-Each color channel (R, G, B) has a distinct responsivity curve shaped by:
-- Color filter transmittance spectrum
-- Silicon absorption depth at each wavelength
-- Anti-reflection coating efficiency
-- Microlens collection efficiency
-
-### Ideal Si Photodiode
-
-The ideal response assumes QE = 1 at all wavelengths:
-
-**R_ideal(λ) = λ_nm / 1240 [A/W]**
-
-::: tip
-Peak responsivity wavelength differs from peak QE wavelength because responsivity includes the λ/1240 factor, which shifts the peak toward longer wavelengths.
+::: tip Learn more
+[Noise, SNR, and Dynamic Range](/theory/sensor/noise-and-snr) · [Quantum Efficiency](/theory/sensor/quantum-efficiency)
 :::

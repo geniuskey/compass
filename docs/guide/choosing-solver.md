@@ -7,11 +7,13 @@ description: Guide to selecting and configuring RCWA and FDTD solvers in COMPASS
 
 COMPASS supports multiple electromagnetic solver backends under a unified interface. This guide covers the available solvers, when to use each one, how to configure them, and how to validate convergence.
 
+::: tip Theory background
+For the physics of each method — what RCWA and FDTD actually compute and the assumptions they make — see [RCWA Explained](/theory/simulation/rcwa-explained), [FDTD Explained](/theory/simulation/fdtd-explained), and [RCWA vs FDTD](/theory/simulation/rcwa-vs-fdtd). This page covers the operational side: which solver to pick, how to configure it, and how to validate results.
+:::
+
 ## Available solvers
 
 ### RCWA solvers
-
-RCWA (Rigorous Coupled-Wave Analysis) is a frequency-domain method that solves Maxwell's equations for periodic structures by expanding fields and permittivity into Fourier harmonics. It is naturally suited to pixel arrays because pixels repeat periodically.
 
 | Name     | Library | Backend    | GPU     | Status      |
 |----------|---------|------------|---------|-------------|
@@ -20,8 +22,6 @@ RCWA (Rigorous Coupled-Wave Analysis) is a frequency-domain method that solves M
 | `meent`  | meent   | NumPy/JAX/PyTorch | CUDA/CPU | Multi-backend, good for validation |
 
 ### FDTD solvers
-
-FDTD (Finite-Difference Time-Domain) solves Maxwell's equations by stepping through time on a spatial grid. It is broadband in a single run and handles arbitrary (non-periodic) geometries.
 
 | Name            | Library | Backend   | GPU           | Status     |
 |-----------------|---------|-----------|---------------|------------|

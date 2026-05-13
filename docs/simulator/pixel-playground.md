@@ -12,18 +12,6 @@ The comprehensive pixel design tool. Configure every parameter of a BSI CMOS pix
 Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
 :::
 
-## Design Guidelines
-
-### Maximizing QE
-1. **Thick silicon** (3-4 μm) for red/NIR absorption
-2. **Optimized BARL** to minimize interface reflection
-3. **Thin color filter** to reduce parasitic absorption outside the passband
-4. **Low-loss planarization** layer
-
-### Minimizing Crosstalk
-1. Keep color filter absorption high (thick CF with sharp spectral edges)
-2. Reduce silicon-transmitted light (relevant for thin Si at long wavelengths)
-
-::: tip
-Start with a preset and adjust one parameter at a time to understand its effect. Compare the "BSI 1μm" and "High QE" presets to see the impact of silicon thickness and BARL optimization.
+::: tip Learn more
+[Image Sensor Optics](/theory/sensor/image-sensor-optics) · [Pixel Stack Config guide](/guide/pixel-stack-config)
 :::

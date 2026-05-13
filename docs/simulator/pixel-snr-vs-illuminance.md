@@ -12,28 +12,6 @@ Plot signal-to-noise ratio as a function of photon count (illuminance). Visualiz
 Use this browser tool for intuition, relative trends, and design-space exploration. Its local simplified model is not a substitute for RCWA/FDTD sign-off, silicon calibration, or vendor process data.
 :::
 
-## SNR Model
-
-**SNR = N / sqrt(σ_read² + N + (PRNU × N)²)**
-
-Where:
-- **N** — signal electrons (photon count × QE)
-- **σ_read** — read noise (electrons RMS)
-- **PRNU** — photo response non-uniformity factor
-
-### Noise Regions
-
-| Region | Dominant Noise | SNR Slope |
-|--------|---------------|-----------|
-| Low light | Read noise | SNR ∝ N |
-| Mid range | Shot noise | SNR ∝ √N |
-| High signal | PRNU | SNR saturates |
-
-### Key Markers
-- **Unity SNR (0 dB)** — signal equals noise, minimum useful exposure
-- **20 dB threshold** — often considered minimum for acceptable image quality
-- **Saturation** — full well capacity reached
-
-::: tip
-The gap between actual and ideal (shot-noise-limited) SNR curves reveals how much the sensor electronics degrade performance. A narrower gap indicates better sensor design.
+::: tip Learn more
+[Noise, SNR, and Dynamic Range](/theory/sensor/noise-and-snr)
 :::

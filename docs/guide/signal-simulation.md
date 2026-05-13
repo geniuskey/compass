@@ -7,13 +7,11 @@ description: Practical guide for computing pixel signal levels from QE simulatio
 
 ## Overview
 
-After computing the quantum efficiency (QE) spectrum of your pixel design, the next step is to predict the actual signal level under realistic imaging conditions. Signal-level simulation bridges the gap between raw QE curves and practical performance metrics like signal-to-noise ratio, white balance, and color accuracy.
+After computing the quantum efficiency (QE) spectrum of your pixel design, the next step is to predict the actual signal level under realistic imaging conditions. This guide is the practical, code-first walkthrough.
 
-### Why signal simulation matters
-
-- **QE alone is not enough**: Two pixel designs with identical peak QE may perform very differently under real illumination because of differences in spectral shape, color filter bandwidth, and IR leakage.
-- **Illuminant dependence**: A pixel that is well-balanced under D65 daylight may show significant color errors under incandescent (A) or fluorescent (F11) lighting.
-- **System-level optimization**: Signal simulation lets you evaluate the full camera module (lens + IR filter + sensor) rather than the pixel in isolation.
+::: tip Theory background
+For the physical model — illuminant SPD, scene reflectance, lens transmission, and the integration that turns QE into electrons — see [Signal Chain](/theory/sensor/signal-chain). For the noise and SNR side, see [Noise, SNR, and Dynamic Range](/theory/sensor/noise-and-snr).
+:::
 
 ### Workflow
 

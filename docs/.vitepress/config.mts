@@ -25,6 +25,9 @@ const theorySidebar = [
     { text: 'Pixel Optical Effects', link: '/theory/sensor/pixel-optical-effects' },
     { text: 'Quantum Efficiency', link: '/theory/sensor/quantum-efficiency' },
     { text: 'Signal Chain', link: '/theory/sensor/signal-chain' },
+    { text: 'Noise, SNR, and Dynamic Range', link: '/theory/sensor/noise-and-snr' },
+    { text: 'EMVA 1288 Characterization', link: '/theory/sensor/emva1288' },
+    { text: 'Resolution, MTF, and Pixel Scaling', link: '/theory/sensor/resolution-and-mtf' },
   ]},
   { text: 'Optical Simulation', collapsed: false, items: [
     { text: 'Simulation Overview', link: '/theory/simulation/' },
@@ -170,6 +173,9 @@ const theorySidebarKo = [
     { text: '픽셀 광학 효과', link: '/ko/theory/sensor/pixel-optical-effects' },
     { text: '양자 효율', link: '/ko/theory/sensor/quantum-efficiency' },
     { text: '신호 체인', link: '/ko/theory/sensor/signal-chain' },
+    { text: '노이즈, SNR, 다이나믹 레인지', link: '/ko/theory/sensor/noise-and-snr' },
+    { text: 'EMVA 1288 특성화', link: '/ko/theory/sensor/emva1288' },
+    { text: '해상도, MTF, 픽셀 스케일링', link: '/ko/theory/sensor/resolution-and-mtf' },
   ]},
   { text: '광학 시뮬레이션', collapsed: false, items: [
     { text: '시뮬레이션 개요', link: '/ko/theory/simulation/' },

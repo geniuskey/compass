@@ -5,19 +5,17 @@ description: Setting up cone illumination from a lens exit pupil in COMPASS, inc
 
 # Cone Illumination
 
-In a real camera system, light reaching each pixel comes from the full area of the lens exit pupil, not from a single direction. The `ConeIllumination` class models this by decomposing the illumination cone into weighted planewaves and integrating the results.
+In a real camera system, light reaching each pixel comes from the full area of the lens exit pupil, not from a single direction. The `ConeIllumination` class models this by decomposing the illumination cone into weighted planewaves and integrating the results. This guide is the practical, code-first walkthrough.
 
-## Physical background
+::: tip Theory background
+For the underlying physics — CRA, the F-number-to-cone-angle relationship, pupil weighting, and the angle-induced shift of thin-film filter response — see [Pixel Optical Effects](/theory/sensor/pixel-optical-effects) and [Thin Film Optics](/theory/optics/thin-film-optics#angle-induced-peak-shift).
+:::
+
+## Cone parameters
 
 <ConeIlluminationViewer />
 
-The illumination cone is characterized by:
-
-- **CRA (Chief Ray Angle)**: The angle between the optical axis and the central ray from the exit pupil to the pixel. CRA is zero at the sensor center and increases toward the edges.
-- **F-number**: Determines the half-cone angle of the illumination via $\theta_{\text{half}} = \arcsin(1 / 2F)$. An F/2.0 lens gives a half-cone of about 14.5 degrees.
-- **Weighting**: The intensity distribution across the cone. Light near the cone edge is typically weaker than at the center (e.g., cosine or cos^4 weighting).
-
-The cone illumination result is obtained by running multiple planewave simulations at sampled angles within the cone and then computing the weighted average of the QE.
+A cone is described by three controls: **CRA** (chief ray angle to the pixel), **F-number** (which sets the half-cone via $\theta_{\text{half}} = \arcsin(1/2F)$ — F/2.0 ≈ 14.5°), and a **pupil weighting** function. The cone-illuminated QE is the weighted average of planewave QE over sampled directions inside the cone.
 
 ::: info Why cone illumination matters for color filters
 A thin-film color filter (or any Fabry-Perot-like cavity in the stack) shifts its transmission peak to shorter wavelengths under oblique incidence -- approximately $\lambda(\theta) \approx \lambda_0\sqrt{1 - (\sin\theta / n_\text{eff})^2}$. A single plane wave at the CRA therefore underestimates both the peak broadening and the centroid blue-shift seen by a real lens with finite aperture. Goossens et al. (2018) derive a convolution model and a closed-form correction for this effect, parameterized exactly by the CRA and F-number used here. The angular sampling on this page is what makes the simulated transmittance match that model -- coarse sampling will under-resolve the peak broadening. See [Key Papers § 6.4](/research/key-papers#_6-4-goossens-et-al-2018-finite-aperture-correction-for-fabry-perot-filters) and the [Thin Film Optics](/theory/optics/thin-film-optics#angle-induced-peak-shift) page.

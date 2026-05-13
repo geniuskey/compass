@@ -12,23 +12,6 @@ title: MTF 분석기
 이 브라우저 도구는 직관 형성, 상대 경향 비교, 설계 공간 탐색에 사용하세요. 로컬에서 실행되는 간이 모델이며 RCWA/FDTD sign-off, 실리콘 보정, 벤더 공정 데이터를 대체하지 않습니다.
 :::
 
-## MTF 구성 요소
-
-### 픽셀 개구 MTF
-정사각형 개구의 MTF는 sinc 함수입니다:
-
-**MTF_pixel(f) = |sinc(π · f · pitch)|**
-
-필 팩터가 1 미만이면 유효 개구가 줄어들어 MTF가 변합니다.
-
-### 광학 회절 MTF
-원형 개구 렌즈의 회절 한계 MTF는 OTF의 절대값으로, f-넘버와 파장에 의해 결정됩니다. 컷오프 주파수 f_c = 1/(λ·F#)입니다.
-
-### 결합 시스템 MTF
-**MTF_system = MTF_pixel × MTF_optics**
-
-나이퀴스트 주파수(1/(2·pitch))에서의 MTF 값이 에일리어싱과 해상력의 핵심 지표입니다.
-
-::: warning
-나이퀴스트 주파수를 초과하는 공간 주파수 성분은 에일리어싱을 유발합니다. 안티에일리어싱 필터(OLPF)가 이를 완화할 수 있습니다.
+::: tip 더 알아보기
+[해상도, MTF, 픽셀 스케일링](/ko/theory/sensor/resolution-and-mtf) · [회절](/ko/theory/optics/diffraction)
 :::
