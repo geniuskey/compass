@@ -74,7 +74,12 @@
     <!-- Top view of cone samples -->
     <div class="topview-section">
       <h5 class="panel-title">{{ t('Cone samples (top view, sensor frame)', '원뿔 샘플 (위에서 본 모습, 센서 좌표계)') }}</h5>
-      <svg :viewBox="`0 0 ${tvW} ${tvH}`" class="topview-svg">
+      <svg
+        :viewBox="`0 0 ${tvW} ${tvH}`"
+        class="topview-svg"
+        role="img"
+        :aria-label="t('Fabry-Perot cone integration sample points in sensor-frame direction cosine space', '센서 좌표계 방향코사인 공간의 Fabry-Perot 콘 적분 샘플 포인트')"
+      >
         <!-- Concentric reference circles at fixed polar angles -->
         <template v-for="ang in tvRefAngles" :key="'rc' + ang">
           <circle
@@ -112,6 +117,7 @@
         <!-- Sample points -->
         <circle v-for="(p, i) in samplePoints" :key="'p' + i"
                 :cx="p.x" :cy="p.y" :r="p.r"
+                data-visual-id="fp-cone-sample"
                 :fill="p.color" :opacity="p.opacity" stroke="var(--vp-c-bg)" stroke-width="0.5" />
 
         <!-- Weight colorbar -->
@@ -153,7 +159,12 @@
 
     <!-- Spectrum chart -->
     <div class="chart-section">
-      <svg :viewBox="`0 0 ${chartW} ${chartH}`" class="chart-svg">
+      <svg
+        :viewBox="`0 0 ${chartW} ${chartH}`"
+        class="chart-svg"
+        role="img"
+        :aria-label="t('Fabry-Perot transmittance spectrum comparing normal incidence, plane wave at CRA, and cone integration', '수직 입사, CRA 평면파, 콘 적분을 비교하는 Fabry-Perot 투과율 스펙트럼')"
+      >
         <!-- Grid -->
         <template v-for="pct in [0, 25, 50, 75, 100]" :key="'gy' + pct">
           <line
@@ -192,7 +203,7 @@
         <!-- Plane wave at CRA -->
         <path :d="pathPlaneWave" fill="none" stroke="#3498db" stroke-width="2" />
         <!-- Cone-integrated -->
-        <path :d="pathCone" fill="none" stroke="#e74c3c" stroke-width="2.5" />
+        <path data-visual-id="fp-cone-spectrum" :d="pathCone" fill="none" stroke="#e74c3c" stroke-width="2.5" />
 
         <!-- Peak markers -->
         <template v-if="planePeak">

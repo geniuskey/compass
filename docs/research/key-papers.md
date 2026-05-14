@@ -155,6 +155,18 @@ Key papers on the optical simulation of CMOS image sensor (CIS) pixels.
 - **Summary**: Proposed a closed-form Snell's law-based method for computing per-layer optical stack shifts (microlens, color filter, passivation) for off-axis pixels. Validated on sub-micron BSI pixels (0.5-1.0 um) with quad CF and in-pixel DTI at CRA 0-35°, error <4.2% vs FDTD. COMPASS implements the Snell's law cumulative shift in `PixelStack._compute_snell_shift()`.
 - **Tags**: [CIS] [Microlens] [CRA] [Optical Alignment]
 
+### 4.6 Han, Chiou & Lin (2020) -- DTI and Inverted Pyramid Arrays
+
+- **Citation**: C.-F. Han, J.-M. Chiou, and J.-F. Lin, "Deep trench isolation and inverted pyramid array structures used to enhance optical efficiency of photodiode in CMOS image sensor via simulations," *Sensors*, vol. 20, no. 11, 3062, 2020. DOI: [10.3390/s20113062](https://doi.org/10.3390/s20113062)
+- **Summary**: A 3D optical simulation study of BSI CIS pixels over 300-1100 nm that sweeps DTI depth and inverted pyramid array (IPA) pitch. The paper reports that DTI depth monotonically improves peak optical efficiency, while the optimum IPA pitch depends on wavelength and color channel; in the NIR region, the DTI + IPA combination can raise the growth ratio up to 82.2%. For COMPASS, this is a practical parameter-sweep reference for adding backside texture primitives and validating DTI/IPA optical-efficiency trends beyond a flat silicon interface.
+- **Tags**: [CIS] [BSI] [DTI] [Light Trapping] [FDTD]
+
+### 4.7 Kim & Kim (2019) -- Quad-WRGB with Spatial DTI
+
+- **Citation**: Y. Kim and Y. Kim, "High-Sensitivity Pixels with a Quad-WRGB Color Filter and Spatial Deep-Trench Isolation," *Sensors*, vol. 19, no. 21, 4653, 2019. DOI: [10.3390/s19214653](https://doi.org/10.3390/s19214653)
+- **Summary**: Introduced a quad-WRGB color filter array combined with spatial DTI (S-DTI) and a spatial tungsten grid (S-WG), simulated on 16 x 16 BSI pixel arrays at 1.0, 0.9, and 0.8 um pitch. The reported sensitivity gains reach 58.2%, 67.0%, and 66.3% for those pitches compared with the reference structure. This is a useful COMPASS reference for grouped-color CFA layouts where isolation should exist between different-color groups but not necessarily inside a same-color binning cluster.
+- **Tags**: [CIS] [Color Filter] [DTI] [Tungsten Grid] [Sub-micron Pixels]
+
 ---
 
 ## 5. Numerical Stability
@@ -203,6 +215,12 @@ Papers on microlenses and color filters, key elements of image sensor optical st
 - **Summary**: This paper derives an analytical model for the spectral shift and peak broadening that occur when a thin-film Fabry-Perot filter, integrated directly on the image sensor, is illuminated by a focused cone of light rather than a single plane wave. The transmittance of an oblique-incidence Fabry-Perot filter shifts to shorter wavelengths approximately as $\lambda(\theta) \approx \lambda_0 \sqrt{1 - (\sin\theta / n_\text{eff})^2}$, so any finite-aperture (low f-number) or off-axis (large chief ray angle, CRA) illumination integrates over a distribution of incidence angles, broadening and blue-shifting the transmission peak. The authors express the measured transmittance as a convolution of the plane-wave transmittance with an angle-dependent kernel determined by the f-number and CRA, and provide a compact closed-form correction for the central wavelength of each pixel as a function of its position on the sensor. The companion paper (Goossens et al. 2019, [10.1364/AO.58.001789](https://doi.org/10.1364/AO.58.001789)) extends the model to vignetted apertures.
 - **Relevance to COMPASS**: Directly motivates the `cone_illumination` source and per-pixel CRA shift handled by `GeometryBuilder`. The same angle-induced peak shift mechanism produces the Fabry-Perot fringes discussed in [Thin Film Optics](/theory/optics/thin-film-optics) and the off-axis QE asymmetry covered by [Hwang & Kim (2023)](#_4-5-hwang-kim-2023-optical-stack-alignment-for-off-axis-pixels). When validating COMPASS against a measured spectral camera or color filter, the convolution kernel from this paper sets the angular bandwidth that must be sampled (number of plane waves in the cone) for the simulated transmittance to match the measurement.
 - **Tags**: [Fabry-Perot] [Color Filter] [Cone Illumination] [CRA] [Spectral Camera]
+
+### 6.5 Seok & Kim (2019) -- Front-Inner Lens for Thin BSI Pixels
+
+- **Citation**: G. Seok and Y. Kim, "Front-Inner Lens for High Sensitivity of CMOS Image Sensors," *Sensors*, vol. 19, no. 7, 1536, 2019. DOI: [10.3390/s19071536](https://doi.org/10.3390/s19071536)
+- **Summary**: Proposed a low-index front-inner lens placed on the front side of a BSI pixel, between FEOL and BEOL, to redirect long-wavelength light back into shallow photodiodes. The study fixes 1.0 um pixel pitch, sweeps 3.0/2.0/1.0 um pixel depth, compares MgF2 and air inner-lens materials, and evaluates 0/10/20° incident angles with STI, DTI, and tungsten-grid variants. For COMPASS, this motivates a future multi-lens pixel stack where the visible top microlens and embedded low-index lens can be varied independently.
+- **Tags**: [CIS] [Microlens] [BSI] [FDTD] [Thin Pixels]
 
 ---
 

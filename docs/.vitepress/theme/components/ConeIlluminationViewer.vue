@@ -40,7 +40,12 @@
     </div>
 
     <div class="svg-wrapper">
-      <svg :viewBox="`0 0 ${svgW} ${svgH}`" class="cone-svg">
+      <svg
+        :viewBox="`0 0 ${svgW} ${svgH}`"
+        class="cone-svg"
+        role="img"
+        :aria-label="t('Cone illumination cross-section with microlens, refracted ray bundles, and photodiode foci', '마이크로렌즈, 굴절된 광선 묶음, 포토다이오드 초점을 보여주는 콘 조명 단면')"
+      >
         <!-- Background regions -->
         <rect x="0" y="0" :width="svgW" :height="mlY" fill="#f0f8ff" opacity="0.3" />
         <rect x="0" :y="mlY" :width="svgW" :height="pdY - mlY" fill="#e8f0e8" opacity="0.3" />
@@ -53,6 +58,7 @@
         <!-- Microlens (curved) -->
         <path
           :d="microlensPath"
+          data-visual-id="cone-microlens"
           fill="#dda0dd"
           fill-opacity="0.5"
           stroke="#9b59b6"
@@ -82,7 +88,7 @@
         <text :x="pixelCenterX" :y="cfY + cfH / 2 + 3" text-anchor="middle" class="small-label">{{ t('Color Filter', '컬러 필터') }}</text>
 
         <!-- Photodiode region -->
-        <rect :x="pdLeft" :y="pdY" :width="pdW" :height="pdH" fill="#f5deb3" opacity="0.5" stroke="#d2691e" stroke-width="1.2" rx="2" />
+        <rect data-visual-id="cone-photodiode" :x="pdLeft" :y="pdY" :width="pdW" :height="pdH" fill="#f5deb3" opacity="0.5" stroke="#d2691e" stroke-width="1.2" rx="2" />
         <text :x="pixelCenterX" :y="pdY + pdH / 2 + 4" text-anchor="middle" class="region-label">{{ t('Photodiode', '포토다이오드') }}</text>
 
         <!-- Light rays: parallel bundles per cone direction, Snell-bent at the stack -->
@@ -116,6 +122,7 @@
             :cx="focus.x"
             :cy="pdY + 6"
             :r="focus.isChief ? 3 : 2"
+            :data-visual-id="focus.isChief ? 'cone-chief-focus' : 'cone-bundle-focus'"
             :fill="focus.color"
             :opacity="focus.isChief ? 0.9 : 0.7"
           />

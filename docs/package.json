@@ -7,9 +7,11 @@
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview",
     "docs:visual-check": "node scripts/check-pixel-stack-visuals.mjs",
-    "docs:guide-check": "node scripts/check-guide-interactives.mjs"
+    "docs:guide-check": "node scripts/check-guide-interactives.mjs",
+    "docs:browser-check": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/three": "^0.160.0",
     "markdown-it-mathjax3": "^4.3.2",
     "mermaid": "^11.14.0",

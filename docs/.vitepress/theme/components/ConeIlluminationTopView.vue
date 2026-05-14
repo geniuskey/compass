@@ -70,7 +70,12 @@
     </div>
 
     <div class="svg-wrapper">
-      <svg :viewBox="`0 0 ${svgSize} ${svgSize}`" class="topview-svg">
+      <svg
+        :viewBox="`0 0 ${svgSize} ${svgSize}`"
+        class="topview-svg"
+        role="img"
+        :aria-label="t('Top view of cone illumination samples over a 2 by 2 Bayer pixel tile', '2 x 2 베이어 픽셀 타일 위의 콘 조명 샘플 상면도')"
+      >
         <defs>
           <marker id="topviewCraArrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
             <polygon points="0 0, 8 3, 0 6" fill="#e67e22" />
@@ -155,6 +160,7 @@
           :cx="coneCenterSvgX"
           :cy="coneCenterSvgY"
           :r="footprintRadiusPx"
+          data-visual-id="cone-top-footprint"
           fill="#3498db"
           fill-opacity="0.1"
           stroke="#3498db"
@@ -213,6 +219,7 @@
           :cx="pt.svgX"
           :cy="pt.svgY"
           r="3"
+          data-visual-id="cone-top-sample"
           :fill="pt.color"
           :opacity="pt.opacity"
           stroke="none"

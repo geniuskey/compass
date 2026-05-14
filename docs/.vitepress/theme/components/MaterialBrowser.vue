@@ -24,6 +24,8 @@
       <svg
         :viewBox="`0 0 ${W} ${H}`"
         class="material-svg"
+        role="img"
+        :aria-label="t('Material refractive index and extinction coefficient chart over visible wavelengths', '가시광선 파장대의 재료 굴절률 및 소광 계수 차트')"
         @mousemove="onMouseMove"
         @mouseleave="hoverData = null"
       >
@@ -79,10 +81,10 @@
         <text :x="padL + plotW / 2" :y="H - 4" text-anchor="middle" class="axis-label">Wavelength (nm)</text>
 
         <!-- n curve (blue) -->
-        <path :d="nPath" fill="none" stroke="#3498db" stroke-width="2.5" />
+        <path data-visual-id="material-n-curve" :d="nPath" fill="none" stroke="#3498db" stroke-width="2.5" />
 
         <!-- k curve (red) -->
-        <path :d="kPath" fill="none" stroke="#e74c3c" stroke-width="2.5" />
+        <path data-visual-id="material-k-curve" :d="kPath" fill="none" stroke="#e74c3c" stroke-width="2.5" />
 
         <!-- Hover vertical line -->
         <line

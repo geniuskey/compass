@@ -155,6 +155,18 @@ CMOS 이미지 센서(CIS) 픽셀의 광학 시뮬레이션에 관한 핵심 논
 - **요약**: 비축 픽셀에 대해 레이어별 광학 스택 시프트(마이크로렌즈, 컬러 필터, 패시베이션)를 계산하는 스넬 법칙 기반 폐쇄형 방법을 제안한 논문이다. 쿼드 CF와 인픽셀 DTI가 적용된 서브마이크론 BSI 픽셀(0.5-1.0 um)에서 CRA 0-35° 범위로 검증하였으며, FDTD 대비 오차 <4.2%를 달성했다. COMPASS는 `PixelStack._compute_snell_shift()`에서 스넬 법칙 누적 시프트를 구현한다.
 - **태그**: [CIS] [마이크로렌즈] [CRA] [광학정렬]
 
+### 4.6 Han, Chiou & Lin (2020) -- DTI와 역피라미드 어레이
+
+- **인용**: C.-F. Han, J.-M. Chiou, and J.-F. Lin, "Deep trench isolation and inverted pyramid array structures used to enhance optical efficiency of photodiode in CMOS image sensor via simulations," *Sensors*, vol. 20, no. 11, 3062, 2020. DOI: [10.3390/s20113062](https://doi.org/10.3390/s20113062)
+- **요약**: 300-1100 nm 범위의 BSI CIS 픽셀에 대해 DTI 깊이와 역피라미드 어레이(IPA) 피치를 스윕한 3D 광학 시뮬레이션 논문이다. DTI 깊이가 증가할수록 피크 광학 효율이 전반적으로 증가하고, 최적 IPA 피치는 파장과 컬러 채널에 따라 달라진다고 보고한다. NIR 영역에서는 DTI + IPA 조합의 성장률이 최대 82.2%까지 올라간다. COMPASS에서는 평탄한 실리콘 계면을 넘어 후면 텍스처 primitive와 DTI/IPA 효율 트렌드 검증을 추가할 때 직접적인 기준으로 쓸 수 있다.
+- **태그**: [CIS] [BSI] [DTI] [광트래핑] [FDTD]
+
+### 4.7 Kim & Kim (2019) -- Quad-WRGB와 Spatial DTI
+
+- **인용**: Y. Kim and Y. Kim, "High-Sensitivity Pixels with a Quad-WRGB Color Filter and Spatial Deep-Trench Isolation," *Sensors*, vol. 19, no. 21, 4653, 2019. DOI: [10.3390/s19214653](https://doi.org/10.3390/s19214653)
+- **요약**: Quad-WRGB 컬러 필터 배열에 spatial DTI(S-DTI)와 spatial tungsten grid(S-WG)를 결합한 구조를 제안하고, 1.0, 0.9, 0.8 um 피치의 16 x 16 BSI 픽셀 배열에서 3D 광학 시뮬레이션으로 평가한 논문이다. 기준 구조 대비 감도 향상은 각 피치에서 최대 58.2%, 67.0%, 66.3%로 보고된다. COMPASS에서는 같은 색상 binning 클러스터 내부에는 격리를 줄이고 다른 색상 그룹 사이에는 격리를 유지하는 grouped-CFA layout 모델의 기준 문헌으로 유용하다.
+- **태그**: [CIS] [컬러필터] [DTI] [텅스텐그리드] [서브마이크론픽셀]
+
 ---
 
 ## 5. 수치 안정성
@@ -196,6 +208,12 @@ RCWA 시뮬레이션의 수치 안정성 확보에 관한 논문들이다.
 - **인용**: P. B. Catrysse, W. Suh, S. Fan, and M. Peeters, "Integrated color pixels in 0.18-um complementary metal oxide semiconductor technology," *J. Opt. Soc. Am. A*, vol. 20, no. 12, pp. 2293--2306, 2003. DOI: [10.1364/JOSAA.20.002293](https://doi.org/10.1364/JOSAA.20.002293)
 - **요약**: 0.18um CMOS 공정으로 제작된 집적 컬러 픽셀의 광학 성능을 FDTD로 분석한 논문이다. 컬러 필터 배열, 마이크로렌즈, 금속 배선 등 실제 픽셀 구조의 전자기 시뮬레이션 방법론을 제시했다. COMPASS의 풀스택 픽셀 시뮬레이션 접근법의 선행 연구이다.
 - **태그**: [CIS] [컬러필터] [FDTD]
+
+### 6.4 Seok & Kim (2019) -- 얇은 BSI 픽셀용 Front-Inner Lens
+
+- **인용**: G. Seok and Y. Kim, "Front-Inner Lens for High Sensitivity of CMOS Image Sensors," *Sensors*, vol. 19, no. 7, 1536, 2019. DOI: [10.3390/s19071536](https://doi.org/10.3390/s19071536)
+- **요약**: 얕은 포토다이오드에서 장파장 광을 다시 흡수 영역으로 되돌리기 위해 BSI 픽셀의 front side, 즉 FEOL과 BEOL 사이에 저굴절률 front-inner lens를 배치하는 구조를 제안한 논문이다. 1.0 um 픽셀 피치에서 3.0/2.0/1.0 um 픽셀 깊이, MgF2/air inner-lens 재료, 0/10/20° 입사각, STI/DTI/tungsten-grid 조건을 비교한다. COMPASS에서는 상부 마이크로렌즈와 내장 저굴절률 렌즈를 독립적으로 바꾸는 다중 렌즈 픽셀 스택 기능의 근거가 된다.
+- **태그**: [CIS] [마이크로렌즈] [BSI] [FDTD] [얇은픽셀]
 
 ---
 

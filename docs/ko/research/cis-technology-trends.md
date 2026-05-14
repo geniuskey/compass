@@ -420,6 +420,17 @@ COMPASS에서의 시뮬레이션 결과 신뢰성을 위한 핵심 검증 기준
 | RCWA 수렴 | Fourier order 증가 시 수렴 확인 | S-matrix만 사용 (T-matrix 불가) |
 | 크로스토크 | 인접 픽셀 신호 누설 비율 | DTI 유무에 따른 차이 검증 |
 
+### 9.5 Image Sensors World Watchlist의 COMPASS 반영
+
+Image Sensors World는 1차 검증 소스라기보다 최신 CIS 논문과 업계 글을 빠르게 발견하기 위한 소스에 가깝다. 현재 COMPASS 범위에 바로 연결되는 항목은 아래와 같으며, 원 논문은 [핵심 학술 논문 정리](/ko/research/key-papers)에 추가했다.
+
+| Image Sensors World 글 | 유용한 기술 신호 | COMPASS 적용 방향 |
+|------------------------|------------------|-------------------|
+| [Front Side Microlens for BSI Pixel](https://image-sensors-world.blogspot.com/2019/03/front-side-microlens-for-bsi-pixel.html) | 얕은 BSI 픽셀에서 장파장 흡수를 보완하기 위해 저굴절률 embedded front-inner lens를 사용 | 마이크로렌즈 모델을 단일 상부 표면에서 재료, 깊이, 형상을 독립적으로 갖는 다중 렌즈 스택으로 확장 |
+| [DTI and Pyramids in 0.9um Pixel Design](https://image-sensors-world.blogspot.com/2020/05/dti-and-pyramids-in-09um-pixel-design.html) | DTI 깊이와 IPA 피치가 visible/NIR 광학 효율 피크를 함께 결정 | 후면 실리콘을 항상 평탄 계면으로 두지 않고, DTI 검증 backlog에 backside IPA texture와 파장별 pitch sweep 추가 |
+| [Sony Enhances IR Sensitivity by 80% with Pyramidal Structure](https://image-sensors-world.blogspot.com/2017/06/sony-enhances-ir-sensitivity-by-80-with.html) | 400 nm 피치 IPA와 DTI를 결합한 BI-CIS prototype에서 850 nm NIR 감도 향상을 보고 | DTI + IPA 시뮬레이션 트렌드를 공개 실측 결과와 비교할 때 sanity check로 사용 |
+| [IISW 2025 proceedings available](https://image-sensors-world.blogspot.com/2025/09/international-image-sensor-workshop.html) | IISS 아카이브에서 DOI가 붙은 최신 pixel/process 논문을 공개 | IISW 주기마다 sub-0.5 um FDTI, RGBZ/NIR, global shutter, stacked pixel benchmark geometry를 재검토 |
+
 ---
 
 ## 참고 자료 및 출처
@@ -437,16 +448,18 @@ COMPASS에서의 시뮬레이션 결과 신뢰성을 위한 핵심 검증 기준
 
 ### 학술 논문
 - ["CMOS Image Sensor for Broad Spectral Range with >90% Quantum Efficiency" (Small, 2023)](https://scholar.google.com/scholar?q=CMOS+Image+Sensor+for+Broad+Spectral+Range+with+%3E90%25+Quantum+Efficiency)
-- ["Deep Trench Isolation and Inverted Pyramid Array Structures for CMOS Image Sensor" (Sensors, 2020)](https://scholar.google.com/scholar?q=Deep+Trench+Isolation+and+Inverted+Pyramid+Array+Structures+for+CMOS+Image+Sensor)
+- ["Deep Trench Isolation and Inverted Pyramid Array Structures Used to Enhance Optical Efficiency of Photodiode in CMOS Image Sensor via Simulations" (Sensors, 2020)](https://doi.org/10.3390/s20113062)
+- ["Front-Inner Lens for High Sensitivity of CMOS Image Sensors" (Sensors, 2019)](https://doi.org/10.3390/s19071536)
+- ["High-Sensitivity Pixels with a Quad-WRGB Color Filter and Spatial Deep-Trench Isolation" (Sensors, 2019)](https://doi.org/10.3390/s19214653)
 - ["Automotive 2.1um Full-Depth DTI CMOS Image Sensor with 120dB Dynamic Range" (Sensors, 2023)](https://scholar.google.com/scholar?q=Automotive+2.1um+Full-Depth+DTI+CMOS+Image+Sensor+with+120dB+Dynamic+Range)
 - ["Adjoint-Assisted Shape Optimization of Microlenses for CMOS Image Sensors" (PMC, 2024)](https://scholar.google.com/scholar?q=Adjoint-Assisted+Shape+Optimization+of+Microlenses+for+CMOS+Image+Sensors)
-- ["IR Sensitivity Enhancement of CMOS Image Sensor with Diffractive Light Trapping Pixels" (Scientific Reports, 2017)](https://www.nature.com/articles/s41598-017-09945-8)
+- ["IR Sensitivity Enhancement of CMOS Image Sensor with Diffractive Light Trapping Pixels" (Scientific Reports, 2017)](https://doi.org/10.1038/s41598-017-04200-y)
 
 ### 업계 발표 및 뉴스
 - [IEEE Spectrum, "Samsung and OmniVision Claim Smallest Camera Pixels" (2022)](https://spectrum.ieee.org/samsung-omnivision-smallest-camera-pixels)
 - [SK hynix Newsroom, "Evolution of Pixel Technology in CMOS Image Sensor"](https://news.skhynix.com/evolution-of-pixel-technology-in-cmos-image-sensor/)
 - [DPReview, "Tech Timeline: Milestones in Sensor Development"](https://www.dpreview.com/)
-- [Image Sensors World (imagesensors.org)](http://imagesensors.blogspot.com/), [IISW 워크숍 논문들](https://www.imagesensors.org/)
+- [Image Sensors World](https://image-sensors-world.blogspot.com/), [IISS 2025 논문 목록](https://imagesensors.org/2025-papers/)
 
 ---
 

@@ -41,3 +41,5 @@ docs/.vitepress/cache/
 .coverage
 htmlcov/
 docs/package-lock.json
+docs/test-results/
+docs/playwright-report/

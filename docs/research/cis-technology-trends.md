@@ -422,6 +422,17 @@ Key verification criteria for ensuring simulation result reliability in COMPASS:
 | RCWA convergence | Confirm convergence with increasing Fourier order | S-matrix only (T-matrix not allowed) |
 | Crosstalk | Signal leakage ratio to adjacent pixels | Verify difference with/without DTI |
 
+### 9.5 Image Sensors World Watchlist Applied to COMPASS
+
+Image Sensors World is useful as a discovery feed rather than a primary validation source. The entries below are the most actionable items found for the current COMPASS scope; the primary papers are tracked in [Key Academic Papers](/research/key-papers).
+
+| Image Sensors World item | Useful technical signal | COMPASS application |
+|--------------------------|-------------------------|---------------------|
+| [Front Side Microlens for BSI Pixel](https://image-sensors-world.blogspot.com/2019/03/front-side-microlens-for-bsi-pixel.html) | Front-inner lens structures use a low-index embedded feature to recover long-wavelength absorption in shallow BSI pixels | Extend microlens modeling from a single top surface to a multi-lens stack with independent material, depth, and shape parameters |
+| [DTI and Pyramids in 0.9um Pixel Design](https://image-sensors-world.blogspot.com/2020/05/dti-and-pyramids-in-09um-pixel-design.html) | DTI depth and IPA pitch jointly determine visible/NIR optical-efficiency peaks | Add backside IPA texture parameters to the DTI validation backlog and sweep IPA pitch by wavelength instead of treating backside silicon as always flat |
+| [Sony Enhances IR Sensitivity by 80% with Pyramidal Structure](https://image-sensors-world.blogspot.com/2017/06/sony-enhances-ir-sensitivity-by-80-with.html) | Prototype BI-CIS data couples 400 nm-pitch IPA with DTI and reports strong 850 nm NIR gain | Use as an experimental sanity check when comparing simulated DTI + IPA trends against published measurements |
+| [IISW 2025 proceedings available](https://image-sensors-world.blogspot.com/2025/09/international-image-sensor-workshop.html) | The IISS archive exposes current pixel-process papers with DOI-backed records | Review each IISW cycle for new benchmark geometries, especially sub-0.5 um FDTI, RGBZ/NIR, global shutter, and stacked pixel papers |
+
 ---
 
 ## References and Sources
@@ -439,16 +450,18 @@ Key verification criteria for ensuring simulation result reliability in COMPASS:
 
 ### Academic Papers
 - ["CMOS Image Sensor for Broad Spectral Range with >90% Quantum Efficiency" (Small, 2023)](https://scholar.google.com/scholar?q=CMOS+Image+Sensor+for+Broad+Spectral+Range+with+%3E90%25+Quantum+Efficiency)
-- ["Deep Trench Isolation and Inverted Pyramid Array Structures for CMOS Image Sensor" (Sensors, 2020)](https://scholar.google.com/scholar?q=Deep+Trench+Isolation+and+Inverted+Pyramid+Array+Structures+for+CMOS+Image+Sensor)
+- ["Deep Trench Isolation and Inverted Pyramid Array Structures Used to Enhance Optical Efficiency of Photodiode in CMOS Image Sensor via Simulations" (Sensors, 2020)](https://doi.org/10.3390/s20113062)
+- ["Front-Inner Lens for High Sensitivity of CMOS Image Sensors" (Sensors, 2019)](https://doi.org/10.3390/s19071536)
+- ["High-Sensitivity Pixels with a Quad-WRGB Color Filter and Spatial Deep-Trench Isolation" (Sensors, 2019)](https://doi.org/10.3390/s19214653)
 - ["Automotive 2.1um Full-Depth DTI CMOS Image Sensor with 120dB Dynamic Range" (Sensors, 2023)](https://scholar.google.com/scholar?q=Automotive+2.1um+Full-Depth+DTI+CMOS+Image+Sensor+with+120dB+Dynamic+Range)
 - ["Adjoint-Assisted Shape Optimization of Microlenses for CMOS Image Sensors" (PMC, 2024)](https://scholar.google.com/scholar?q=Adjoint-Assisted+Shape+Optimization+of+Microlenses+for+CMOS+Image+Sensors)
-- ["IR Sensitivity Enhancement of CMOS Image Sensor with Diffractive Light Trapping Pixels" (Scientific Reports, 2017)](https://www.nature.com/articles/s41598-017-09945-8)
+- ["IR Sensitivity Enhancement of CMOS Image Sensor with Diffractive Light Trapping Pixels" (Scientific Reports, 2017)](https://doi.org/10.1038/s41598-017-04200-y)
 
 ### Industry Presentations and News
 - [IEEE Spectrum, "Samsung and OmniVision Claim Smallest Camera Pixels" (2022)](https://spectrum.ieee.org/samsung-omnivision-smallest-camera-pixels)
 - [SK hynix Newsroom, "Evolution of Pixel Technology in CMOS Image Sensor"](https://news.skhynix.com/evolution-of-pixel-technology-in-cmos-image-sensor/)
 - [DPReview, "Tech Timeline: Milestones in Sensor Development"](https://www.dpreview.com/)
-- Image Sensors World (imagesensors.org), IISW workshop papers
+- [Image Sensors World](https://image-sensors-world.blogspot.com/), [IISS 2025 papers](https://imagesensors.org/2025-papers/)
 
 ---
 

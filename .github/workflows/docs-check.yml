@@ -24,6 +24,10 @@ jobs:
         run: npm install
         working-directory: docs
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: docs
+
       # VitePress fails the build on unresolved internal markdown links by default.
       - name: Build VitePress (dead-link check)
         run: npm run docs:build
@@ -35,6 +39,10 @@ jobs:
 
       - name: Guide interactive component check
         run: npm run docs:guide-check
+        working-directory: docs
+
+      - name: Browser smoke test
+        run: npm run docs:browser-check
         working-directory: docs
 
   link-and-sync:
