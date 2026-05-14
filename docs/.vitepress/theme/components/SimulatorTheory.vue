@@ -41,8 +41,6 @@
 import { computed, onMounted, watch, nextTick } from 'vue'
 import { useLocale } from '../composables/useLocale'
 
-// ... interfaces ...
-
 const props = defineProps<{ slug: string }>()
 const { isKo, t } = useLocale()
 
@@ -60,9 +58,6 @@ const typesetMath = () => {
 
 onMounted(typesetMath)
 watch(() => props.slug, typesetMath)
-
-// ... refs and theoryEntries ...
-
 
 type Localized = { en: string; ko: string }
 
@@ -84,13 +79,6 @@ interface TheoryEntry {
   formulas: Formula[]
   concepts: Localized[]
   references: Reference[]
-}
-
-const props = defineProps<{ slug: string }>()
-const { isKo, t } = useLocale()
-
-function pick(value: Localized) {
-  return isKo.value ? value.ko : value.en
 }
 
 const refs = {
