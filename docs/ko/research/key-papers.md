@@ -167,6 +167,12 @@ CMOS 이미지 센서(CIS) 픽셀의 광학 시뮬레이션에 관한 핵심 논
 - **요약**: Quad-WRGB 컬러 필터 배열에 spatial DTI(S-DTI)와 spatial tungsten grid(S-WG)를 결합한 구조를 제안하고, 1.0, 0.9, 0.8 um 피치의 16 x 16 BSI 픽셀 배열에서 3D 광학 시뮬레이션으로 평가한 논문이다. 기준 구조 대비 감도 향상은 각 피치에서 최대 58.2%, 67.0%, 66.3%로 보고된다. COMPASS에서는 같은 색상 binning 클러스터 내부에는 격리를 줄이고 다른 색상 그룹 사이에는 격리를 유지하는 grouped-CFA layout 모델의 기준 문헌으로 유용하다.
 - **태그**: [CIS] [컬러필터] [DTI] [텅스텐그리드] [서브마이크론픽셀]
 
+### 4.8 Blockstein & Yadid-Pecht (2010) -- 크로스토크 정량화
+
+- **인용**: L. Blockstein and O. Yadid-Pecht, "Crosstalk quantification, analysis, and trends in CMOS image sensors," *Applied Optics*, vol. 49, no. 24, pp. 4483--4488, 2010. DOI: [10.1364/AO.49.004483](https://doi.org/10.1364/AO.49.004483)
+- **요약**: 픽셀 크로스토크를 optical, electrical, spectral component의 조합으로 정의하고, 픽셀 구조에 의해 좌우되는 pixel-architecture-dependent crosstalk(PADC)를 정량화하는 틀을 제시한 논문이다. 3.2, 2.2, 1.75 um 픽셀에 대한 scanning measurement 결과를 보고한다. COMPASS에서는 전자기 시뮬레이션으로 직접 검증 가능한 optical crosstalk와 실제 카메라에서 측정되는 total crosstalk를 구분해 문서화할 때 기준 용어와 측정 프레임을 제공한다.
+- **태그**: [CIS] [크로스토크] [검증] [측정]
+
 ---
 
 ## 5. 수치 안정성
@@ -214,6 +220,18 @@ RCWA 시뮬레이션의 수치 안정성 확보에 관한 논문들이다.
 - **인용**: G. Seok and Y. Kim, "Front-Inner Lens for High Sensitivity of CMOS Image Sensors," *Sensors*, vol. 19, no. 7, 1536, 2019. DOI: [10.3390/s19071536](https://doi.org/10.3390/s19071536)
 - **요약**: 얕은 포토다이오드에서 장파장 광을 다시 흡수 영역으로 되돌리기 위해 BSI 픽셀의 front side, 즉 FEOL과 BEOL 사이에 저굴절률 front-inner lens를 배치하는 구조를 제안한 논문이다. 1.0 um 픽셀 피치에서 3.0/2.0/1.0 um 픽셀 깊이, MgF2/air inner-lens 재료, 0/10/20° 입사각, STI/DTI/tungsten-grid 조건을 비교한다. COMPASS에서는 상부 마이크로렌즈와 내장 저굴절률 렌즈를 독립적으로 바꾸는 다중 렌즈 픽셀 스택 기능의 근거가 된다.
 - **태그**: [CIS] [마이크로렌즈] [BSI] [FDTD] [얇은픽셀]
+
+### 6.5 Douix, Crocherie & Mamdy (2021) -- High-Index Microlens 광학 스택
+
+- **인용**: M. Douix, A. Crocherie, and B. Mamdy, "Back-side illuminated optical stack optimized with a high refractive index micro-lens array for CMOS image sensors," *OSA Continuum*, vol. 4, no. 6, pp. 1801--1807, 2021. DOI: [10.1364/OSAC.423031](https://doi.org/10.1364/OSAC.423031)
+- **요약**: 단순화한 BSI 광학 스택을 Lumerical FDTD로 해석하면서, 550 nm-1.4 um 파장 범위와 1-10 um 픽셀 피치에서 마이크로렌즈 및 planarization layer 굴절률을 기존 1.5 부근에서 2.0까지 스윕한 논문이다. 핵심 결과는 NIR 영역에서 약 1.7 수준의 다소 높은 stack index가 집광에 유리하지만, 가시광 영역의 이득은 상대적으로 작다는 점이다. COMPASS에서는 마이크로렌즈와 planarization 굴절률을 고정 공정 상수가 아니라 NIR/얇은 stack 연구의 주요 sweep 변수로 다루도록 하는 근거가 된다.
+- **태그**: [CIS] [마이크로렌즈] [BSI] [NIR] [재료스윕]
+
+### 6.6 Dilhan et al. (2020) -- NIR SPAD 픽셀용 Planar Microlens
+
+- **인용**: L. Dilhan, J. Vaillant, A. Ostrovsky, L. Masarotto, C. Pichard, and R. Paquet, "Planar microlenses for near infrared CMOS image sensors," *Electronic Imaging*, vol. 32, no. 7, ISS-144, 2020. DOI: [10.2352/ISSN.2470-1173.2020.7.ISS-144](https://doi.org/10.2352/ISSN.2470-1173.2020.7.ISS-144)
+- **요약**: STMicroelectronics 40 nm CMOS SPAD test chip에서 NIR 감도 향상을 목표로 diffractive 및 metasurface planar microlens 구조를 설계하고 구현한 논문이다. 기준 melted microlens, 설계된 diffractive microlens, microlens 없는 SPAD를 비교 측정해, COMPASS가 기존 reflow lens와 향후 planar/meta-optics lens primitive를 연결할 때 참고할 수 있는 실험 기준을 제공한다.
+- **태그**: [CIS] [마이크로렌즈] [SPAD] [NIR] [메타옵틱스]
 
 ---
 

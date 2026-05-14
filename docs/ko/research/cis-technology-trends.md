@@ -427,8 +427,12 @@ Image Sensors World는 1차 검증 소스라기보다 최신 CIS 논문과 업�
 | Image Sensors World 글 | 유용한 기술 신호 | COMPASS 적용 방향 |
 |------------------------|------------------|-------------------|
 | [Front Side Microlens for BSI Pixel](https://image-sensors-world.blogspot.com/2019/03/front-side-microlens-for-bsi-pixel.html) | 얕은 BSI 픽셀에서 장파장 흡수를 보완하기 위해 저굴절률 embedded front-inner lens를 사용 | 마이크로렌즈 모델을 단일 상부 표면에서 재료, 깊이, 형상을 독립적으로 갖는 다중 렌즈 스택으로 확장 |
+| [ST Paper on NIR Microlens Optimization](https://image-sensors-world.blogspot.com/2021/06/st-paper-on-nir-microlens-optimization.html) | High-index 마이크로렌즈와 planarization layer가 얇은 BSI stack의 NIR 집광을 개선 | NIR 중심 마이크로렌즈 연구에서 lens 및 planarization 굴절률을 sweep 변수로 취급 |
 | [DTI and Pyramids in 0.9um Pixel Design](https://image-sensors-world.blogspot.com/2020/05/dti-and-pyramids-in-09um-pixel-design.html) | DTI 깊이와 IPA 피치가 visible/NIR 광학 효율 피크를 함께 결정 | 후면 실리콘을 항상 평탄 계면으로 두지 않고, DTI 검증 backlog에 backside IPA texture와 파장별 pitch sweep 추가 |
 | [Sony Enhances IR Sensitivity by 80% with Pyramidal Structure](https://image-sensors-world.blogspot.com/2017/06/sony-enhances-ir-sensitivity-by-80-with.html) | 400 nm 피치 IPA와 DTI를 결합한 BI-CIS prototype에서 850 nm NIR 감도 향상을 보고 | DTI + IPA 시뮬레이션 트렌드를 공개 실측 결과와 비교할 때 sanity check로 사용 |
+| [Crosstalk Quantification, Analysis and Trends in CMOS Sensors](https://image-sensors-world.blogspot.com/2010/07/crosstalk-quantification-analysis-and.html) | optical, electrical, spectral crosstalk를 구분하고 pixel-architecture-dependent crosstalk를 정의 | EM 시뮬레이션 결과는 optical crosstalk임을 명확히 하고 carrier/electrical crosstalk와 혼동하지 않도록 문서화 |
+| [FSI vs BSI PDAF Pixels for 3D Imaging](https://image-sensors-world.blogspot.com/2020/09/fsi-vs-bsi-pdaf-pixels-for-3d-imaging.html) | offset pixel aperture 응답이 stack height와 CRA에 강하게 의존 | depth/PDAF 연구용 future geometry primitive로 offset-aperture mask 추가 |
+| [Image Sensors at EI 2020](https://image-sensors-world.blogspot.com/2019/12/image-sensors-at-ei-2020.html) | NIR SPAD 픽셀용 planar diffractive/metasurface microlens 항목 포함 | planar lens와 metalens primitive를 melted/reflow microlens와 별도로 추적 |
 | [IISW 2025 proceedings available](https://image-sensors-world.blogspot.com/2025/09/international-image-sensor-workshop.html) | IISS 아카이브에서 DOI가 붙은 최신 pixel/process 논문을 공개 | IISW 주기마다 sub-0.5 um FDTI, RGBZ/NIR, global shutter, stacked pixel benchmark geometry를 재검토 |
 
 ---
@@ -451,6 +455,10 @@ Image Sensors World는 1차 검증 소스라기보다 최신 CIS 논문과 업�
 - ["Deep Trench Isolation and Inverted Pyramid Array Structures Used to Enhance Optical Efficiency of Photodiode in CMOS Image Sensor via Simulations" (Sensors, 2020)](https://doi.org/10.3390/s20113062)
 - ["Front-Inner Lens for High Sensitivity of CMOS Image Sensors" (Sensors, 2019)](https://doi.org/10.3390/s19071536)
 - ["High-Sensitivity Pixels with a Quad-WRGB Color Filter and Spatial Deep-Trench Isolation" (Sensors, 2019)](https://doi.org/10.3390/s19214653)
+- ["Back-side Illuminated Optical Stack Optimized with a High Refractive Index Micro-lens Array for CMOS Image Sensors" (OSA Continuum, 2021)](https://doi.org/10.1364/OSAC.423031)
+- ["Planar Microlenses for Near Infrared CMOS Image Sensors" (Electronic Imaging, 2020)](https://doi.org/10.2352/ISSN.2470-1173.2020.7.ISS-144)
+- ["Crosstalk Quantification, Analysis, and Trends in CMOS Image Sensors" (Applied Optics, 2010)](https://doi.org/10.1364/AO.49.004483)
+- ["CMOS Depth Image Sensor with Offset Pixel Aperture Using a Back-Side Illumination Structure for Improving Disparity" (Sensors, 2020)](https://doi.org/10.3390/s20185138)
 - ["Automotive 2.1um Full-Depth DTI CMOS Image Sensor with 120dB Dynamic Range" (Sensors, 2023)](https://scholar.google.com/scholar?q=Automotive+2.1um+Full-Depth+DTI+CMOS+Image+Sensor+with+120dB+Dynamic+Range)
 - ["Adjoint-Assisted Shape Optimization of Microlenses for CMOS Image Sensors" (PMC, 2024)](https://scholar.google.com/scholar?q=Adjoint-Assisted+Shape+Optimization+of+Microlenses+for+CMOS+Image+Sensors)
 - ["IR Sensitivity Enhancement of CMOS Image Sensor with Diffractive Light Trapping Pixels" (Scientific Reports, 2017)](https://doi.org/10.1038/s41598-017-04200-y)

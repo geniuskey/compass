@@ -167,6 +167,12 @@ Key papers on the optical simulation of CMOS image sensor (CIS) pixels.
 - **Summary**: Introduced a quad-WRGB color filter array combined with spatial DTI (S-DTI) and a spatial tungsten grid (S-WG), simulated on 16 x 16 BSI pixel arrays at 1.0, 0.9, and 0.8 um pitch. The reported sensitivity gains reach 58.2%, 67.0%, and 66.3% for those pitches compared with the reference structure. This is a useful COMPASS reference for grouped-color CFA layouts where isolation should exist between different-color groups but not necessarily inside a same-color binning cluster.
 - **Tags**: [CIS] [Color Filter] [DTI] [Tungsten Grid] [Sub-micron Pixels]
 
+### 4.8 Blockstein & Yadid-Pecht (2010) -- Crosstalk Quantification
+
+- **Citation**: L. Blockstein and O. Yadid-Pecht, "Crosstalk quantification, analysis, and trends in CMOS image sensors," *Applied Optics*, vol. 49, no. 24, pp. 4483--4488, 2010. DOI: [10.1364/AO.49.004483](https://doi.org/10.1364/AO.49.004483)
+- **Summary**: Defines pixel crosstalk as a combination of optical, electrical, and spectral components, then introduces pixel-architecture-dependent crosstalk (PADC) as the portion most affected by pixel structure. The paper reports empirical scanning measurements on 3.2, 2.2, and 1.75 um pixels. For COMPASS, it provides vocabulary and measurement framing for separating simulated optical crosstalk from total camera crosstalk, and for documenting what a purely electromagnetic simulation can and cannot validate.
+- **Tags**: [CIS] [Crosstalk] [Validation] [Measurement]
+
 ---
 
 ## 5. Numerical Stability
@@ -221,6 +227,18 @@ Papers on microlenses and color filters, key elements of image sensor optical st
 - **Citation**: G. Seok and Y. Kim, "Front-Inner Lens for High Sensitivity of CMOS Image Sensors," *Sensors*, vol. 19, no. 7, 1536, 2019. DOI: [10.3390/s19071536](https://doi.org/10.3390/s19071536)
 - **Summary**: Proposed a low-index front-inner lens placed on the front side of a BSI pixel, between FEOL and BEOL, to redirect long-wavelength light back into shallow photodiodes. The study fixes 1.0 um pixel pitch, sweeps 3.0/2.0/1.0 um pixel depth, compares MgF2 and air inner-lens materials, and evaluates 0/10/20° incident angles with STI, DTI, and tungsten-grid variants. For COMPASS, this motivates a future multi-lens pixel stack where the visible top microlens and embedded low-index lens can be varied independently.
 - **Tags**: [CIS] [Microlens] [BSI] [FDTD] [Thin Pixels]
+
+### 6.6 Douix, Crocherie & Mamdy (2021) -- High-Index Microlens Optical Stack
+
+- **Citation**: M. Douix, A. Crocherie, and B. Mamdy, "Back-side illuminated optical stack optimized with a high refractive index micro-lens array for CMOS image sensors," *OSA Continuum*, vol. 4, no. 6, pp. 1801--1807, 2021. DOI: [10.1364/OSAC.423031](https://doi.org/10.1364/OSAC.423031)
+- **Summary**: Uses Lumerical FDTD to sweep a simplified BSI optical stack over 550 nm to 1.4 um wavelength and 1 to 10 um pixel pitch while varying microlens and planarization refractive index from conventional values near 1.5 toward 2.0. The key result is that NIR focusing benefits from a moderately higher stack index around 1.7, while visible wavelengths gain less. For COMPASS, this makes microlens and planarization index first-class sweep variables rather than fixed process constants, especially for NIR and thin-stack studies.
+- **Tags**: [CIS] [Microlens] [BSI] [NIR] [Material Sweep]
+
+### 6.7 Dilhan et al. (2020) -- Planar Microlenses for NIR SPAD Pixels
+
+- **Citation**: L. Dilhan, J. Vaillant, A. Ostrovsky, L. Masarotto, C. Pichard, and R. Paquet, "Planar microlenses for near infrared CMOS image sensors," *Electronic Imaging*, vol. 32, no. 7, ISS-144, 2020. DOI: [10.2352/ISSN.2470-1173.2020.7.ISS-144](https://doi.org/10.2352/ISSN.2470-1173.2020.7.ISS-144)
+- **Summary**: Designs diffractive and metasurface planar microlens structures for NIR sensitivity improvement on STMicroelectronics 40 nm CMOS SPAD test chips. Reported measurements compare a reference melted microlens and designed diffractive microlens against a SPAD without microlens, giving COMPASS a concrete bridge between conventional reflow lenses and future planar/meta-optics lens primitives.
+- **Tags**: [CIS] [Microlens] [SPAD] [NIR] [Meta-optics]
 
 ---
 
