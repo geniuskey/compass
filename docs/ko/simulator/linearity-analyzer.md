@@ -15,3 +15,5 @@ title: 선형성 분석기
 ::: tip 더 알아보기
 [노이즈, SNR, 다이나믹 레인지](/ko/theory/sensor/noise-and-snr)
 :::
+
+<SimulatorTheory slug="linearity-analyzer" />

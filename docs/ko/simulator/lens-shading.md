@@ -15,3 +15,5 @@ CRA(주광선 각도), 마이크로렌즈 시프트, cos⁴ 감쇄를 기반으�
 ::: tip 더 알아보기
 [신호 체인](/ko/theory/sensor/signal-chain) · [픽셀 광학 효과](/ko/theory/sensor/pixel-optical-effects)
 :::
+
+<SimulatorTheory slug="lens-shading" />

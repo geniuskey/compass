@@ -143,3 +143,79 @@ html {
   color: var(--vp-c-text-2);
   line-height: 1.5;
 }
+
+/* Shared fullscreen affordance for control-heavy simulator components */
+.sim-fs-root {
+  position: relative;
+}
+
+.sim-fs-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  font-size: 1.15rem;
+  line-height: 1;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.sim-fs-root > h4 {
+  padding-right: 44px;
+}
+
+.sim-fs-btn:hover,
+.sim-fs-btn:focus-visible {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-bg-soft);
+}
+
+.sim-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  width: auto !important;
+  max-width: none !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  padding: 16px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  overflow: auto !important;
+  background: var(--vp-c-bg) !important;
+}
+
+.sim-fullscreen h4 {
+  padding-right: 44px;
+}
+
+.sim-fullscreen .component-description {
+  max-width: 960px;
+  padding-right: 44px;
+}
+
+.sim-fullscreen .svg-wrapper svg,
+.sim-fullscreen .result-svg,
+.sim-fullscreen .tmm-qe-svg,
+.sim-fullscreen .bo-svg,
+.sim-fullscreen .energy-svg,
+.sim-fullscreen .spectrum-svg,
+.sim-fullscreen .angular-svg,
+.sim-fullscreen .de-svg,
+.sim-fullscreen .emva-svg,
+.sim-fullscreen .mla-svg,
+.sim-fullscreen .main-svg,
+.sim-fullscreen .structure-svg {
+  max-width: none !important;
+}

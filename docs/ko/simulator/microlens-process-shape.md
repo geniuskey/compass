@@ -35,3 +35,5 @@ Lithography layout, thermal reflow, etch-transfer 조건이 CIS 마이크로렌�
 ::: tip 관련 도구
 [마이크로렌즈 광선 추적](./microlens-raytrace) · [MLA 어레이 시각화](./mla-array) · [마이크로렌즈 & CRA 레시피](/ko/cookbook/microlens-optimization)
 :::
+
+<SimulatorTheory slug="microlens-process-shape" />

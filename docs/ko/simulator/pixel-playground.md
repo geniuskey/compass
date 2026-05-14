@@ -15,3 +15,5 @@ title: 픽셀 설계 놀이터
 ::: tip 더 알아보기
 [이미지 센서 광학](/ko/theory/sensor/image-sensor-optics) · [픽셀 스택 구성 가이드](/ko/guide/pixel-stack-config)
 :::
+
+<SimulatorTheory slug="pixel-playground" />

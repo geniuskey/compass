@@ -1,6 +1,14 @@
 <template>
-  <div class="angular-response-container">
+  <div :class="['angular-response-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Angular Response Simulator', '\uAC01\uB3C4 \uC751\uB2F5 \uC2DC\uBBAC\uB808\uC774\uD130') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Explore how quantum efficiency changes with angle of incidence — critical for understanding Chief Ray Angle (CRA) effects in image sensors.',
@@ -254,11 +262,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 import {
   tmmCalc, defaultBsiStack, SI_LAYER_IDX,
 } from '../composables/tmm'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 // --- Controls ---
 const displayMode = ref<'single' | 'rgb'>('single')

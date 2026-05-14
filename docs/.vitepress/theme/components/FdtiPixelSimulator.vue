@@ -1,6 +1,14 @@
 <template>
-  <div class="fdti-simulator">
+  <div :class="['fdti-simulator', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('FDTI / BDTI CMOS Pixel Optical Simulator', 'FDTI / BDTI CMOS 픽셀 광학 시뮬레이터') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Build a virtual deep trench isolation pixel and inspect the approximate optical field, collected signal, and crosstalk trend.',
@@ -249,6 +257,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 
 type IsolationMode = 'fdti' | 'bdti'
 type LinerKey = 'oxide' | 'nitride' | 'metal'
@@ -278,6 +287,7 @@ interface Metrics {
 }
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 const preset = ref('balanced')
 const pitch = ref(1.0)

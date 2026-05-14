@@ -1,6 +1,14 @@
 <template>
-  <div class="mla-container">
+  <div :class="['mla-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Micro Lens Array Visualizer', '마이크로 렌즈 어레이 시각화') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Visualize superellipse microlens array geometry with contour maps, equal-aspect cross-sections, interactive 3D surface, and 2D ray tracing.',
@@ -289,8 +297,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onBeforeUnmount, nextTick } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 const tabs = [
   { key: 'contour', en: 'Contour', ko: '등고선' },

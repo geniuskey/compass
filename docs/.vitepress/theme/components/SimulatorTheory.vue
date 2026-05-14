@@ -1,0 +1,1029 @@
+<template>
+  <section v-if="entry" class="sim-theory">
+    <div class="sim-theory-eyebrow">{{ t('Physics Notes', '물리 수식과 이론') }}</div>
+    <h2>{{ pick(entry.title) }}</h2>
+    <p class="sim-theory-summary">{{ pick(entry.summary) }}</p>
+
+    <div class="sim-theory-grid">
+      <div class="sim-theory-card">
+        <h3>{{ t('Core Equations', '핵심 수식') }}</h3>
+        <div v-for="formula in entry.formulas" :key="formula.equation" class="formula-row">
+          <div class="formula-label">{{ pick(formula.label) }}</div>
+          <code>{{ formula.equation }}</code>
+          <p>{{ pick(formula.note) }}</p>
+        </div>
+      </div>
+
+      <div class="sim-theory-card">
+        <h3>{{ t('Model Interpretation', '모델 해석') }}</h3>
+        <ul>
+          <li v-for="item in entry.concepts" :key="pick(item)">{{ pick(item) }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sim-theory-card references-card">
+      <h3>{{ t('References', '관련 논문 및 레퍼런스') }}</h3>
+      <ul>
+        <li v-for="ref in entry.references" :key="ref.label">
+          <a v-if="ref.href" :href="ref.href" target="_blank" rel="noreferrer">{{ ref.label }}</a>
+          <span v-else>{{ ref.label }}</span>
+          <span v-if="ref.note"> — {{ pick(ref.note) }}</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+type Localized = { en: string; ko: string }
+
+interface Formula {
+  label: Localized
+  equation: string
+  note: Localized
+}
+
+interface Reference {
+  label: string
+  href?: string
+  note?: Localized
+}
+
+interface TheoryEntry {
+  title: Localized
+  summary: Localized
+  formulas: Formula[]
+  concepts: Localized[]
+  references: Reference[]
+}
+
+const props = defineProps<{ slug: string }>()
+const { isKo, t } = useLocale()
+
+function pick(value: Localized) {
+  return isKo.value ? value.ko : value.en
+}
+
+const refs = {
+  catrysse2002: {
+    label: 'Catrysse & Wandell, "Optical efficiency of image sensor pixels", JOSA A, 2002',
+    href: 'https://doi.org/10.1364/JOSAA.19.001610',
+  },
+  agranov2003: {
+    label: 'Agranov, Berezin & Tsai, "Crosstalk and microlens study in a color CMOS image sensor", IEEE TED, 2003',
+    href: 'https://doi.org/10.1109/TED.2002.806473',
+  },
+  green2008: {
+    label: 'Green, "Self-consistent optical parameters of intrinsic silicon at 300 K", Solar Energy Materials and Solar Cells, 2008',
+    href: 'https://doi.org/10.1016/j.solmat.2008.06.009',
+  },
+  macleod: {
+    label: 'Macleod, Thin-Film Optical Filters, 5th ed., CRC Press, 2017',
+    href: 'https://www.routledge.com/Thin-Film-Optical-Filters/Macleod/p/book/9781138198241',
+  },
+  bornWolf: {
+    label: 'Born & Wolf, Principles of Optics, 7th ed., Cambridge University Press, 1999',
+    href: 'https://doi.org/10.1017/CBO9781139644181',
+  },
+  goossens2018: {
+    label: 'Goossens et al., "Finite aperture correction for spectral cameras with integrated thin-film Fabry-Perot filters", Applied Optics, 2018',
+    href: 'https://doi.org/10.1364/AO.57.007539',
+  },
+  hwang2023: {
+    label: 'Hwang & Kim, "A Numerical Method of Aligning the Optical Stacks for All Pixels", Sensors, 2023',
+    href: 'https://doi.org/10.3390/s23020702',
+  },
+  yokogawa2017: {
+    label: 'Yokogawa et al., "IR sensitivity enhancement of CMOS Image Sensor with diffractive light trapping pixels", Scientific Reports, 2017',
+    href: 'https://doi.org/10.1038/s41598-017-04200-y',
+  },
+  han2020: {
+    label: 'Han, Chiou & Lin, "Deep trench isolation and inverted pyramid array structures...", Sensors, 2020',
+    href: 'https://doi.org/10.3390/s20113062',
+  },
+  ristoiu2020: {
+    label: 'Ristoiu et al., "A DOE study of plasma etched microlens shape for CMOS image sensors", SPIE, 2020',
+    href: 'https://doi.org/10.1117/12.2551857',
+  },
+  baillie2004: {
+    label: 'Baillie & Gendler, "Zero-space microlenses for CMOS image sensors", SPIE, 2004',
+    href: 'https://doi.org/10.1117/12.533453',
+  },
+  emva: {
+    label: 'EMVA 1288 Standard, Release 4.0',
+    href: 'https://www.emva.org/standards-technology/emva-1288/',
+  },
+  iso12233: {
+    label: 'ISO 12233:2024, Digital cameras - Resolution and spatial frequency responses',
+    href: 'https://www.iso.org/standard/88626.html',
+  },
+  nistCie: {
+    label: 'NIST, "CIE Fundamentals for Color Measurements"',
+    href: 'https://www.nist.gov/publications/cie-fundamentals-color-measurements-0',
+  },
+  mccamy1992: {
+    label: 'McCamy, "Correlated Color Temperature as an Explicit Function of Chromaticity Coordinates", Color Research & Application, 1992',
+    href: 'https://doi.org/10.1002/col.5080170211',
+  },
+  blockstein2010: {
+    label: 'Blockstein & Yadid-Pecht, "Crosstalk quantification, analysis, and trends in CMOS image sensors", Applied Optics, 2010',
+    href: 'https://doi.org/10.1364/AO.49.004483',
+  },
+}
+
+const theoryEntries: Record<string, TheoryEntry> = {
+  'tmm-qe': {
+    title: { en: 'Transfer-Matrix QE Model', ko: '전달 행렬 기반 QE 모델' },
+    summary: {
+      en: 'The calculator treats the pixel stack as a one-dimensional sequence of planar films. It solves coherent reflection and transmission first, then reports silicon-layer absorption as the optical upper bound for quantum efficiency.',
+      ko: '이 계산기는 픽셀 스택을 1차원 평면 박막의 연속으로 보고, 먼저 간섭에 의한 반사/투과를 푼 뒤 실리콘층 흡수를 양자 효율의 광학적 상한으로 표시합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Layer phase', ko: '레이어 위상' },
+        equation: 'delta_j = 2*pi*n_j*d_j*cos(theta_j)/lambda',
+        note: { en: 'Each layer contributes a wavelength- and angle-dependent phase delay.', ko: '각 레이어는 파장과 입사각에 의존하는 위상 지연을 만듭니다.' },
+      },
+      {
+        label: { en: 'Energy balance', ko: '에너지 보존' },
+        equation: 'R(lambda) + T(lambda) + sum_j A_j(lambda) = 1',
+        note: { en: 'A physically consistent TMM result should conserve incident optical power.', ko: '물리적으로 일관된 TMM 결과는 입사 광파워를 보존해야 합니다.' },
+      },
+      {
+        label: { en: 'Optical QE proxy', ko: '광학 QE 근사' },
+        equation: 'QE_opt(lambda) ~= A_Si(lambda)',
+        note: { en: 'Carrier collection loss is not modeled, so silicon absorption is an optimistic QE estimate.', ko: '전하 수집 손실은 포함하지 않으므로 실리콘 흡수율은 낙관적인 QE 추정치입니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Best for flat BSI stacks, BARL tuning, and first-pass spectral trends.', ko: '평탄 BSI 스택, BARL 조정, 1차 분광 경향 확인에 적합합니다.' },
+      { en: 'It cannot capture lateral diffraction, metal-grid shadowing, DTI crosstalk, or microlens focusing.', ko: '횡방향 회절, 금속 그리드 차광, DTI 크로스토크, 마이크로렌즈 집광은 포착하지 못합니다.' },
+      { en: 'Large angle sweeps should be read as planar-film angular response, not full camera CRA behavior.', ko: '큰 각도 스윕은 전체 카메라 CRA가 아니라 평면 박막의 각도 응답으로 해석해야 합니다.' },
+    ],
+    references: [refs.macleod, refs.green2008, refs.catrysse2002],
+  },
+  'barl-optimizer': {
+    title: { en: 'Thin-Film Anti-Reflection Theory', ko: '박막 반사 방지 이론' },
+    summary: {
+      en: 'BARL and coating stacks reduce Fresnel reflection by arranging multiple reflected waves to cancel at target wavelengths.',
+      ko: 'BARL 및 박막 코팅은 여러 계면 반사파가 목표 파장에서 상쇄되도록 두께와 굴절률을 조합해 프레넬 반사를 줄입니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Normal-incidence Fresnel reflection', ko: '수직 입사 프레넬 반사' },
+        equation: 'R = |(n_0 - n_s)/(n_0 + n_s)|^2',
+        note: { en: 'A bare polymer/silicon or oxide/silicon interface has high reflection because the index contrast is large.', ko: '폴리머/실리콘 또는 산화막/실리콘 계면은 굴절률 차이가 커서 반사가 큽니다.' },
+      },
+      {
+        label: { en: 'Quarter-wave seed thickness', ko: '1/4파장 초기 두께' },
+        equation: 'd ~= lambda_0/(4*n_layer)',
+        note: { en: 'A quarter-wave layer gives a useful starting point, but broadband stacks require numerical tuning.', ko: '1/4파장 두께는 좋은 출발점이지만 광대역 스택은 수치 최적화가 필요합니다.' },
+      },
+      {
+        label: { en: 'Merit function', ko: '목적 함수' },
+        equation: 'loss = mean_{lambda in band} R(lambda)',
+        note: { en: 'The optimizer minimizes average reflectance over the selected spectral band.', ko: '최적화기는 선택한 파장 대역의 평균 반사율을 줄입니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'The optimum depends on the incident medium, substrate, wavelength band, and angle.', ko: '최적점은 입사 매질, 기판, 파장 대역, 입사각에 따라 달라집니다.' },
+      { en: 'A stack optimized for green peak QE can hurt blue or NIR response.', ko: '녹색 피크 QE에 맞춘 스택은 청색 또는 NIR 응답을 악화시킬 수 있습니다.' },
+      { en: 'Real CIS BARL recipes are process-specific and usually use constrained material sets.', ko: '실제 CIS BARL 레시피는 공정별로 다르며 사용할 수 있는 재료 조합도 제한됩니다.' },
+    ],
+    references: [refs.macleod, refs.bornWolf, refs.green2008],
+  },
+  'energy-budget': {
+    title: { en: 'Photon Energy Accounting', ko: '광자 에너지 예산' },
+    summary: {
+      en: 'The analyzer decomposes incident optical power into reflected power, transmitted power, and absorption in each stack layer.',
+      ko: '이 분석기는 입사 광파워를 반사, 투과, 각 스택 레이어에서의 흡수로 분해합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Conservation check', ko: '보존성 검증' },
+        equation: '1 = R + T + A_CF + A_BARL + A_Si + ...',
+        note: { en: 'The residual should stay near zero; otherwise the optical model or sampling is inconsistent.', ko: '잔차는 0에 가까워야 하며, 그렇지 않다면 광학 모델이나 샘플링을 의심해야 합니다.' },
+      },
+      {
+        label: { en: 'Layer absorption', ko: '레이어 흡수' },
+        equation: 'A_j = P_enter,j - P_exit,j',
+        note: { en: 'Absorption is assigned by tracking the power flux entering and leaving a layer.', ko: '흡수는 해당 레이어로 들어간 파워와 나간 파워의 차이로 배분합니다.' },
+      },
+      {
+        label: { en: 'Useful absorption', ko: '유효 흡수' },
+        equation: 'QE_opt <= A_Si',
+        note: { en: 'Only absorption inside the photodiode silicon can become collected charge.', ko: '포토다이오드 실리콘 내부 흡수만 수집 전하로 변환될 수 있습니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Color-filter and metal absorption reduce throughput before photons reach silicon.', ko: '컬러 필터와 금속 흡수는 광자가 실리콘에 도달하기 전 처리량을 낮춥니다.' },
+      { en: 'Transmission out of the silicon layer is lost unless backside reflection or light trapping is modeled.', ko: '후면 반사나 광 포획을 모델링하지 않으면 실리콘을 통과한 빛은 손실로 봅니다.' },
+      { en: 'Use the budget to identify whether a QE loss is reflection-limited, filter-limited, or silicon-thickness-limited.', ko: '에너지 예산은 QE 손실이 반사, 필터, 실리콘 두께 중 무엇에 의해 제한되는지 구분하는 데 유용합니다.' },
+    ],
+    references: [refs.catrysse2002, refs.green2008, refs.macleod],
+  },
+  'angular-response': {
+    title: { en: 'Chief-Ray Angle and Polarization Response', ko: '주광선각 및 편광 응답' },
+    summary: {
+      en: 'Angular response combines Snell refraction, polarization-dependent Fresnel coefficients, and longer optical path length through absorbing layers.',
+      ko: '각도 응답은 스넬 굴절, 편광별 프레넬 계수, 흡수층 내 광경로 증가가 함께 만든 결과입니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Snell law', ko: '스넬 법칙' },
+        equation: 'n_0*sin(theta_0) = n_j*sin(theta_j)',
+        note: { en: 'Higher-index layers bend the ray toward normal and reduce the internal angle.', ko: '고굴절률 레이어는 광선을 법선 쪽으로 굴절시켜 내부 각도를 줄입니다.' },
+      },
+      {
+        label: { en: 'Path length increase', ko: '광경로 증가' },
+        equation: 'd_eff = d/cos(theta_j)',
+        note: { en: 'Oblique rays see a thicker effective absorber or filter.', ko: '경사 입사 광선은 흡수층이나 필터를 더 두껍게 통과합니다.' },
+      },
+      {
+        label: { en: 'Relative angular QE', ko: '상대 각도 QE' },
+        equation: 'AR(theta, lambda) = QE(theta, lambda)/QE(0, lambda)',
+        note: { en: 'This normalizes away the absolute calibration and highlights roll-off.', ko: '절대 보정을 제거하고 각도에 따른 롤오프를 보여줍니다.' },
+      },
+    ],
+    concepts: [
+      { en: 's- and p-polarization can diverge strongly near high angles.', ko: '큰 입사각에서는 s/p 편광 응답이 크게 달라질 수 있습니다.' },
+      { en: 'Real edge pixels also need microlens shift and finite-cone integration.', ko: '실제 주변부 픽셀은 마이크로렌즈 시프트와 유한 조리개 cone 적분도 필요합니다.' },
+      { en: 'The planar model is useful for stack sensitivity but incomplete for full-pixel CRA optimization.', ko: '평면 모델은 스택 민감도 분석에는 유용하지만 전체 픽셀 CRA 최적화에는 불충분합니다.' },
+    ],
+    references: [refs.hwang2023, refs.goossens2018, refs.macleod],
+  },
+  'snr-calculator': {
+    title: { en: 'Pixel Signal-to-Noise Model', ko: '픽셀 신호 대 잡음 모델' },
+    summary: {
+      en: 'SNR follows from the signal charge divided by the root-sum-square of shot, dark, read, and fixed-pattern noise terms.',
+      ko: 'SNR은 신호 전하를 샷 노이즈, 암전류 노이즈, 읽기 노이즈, 고정 패턴 노이즈의 제곱합 제곱근으로 나눈 값입니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Photoelectrons', ko: '광전자 수' },
+        equation: 'S = Phi_photon * A_pixel * t_exp * QE',
+        note: { en: 'Signal scales with photon flux, pixel area, exposure time, and quantum efficiency.', ko: '신호는 광자 플럭스, 픽셀 면적, 노출 시간, 양자 효율에 비례합니다.' },
+      },
+      {
+        label: { en: 'Noise variance', ko: '노이즈 분산' },
+        equation: 'sigma^2 = S + D*t_exp + sigma_read^2 + (PRNU*S)^2',
+        note: { en: 'Shot and dark noise are Poisson terms; read and PRNU terms are added in variance.', ko: '샷/암전류 노이즈는 포아송 항이고, 읽기 노이즈와 PRNU는 분산으로 더합니다.' },
+      },
+      {
+        label: { en: 'SNR', ko: 'SNR' },
+        equation: 'SNR_dB = 20*log10(S/sigma)',
+        note: { en: 'The dB form is useful for comparing operating points across illumination levels.', ko: 'dB 표현은 조도별 동작점을 비교할 때 유용합니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'At low signal, read noise dominates; at high signal, photon shot noise dominates.', ko: '저신호에서는 읽기 노이즈가, 고신호에서는 광자 샷 노이즈가 지배적입니다.' },
+      { en: 'Full well capacity clips signal before the formula can continue to improve.', ko: '풀웰 용량에 도달하면 신호가 포화되어 SNR 개선이 멈춥니다.' },
+      { en: 'PRNU is signal-proportional, so it matters most in bright regions.', ko: 'PRNU는 신호에 비례하므로 밝은 영역에서 중요해집니다.' },
+    ],
+    references: [refs.emva, refs.catrysse2002],
+  },
+  'color-filter': {
+    title: { en: 'Spectral Color Separation', ko: '분광 색 분리 모델' },
+    summary: {
+      en: 'Color-filter design maps spectral transmittance into camera RGB sensitivities, CIE tristimulus values, chromaticity, crosstalk, and color-correction conditioning.',
+      ko: '컬러 필터 설계는 분광 투과율을 카메라 RGB 감도, CIE 삼자극값, 색도, 크로스토크, 색 보정 조건수로 변환합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Channel response', ko: '채널 응답' },
+        equation: 'S_c(lambda) = T_c(lambda) * QE_stack(lambda)',
+        note: { en: 'The sensor channel is the filter transmission multiplied by the optical stack QE.', ko: '센서 채널 응답은 필터 투과율과 광학 스택 QE의 곱입니다.' },
+      },
+      {
+        label: { en: 'CIE tristimulus integration', ko: 'CIE 삼자극 적분' },
+        equation: 'X = integral S(lambda)*xbar(lambda) d_lambda',
+        note: { en: 'The same integration is used for Y and Z with ybar and zbar.', ko: 'Y와 Z도 각각 ybar, zbar로 같은 방식으로 적분합니다.' },
+      },
+      {
+        label: { en: 'Chromaticity', ko: '색도 좌표' },
+        equation: 'x = X/(X+Y+Z), y = Y/(X+Y+Z)',
+        note: { en: 'The gamut triangle comes from the R, G, and B chromaticity points.', ko: '색역 삼각형은 R, G, B 색도점으로부터 만들어집니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Narrow filters improve color separation but reduce photon throughput.', ko: '좁은 필터는 색 분리를 개선하지만 광자 처리량을 낮춥니다.' },
+      { en: 'Large spectral overlap increases crosstalk and makes the CCM less well conditioned.', ko: '분광 겹침이 크면 크로스토크가 증가하고 CCM 조건이 나빠집니다.' },
+      { en: 'The IR-cut setting is critical because silicon remains sensitive beyond the visible band.', ko: '실리콘은 가시광 이후에도 민감하므로 IR 차단 설정이 중요합니다.' },
+    ],
+    references: [refs.nistCie, refs.mccamy1992, refs.catrysse2002],
+  },
+  'pixel-playground': {
+    title: { en: 'Coupled Pixel Stack Model', ko: '결합 픽셀 스택 모델' },
+    summary: {
+      en: 'The playground combines pixel pitch, color-filter thickness, BARL layers, silicon thickness, and incidence angle into one simplified stack-level optical response.',
+      ko: '플레이그라운드는 픽셀 피치, 컬러 필터 두께, BARL 레이어, 실리콘 두께, 입사각을 하나의 단순화된 스택 광학 응답으로 결합합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Stack response', ko: '스택 응답' },
+        equation: 'QE_c(lambda) ~= T_CF,c(lambda) * A_Si(lambda; stack)',
+        note: { en: 'The color channel response is approximated by filter transmission times silicon absorption.', ko: '색 채널 응답은 필터 투과율과 실리콘 흡수율의 곱으로 근사합니다.' },
+      },
+      {
+        label: { en: 'Pixel area scaling', ko: '픽셀 면적 스케일링' },
+        equation: 'A_pixel = pitch^2',
+        note: { en: 'Area changes photon count and full-well trends even if spectral QE is unchanged.', ko: '분광 QE가 같아도 면적은 광자 수와 풀웰 경향을 바꿉니다.' },
+      },
+      {
+        label: { en: 'Energy budget', ko: '에너지 예산' },
+        equation: 'R + T + sum(A_layer) = 1',
+        note: { en: 'The same conservation check is used to interpret stack losses.', ko: '스택 손실 해석에는 같은 에너지 보존 검증을 사용합니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Changing one slider can shift multiple metrics because optical stacks are coupled.', ko: '광학 스택은 결합되어 있으므로 하나의 슬라이더가 여러 지표를 동시에 바꿀 수 있습니다.' },
+      { en: 'Use this for design-space triage before running RCWA or FDTD on a detailed geometry.', ko: '상세 형상 RCWA/FDTD 전에 설계 공간을 좁히는 용도로 쓰세요.' },
+      { en: 'The model omits lateral field maps, carrier transport, and process variation.', ko: '이 모델은 횡방향 필드맵, 전하 수송, 공정 변동을 포함하지 않습니다.' },
+    ],
+    references: [refs.catrysse2002, refs.green2008, refs.macleod],
+  },
+  'si-absorption': {
+    title: { en: 'Beer-Lambert Absorption in Silicon', ko: '실리콘 내 Beer-Lambert 흡수' },
+    summary: {
+      en: 'Silicon absorption depends strongly on wavelength. Blue light is absorbed near the surface, while red and NIR photons penetrate much deeper.',
+      ko: '실리콘 흡수는 파장에 매우 강하게 의존합니다. 청색광은 표면 근처에서 흡수되고, 적색 및 NIR 광자는 훨씬 깊게 침투합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Absorption coefficient', ko: '흡수 계수' },
+        equation: 'alpha(lambda) = 4*pi*k(lambda)/lambda',
+        note: { en: 'The extinction coefficient k is converted to an absorption coefficient.', ko: '소광 계수 k를 흡수 계수로 변환합니다.' },
+      },
+      {
+        label: { en: 'Intensity decay', ko: '강도 감쇠' },
+        equation: 'I(z, lambda) = I0*exp(-alpha(lambda)*z)',
+        note: { en: 'This is the Beer-Lambert law for a uniform absorbing medium.', ko: '균일 흡수 매질에 대한 Beer-Lambert 법칙입니다.' },
+      },
+      {
+        label: { en: 'Absorbed fraction', ko: '흡수율' },
+        equation: 'A(d, lambda) = 1 - exp(-alpha(lambda)*d)',
+        note: { en: 'This ignores front-surface reflection and interference.', ko: '이 식은 표면 반사와 간섭을 무시한 근사입니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Thin BSI pixels may collect visible light well but lose NIR photons.', ko: '얇은 BSI 픽셀은 가시광은 잘 수집해도 NIR 광자를 놓칠 수 있습니다.' },
+      { en: 'DTI, backside texture, and reflectors can increase the effective path length.', ko: 'DTI, 후면 텍스처, 반사 구조는 유효 광경로를 늘릴 수 있습니다.' },
+      { en: 'Carrier collection depth is a separate electrical problem not included here.', ko: '전하 수집 깊이는 별도의 전기적 문제이며 여기에는 포함하지 않습니다.' },
+    ],
+    references: [refs.green2008, refs.yokogawa2017, refs.han2020],
+  },
+  'microlens-raytrace': {
+    title: { en: 'Geometric Microlens Ray Tracing', ko: '기하광학 마이크로렌즈 광선 추적' },
+    summary: {
+      en: 'This simulator traces rays through a smooth microlens surface using local surface normals and Snell refraction.',
+      ko: '이 시뮬레이터는 매끄러운 마이크로렌즈 표면의 국소 법선과 스넬 굴절을 사용해 광선을 추적합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Superellipse lens profile', ko: '초타원 렌즈 프로파일' },
+        equation: 'z(r) = h*(1 - (r/R)^n)^(1/n)',
+        note: { en: 'The exponent controls whether the lens is rounded, flat-topped, or steep-edged.', ko: '지수는 렌즈가 둥근지, 평탄한지, 가장자리가 가파른지를 조절합니다.' },
+      },
+      {
+        label: { en: 'Snell refraction', ko: '스넬 굴절' },
+        equation: 'n_1*sin(theta_1) = n_2*sin(theta_2)',
+        note: { en: 'Refraction is evaluated at the local surface normal, not at the global vertical axis.', ko: '굴절은 전역 수직축이 아니라 국소 표면 법선 기준으로 계산합니다.' },
+      },
+      {
+        label: { en: 'Spot efficiency proxy', ko: '스폿 효율 근사' },
+        equation: 'eta_collect ~= N_rays hitting PD / N_total',
+        note: { en: 'Ray-count efficiency is intuitive but not a wave-optical QE calculation.', ko: '광선 개수 기반 효율은 직관적이지만 파동광학 QE 계산은 아닙니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Microlens shift is needed when chief rays arrive at high CRA.', ko: '주광선각이 큰 경우 마이크로렌즈 시프트가 필요합니다.' },
+      { en: 'Geometric ray tracing breaks down when pixel pitch approaches the wavelength.', ko: '픽셀 피치가 파장에 가까워지면 기하광학 추적은 한계가 있습니다.' },
+      { en: 'Use RCWA/FDTD for diffraction, interference, and sub-wavelength metal-grid effects.', ko: '회절, 간섭, 서브파장 금속 그리드 효과는 RCWA/FDTD가 필요합니다.' },
+    ],
+    references: [refs.agranov2003, refs.hwang2023, refs.catrysse2002],
+  },
+  'microlens-process-shape': {
+    title: { en: 'Layout-to-Reflow Shape Surrogate', ko: '레이아웃-리플로우 형상 대리 모델' },
+    summary: {
+      en: 'The process predictor uses simplified conservation and empirical knobs to connect mask layout, thermal reflow, and etch-transfer settings to final lens geometry.',
+      ko: '공정 형상 예측기는 단순화한 보존 법칙과 경험적 계수를 사용해 마스크 레이아웃, 열 리플로우, 식각 전사 조건을 최종 렌즈 형상과 연결합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Volume conservation', ko: '체적 보존' },
+        equation: 'V_resist ~= V_lens(final)',
+        note: { en: 'Reflow reshapes the resist island while approximately conserving material volume.', ko: '리플로우는 resist island의 형상을 바꾸지만 재료 체적은 대략 보존합니다.' },
+      },
+      {
+        label: { en: 'Sag-radius relation', ko: 'sag-곡률 관계' },
+        equation: 'R_vertex ~= (a^2 + h^2)/(2*h)',
+        note: { en: 'For a spherical-cap approximation, aperture radius a and sag h set vertex curvature.', ko: '구면 cap 근사에서 개구 반경 a와 sag h가 꼭짓점 곡률을 결정합니다.' },
+      },
+      {
+        label: { en: 'Gap closure trend', ko: 'gap closure 경향' },
+        equation: 'gap_final = max(0, gap_layout - spread_reflow - closure_etch)',
+        note: { en: 'The simulator keeps the directional trend explicit so coefficients can later be calibrated.', ko: '나중에 계수를 보정할 수 있도록 방향성 관계를 명시적으로 둡니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Public papers usually report DOE trends, not universal foundry recipes.', ko: '공개 논문은 대개 범용 foundry recipe가 아니라 DOE 경향을 보고합니다.' },
+      { en: 'AFM/SEM metrology is needed to calibrate real process coefficients.', ko: '실제 공정 계수 보정에는 AFM/SEM 계측이 필요합니다.' },
+      { en: 'The output is best read as sensitivity and failure-mode guidance.', ko: '출력은 정량 recipe보다 민감도와 failure mode 지침으로 해석하는 것이 좋습니다.' },
+    ],
+    references: [refs.ristoiu2020, refs.baillie2004],
+  },
+  'mla-array': {
+    title: { en: 'Microlens Array Surface Geometry', ko: '마이크로렌즈 어레이 표면 형상' },
+    summary: {
+      en: 'The MLA visualizer extends a single lens profile into periodic arrays and shows how pitch, curvature, asymmetry, and ray direction change array behavior.',
+      ko: 'MLA 시각화는 단일 렌즈 프로파일을 주기 어레이로 확장하고 pitch, 곡률, 비대칭성, 광선 방향이 어레이 거동을 어떻게 바꾸는지 보여줍니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Anisotropic normalized radius', ko: '비등방 정규화 반경' },
+        equation: 'rho = ((|x/Rx|)^n + (|y/Ry|)^n)^(1/n)',
+        note: { en: 'Different Rx and Ry produce astigmatic or rectangular-pixel lens footprints.', ko: 'Rx와 Ry가 다르면 비점수차 또는 직사각형 픽셀용 렌즈 footprint가 됩니다.' },
+      },
+      {
+        label: { en: 'Surface sag', ko: '표면 sag' },
+        equation: 'z(x,y) = h*max(0, 1 - rho^alpha)',
+        note: { en: 'Height h and curvature alpha set focusing strength and edge steepness.', ko: '높이 h와 곡률 alpha는 집광 세기와 가장자리 기울기를 결정합니다.' },
+      },
+      {
+        label: { en: 'Array pitch', ko: '어레이 피치' },
+        equation: 'center_{m,n} = (m*Px, n*Py)',
+        note: { en: 'Array spacing controls gap, overlap risk, and fill factor.', ko: '어레이 간격은 gap, overlap 위험, fill factor를 결정합니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Array-level gap and asymmetry matter as much as single-lens curvature.', ko: '어레이 수준의 gap과 비대칭성은 단일 렌즈 곡률만큼 중요합니다.' },
+      { en: 'A 3D surface view is geometric evidence, not a wave-optical simulation result.', ko: '3D 표면 뷰는 기하학적 근거이지 파동광학 시뮬레이션 결과는 아닙니다.' },
+      { en: 'Use this with the process-shape tool when connecting layout to final reflow geometry.', ko: '레이아웃과 최종 리플로우 형상을 연결할 때 공정 형상 도구와 함께 사용하세요.' },
+    ],
+    references: [refs.agranov2003, refs.baillie2004, refs.ristoiu2020],
+  },
+  'fdti-pixel': {
+    title: { en: 'DTI Optical Confinement and Crosstalk', ko: 'DTI 광 구속 및 크로스토크' },
+    summary: {
+      en: 'Deep trench isolation reduces optical crosstalk by redirecting or blocking lateral light leakage between neighboring pixels.',
+      ko: 'Deep trench isolation은 인접 픽셀 사이로 새는 횡방향 빛을 반사하거나 차단해 광학 크로스토크를 줄입니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Critical angle', ko: '임계각' },
+        equation: 'theta_c = asin(n_trench/n_Si)',
+        note: { en: 'A low-index trench can confine silicon-guided rays by total internal reflection.', ko: '저굴절률 트렌치는 전반사를 통해 실리콘 내 광선을 가둘 수 있습니다.' },
+      },
+      {
+        label: { en: 'Optical crosstalk proxy', ko: '광학 크로스토크 근사' },
+        equation: 'XT = P_neighbor/(P_center + P_neighbor)',
+        note: { en: 'The simulator reports a structural optical trend, not carrier diffusion crosstalk.', ko: '시뮬레이터는 구조적 광학 경향을 보여주며 carrier diffusion 크로스토크는 포함하지 않습니다.' },
+      },
+      {
+        label: { en: 'Absorption path benefit', ko: '흡수 경로 이득' },
+        equation: 'A = 1 - exp(-alpha*L_eff)',
+        note: { en: 'DTI and backside structures can increase effective path length in silicon.', ko: 'DTI와 후면 구조는 실리콘 내 유효 경로 길이를 늘릴 수 있습니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'FDTI and BDTI differ in how much of the silicon depth is isolated.', ko: 'FDTI와 BDTI는 실리콘 깊이 중 어느 범위를 격리하는지가 다릅니다.' },
+      { en: 'Metal-filled trenches improve shielding but introduce absorption and process complexity.', ko: '금속 충전 트렌치는 차광을 개선하지만 흡수와 공정 복잡도를 늘립니다.' },
+      { en: 'Electrical isolation and optical isolation are related but not identical metrics.', ko: '전기적 격리와 광학적 격리는 관련되지만 동일한 지표가 아닙니다.' },
+    ],
+    references: [refs.han2020, refs.yokogawa2017, refs.blockstein2010],
+  },
+  'fabry-perot': {
+    title: { en: 'Single-Layer Interference', ko: '단층 박막 간섭' },
+    summary: {
+      en: 'Fabry-Perot behavior comes from repeated internal reflections whose phase can add constructively or destructively.',
+      ko: '파브리-페로 거동은 박막 내부에서 반복 반사된 빛의 위상이 보강 또는 상쇄 간섭을 일으키면서 발생합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Round-trip phase', ko: '왕복 위상' },
+        equation: 'delta = 4*pi*n*d*cos(theta)/lambda',
+        note: { en: 'A small thickness or angle change can move the film between reflection peaks and valleys.', ko: '두께나 각도의 작은 변화만으로도 반사 피크와 밸리 사이를 이동할 수 있습니다.' },
+      },
+      {
+        label: { en: 'Constructive condition', ko: '보강 조건' },
+        equation: '2*n*d*cos(theta) = m*lambda',
+        note: { en: 'Integer round-trip phase gives resonant transmission or reflection depending on the stack.', ko: '왕복 위상이 정수배가 되면 스택에 따라 공진 투과 또는 반사가 나타납니다.' },
+      },
+      {
+        label: { en: 'Quarter-wave AR', ko: '1/4파장 AR' },
+        equation: 'd = lambda_0/(4*n)',
+        note: { en: 'The common AR seed thickness creates destructive interference for front-surface reflection.', ko: '일반적인 AR 초기 두께는 전면 반사를 상쇄 간섭시키도록 잡습니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'A single layer is the simplest case of the full TMM stack.', ko: '단층 박막은 전체 TMM 스택의 가장 단순한 경우입니다.' },
+      { en: 'Angle and spectral bandwidth broaden or shift interference features.', ko: '입사각과 분광 대역폭은 간섭 특징을 넓히거나 이동시킵니다.' },
+      { en: 'Real color filters and BARL stacks require multiple materials and absorbing films.', ko: '실제 컬러 필터와 BARL 스택은 여러 재료와 흡수성 박막을 포함합니다.' },
+    ],
+    references: [refs.macleod, refs.bornWolf, refs.goossens2018],
+  },
+  'diffraction-psf': {
+    title: { en: 'Airy Pattern and Pixel Sampling', ko: '에어리 패턴과 픽셀 샘플링' },
+    summary: {
+      en: 'A circular aperture forms an Airy diffraction pattern, which spreads energy across multiple pixels as f-number or wavelength increases.',
+      ko: '원형 개구는 에어리 회절 패턴을 만들며, f-number 또는 파장이 증가하면 에너지가 여러 픽셀로 퍼집니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Airy intensity', ko: '에어리 강도' },
+        equation: 'I(r) = I0 * [2*J1(pi*r/(lambda*N))/(pi*r/(lambda*N))]^2',
+        note: { en: 'J1 is the first-order Bessel function and N is the f-number.', ko: 'J1은 1차 베셀 함수이고 N은 f-number입니다.' },
+      },
+      {
+        label: { en: 'First dark ring', ko: '첫 암환 반경' },
+        equation: 'r_1 = 1.22*lambda*N',
+        note: { en: 'This gives the common diffraction-limited spot radius estimate.', ko: '회절 한계 스폿 반경의 흔한 추정식입니다.' },
+      },
+      {
+        label: { en: 'Encircled energy', ko: '포위 에너지' },
+        equation: 'EE(r) = integral_0^r 2*pi*rho*I(rho) d_rho',
+        note: { en: 'Pixel collection depends on how much PSF energy falls within the active aperture.', ko: '픽셀 수집은 PSF 에너지 중 얼마가 활성 개구 안에 들어오는지에 좌우됩니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Diffraction becomes a first-order limit when pixel pitch approaches the wavelength.', ko: '픽셀 피치가 파장에 가까워지면 회절이 1차 제한 요인이 됩니다.' },
+      { en: 'The PSF viewer assumes an ideal circular aperture and ignores aberrations.', ko: '이 PSF 뷰어는 이상적인 원형 개구를 가정하며 수차는 무시합니다.' },
+      { en: 'For real camera resolution, combine diffraction, pixel aperture MTF, lens aberration, and demosaicing.', ko: '실제 카메라 해상도는 회절, 픽셀 개구 MTF, 렌즈 수차, 디모자이킹을 함께 봐야 합니다.' },
+    ],
+    references: [refs.bornWolf, refs.iso12233],
+  },
+  'mtf-analyzer': {
+    title: { en: 'Modulation Transfer Function', ko: '변조 전달 함수' },
+    summary: {
+      en: 'MTF describes how contrast is transferred as a function of spatial frequency. The analyzer combines pixel aperture and diffraction limits.',
+      ko: 'MTF는 공간 주파수에 따라 대비가 얼마나 전달되는지를 나타냅니다. 이 분석기는 픽셀 개구와 회절 한계를 결합합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Pixel aperture MTF', ko: '픽셀 개구 MTF' },
+        equation: 'MTF_pixel(f) = |sinc(pi*f*pitch*fill_factor)|',
+        note: { en: 'A rectangular aperture low-pass filters the sampled image.', ko: '직사각형 개구는 샘플링된 이미지를 저역통과 필터링합니다.' },
+      },
+      {
+        label: { en: 'Diffraction cutoff', ko: '회절 cutoff' },
+        equation: 'f_c = 1/(lambda*N)',
+        note: { en: 'No ideal incoherent diffraction-limited contrast remains beyond the cutoff.', ko: 'cutoff 이후에는 이상적인 비간섭 회절 제한 대비가 남지 않습니다.' },
+      },
+      {
+        label: { en: 'Nyquist frequency', ko: '나이퀴스트 주파수' },
+        equation: 'f_N = 1/(2*pitch)',
+        note: { en: 'Sampling above Nyquist aliases into lower spatial frequencies.', ko: '나이퀴스트를 넘는 샘플링 성분은 낮은 주파수로 aliasing됩니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Pixel pitch controls sampling; f-number and wavelength control diffraction blur.', ko: '픽셀 피치는 샘플링을, f-number와 파장은 회절 blur를 결정합니다.' },
+      { en: 'The combined MTF is a product only under simplified linear, shift-invariant assumptions.', ko: '결합 MTF를 곱으로 보는 것은 선형/시불변 근사 아래에서만 단순화된 표현입니다.' },
+      { en: 'ISO 12233/SFR measurements are system-level tests, not just pixel physics.', ko: 'ISO 12233/SFR 측정은 픽셀 물리만이 아니라 시스템 레벨 테스트입니다.' },
+    ],
+    references: [refs.iso12233, refs.bornWolf],
+  },
+  'pixel-scaling': {
+    title: { en: 'Pixel Pitch Scaling Laws', ko: '픽셀 피치 스케일링 법칙' },
+    summary: {
+      en: 'Shrinking pixels changes photon count, full well capacity, crosstalk, diffraction sensitivity, and read-noise requirements together.',
+      ko: '픽셀 축소는 광자 수, 풀웰 용량, 크로스토크, 회절 민감도, 읽기 노이즈 요구조건을 동시에 바꿉니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Area scaling', ko: '면적 스케일링' },
+        equation: 'A_pixel = pitch^2',
+        note: { en: 'Photon capture and approximate capacitance both scale with pixel area.', ko: '광자 수집과 대략적인 커패시턴스는 모두 픽셀 면적에 비례합니다.' },
+      },
+      {
+        label: { en: 'Shot-noise limit', ko: '샷 노이즈 한계' },
+        equation: 'SNR_shot = sqrt(N_e)',
+        note: { en: 'If the collected electron count falls by 4x, shot-limited SNR falls by 2x.', ko: '수집 전자 수가 4배 줄면 샷 노이즈 한계 SNR은 2배 줄어듭니다.' },
+      },
+      {
+        label: { en: 'Diffraction ratio', ko: '회절 비율' },
+        equation: 'Airy diameter / pitch ~= 2.44*lambda*N/pitch',
+        note: { en: 'This ratio rises as pixels shrink, increasing optical sharing between pixels.', ko: '픽셀이 작아질수록 이 비율이 커져 픽셀 간 광학 공유가 증가합니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Modern sub-micron pixels rely on BSI, DTI, microlens shift, and computational binning.', ko: '현대 서브마이크론 픽셀은 BSI, DTI, 마이크로렌즈 시프트, 계산적 binning에 의존합니다.' },
+      { en: 'Pitch scaling is not a single-variable problem because optics and electronics scale differently.', ko: '광학과 전자 회로는 서로 다르게 스케일링되므로 픽셀 축소는 단일 변수 문제가 아닙니다.' },
+      { en: 'Commercial trend lines should be treated as context, not as a process design rule.', ko: '상용 센서 추세선은 공정 설계 규칙이 아니라 맥락 정보로 봐야 합니다.' },
+    ],
+    references: [refs.catrysse2002, refs.agranov2003, refs.blockstein2010],
+  },
+  'color-accuracy': {
+    title: { en: 'Color Correction and Delta E', ko: '색 보정과 Delta E' },
+    summary: {
+      en: 'The analyzer maps simulated camera RGB responses to reference colorimetry with a color correction matrix, then measures perceptual error.',
+      ko: '이 분석기는 시뮬레이션된 카메라 RGB 응답을 색 보정 행렬로 기준 색도계 값에 매핑하고 지각 색차를 측정합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Least-squares CCM', ko: '최소제곱 CCM' },
+        equation: 'M = argmin_M ||R_camera*M - XYZ_ref||_2^2',
+        note: { en: 'The CCM is fitted to map camera sensor responses to reference XYZ values.', ko: 'CCM은 카메라 센서 응답을 기준 XYZ 값에 맞추도록 피팅됩니다.' },
+      },
+      {
+        label: { en: 'CIELAB error', ko: 'CIELAB 색차' },
+        equation: 'DeltaE_ab = sqrt((DeltaL*)^2 + (Deltaa*)^2 + (Deltab*)^2)',
+        note: { en: 'Delta E summarizes color mismatch after conversion to a perceptual color space.', ko: 'Delta E는 지각 색공간에서의 색 불일치를 요약합니다.' },
+      },
+      {
+        label: { en: 'Noise-perturbed RGB', ko: '노이즈 포함 RGB' },
+        equation: 'R_meas = R_ideal + noise_shot + noise_read',
+        note: { en: 'Color accuracy degrades when low-light noise perturbs channel ratios.', ko: '저조도 노이즈가 채널 비율을 흔들면 색 정확도가 나빠집니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Good color filters are not only narrow; they must produce well-conditioned RGB bases.', ko: '좋은 컬러 필터는 단순히 좁은 필터가 아니라 조건이 좋은 RGB 기저를 만들어야 합니다.' },
+      { en: 'A CCM can correct linear color mixing but cannot recover missing spectral information.', ko: 'CCM은 선형 색 혼합은 보정할 수 있지만 사라진 분광 정보는 복원할 수 없습니다.' },
+      { en: 'Illuminant choice changes both reference colors and camera channel balance.', ko: '광원 선택은 기준 색과 카메라 채널 밸런스를 모두 바꿉니다.' },
+    ],
+    references: [refs.nistCie, refs.mccamy1992],
+  },
+  'dark-current': {
+    title: { en: 'Thermal Generation and Dark Noise', ko: '열 생성과 암전류 노이즈' },
+    summary: {
+      en: 'Dark current is thermally generated charge accumulated during exposure. It rises rapidly with temperature and contributes shot noise.',
+      ko: '암전류는 노출 중 열적으로 생성되어 축적되는 전하입니다. 온도에 따라 빠르게 증가하며 샷 노이즈를 더합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Arrhenius trend', ko: '아레니우스 경향' },
+        equation: 'I_dark(T) proportional to T^3 * exp(-E_a/(k*T))',
+        note: { en: 'Activation energy controls how steeply dark current rises with temperature.', ko: '활성화 에너지는 온도 상승에 따른 암전류 증가 기울기를 결정합니다.' },
+      },
+      {
+        label: { en: 'Dark signal', ko: '암신호' },
+        equation: 'D = I_dark * t_exp',
+        note: { en: 'Longer exposure accumulates more dark electrons.', ko: '노출 시간이 길수록 더 많은 암전자가 축적됩니다.' },
+      },
+      {
+        label: { en: 'Dark shot noise', ko: '암전류 샷 노이즈' },
+        equation: 'sigma_dark = sqrt(D)',
+        note: { en: 'Thermal generation is a Poisson process in this simplified model.', ko: '이 단순 모델에서 열 생성은 포아송 과정으로 봅니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Cooling, pinned photodiodes, and better isolation reduce dark-current impact.', ko: '냉각, pinned photodiode, 개선된 격리는 암전류 영향을 줄입니다.' },
+      { en: 'Hot pixels are spatial outliers and are not captured by a single average current.', ko: '핫픽셀은 공간적 이상치이므로 단일 평균 암전류만으로는 포착되지 않습니다.' },
+      { en: 'Dark noise matters most in long exposure and low-light operation.', ko: '암전류 노이즈는 장노출 및 저조도 동작에서 가장 중요합니다.' },
+    ],
+    references: [refs.emva],
+  },
+  'photon-transfer-curve': {
+    title: { en: 'Photon Transfer Curve', ko: '광자 전달 곡선' },
+    summary: {
+      en: 'PTC uses the relationship between mean signal and variance to estimate conversion gain, read noise, full well, and PRNU.',
+      ko: 'PTC는 평균 신호와 분산의 관계를 이용해 conversion gain, 읽기 노이즈, 풀웰, PRNU를 추정합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Shot-noise region', ko: '샷 노이즈 영역' },
+        equation: 'variance_DN ~= mean_DN / K',
+        note: { en: 'The slope in the shot-noise region gives conversion gain K in e-/DN.', ko: '샷 노이즈 영역의 기울기에서 e-/DN 단위의 conversion gain K를 얻습니다.' },
+      },
+      {
+        label: { en: 'Read noise', ko: '읽기 노이즈' },
+        equation: 'sigma_read,e = K * sigma_read,DN',
+        note: { en: 'Dark-frame variance near zero signal estimates read noise.', ko: '0 신호 근처 dark-frame 분산으로 읽기 노이즈를 추정합니다.' },
+      },
+      {
+        label: { en: 'PRNU region', ko: 'PRNU 영역' },
+        equation: 'sigma_total^2 ~= sigma_shot^2 + (PRNU*S)^2',
+        note: { en: 'At high signal, multiplicative non-uniformity bends the curve upward.', ko: '고신호에서는 곱셈성 비균일성이 곡선을 위쪽으로 휘게 합니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'The log-log PTC separates read-noise, shot-noise, and saturation regions.', ko: '로그-로그 PTC는 읽기 노이즈, 샷 노이즈, 포화 영역을 구분합니다.' },
+      { en: 'Linearity and flat-field quality affect gain extraction.', ko: '선형성과 flat-field 품질은 gain 추정에 영향을 줍니다.' },
+      { en: 'PTC is a measurement method; the simulator shows idealized trends.', ko: 'PTC는 측정 방법이며, 시뮬레이터는 이상화된 경향을 보여줍니다.' },
+    ],
+    references: [refs.emva],
+  },
+  'dynamic-range': {
+    title: { en: 'Dynamic Range and Saturation', ko: '다이나믹 레인지와 포화' },
+    summary: {
+      en: 'Dynamic range compares the largest usable signal to the smallest distinguishable signal, usually limited by full well and noise floor.',
+      ko: '다이나믹 레인지는 최대 사용 가능 신호와 구분 가능한 최소 신호의 비이며, 보통 풀웰과 노이즈 플로어가 제한합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Single-exposure DR', ko: '단일 노출 DR' },
+        equation: 'DR_dB = 20*log10(FWC/sigma_floor)',
+        note: { en: 'The noise floor often includes read noise plus dark noise.', ko: '노이즈 플로어에는 보통 읽기 노이즈와 암전류 노이즈가 포함됩니다.' },
+      },
+      {
+        label: { en: 'Saturation', ko: '포화' },
+        equation: 'S_clipped = min(S, FWC)',
+        note: { en: 'No linear signal information remains above full well.', ko: '풀웰을 넘으면 선형 신호 정보가 남지 않습니다.' },
+      },
+      {
+        label: { en: 'HDR exposure span', ko: 'HDR 노출 범위' },
+        equation: 'DR_HDR ~= 20*log10(S_max,long / S_min,short)',
+        note: { en: 'Multi-exposure HDR extends range but introduces motion and merge constraints.', ko: '다중 노출 HDR은 범위를 넓히지만 motion 및 병합 제약을 만듭니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Increasing FWC helps highlights; reducing read noise helps shadows.', ko: 'FWC 증가는 하이라이트에, 읽기 노이즈 감소는 섀도에 유리합니다.' },
+      { en: 'Dark current raises the floor for long exposures and high temperatures.', ko: '암전류는 장노출과 고온에서 바닥 노이즈를 올립니다.' },
+      { en: 'Published DR values depend on measurement definitions and SNR thresholds.', ko: '공개 DR 값은 측정 정의와 SNR 임계값에 따라 달라집니다.' },
+    ],
+    references: [refs.emva],
+  },
+  'emva1288': {
+    title: { en: 'EMVA 1288 Characterization Metrics', ko: 'EMVA 1288 특성화 지표' },
+    summary: {
+      en: 'The dashboard groups sensor metrics using the EMVA 1288 measurement vocabulary: sensitivity, noise, saturation, dynamic range, and SNR.',
+      ko: '이 대시보드는 EMVA 1288 측정 용어에 따라 감도, 노이즈, 포화, 다이나믹 레인지, SNR 지표를 묶어 보여줍니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Absolute sensitivity threshold', ko: '절대 감도 임계값' },
+        equation: 'mu_p,min when SNR = 1',
+        note: { en: 'This estimates the photon count needed for signal to equal noise.', ko: '신호가 노이즈와 같아지는 데 필요한 광자 수를 추정합니다.' },
+      },
+      {
+        label: { en: 'Saturation capacity', ko: '포화 용량' },
+        equation: 'S_sat ~= FWC',
+        note: { en: 'Full well is the charge capacity before clipping or nonlinearity dominates.', ko: '풀웰은 clipping 또는 비선형성이 지배하기 전 전하 용량입니다.' },
+      },
+      {
+        label: { en: 'SNR', ko: 'SNR' },
+        equation: 'SNR = mu_e / sqrt(sigma_d^2 + sigma_q^2 + mu_e)',
+        note: { en: 'The simplified dashboard includes dark/read-like noise and shot noise terms.', ko: '단순화된 대시보드는 dark/read 계열 노이즈와 샷 노이즈 항을 포함합니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'EMVA 1288 is a measurement standard, not a device physics simulator.', ko: 'EMVA 1288은 측정 표준이지 소자 물리 시뮬레이터가 아닙니다.' },
+      { en: 'Use it to compare camera-level metrics under consistent definitions.', ko: '일관된 정의 아래 카메라 수준 지표를 비교하는 데 사용하세요.' },
+      { en: 'Real EMVA testing requires calibrated illumination and image acquisition procedures.', ko: '실제 EMVA 시험에는 보정된 조명과 영상 취득 절차가 필요합니다.' },
+    ],
+    references: [refs.emva],
+  },
+  'lens-shading': {
+    title: { en: 'Relative Illumination and CRA Shading', ko: '상대 조도와 CRA 쉐이딩' },
+    summary: {
+      en: 'Lens shading combines optical cos-fourth falloff, chief-ray angle mismatch, microlens offset, and color-channel angular response.',
+      ko: '렌즈 쉐이딩은 cos^4 상대 조도 저하, 주광선각 mismatch, 마이크로렌즈 offset, 색 채널별 각도 응답이 결합된 결과입니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Cos-fourth falloff', ko: 'cos^4 감쇠' },
+        equation: 'RI(theta) ~= cos^4(theta)',
+        note: { en: 'This is a classical first-order model for image-plane relative illumination.', ko: '이미지 평면 상대 조도의 고전적 1차 모델입니다.' },
+      },
+      {
+        label: { en: 'Microlens shift', ko: '마이크로렌즈 시프트' },
+        equation: 'shift ~= h_stack * tan(CRA_eff)',
+        note: { en: 'Refraction in the stack usually makes CRA_eff smaller than the air-side CRA.', ko: '스택 내 굴절 때문에 CRA_eff는 보통 공기 중 CRA보다 작습니다.' },
+      },
+      {
+        label: { en: 'Color shading', ko: '색 쉐이딩' },
+        equation: 'gain_c(r) = response_c(center)/response_c(r)',
+        note: { en: 'Per-channel lens-shading correction equalizes radial response.', ko: '채널별 렌즈 쉐이딩 보정은 반경별 응답을 맞춥니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Color shading appears when R/G/B angular responses are not identical.', ko: 'R/G/B 각도 응답이 다르면 색 쉐이딩이 나타납니다.' },
+      { en: 'Microlens shift improves edge response but can reduce center tolerance if overdone.', ko: '마이크로렌즈 시프트는 주변부 응답을 개선하지만 과하면 중심부 허용도를 낮출 수 있습니다.' },
+      { en: 'Production correction tables combine optical design and factory calibration.', ko: '양산 보정 테이블은 광학 설계와 공장 보정을 함께 반영합니다.' },
+    ],
+    references: [refs.hwang2023, refs.agranov2003],
+  },
+  'prnu-visualizer': {
+    title: { en: 'Fixed-Pattern Non-Uniformity', ko: '고정 패턴 비균일성' },
+    summary: {
+      en: 'PRNU and DSNU model pixel-to-pixel response variation that remains spatially fixed across frames.',
+      ko: 'PRNU와 DSNU는 프레임 사이에서 공간적으로 고정되어 남는 픽셀 간 응답 변동을 모델링합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Pixel signal model', ko: '픽셀 신호 모델' },
+        equation: 'Y_ij = (1 + g_ij)*S + d_ij + noise_ij',
+        note: { en: 'g_ij is PRNU and d_ij is DSNU/dark offset.', ko: 'g_ij는 PRNU, d_ij는 DSNU 또는 dark offset입니다.' },
+      },
+      {
+        label: { en: 'PRNU', ko: 'PRNU' },
+        equation: 'PRNU = std(flat_field)/mean(flat_field)',
+        note: { en: 'PRNU is measured from illuminated flat-field frames after offset correction.', ko: 'PRNU는 offset 보정 후 조명 flat-field 프레임에서 측정합니다.' },
+      },
+      {
+        label: { en: 'DSNU', ko: 'DSNU' },
+        equation: 'DSNU = std(dark_frame)',
+        note: { en: 'DSNU describes spatial variation of dark signal.', ko: 'DSNU는 암신호의 공간적 변동을 나타냅니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'PRNU grows with signal; DSNU is present even in darkness.', ko: 'PRNU는 신호와 함께 커지고 DSNU는 어두운 상태에서도 존재합니다.' },
+      { en: 'Fixed-pattern noise can often be calibrated, but residuals remain after temperature and aging changes.', ko: '고정 패턴 노이즈는 보정 가능하지만 온도와 노화 변화 후 잔차가 남을 수 있습니다.' },
+      { en: 'The visualizer uses synthetic spatial fields, not measured wafer maps.', ko: '이 시각화는 측정 wafer map이 아니라 합성 공간장을 사용합니다.' },
+    ],
+    references: [refs.emva],
+  },
+  'pixel-snr-vs-illuminance': {
+    title: { en: 'Illuminance-to-SNR Conversion', ko: '조도-SNR 변환' },
+    summary: {
+      en: 'This tool shows how scene illuminance becomes photons, photoelectrons, and finally SNR after adding sensor noise sources.',
+      ko: '이 도구는 장면 조도가 광자, 광전자, 그리고 센서 노이즈를 포함한 최종 SNR로 변환되는 과정을 보여줍니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Electron signal', ko: '전자 신호' },
+        equation: 'S = N_photons * QE',
+        note: { en: 'Optical throughput and quantum efficiency turn photons into collected electrons.', ko: '광학 처리량과 양자 효율이 광자를 수집 전자로 바꿉니다.' },
+      },
+      {
+        label: { en: 'Total noise', ko: '전체 노이즈' },
+        equation: 'sigma = sqrt(S + D*t + sigma_read^2)',
+        note: { en: 'The simulator separates shot, dark, and read-noise contributions.', ko: '시뮬레이터는 샷, 암전류, 읽기 노이즈 기여를 구분합니다.' },
+      },
+      {
+        label: { en: 'Ideal limit', ko: '이상적 한계' },
+        equation: 'SNR_ideal = sqrt(S)',
+        note: { en: 'This is the best possible photon shot-noise limit for a given signal.', ko: '주어진 신호에서 가능한 최선의 광자 샷 노이즈 한계입니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Low-light SNR is usually read-noise and photon-starvation limited.', ko: '저조도 SNR은 보통 읽기 노이즈와 광자 부족에 의해 제한됩니다.' },
+      { en: 'Large pixels collect more photons at the same illuminance and exposure.', ko: '같은 조도와 노출에서 큰 픽셀은 더 많은 광자를 수집합니다.' },
+      { en: 'Illuminance-to-photon conversion depends on spectrum, lens f-number, and calibration assumptions.', ko: '조도-광자 변환은 스펙트럼, 렌즈 f-number, 보정 가정에 의존합니다.' },
+    ],
+    references: [refs.emva, refs.catrysse2002],
+  },
+  'responsivity-calculator': {
+    title: { en: 'Quantum Efficiency to Responsivity', ko: '양자 효율에서 응답도 변환' },
+    summary: {
+      en: 'Spectral responsivity converts optical power at a wavelength into photocurrent, using the photon energy and quantum efficiency.',
+      ko: '분광 응답도는 파장별 광파워를 광전류로 변환하며, 광자 에너지와 양자 효율을 사용합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Photon energy', ko: '광자 에너지' },
+        equation: 'E_photon = h*c/lambda',
+        note: { en: 'Longer wavelengths carry less energy per photon.', ko: '긴 파장의 광자는 하나당 에너지가 더 낮습니다.' },
+      },
+      {
+        label: { en: 'Responsivity', ko: '응답도' },
+        equation: 'R(lambda) = QE(lambda)*q*lambda/(h*c)',
+        note: { en: 'With lambda in micrometers, R ~= QE*lambda/1.2398 A/W.', ko: 'lambda를 micrometer로 쓰면 R ~= QE*lambda/1.2398 A/W입니다.' },
+      },
+      {
+        label: { en: 'Photocurrent', ko: '광전류' },
+        equation: 'I_photo = R(lambda)*P_optical',
+        note: { en: 'Responsivity links optical simulation to electrical current.', ko: '응답도는 광학 시뮬레이션을 전기적 전류와 연결합니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'The same QE gives higher A/W at longer wavelengths until silicon absorption falls.', ko: '같은 QE라면 긴 파장에서 A/W는 커지지만, 실리콘 흡수가 떨어지면 감소합니다.' },
+      { en: 'Responsivity is not color accuracy; it is a power-to-current metric.', ko: '응답도는 색 정확도가 아니라 파워-전류 변환 지표입니다.' },
+      { en: 'Measured responsivity includes optics, fill factor, and collection efficiency.', ko: '측정 응답도에는 광학계, fill factor, 수집 효율이 포함됩니다.' },
+    ],
+    references: [refs.green2008, refs.emva],
+  },
+  'linearity-analyzer': {
+    title: { en: 'Transfer-Curve Linearity', ko: '전달 곡선 선형성' },
+    summary: {
+      en: 'Linearity measures how closely output code follows input exposure before saturation or knee compression.',
+      ko: '선형성은 포화 또는 knee 압축 전까지 출력 코드가 입력 노출을 얼마나 선형적으로 따르는지를 측정합니다.',
+    },
+    formulas: [
+      {
+        label: { en: 'Ideal response', ko: '이상 응답' },
+        equation: 'Y_ideal = gain*X + offset',
+        note: { en: 'A linear sensor has constant slope over the usable exposure range.', ko: '선형 센서는 사용 가능한 노출 범위에서 일정한 기울기를 가집니다.' },
+      },
+      {
+        label: { en: 'Residual', ko: '잔차' },
+        equation: 'residual = Y_meas - Y_fit',
+        note: { en: 'Residual plots reveal curvature that is hidden in the main transfer curve.', ko: '잔차 플롯은 주 전달 곡선에서 잘 보이지 않는 곡률을 드러냅니다.' },
+      },
+      {
+        label: { en: 'Integral nonlinearity', ko: '적분 비선형성' },
+        equation: 'INL = max(|residual|)/full_scale',
+        note: { en: 'INL normalizes the worst deviation by full-scale output.', ko: 'INL은 최대 편차를 full-scale 출력으로 정규화합니다.' },
+      },
+    ],
+    concepts: [
+      { en: 'Knee compression extends highlight range at the cost of linear radiometry.', ko: 'knee 압축은 선형 방사 측정성을 희생해 하이라이트 범위를 늘립니다.' },
+      { en: 'Linearity errors affect photometry, color correction, HDR merge, and calibration.', ko: '선형성 오차는 광도 측정, 색 보정, HDR 병합, 보정에 영향을 줍니다.' },
+      { en: 'Real measurements need black-level subtraction and stable illumination.', ko: '실측에는 black-level 제거와 안정적인 조명이 필요합니다.' },
+    ],
+    references: [refs.emva],
+  },
+}
+
+const entry = computed(() => theoryEntries[props.slug])
+</script>
+
+<style scoped>
+.sim-theory {
+  margin: 36px 0 24px;
+  padding: 20px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  background: var(--vp-c-bg-soft);
+}
+
+.sim-theory-eyebrow {
+  margin-bottom: 4px;
+  color: var(--vp-c-brand-1);
+  font-size: 0.78em;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.sim-theory h2 {
+  margin: 0 0 8px;
+  border-top: 0;
+  padding-top: 0;
+  font-size: 1.25em;
+}
+
+.sim-theory h3 {
+  margin: 0 0 12px;
+  font-size: 1em;
+  color: var(--vp-c-text-1);
+}
+
+.sim-theory-summary {
+  margin: 0 0 16px;
+  color: var(--vp-c-text-2);
+}
+
+.sim-theory-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.sim-theory-card {
+  padding: 14px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  background: var(--vp-c-bg);
+}
+
+.sim-theory-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.sim-theory-card li {
+  margin: 6px 0;
+}
+
+.formula-row {
+  padding: 10px 0;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.formula-row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.formula-label {
+  margin-bottom: 4px;
+  color: var(--vp-c-text-2);
+  font-size: 0.82em;
+  font-weight: 600;
+}
+
+.formula-row code {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 6px;
+  overflow-x: auto;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-brand-1);
+  font-size: 0.86em;
+  white-space: nowrap;
+}
+
+.formula-row p {
+  margin: 6px 0 0;
+  color: var(--vp-c-text-2);
+  font-size: 0.9em;
+}
+
+.references-card {
+  margin-top: 14px;
+}
+
+@media (max-width: 760px) {
+  .sim-theory {
+    padding: 14px;
+  }
+
+  .sim-theory-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

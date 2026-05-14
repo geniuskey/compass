@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Diffraction](/theory/optics/diffraction) · [Resolution, MTF, and Pixel Scaling](/theory/sensor/resolution-and-mtf)
 :::
+
+<SimulatorTheory slug="diffraction-psf" />

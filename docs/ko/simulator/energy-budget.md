@@ -15,3 +15,5 @@ title: 에너지 버짓 분석기
 ::: tip 더 알아보기
 [양자 효율](/ko/theory/sensor/quantum-efficiency)
 :::
+
+<SimulatorTheory slug="energy-budget" />

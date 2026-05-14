@@ -15,3 +15,5 @@ title: 색 정확도 분석기
 ::: tip 더 알아보기
 [신호 체인](/ko/theory/sensor/signal-chain) · [신호 체인 색 정확도 레시피](/ko/cookbook/signal-chain-color-accuracy)
 :::
+
+<SimulatorTheory slug="color-accuracy" />

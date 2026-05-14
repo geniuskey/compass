@@ -1,6 +1,14 @@
 <template>
-  <div class="mlp-container">
+  <div :class="['mlp-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Microlens Process Shape Predictor', '마이크로렌즈 공정 형상 예측기') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Explore how layout gap, reflow budget, and etch-transfer settings can move a CIS microlens toward a final gap, height, and profile.',
@@ -321,8 +329,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 type ApertureShape = 'circular' | 'rounded-square' | 'square'
 type ViewMode = 'section' | 'surface' | 'process'

@@ -15,3 +15,5 @@ title: 픽셀 SNR vs 조도
 ::: tip 더 알아보기
 [노이즈, SNR, 다이나믹 레인지](/ko/theory/sensor/noise-and-snr)
 :::
+
+<SimulatorTheory slug="pixel-snr-vs-illuminance" />

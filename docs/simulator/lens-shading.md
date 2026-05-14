@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Signal Chain](/theory/sensor/signal-chain) · [Pixel Optical Effects](/theory/sensor/pixel-optical-effects)
 :::
+
+<SimulatorTheory slug="lens-shading" />

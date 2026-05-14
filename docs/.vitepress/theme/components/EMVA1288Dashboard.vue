@@ -1,6 +1,14 @@
 <template>
-  <div class="emva-container">
+  <div :class="['emva-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('EMVA 1288 Dashboard', 'EMVA 1288 대시보드') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Integrated characterization dashboard based on EMVA 1288 standard. Simulates key sensor parameters from pixel design.',
@@ -79,9 +87,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 import { tmmCalc, defaultBsiStack, SI_LAYER_IDX } from '../composables/tmm'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 const siThick = ref(3.0)
 const pitch = ref(1.0)

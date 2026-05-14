@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Image Sensor Optics](/theory/sensor/image-sensor-optics)
 :::
+
+<SimulatorTheory slug="mla-array" />

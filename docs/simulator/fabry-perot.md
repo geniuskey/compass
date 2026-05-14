@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Thin Film Optics](/theory/optics/thin-film-optics)
 :::
+
+<SimulatorTheory slug="fabry-perot" />

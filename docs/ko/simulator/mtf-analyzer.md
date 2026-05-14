@@ -15,3 +15,5 @@ title: MTF 분석기
 ::: tip 더 알아보기
 [해상도, MTF, 픽셀 스케일링](/ko/theory/sensor/resolution-and-mtf) · [회절](/ko/theory/optics/diffraction)
 :::
+
+<SimulatorTheory slug="mtf-analyzer" />

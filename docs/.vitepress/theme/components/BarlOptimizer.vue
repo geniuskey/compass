@@ -1,6 +1,14 @@
 <template>
-  <div class="barl-optimizer-container">
+  <div :class="['barl-optimizer-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Thin Film Stack Designer', '박막 스택 설계기') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Design multi-layer thin film coatings with arbitrary materials, order, and thickness. Add/remove/reorder layers freely. Supports 20+ materials.',
@@ -225,12 +233,14 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 import {
   tmmSpectrum, wlRange, MATERIALS, COATING_MATERIALS, SUBSTRATE_MATERIALS,
   type TmmLayer, type TmmResult
 } from '../composables/tmm'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 // --- Material helpers ---
 const coatingMats = COATING_MATERIALS

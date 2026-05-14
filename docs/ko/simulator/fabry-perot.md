@@ -15,3 +15,5 @@ title: 파브리-페로 시각화
 ::: tip 더 알아보기
 [박막 광학](/ko/theory/optics/thin-film-optics)
 :::
+
+<SimulatorTheory slug="fabry-perot" />

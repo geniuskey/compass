@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Noise, SNR, and Dynamic Range](/theory/sensor/noise-and-snr) · [EMVA 1288 Characterization](/theory/sensor/emva1288)
 :::
+
+<SimulatorTheory slug="prnu-visualizer" />

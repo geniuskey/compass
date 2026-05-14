@@ -15,3 +15,5 @@ TMM 기반 양자 효율에서 분광 응답도를 계산합니다. 채널별 �
 ::: tip 더 알아보기
 [노이즈, SNR, 다이나믹 레인지](/ko/theory/sensor/noise-and-snr) · [양자 효율](/ko/theory/sensor/quantum-efficiency)
 :::
+
+<SimulatorTheory slug="responsivity-calculator" />

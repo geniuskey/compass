@@ -15,3 +15,5 @@ title: 박막 스택 설계기
 ::: tip 더 알아보기
 [박막 광학](/ko/theory/optics/thin-film-optics) · [BARL 설계 레시피](/ko/cookbook/barl-design)
 :::
+
+<SimulatorTheory slug="barl-optimizer" />

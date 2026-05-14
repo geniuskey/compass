@@ -1,6 +1,14 @@
 <template>
-  <div class="ca-container">
+  <div :class="['ca-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Color Accuracy Analyzer', '색 정확도 분석기') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Compute color reproduction accuracy (deltaE) for ColorChecker patches using TMM-based QE spectra and a least-squares Color Correction Matrix.',
@@ -449,9 +457,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 import { tmmCalc, defaultBsiStack, SI_LAYER_IDX } from '../composables/tmm'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 // ---- Controls ----
 const siThickness = ref(3.0)

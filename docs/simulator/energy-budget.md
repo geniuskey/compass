@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Quantum Efficiency](/theory/sensor/quantum-efficiency)
 :::
+
+<SimulatorTheory slug="energy-budget" />

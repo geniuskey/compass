@@ -15,3 +15,5 @@ title: 마이크로렌즈 광선 추적
 ::: tip 더 알아보기
 [이미지 센서 광학](/ko/theory/sensor/image-sensor-optics) · [마이크로렌즈 & CRA 레시피](/ko/cookbook/microlens-optimization)
 :::
+
+<SimulatorTheory slug="microlens-raytrace" />

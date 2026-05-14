@@ -15,3 +15,5 @@ title: 픽셀 스케일링 트렌드
 ::: tip 더 알아보기
 [해상도, MTF, 픽셀 스케일링](/ko/theory/sensor/resolution-and-mtf)
 :::
+
+<SimulatorTheory slug="pixel-scaling" />

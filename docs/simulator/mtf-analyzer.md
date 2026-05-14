@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Resolution, MTF, and Pixel Scaling](/theory/sensor/resolution-and-mtf) · [Diffraction](/theory/optics/diffraction)
 :::
+
+<SimulatorTheory slug="mtf-analyzer" />

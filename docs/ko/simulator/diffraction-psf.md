@@ -15,3 +15,5 @@ title: 회절 PSF 뷰어
 ::: tip 더 알아보기
 [회절](/ko/theory/optics/diffraction) · [해상도, MTF, 픽셀 스케일링](/ko/theory/sensor/resolution-and-mtf)
 :::
+
+<SimulatorTheory slug="diffraction-psf" />

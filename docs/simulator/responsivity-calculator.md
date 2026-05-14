@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Noise, SNR, and Dynamic Range](/theory/sensor/noise-and-snr) · [Quantum Efficiency](/theory/sensor/quantum-efficiency)
 :::
+
+<SimulatorTheory slug="responsivity-calculator" />

@@ -35,3 +35,5 @@ The public papers do not expose a universal CIS recipe. The simulator therefore 
 ::: tip Related tools
 [Microlens Ray Trace](./microlens-raytrace) · [MLA Array Visualizer](./mla-array) · [Microlens & CRA recipe](/cookbook/microlens-optimization)
 :::
+
+<SimulatorTheory slug="microlens-process-shape" />

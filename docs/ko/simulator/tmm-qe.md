@@ -15,3 +15,5 @@ Transfer Matrix Method를 사용하여 BSI CMOS 픽셀의 양자 효율 스펙�
 ::: tip 더 알아보기
 [양자 효율](/ko/theory/sensor/quantum-efficiency) · [TMM 검증 결과 레시피](/ko/cookbook/tmm-validation-results)
 :::
+
+<SimulatorTheory slug="tmm-qe" />

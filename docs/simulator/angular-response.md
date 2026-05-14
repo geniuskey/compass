@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Pixel Optical Effects](/theory/sensor/pixel-optical-effects) · [Cone Illumination guide](/guide/cone-illumination)
 :::
+
+<SimulatorTheory slug="angular-response" />

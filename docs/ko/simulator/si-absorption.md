@@ -15,3 +15,5 @@ title: 실리콘 흡수 깊이
 ::: tip 더 알아보기
 [픽셀 광학 효과](/ko/theory/sensor/pixel-optical-effects) · [양자 효율](/ko/theory/sensor/quantum-efficiency)
 :::
+
+<SimulatorTheory slug="si-absorption" />

@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Signal Chain](/theory/sensor/signal-chain) · [Signal Chain Color Accuracy recipe](/cookbook/signal-chain-color-accuracy)
 :::
+
+<SimulatorTheory slug="color-accuracy" />

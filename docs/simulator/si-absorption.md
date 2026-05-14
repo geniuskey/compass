@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Pixel Optical Effects](/theory/sensor/pixel-optical-effects) · [Quantum Efficiency](/theory/sensor/quantum-efficiency)
 :::
+
+<SimulatorTheory slug="si-absorption" />

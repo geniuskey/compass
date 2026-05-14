@@ -1,6 +1,14 @@
 <template>
-  <div class="pixel-playground">
+  <div :class="['pixel-playground', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Pixel Design Playground', '픽셀 설계 플레이그라운드') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Configure all pixel parameters and explore multi-panel results: QE spectra, layer stack visualization, and energy budget analysis powered by TMM.',
@@ -282,9 +290,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 import { tmmCalc, wlRange, MATERIALS, type TmmLayer, type TmmResult } from '../composables/tmm'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 // ── Control state ────────────────────────────────────────────────────────────
 const preset = ref('bsi_1um')

@@ -15,3 +15,5 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 ::: tip Learn more
 [Noise, SNR, and Dynamic Range](/theory/sensor/noise-and-snr)
 :::
+
+<SimulatorTheory slug="pixel-snr-vs-illuminance" />

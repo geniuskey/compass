@@ -74,6 +74,7 @@ const globalComponents = [
   ['ResponsivityCalculator', () => import('./components/ResponsivityCalculator.vue')],
   ['LinearityAnalyzer', () => import('./components/LinearityAnalyzer.vue')],
   ['ReferenceInteractiveList', () => import('./components/ReferenceInteractiveList.vue')],
+  ['SimulatorTheory', () => import('./components/SimulatorTheory.vue')],
 ] as const
 
 function isLocaleSwitch(from: string, to: string): boolean {

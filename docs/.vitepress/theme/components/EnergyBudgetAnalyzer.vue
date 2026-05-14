@@ -1,6 +1,14 @@
 <template>
-  <div class="energy-budget-container">
+  <div :class="['energy-budget-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Energy Budget Analyzer', '에너지 버짓 분석기') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Visualize where photon energy goes at each wavelength — how much is reflected, absorbed in each layer, or transmitted through the pixel stack.',
@@ -223,12 +231,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 import {
   tmmCalc, tmmSpectrum, wlRange, defaultBsiStack,
   SI_LAYER_IDX, type TmmResult,
 } from '../composables/tmm'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 // --- Controls ---
 const mode = ref<'single' | 'spectrum'>('single')

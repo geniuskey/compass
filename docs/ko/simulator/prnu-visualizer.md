@@ -15,3 +15,5 @@ title: PRNU / DSNU 시각화
 ::: tip 더 알아보기
 [노이즈, SNR, 다이나믹 레인지](/ko/theory/sensor/noise-and-snr) · [EMVA 1288 특성화](/ko/theory/sensor/emva1288)
 :::
+
+<SimulatorTheory slug="prnu-visualizer" />

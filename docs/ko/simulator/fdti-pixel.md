@@ -15,3 +15,5 @@ title: FDTI / BDTI 픽셀 시뮬레이터
 ::: tip 더 알아보기
 [픽셀 광학 효과](/ko/theory/sensor/pixel-optical-effects) · [DTI 크로스토크 레시피](/ko/cookbook/dti-crosstalk)
 :::
+
+<SimulatorTheory slug="fdti-pixel" />

@@ -15,3 +15,5 @@ title: 각도 응답
 ::: tip 더 알아보기
 [픽셀 광학 효과](/ko/theory/sensor/pixel-optical-effects) · [원뿔 조명 가이드](/ko/guide/cone-illumination)
 :::
+
+<SimulatorTheory slug="angular-response" />

@@ -15,3 +15,5 @@ title: MLA 어레이 시각화
 ::: tip 더 알아보기
 [이미지 센서 광학](/ko/theory/sensor/image-sensor-optics)
 :::
+
+<SimulatorTheory slug="mla-array" />

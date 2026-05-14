@@ -1,6 +1,14 @@
 <template>
-  <div class="tmm-qe-container">
+  <div :class="['tmm-qe-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('TMM Quantum Efficiency Calculator', 'TMM 양자 효율 계산기') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Configure a BSI pixel layer stack and see real-time R/T/A/QE spectra computed via the transfer matrix method.',
@@ -264,6 +272,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 import {
   tmmSpectrum, wlRange, defaultBsiStack,
   SI_LAYER_IDX,
@@ -271,6 +280,7 @@ import {
 } from '../composables/tmm'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 // --- Controls ---
 const preset = ref<'bsi1um' | 'bsi08um' | 'custom'>('bsi1um')
