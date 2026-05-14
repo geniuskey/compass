@@ -57,6 +57,7 @@ const globalComponents = [
   ['FabryPerotVisualizer', () => import('./components/FabryPerotVisualizer.vue')],
   ['FabryPerotConeSimulator', () => import('./components/FabryPerotConeSimulator.vue')],
   ['MicrolensRayTrace', () => import('./components/MicrolensRayTrace.vue')],
+  ['MicrolensProcessShape', () => import('./components/MicrolensProcessShape.vue')],
   ['DiffractionPsfViewer', () => import('./components/DiffractionPsfViewer.vue')],
   ['FdtiPixelSimulator', () => import('./components/FdtiPixelSimulator.vue')],
   ['MtfAnalyzer', () => import('./components/MtfAnalyzer.vue')],

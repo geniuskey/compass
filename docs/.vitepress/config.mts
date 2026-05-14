@@ -324,6 +324,7 @@ const simulatorSidebar = [
   { text: 'Optics & Wave Physics', collapsed: false, items: [
     { text: 'Si Absorption Depth', link: '/simulator/si-absorption' },
     { text: 'Microlens Ray Trace', link: '/simulator/microlens-raytrace' },
+    { text: 'Microlens Process Shape', link: '/simulator/microlens-process-shape' },
     { text: 'MLA Array Visualizer', link: '/simulator/mla-array' },
     { text: 'FDTI / BDTI Pixel Simulator', link: '/simulator/fdti-pixel' },
     { text: 'Fabry-Pérot Visualizer', link: '/simulator/fabry-perot' },
@@ -363,6 +364,7 @@ const simulatorSidebarKo = [
   { text: '광학 & 파동 물리', collapsed: false, items: [
     { text: 'Si 흡수 깊이', link: '/ko/simulator/si-absorption' },
     { text: '마이크로렌즈 광선추적', link: '/ko/simulator/microlens-raytrace' },
+    { text: '마이크로렌즈 공정 형상', link: '/ko/simulator/microlens-process-shape' },
     { text: 'MLA 어레이 시각화', link: '/ko/simulator/mla-array' },
     { text: 'FDTI / BDTI 픽셀 시뮬레이터', link: '/ko/simulator/fdti-pixel' },
     { text: '파브리-페로 시각화', link: '/ko/simulator/fabry-perot' },
