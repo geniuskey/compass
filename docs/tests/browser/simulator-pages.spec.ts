@@ -42,7 +42,7 @@ test.describe('simulator pages', () => {
       await gotoDocs(page, path)
 
       await expect(page.locator('.sim-theory')).toHaveCount(1)
-      await expect(page.locator('.sim-theory code').first()).toBeVisible()
+      await expect(page.locator('.sim-theory .formula-equation').first()).toBeVisible()
       await expect(page.locator('.sim-theory a').first()).toBeVisible()
     })
   }
