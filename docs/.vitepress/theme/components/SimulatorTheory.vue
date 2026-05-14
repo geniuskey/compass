@@ -9,7 +9,9 @@
         <h3>{{ t('Core Equations', '핵심 수식') }}</h3>
         <div v-for="formula in entry.formulas" :key="formula.equation" class="formula-row">
           <div class="formula-label">{{ pick(formula.label) }}</div>
-          <code>{{ formula.equation }}</code>
+          <div class="formula-equation">
+            $${{ formula.equation }}$$
+          </div>
           <p>{{ pick(formula.note) }}</p>
         </div>
       </div>
@@ -36,8 +38,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, watch, nextTick } from 'vue'
 import { useLocale } from '../composables/useLocale'
+
+// ... interfaces ...
+
+const props = defineProps<{ slug: string }>()
+const { isKo, t } = useLocale()
+
+function pick(value: Localized) {
+  return isKo.value ? value.ko : value.en
+}
+
+const typesetMath = () => {
+  if (typeof window !== 'undefined' && (window as any).MathJax) {
+    nextTick(() => {
+      (window as any).MathJax.typesetPromise?.()
+    })
+  }
+}
+
+onMounted(typesetMath)
+watch(() => props.slug, typesetMath)
+
+// ... refs and theoryEntries ...
+
 
 type Localized = { en: string; ko: string }
 
@@ -145,17 +170,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Layer phase', ko: '레이어 위상' },
-        equation: 'delta_j = 2*pi*n_j*d_j*cos(theta_j)/lambda',
+        equation: '\\delta_j = \\frac{2\\pi n_j d_j \\cos(\\theta_j)}{\\lambda}',
         note: { en: 'Each layer contributes a wavelength- and angle-dependent phase delay.', ko: '각 레이어는 파장과 입사각에 의존하는 위상 지연을 만듭니다.' },
       },
       {
         label: { en: 'Energy balance', ko: '에너지 보존' },
-        equation: 'R(lambda) + T(lambda) + sum_j A_j(lambda) = 1',
+        equation: 'R(\\lambda) + T(\\lambda) + \\sum_j A_j(\\lambda) = 1',
         note: { en: 'A physically consistent TMM result should conserve incident optical power.', ko: '물리적으로 일관된 TMM 결과는 입사 광파워를 보존해야 합니다.' },
       },
       {
         label: { en: 'Optical QE proxy', ko: '광학 QE 근사' },
-        equation: 'QE_opt(lambda) ~= A_Si(lambda)',
+        equation: 'QE_{\\text{opt}}(\\lambda) \\approx A_{\\text{Si}}(\\lambda)',
         note: { en: 'Carrier collection loss is not modeled, so silicon absorption is an optimistic QE estimate.', ko: '전하 수집 손실은 포함하지 않으므로 실리콘 흡수율은 낙관적인 QE 추정치입니다.' },
       },
     ],
@@ -175,17 +200,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Normal-incidence Fresnel reflection', ko: '수직 입사 프레넬 반사' },
-        equation: 'R = |(n_0 - n_s)/(n_0 + n_s)|^2',
+        equation: 'R = \\left| \\frac{n_0 - n_s}{n_0 + n_s} \\right|^2',
         note: { en: 'A bare polymer/silicon or oxide/silicon interface has high reflection because the index contrast is large.', ko: '폴리머/실리콘 또는 산화막/실리콘 계면은 굴절률 차이가 커서 반사가 큽니다.' },
       },
       {
         label: { en: 'Quarter-wave seed thickness', ko: '1/4파장 초기 두께' },
-        equation: 'd ~= lambda_0/(4*n_layer)',
+        equation: 'd \\approx \\frac{\\lambda_0}{4n_{\\text{layer}}}',
         note: { en: 'A quarter-wave layer gives a useful starting point, but broadband stacks require numerical tuning.', ko: '1/4파장 두께는 좋은 출발점이지만 광대역 스택은 수치 최적화가 필요합니다.' },
       },
       {
         label: { en: 'Merit function', ko: '목적 함수' },
-        equation: 'loss = mean_{lambda in band} R(lambda)',
+        equation: '\\mathcal{L} = \\langle R(\\lambda) \\rangle_{\\lambda \\in \\text{band}}',
         note: { en: 'The optimizer minimizes average reflectance over the selected spectral band.', ko: '최적화기는 선택한 파장 대역의 평균 반사율을 줄입니다.' },
       },
     ],
@@ -205,17 +230,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Conservation check', ko: '보존성 검증' },
-        equation: '1 = R + T + A_CF + A_BARL + A_Si + ...',
+        equation: '1 = R + T + A_{\\text{CF}} + A_{\\text{BARL}} + A_{\\text{Si}} + \\dots',
         note: { en: 'The residual should stay near zero; otherwise the optical model or sampling is inconsistent.', ko: '잔차는 0에 가까워야 하며, 그렇지 않다면 광학 모델이나 샘플링을 의심해야 합니다.' },
       },
       {
         label: { en: 'Layer absorption', ko: '레이어 흡수' },
-        equation: 'A_j = P_enter,j - P_exit,j',
+        equation: 'A_j = P_{\\text{in},j} - P_{\\text{out},j}',
         note: { en: 'Absorption is assigned by tracking the power flux entering and leaving a layer.', ko: '흡수는 해당 레이어로 들어간 파워와 나간 파워의 차이로 배분합니다.' },
       },
       {
         label: { en: 'Useful absorption', ko: '유효 흡수' },
-        equation: 'QE_opt <= A_Si',
+        equation: 'QE_{\\text{opt}} \\leq A_{\\text{Si}}',
         note: { en: 'Only absorption inside the photodiode silicon can become collected charge.', ko: '포토다이오드 실리콘 내부 흡수만 수집 전하로 변환될 수 있습니다.' },
       },
     ],
@@ -235,17 +260,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Snell law', ko: '스넬 법칙' },
-        equation: 'n_0*sin(theta_0) = n_j*sin(theta_j)',
+        equation: 'n_0 \\sin(\\theta_0) = n_j \\sin(\\theta_j)',
         note: { en: 'Higher-index layers bend the ray toward normal and reduce the internal angle.', ko: '고굴절률 레이어는 광선을 법선 쪽으로 굴절시켜 내부 각도를 줄입니다.' },
       },
       {
         label: { en: 'Path length increase', ko: '광경로 증가' },
-        equation: 'd_eff = d/cos(theta_j)',
+        equation: 'd_{\\text{eff}} = \\frac{d}{\\cos(\\theta_j)}',
         note: { en: 'Oblique rays see a thicker effective absorber or filter.', ko: '경사 입사 광선은 흡수층이나 필터를 더 두껍게 통과합니다.' },
       },
       {
         label: { en: 'Relative angular QE', ko: '상대 각도 QE' },
-        equation: 'AR(theta, lambda) = QE(theta, lambda)/QE(0, lambda)',
+        equation: 'AR(\\theta, \\lambda) = \\frac{QE(\\theta, \\lambda)}{QE(0, \\lambda)}',
         note: { en: 'This normalizes away the absolute calibration and highlights roll-off.', ko: '절대 보정을 제거하고 각도에 따른 롤오프를 보여줍니다.' },
       },
     ],
@@ -265,17 +290,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Photoelectrons', ko: '광전자 수' },
-        equation: 'S = Phi_photon * A_pixel * t_exp * QE',
+        equation: 'S = \\Phi_{\\text{ph}} \\cdot A_{\\text{px}} \\cdot t_{\\text{exp}} \\cdot QE',
         note: { en: 'Signal scales with photon flux, pixel area, exposure time, and quantum efficiency.', ko: '신호는 광자 플럭스, 픽셀 면적, 노출 시간, 양자 효율에 비례합니다.' },
       },
       {
         label: { en: 'Noise variance', ko: '노이즈 분산' },
-        equation: 'sigma^2 = S + D*t_exp + sigma_read^2 + (PRNU*S)^2',
+        equation: '\\sigma^2 = S + D \\cdot t_{\\text{exp}} + \\sigma_{\\text{read}}^2 + (PRNU \\cdot S)^2',
         note: { en: 'Shot and dark noise are Poisson terms; read and PRNU terms are added in variance.', ko: '샷/암전류 노이즈는 포아송 항이고, 읽기 노이즈와 PRNU는 분산으로 더합니다.' },
       },
       {
         label: { en: 'SNR', ko: 'SNR' },
-        equation: 'SNR_dB = 20*log10(S/sigma)',
+        equation: 'SNR_{\\text{dB}} = 20 \\log_{10} \\left( \\frac{S}{\\sigma} \\right)',
         note: { en: 'The dB form is useful for comparing operating points across illumination levels.', ko: 'dB 표현은 조도별 동작점을 비교할 때 유용합니다.' },
       },
     ],
@@ -295,17 +320,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Channel response', ko: '채널 응답' },
-        equation: 'S_c(lambda) = T_c(lambda) * QE_stack(lambda)',
+        equation: 'S_c(\\lambda) = T_c(\\lambda) \\cdot QE_{\\text{stack}}(\\lambda)',
         note: { en: 'The sensor channel is the filter transmission multiplied by the optical stack QE.', ko: '센서 채널 응답은 필터 투과율과 광학 스택 QE의 곱입니다.' },
       },
       {
         label: { en: 'CIE tristimulus integration', ko: 'CIE 삼자극 적분' },
-        equation: 'X = integral S(lambda)*xbar(lambda) d_lambda',
+        equation: 'X = \\int S(\\lambda) \\bar{x}(\\lambda) d\\lambda',
         note: { en: 'The same integration is used for Y and Z with ybar and zbar.', ko: 'Y와 Z도 각각 ybar, zbar로 같은 방식으로 적분합니다.' },
       },
       {
         label: { en: 'Chromaticity', ko: '색도 좌표' },
-        equation: 'x = X/(X+Y+Z), y = Y/(X+Y+Z)',
+        equation: 'x = \\frac{X}{X+Y+Z}, \\quad y = \\frac{Y}{X+Y+Z}',
         note: { en: 'The gamut triangle comes from the R, G, and B chromaticity points.', ko: '색역 삼각형은 R, G, B 색도점으로부터 만들어집니다.' },
       },
     ],
@@ -325,17 +350,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Stack response', ko: '스택 응답' },
-        equation: 'QE_c(lambda) ~= T_CF,c(lambda) * A_Si(lambda; stack)',
+        equation: 'QE_c(\\lambda) \\approx T_{\\text{CF},c}(\\lambda) \\cdot A_{\\text{Si}}(\\lambda; \\text{stack})',
         note: { en: 'The color channel response is approximated by filter transmission times silicon absorption.', ko: '색 채널 응답은 필터 투과율과 실리콘 흡수율의 곱으로 근사합니다.' },
       },
       {
         label: { en: 'Pixel area scaling', ko: '픽셀 면적 스케일링' },
-        equation: 'A_pixel = pitch^2',
+        equation: 'A_{\\text{px}} = p^2',
         note: { en: 'Area changes photon count and full-well trends even if spectral QE is unchanged.', ko: '분광 QE가 같아도 면적은 광자 수와 풀웰 경향을 바꿉니다.' },
       },
       {
         label: { en: 'Energy budget', ko: '에너지 예산' },
-        equation: 'R + T + sum(A_layer) = 1',
+        equation: 'R + T + \\sum A_{\\text{layer}} = 1',
         note: { en: 'The same conservation check is used to interpret stack losses.', ko: '스택 손실 해석에는 같은 에너지 보존 검증을 사용합니다.' },
       },
     ],
@@ -355,17 +380,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Absorption coefficient', ko: '흡수 계수' },
-        equation: 'alpha(lambda) = 4*pi*k(lambda)/lambda',
+        equation: '\\alpha(\\lambda) = \\frac{4\\pi k(\\lambda)}{\\lambda}',
         note: { en: 'The extinction coefficient k is converted to an absorption coefficient.', ko: '소광 계수 k를 흡수 계수로 변환합니다.' },
       },
       {
         label: { en: 'Intensity decay', ko: '강도 감쇠' },
-        equation: 'I(z, lambda) = I0*exp(-alpha(lambda)*z)',
+        equation: 'I(z, \\lambda) = I_0 e^{-\\alpha(\\lambda)z}',
         note: { en: 'This is the Beer-Lambert law for a uniform absorbing medium.', ko: '균일 흡수 매질에 대한 Beer-Lambert 법칙입니다.' },
       },
       {
         label: { en: 'Absorbed fraction', ko: '흡수율' },
-        equation: 'A(d, lambda) = 1 - exp(-alpha(lambda)*d)',
+        equation: 'A(d, \\lambda) = 1 - e^{-\\alpha(\\lambda)d}',
         note: { en: 'This ignores front-surface reflection and interference.', ko: '이 식은 표면 반사와 간섭을 무시한 근사입니다.' },
       },
     ],
@@ -385,17 +410,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Superellipse lens profile', ko: '초타원 렌즈 프로파일' },
-        equation: 'z(r) = h*(1 - (r/R)^n)^(1/n)',
+        equation: 'z(r) = h \\left( 1 - \\left( \\frac{r}{R} \\right)^n \\right)^{1/n}',
         note: { en: 'The exponent controls whether the lens is rounded, flat-topped, or steep-edged.', ko: '지수는 렌즈가 둥근지, 평탄한지, 가장자리가 가파른지를 조절합니다.' },
       },
       {
         label: { en: 'Snell refraction', ko: '스넬 굴절' },
-        equation: 'n_1*sin(theta_1) = n_2*sin(theta_2)',
+        equation: 'n_1 \\sin(\\theta_1) = n_2 \\sin(\\theta_2)',
         note: { en: 'Refraction is evaluated at the local surface normal, not at the global vertical axis.', ko: '굴절은 전역 수직축이 아니라 국소 표면 법선 기준으로 계산합니다.' },
       },
       {
         label: { en: 'Spot efficiency proxy', ko: '스폿 효율 근사' },
-        equation: 'eta_collect ~= N_rays hitting PD / N_total',
+        equation: '\\eta_{\\text{coll}} \\approx \\frac{N_{\\text{hits}}}{N_{\\text{total}}}',
         note: { en: 'Ray-count efficiency is intuitive but not a wave-optical QE calculation.', ko: '광선 개수 기반 효율은 직관적이지만 파동광학 QE 계산은 아닙니다.' },
       },
     ],
@@ -415,17 +440,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Volume conservation', ko: '체적 보존' },
-        equation: 'V_resist ~= V_lens(final)',
+        equation: 'V_{\\text{resist}} \\approx V_{\\text{lens, final}}',
         note: { en: 'Reflow reshapes the resist island while approximately conserving material volume.', ko: '리플로우는 resist island의 형상을 바꾸지만 재료 체적은 대략 보존합니다.' },
       },
       {
         label: { en: 'Sag-radius relation', ko: 'sag-곡률 관계' },
-        equation: 'R_vertex ~= (a^2 + h^2)/(2*h)',
+        equation: 'R_{\\text{vtx}} \\approx \\frac{a^2 + h^2}{2h}',
         note: { en: 'For a spherical-cap approximation, aperture radius a and sag h set vertex curvature.', ko: '구면 cap 근사에서 개구 반경 a와 sag h가 꼭짓점 곡률을 결정합니다.' },
       },
       {
         label: { en: 'Gap closure trend', ko: 'gap closure 경향' },
-        equation: 'gap_final = max(0, gap_layout - spread_reflow - closure_etch)',
+        equation: 'g_{\\text{final}} = \\max(0, g_{\\text{lay}} - \\Delta_{\\text{reflow}} - \\Delta_{\\text{etch}})',
         note: { en: 'The simulator keeps the directional trend explicit so coefficients can later be calibrated.', ko: '나중에 계수를 보정할 수 있도록 방향성 관계를 명시적으로 둡니다.' },
       },
     ],
@@ -445,17 +470,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Anisotropic normalized radius', ko: '비등방 정규화 반경' },
-        equation: 'rho = ((|x/Rx|)^n + (|y/Ry|)^n)^(1/n)',
+        equation: '\\rho = \\left( \\left| \\frac{x}{R_x} \\right|^n + \\left| \\frac{y}{R_y} \\right|^n \\right)^{1/n}',
         note: { en: 'Different Rx and Ry produce astigmatic or rectangular-pixel lens footprints.', ko: 'Rx와 Ry가 다르면 비점수차 또는 직사각형 픽셀용 렌즈 footprint가 됩니다.' },
       },
       {
         label: { en: 'Surface sag', ko: '표면 sag' },
-        equation: 'z(x,y) = h*max(0, 1 - rho^alpha)',
+        equation: 'z(x, y) = h \\cdot \\max(0, 1 - \\rho^\\alpha)',
         note: { en: 'Height h and curvature alpha set focusing strength and edge steepness.', ko: '높이 h와 곡률 alpha는 집광 세기와 가장자리 기울기를 결정합니다.' },
       },
       {
         label: { en: 'Array pitch', ko: '어레이 피치' },
-        equation: 'center_{m,n} = (m*Px, n*Py)',
+        equation: '(x, y)_{m,n} = (m P_x, n P_y)',
         note: { en: 'Array spacing controls gap, overlap risk, and fill factor.', ko: '어레이 간격은 gap, overlap 위험, fill factor를 결정합니다.' },
       },
     ],
@@ -475,17 +500,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Critical angle', ko: '임계각' },
-        equation: 'theta_c = asin(n_trench/n_Si)',
+        equation: '\\theta_c = \\arcsin\\left( \\frac{n_{\\text{trench}}}{n_{\\text{Si}}} \\right)',
         note: { en: 'A low-index trench can confine silicon-guided rays by total internal reflection.', ko: '저굴절률 트렌치는 전반사를 통해 실리콘 내 광선을 가둘 수 있습니다.' },
       },
       {
         label: { en: 'Optical crosstalk proxy', ko: '광학 크로스토크 근사' },
-        equation: 'XT = P_neighbor/(P_center + P_neighbor)',
+        equation: 'XT = \\frac{P_{\\text{neighbor}}}{P_{\\text{center}} + P_{\\text{neighbor}}}',
         note: { en: 'The simulator reports a structural optical trend, not carrier diffusion crosstalk.', ko: '시뮬레이터는 구조적 광학 경향을 보여주며 carrier diffusion 크로스토크는 포함하지 않습니다.' },
       },
       {
         label: { en: 'Absorption path benefit', ko: '흡수 경로 이득' },
-        equation: 'A = 1 - exp(-alpha*L_eff)',
+        equation: 'A = 1 - e^{-\\alpha L_{\\text{eff}}}',
         note: { en: 'DTI and backside structures can increase effective path length in silicon.', ko: 'DTI와 후면 구조는 실리콘 내 유효 경로 길이를 늘릴 수 있습니다.' },
       },
     ],
@@ -505,17 +530,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Round-trip phase', ko: '왕복 위상' },
-        equation: 'delta = 4*pi*n*d*cos(theta)/lambda',
+        equation: '\\delta = \\frac{4\\pi n d \\cos(\\theta)}{\\lambda}',
         note: { en: 'A small thickness or angle change can move the film between reflection peaks and valleys.', ko: '두께나 각도의 작은 변화만으로도 반사 피크와 밸리 사이를 이동할 수 있습니다.' },
       },
       {
         label: { en: 'Constructive condition', ko: '보강 조건' },
-        equation: '2*n*d*cos(theta) = m*lambda',
+        equation: '2nd \\cos(\\theta) = m\\lambda',
         note: { en: 'Integer round-trip phase gives resonant transmission or reflection depending on the stack.', ko: '왕복 위상이 정수배가 되면 스택에 따라 공진 투과 또는 반사가 나타납니다.' },
       },
       {
         label: { en: 'Quarter-wave AR', ko: '1/4파장 AR' },
-        equation: 'd = lambda_0/(4*n)',
+        equation: 'd = \\frac{\\lambda_0}{4n}',
         note: { en: 'The common AR seed thickness creates destructive interference for front-surface reflection.', ko: '일반적인 AR 초기 두께는 전면 반사를 상쇄 간섭시키도록 잡습니다.' },
       },
     ],
@@ -535,17 +560,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Airy intensity', ko: '에어리 강도' },
-        equation: 'I(r) = I0 * [2*J1(pi*r/(lambda*N))/(pi*r/(lambda*N))]^2',
+        equation: 'I(r) = I_0 \\left[ \\frac{2J_1(\\frac{\\pi r}{\\lambda N})}{\\frac{\\pi r}{\\lambda N}} \\right]^2',
         note: { en: 'J1 is the first-order Bessel function and N is the f-number.', ko: 'J1은 1차 베셀 함수이고 N은 f-number입니다.' },
       },
       {
         label: { en: 'First dark ring', ko: '첫 암환 반경' },
-        equation: 'r_1 = 1.22*lambda*N',
+        equation: 'r_1 = 1.22 \\lambda N',
         note: { en: 'This gives the common diffraction-limited spot radius estimate.', ko: '회절 한계 스폿 반경의 흔한 추정식입니다.' },
       },
       {
         label: { en: 'Encircled energy', ko: '포위 에너지' },
-        equation: 'EE(r) = integral_0^r 2*pi*rho*I(rho) d_rho',
+        equation: 'EE(r) = \\int_0^r 2\\pi \\rho I(\\rho) d\\rho',
         note: { en: 'Pixel collection depends on how much PSF energy falls within the active aperture.', ko: '픽셀 수집은 PSF 에너지 중 얼마가 활성 개구 안에 들어오는지에 좌우됩니다.' },
       },
     ],
@@ -565,17 +590,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Pixel aperture MTF', ko: '픽셀 개구 MTF' },
-        equation: 'MTF_pixel(f) = |sinc(pi*f*pitch*fill_factor)|',
+        equation: 'MTF_{\\text{px}}(f) = \\left| \\text{sinc}(\\pi f \\cdot p \\cdot FF) \\right|',
         note: { en: 'A rectangular aperture low-pass filters the sampled image.', ko: '직사각형 개구는 샘플링된 이미지를 저역통과 필터링합니다.' },
       },
       {
         label: { en: 'Diffraction cutoff', ko: '회절 cutoff' },
-        equation: 'f_c = 1/(lambda*N)',
+        equation: 'f_c = \\frac{1}{\\lambda N}',
         note: { en: 'No ideal incoherent diffraction-limited contrast remains beyond the cutoff.', ko: 'cutoff 이후에는 이상적인 비간섭 회절 제한 대비가 남지 않습니다.' },
       },
       {
         label: { en: 'Nyquist frequency', ko: '나이퀴스트 주파수' },
-        equation: 'f_N = 1/(2*pitch)',
+        equation: 'f_N = \\frac{1}{2p}',
         note: { en: 'Sampling above Nyquist aliases into lower spatial frequencies.', ko: '나이퀴스트를 넘는 샘플링 성분은 낮은 주파수로 aliasing됩니다.' },
       },
     ],
@@ -595,17 +620,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Area scaling', ko: '면적 스케일링' },
-        equation: 'A_pixel = pitch^2',
+        equation: 'A_{\\text{px}} = p^2',
         note: { en: 'Photon capture and approximate capacitance both scale with pixel area.', ko: '광자 수집과 대략적인 커패시턴스는 모두 픽셀 면적에 비례합니다.' },
       },
       {
         label: { en: 'Shot-noise limit', ko: '샷 노이즈 한계' },
-        equation: 'SNR_shot = sqrt(N_e)',
+        equation: 'SNR_{\\text{shot}} = \\sqrt{N_e}',
         note: { en: 'If the collected electron count falls by 4x, shot-limited SNR falls by 2x.', ko: '수집 전자 수가 4배 줄면 샷 노이즈 한계 SNR은 2배 줄어듭니다.' },
       },
       {
         label: { en: 'Diffraction ratio', ko: '회절 비율' },
-        equation: 'Airy diameter / pitch ~= 2.44*lambda*N/pitch',
+        equation: '\\frac{D_{\\text{Airy}}}{p} \\approx \\frac{2.44 \\lambda N}{p}',
         note: { en: 'This ratio rises as pixels shrink, increasing optical sharing between pixels.', ko: '픽셀이 작아질수록 이 비율이 커져 픽셀 간 광학 공유가 증가합니다.' },
       },
     ],
@@ -625,17 +650,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Least-squares CCM', ko: '최소제곱 CCM' },
-        equation: 'M = argmin_M ||R_camera*M - XYZ_ref||_2^2',
+        equation: 'M = \\text{argmin}_M \\left\\| \\mathbf{R}_{\\text{cam}} M - \\mathbf{X}_{\\text{ref}} \\right\\|_2^2',
         note: { en: 'The CCM is fitted to map camera sensor responses to reference XYZ values.', ko: 'CCM은 카메라 센서 응답을 기준 XYZ 값에 맞추도록 피팅됩니다.' },
       },
       {
         label: { en: 'CIELAB error', ko: 'CIELAB 색차' },
-        equation: 'DeltaE_ab = sqrt((DeltaL*)^2 + (Deltaa*)^2 + (Deltab*)^2)',
+        equation: '\\Delta E_{ab}^* = \\sqrt{(\\Delta L^*)^2 + (\\Delta a^*)^2 + (\\Delta b^*)^2}',
         note: { en: 'Delta E summarizes color mismatch after conversion to a perceptual color space.', ko: 'Delta E는 지각 색공간에서의 색 불일치를 요약합니다.' },
       },
       {
         label: { en: 'Noise-perturbed RGB', ko: '노이즈 포함 RGB' },
-        equation: 'R_meas = R_ideal + noise_shot + noise_read',
+        equation: 'R_{\\text{meas}} = R_{\\text{ideal}} + n_{\\text{shot}} + n_{\\text{read}}',
         note: { en: 'Color accuracy degrades when low-light noise perturbs channel ratios.', ko: '저조도 노이즈가 채널 비율을 흔들면 색 정확도가 나빠집니다.' },
       },
     ],
@@ -655,17 +680,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Arrhenius trend', ko: '아레니우스 경향' },
-        equation: 'I_dark(T) proportional to T^3 * exp(-E_a/(k*T))',
+        equation: 'I_{\\text{dark}}(T) \\propto T^3 e^{-\\frac{E_a}{kT}}',
         note: { en: 'Activation energy controls how steeply dark current rises with temperature.', ko: '활성화 에너지는 온도 상승에 따른 암전류 증가 기울기를 결정합니다.' },
       },
       {
         label: { en: 'Dark signal', ko: '암신호' },
-        equation: 'D = I_dark * t_exp',
+        equation: 'D = I_{\\text{dark}} \\cdot t_{\\text{exp}}',
         note: { en: 'Longer exposure accumulates more dark electrons.', ko: '노출 시간이 길수록 더 많은 암전자가 축적됩니다.' },
       },
       {
         label: { en: 'Dark shot noise', ko: '암전류 샷 노이즈' },
-        equation: 'sigma_dark = sqrt(D)',
+        equation: '\\sigma_{\\text{dark}} = \\sqrt{D}',
         note: { en: 'Thermal generation is a Poisson process in this simplified model.', ko: '이 단순 모델에서 열 생성은 포아송 과정으로 봅니다.' },
       },
     ],
@@ -685,17 +710,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Shot-noise region', ko: '샷 노이즈 영역' },
-        equation: 'variance_DN ~= mean_DN / K',
+        equation: '\\sigma_{\\text{DN}}^2 \\approx \\frac{\\mu_{\\text{DN}}}{K}',
         note: { en: 'The slope in the shot-noise region gives conversion gain K in e-/DN.', ko: '샷 노이즈 영역의 기울기에서 e-/DN 단위의 conversion gain K를 얻습니다.' },
       },
       {
         label: { en: 'Read noise', ko: '읽기 노이즈' },
-        equation: 'sigma_read,e = K * sigma_read,DN',
+        equation: '\\sigma_{\\text{read}, e^-} = K \\cdot \\sigma_{\\text{read}, \\text{DN}}',
         note: { en: 'Dark-frame variance near zero signal estimates read noise.', ko: '0 신호 근처 dark-frame 분산으로 읽기 노이즈를 추정합니다.' },
       },
       {
         label: { en: 'PRNU region', ko: 'PRNU 영역' },
-        equation: 'sigma_total^2 ~= sigma_shot^2 + (PRNU*S)^2',
+        equation: '\\sigma_{\\text{total}}^2 \\approx \\sigma_{\\text{shot}}^2 + (PRNU \\cdot S)^2',
         note: { en: 'At high signal, multiplicative non-uniformity bends the curve upward.', ko: '고신호에서는 곱셈성 비균일성이 곡선을 위쪽으로 휘게 합니다.' },
       },
     ],
@@ -715,17 +740,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Single-exposure DR', ko: '단일 노출 DR' },
-        equation: 'DR_dB = 20*log10(FWC/sigma_floor)',
+        equation: 'DR_{\\text{dB}} = 20 \\log_{10} \\left( \\frac{FWC}{\\sigma_{\\text{floor}}} \\right)',
         note: { en: 'The noise floor often includes read noise plus dark noise.', ko: '노이즈 플로어에는 보통 읽기 노이즈와 암전류 노이즈가 포함됩니다.' },
       },
       {
         label: { en: 'Saturation', ko: '포화' },
-        equation: 'S_clipped = min(S, FWC)',
+        equation: 'S_{\\text{clip}} = \\min(S, FWC)',
         note: { en: 'No linear signal information remains above full well.', ko: '풀웰을 넘으면 선형 신호 정보가 남지 않습니다.' },
       },
       {
         label: { en: 'HDR exposure span', ko: 'HDR 노출 범위' },
-        equation: 'DR_HDR ~= 20*log10(S_max,long / S_min,short)',
+        equation: 'DR_{\\text{HDR}} \\approx 20 \\log_{10} \\left( \\frac{S_{\\text{max, long}}}{S_{\\text{min, short}}} \\right)',
         note: { en: 'Multi-exposure HDR extends range but introduces motion and merge constraints.', ko: '다중 노출 HDR은 범위를 넓히지만 motion 및 병합 제약을 만듭니다.' },
       },
     ],
@@ -745,17 +770,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Absolute sensitivity threshold', ko: '절대 감도 임계값' },
-        equation: 'mu_p,min when SNR = 1',
+        equation: '\\mu_{p, \\text{min}} \\quad (\\text{at } SNR=1)',
         note: { en: 'This estimates the photon count needed for signal to equal noise.', ko: '신호가 노이즈와 같아지는 데 필요한 광자 수를 추정합니다.' },
       },
       {
         label: { en: 'Saturation capacity', ko: '포화 용량' },
-        equation: 'S_sat ~= FWC',
+        equation: 'S_{\\text{sat}} \\approx FWC',
         note: { en: 'Full well is the charge capacity before clipping or nonlinearity dominates.', ko: '풀웰은 clipping 또는 비선형성이 지배하기 전 전하 용량입니다.' },
       },
       {
         label: { en: 'SNR', ko: 'SNR' },
-        equation: 'SNR = mu_e / sqrt(sigma_d^2 + sigma_q^2 + mu_e)',
+        equation: 'SNR = \\frac{\\mu_e}{\\sqrt{\\sigma_d^2 + \\sigma_q^2 + \\mu_e}}',
         note: { en: 'The simplified dashboard includes dark/read-like noise and shot noise terms.', ko: '단순화된 대시보드는 dark/read 계열 노이즈와 샷 노이즈 항을 포함합니다.' },
       },
     ],
@@ -775,17 +800,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Cos-fourth falloff', ko: 'cos^4 감쇠' },
-        equation: 'RI(theta) ~= cos^4(theta)',
+        equation: 'RI(\\theta) \\approx \\cos^4(\\theta)',
         note: { en: 'This is a classical first-order model for image-plane relative illumination.', ko: '이미지 평면 상대 조도의 고전적 1차 모델입니다.' },
       },
       {
         label: { en: 'Microlens shift', ko: '마이크로렌즈 시프트' },
-        equation: 'shift ~= h_stack * tan(CRA_eff)',
+        equation: '\\text{shift} \\approx h_{\\text{stack}} \\cdot \\tan(CRA_{\\text{eff}})',
         note: { en: 'Refraction in the stack usually makes CRA_eff smaller than the air-side CRA.', ko: '스택 내 굴절 때문에 CRA_eff는 보통 공기 중 CRA보다 작습니다.' },
       },
       {
         label: { en: 'Color shading', ko: '색 쉐이딩' },
-        equation: 'gain_c(r) = response_c(center)/response_c(r)',
+        equation: 'G_c(r) = \\frac{S_c(0)}{S_c(r)}',
         note: { en: 'Per-channel lens-shading correction equalizes radial response.', ko: '채널별 렌즈 쉐이딩 보정은 반경별 응답을 맞춥니다.' },
       },
     ],
@@ -805,17 +830,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Pixel signal model', ko: '픽셀 신호 모델' },
-        equation: 'Y_ij = (1 + g_ij)*S + d_ij + noise_ij',
+        equation: 'Y_{ij} = (1 + g_{ij})S + d_{ij} + n_{ij}',
         note: { en: 'g_ij is PRNU and d_ij is DSNU/dark offset.', ko: 'g_ij는 PRNU, d_ij는 DSNU 또는 dark offset입니다.' },
       },
       {
         label: { en: 'PRNU', ko: 'PRNU' },
-        equation: 'PRNU = std(flat_field)/mean(flat_field)',
+        equation: 'PRNU = \\frac{\\sigma_{\\text{flat}}}{\\mu_{\\text{flat}}}',
         note: { en: 'PRNU is measured from illuminated flat-field frames after offset correction.', ko: 'PRNU는 offset 보정 후 조명 flat-field 프레임에서 측정합니다.' },
       },
       {
         label: { en: 'DSNU', ko: 'DSNU' },
-        equation: 'DSNU = std(dark_frame)',
+        equation: 'DSNU = \\sigma_{\\text{dark}}',
         note: { en: 'DSNU describes spatial variation of dark signal.', ko: 'DSNU는 암신호의 공간적 변동을 나타냅니다.' },
       },
     ],
@@ -835,17 +860,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Electron signal', ko: '전자 신호' },
-        equation: 'S = N_photons * QE',
+        equation: 'S = N_{\\text{ph}} \\cdot QE',
         note: { en: 'Optical throughput and quantum efficiency turn photons into collected electrons.', ko: '광학 처리량과 양자 효율이 광자를 수집 전자로 바꿉니다.' },
       },
       {
         label: { en: 'Total noise', ko: '전체 노이즈' },
-        equation: 'sigma = sqrt(S + D*t + sigma_read^2)',
+        equation: '\\sigma = \\sqrt{S + D \\cdot t + \\sigma_{\\text{read}}^2}',
         note: { en: 'The simulator separates shot, dark, and read-noise contributions.', ko: '시뮬레이터는 샷, 암전류, 읽기 노이즈 기여를 구분합니다.' },
       },
       {
         label: { en: 'Ideal limit', ko: '이상적 한계' },
-        equation: 'SNR_ideal = sqrt(S)',
+        equation: 'SNR_{\\text{ideal}} = \\sqrt{S}',
         note: { en: 'This is the best possible photon shot-noise limit for a given signal.', ko: '주어진 신호에서 가능한 최선의 광자 샷 노이즈 한계입니다.' },
       },
     ],
@@ -865,17 +890,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Photon energy', ko: '광자 에너지' },
-        equation: 'E_photon = h*c/lambda',
+        equation: 'E_{\\text{ph}} = \\frac{hc}{\\lambda}',
         note: { en: 'Longer wavelengths carry less energy per photon.', ko: '긴 파장의 광자는 하나당 에너지가 더 낮습니다.' },
       },
       {
         label: { en: 'Responsivity', ko: '응답도' },
-        equation: 'R(lambda) = QE(lambda)*q*lambda/(h*c)',
+        equation: 'R(\\lambda) = \\frac{QE(\\lambda) \\cdot q \\lambda}{hc}',
         note: { en: 'With lambda in micrometers, R ~= QE*lambda/1.2398 A/W.', ko: 'lambda를 micrometer로 쓰면 R ~= QE*lambda/1.2398 A/W입니다.' },
       },
       {
         label: { en: 'Photocurrent', ko: '광전류' },
-        equation: 'I_photo = R(lambda)*P_optical',
+        equation: 'I_{\\text{ph}} = R(\\lambda) \\cdot P_{\\text{opt}}',
         note: { en: 'Responsivity links optical simulation to electrical current.', ko: '응답도는 광학 시뮬레이션을 전기적 전류와 연결합니다.' },
       },
     ],
@@ -895,17 +920,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Ideal response', ko: '이상 응답' },
-        equation: 'Y_ideal = gain*X + offset',
+        equation: 'Y_{\\text{ideal}} = gX + \\text{offset}',
         note: { en: 'A linear sensor has constant slope over the usable exposure range.', ko: '선형 센서는 사용 가능한 노출 범위에서 일정한 기울기를 가집니다.' },
       },
       {
         label: { en: 'Residual', ko: '잔차' },
-        equation: 'residual = Y_meas - Y_fit',
+        equation: '\\text{residual} = Y_{\\text{meas}} - Y_{\\text{fit}}',
         note: { en: 'Residual plots reveal curvature that is hidden in the main transfer curve.', ko: '잔차 플롯은 주 전달 곡선에서 잘 보이지 않는 곡률을 드러냅니다.' },
       },
       {
         label: { en: 'Integral nonlinearity', ko: '적분 비선형성' },
-        equation: 'INL = max(|residual|)/full_scale',
+        equation: 'INL = \\frac{\\max(|\\text{residual}|)}{\\text{full scale}}',
         note: { en: 'INL normalizes the worst deviation by full-scale output.', ko: 'INL은 최대 편차를 full-scale 출력으로 정규화합니다.' },
       },
     ],
@@ -996,15 +1021,20 @@ const entry = computed(() => theoryEntries[props.slug])
   font-weight: 600;
 }
 
-.formula-row code {
+.formula-equation {
   display: block;
-  padding: 8px 10px;
+  margin: 6px 0;
+  padding: 10px;
   border-radius: 6px;
-  overflow-x: auto;
   background: var(--vp-c-bg-soft);
-  color: var(--vp-c-brand-1);
-  font-size: 0.86em;
-  white-space: nowrap;
+  overflow-x: auto;
+  font-size: 0.95em;
+}
+
+/* Ensure MathJax block math doesn't add extra margins here */
+.formula-equation :deep(mjx-container[display="true"]) {
+  margin: 0 !important;
+  text-align: left !important;
 }
 
 .formula-row p {
