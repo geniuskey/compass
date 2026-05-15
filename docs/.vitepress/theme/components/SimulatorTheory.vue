@@ -48,11 +48,29 @@ function pick(value: Localized) {
   return isKo.value ? value.ko : value.en
 }
 
-const typesetMath = () => {
-  if (typeof window !== 'undefined' && (window as any).MathJax) {
-    nextTick(() => {
-      (window as any).MathJax.typesetPromise?.()
-    })
+const waitForMathJax = async (timeoutMs = 8000) => {
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
+    const mj = (window as any).MathJax
+    if (mj?.startup?.promise && typeof mj.typesetPromise === 'function') {
+      await mj.startup.promise
+      return mj
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  }
+  return null
+}
+
+const typesetMath = async () => {
+  if (typeof window === 'undefined') return
+  await nextTick()
+  const mj = await waitForMathJax()
+  if (mj) {
+    try {
+      await mj.typesetPromise()
+    } catch {
+      /* ignore typeset errors */
+    }
   }
 }
 
