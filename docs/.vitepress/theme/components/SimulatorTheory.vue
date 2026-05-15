@@ -2,6 +2,12 @@
   <section v-if="entry" class="sim-theory">
     <div class="sim-theory-eyebrow">{{ t('Physics Notes', '물리 수식과 이론') }}</div>
     <h2>{{ pick(entry.title) }}</h2>
+
+    <div v-if="entry.intuition" class="sim-theory-intuition">
+      <div class="intuition-eyebrow">{{ t('Plain-English Intuition', '쉽게 이해하기') }}</div>
+      <p>{{ pick(entry.intuition) }}</p>
+    </div>
+
     <p class="sim-theory-summary">{{ pick(entry.summary) }}</p>
 
     <div class="sim-theory-grid">
@@ -94,6 +100,7 @@ interface Reference {
 interface TheoryEntry {
   title: Localized
   summary: Localized
+  intuition?: Localized
   formulas: Formula[]
   concepts: Localized[]
   references: Reference[]
@@ -173,6 +180,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'The calculator treats the pixel stack as a one-dimensional sequence of planar films. It solves coherent reflection and transmission first, then reports silicon-layer absorption as the optical upper bound for quantum efficiency.',
       ko: '이 계산기는 픽셀 스택을 1차원 평면 박막의 연속으로 보고, 먼저 간섭에 의한 반사/투과를 푼 뒤 실리콘층 흡수를 양자 효율의 광학적 상한으로 표시합니다.',
     },
+    intuition: {
+      en: 'Imagine sunlight hitting a stack of clear films layered like a sandwich. At every boundary some light bounces back and some passes through, and those waves can either reinforce or cancel each other — the same trick that paints rainbow colours on a soap bubble. This tool tracks every bouncing wave and reports how much light actually reaches the silicon, where photons become electrons.',
+      ko: '햇빛이 투명한 필름이 여러 겹 쌓인 샌드위치를 통과한다고 상상해 보세요. 경계마다 빛의 일부는 반사되고 일부는 통과하며, 이 파동들이 서로 보강하거나 상쇄되어 비누 거품의 무지개색 같은 간섭을 만듭니다. 이 도구는 그 모든 반사파를 추적해 광자가 전자로 바뀌는 곳, 즉 실리콘에 빛이 얼마나 도달하는지를 알려줍니다.',
+    },
     formulas: [
       {
         label: { en: 'Layer phase', ko: '레이어 위상' },
@@ -202,6 +213,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'BARL and coating stacks reduce Fresnel reflection by arranging multiple reflected waves to cancel at target wavelengths.',
       ko: 'BARL 및 박막 코팅은 여러 계면 반사파가 목표 파장에서 상쇄되도록 두께와 굴절률을 조합해 프레넬 반사를 줄입니다.',
+    },
+    intuition: {
+      en: 'Anti-reflection layers work like noise-cancelling headphones for light. By stacking the right films at the right thicknesses, the unwanted reflections from each interface cancel each other out, so more light passes through and reaches the sensor instead of bouncing back into the lens.',
+      ko: '반사 방지 박막은 빛에 대한 노이즈 캔슬링 이어폰처럼 동작합니다. 알맞은 두께의 박막을 잘 쌓으면 각 경계면의 반사파끼리 서로 상쇄되어, 빛이 렌즈 쪽으로 튀어나가지 않고 더 많이 센서로 들어옵니다.',
     },
     formulas: [
       {
@@ -233,6 +248,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'The analyzer decomposes incident optical power into reflected power, transmitted power, and absorption in each stack layer.',
       ko: '이 분석기는 입사 광파워를 반사, 투과, 각 스택 레이어에서의 흡수로 분해합니다.',
     },
+    intuition: {
+      en: 'Think of incoming light as a budget. Some of it is lost to reflection (bounces away), some is spent as toll fees inside the colour filter or metal layers, and only the part absorbed in silicon becomes a useful electrical signal. This tool gives you an itemised receipt that shows exactly where every percent of the budget went.',
+      ko: '들어오는 빛을 예산이라고 생각해 보세요. 일부는 반사로 튕겨 나가 잃어버리고, 일부는 컬러 필터와 금속층에서 통행료로 쓰이며, 실리콘 내부에서 흡수된 부분만 실제 전기 신호가 됩니다. 이 도구는 예산의 몇 %가 어디로 사용되었는지를 영수증처럼 항목별로 보여줍니다.',
+    },
     formulas: [
       {
         label: { en: 'Conservation check', ko: '보존성 검증' },
@@ -262,6 +281,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'Angular response combines Snell refraction, polarization-dependent Fresnel coefficients, and longer optical path length through absorbing layers.',
       ko: '각도 응답은 스넬 굴절, 편광별 프레넬 계수, 흡수층 내 광경로 증가가 함께 만든 결과입니다.',
+    },
+    intuition: {
+      en: 'Light coming straight down acts differently from light arriving at an angle, just as rain falling vertically differs from rain hitting a windshield. Tilted rays bend at each surface, travel a longer effective path through each absorbing layer, and behave differently for the two polarisations — so QE typically drops as the incidence angle grows.',
+      ko: '곧장 위에서 떨어지는 빛과 비스듬히 들어오는 빛은 동작이 다릅니다. 수직으로 내리는 비와 자동차 앞유리에 비스듬히 부딪히는 비가 다른 것과 같죠. 기울어진 광선은 각 경계에서 굴절되고, 흡수층 내부에서 더 긴 경로를 지나며, 편광에 따라 다르게 반응하기 때문에 입사각이 커질수록 보통 QE가 떨어집니다.',
     },
     formulas: [
       {
@@ -293,6 +316,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'SNR follows from the signal charge divided by the root-sum-square of shot, dark, read, and fixed-pattern noise terms.',
       ko: 'SNR은 신호 전하를 샷 노이즈, 암전류 노이즈, 읽기 노이즈, 고정 패턴 노이즈의 제곱합 제곱근으로 나눈 값입니다.',
     },
+    intuition: {
+      en: 'Imagine trying to hear someone whisper in a noisy room — what matters is the whisper compared to the background noise, not the whisper alone. In a pixel, the signal is the electrons created by light, while the background noise comes from random photon arrivals, thermal dark current, and the readout circuit. SNR tells you how clearly the image rises above the noise floor.',
+      ko: '시끄러운 방에서 누군가의 속삭임을 들으려 한다고 상상해 보세요. 중요한 것은 속삭임 자체가 아니라 배경 소음과 비교한 크기입니다. 픽셀에서는 빛으로 생성된 전자가 신호이고, 광자 도착의 무작위성, 열에 의한 암전류, 회로의 읽기 노이즈가 배경 소음에 해당합니다. SNR은 이미지가 노이즈 바닥 위로 얼마나 또렷이 떠오르는지를 알려줍니다.',
+    },
     formulas: [
       {
         label: { en: 'Photoelectrons', ko: '광전자 수' },
@@ -322,6 +349,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'Color-filter design maps spectral transmittance into camera RGB sensitivities, CIE tristimulus values, chromaticity, crosstalk, and color-correction conditioning.',
       ko: '컬러 필터 설계는 분광 투과율을 카메라 RGB 감도, CIE 삼자극값, 색도, 크로스토크, 색 보정 조건수로 변환합니다.',
+    },
+    intuition: {
+      en: 'A colour filter is like coloured sunglasses for one pixel — a red filter mostly lets red light through and blocks the rest. By giving each pixel a different filter (R, G, or B), the sensor learns colour. The trade-off is balance: narrow filters give purer colour but waste photons, while wide filters keep brightness but mix colour channels together.',
+      ko: '컬러 필터는 픽셀 하나에 씌운 색깔 선글라스와 비슷합니다. 빨간 필터는 빨간빛만 잘 통과시키고 나머지는 차단하죠. 픽셀마다 다른 필터(R/G/B)를 씌우면 센서가 색을 인식합니다. 핵심은 균형입니다. 좁은 필터는 색이 깨끗하지만 광량을 잃고, 넓은 필터는 밝지만 채널 간 색이 섞입니다.',
     },
     formulas: [
       {
@@ -353,6 +384,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'The playground combines pixel pitch, color-filter thickness, BARL layers, silicon thickness, and incidence angle into one simplified stack-level optical response.',
       ko: '플레이그라운드는 픽셀 피치, 컬러 필터 두께, BARL 레이어, 실리콘 두께, 입사각을 하나의 단순화된 스택 광학 응답으로 결합합니다.',
     },
+    intuition: {
+      en: 'This is a what-if sandbox for pixel design. Drag a slider — pixel pitch, filter thickness, silicon depth — and watch several metrics move at once because everything in a pixel is coupled. It is a quick first-pass tool to build intuition before you spend hours on a full RCWA or FDTD simulation.',
+      ko: '픽셀 설계를 위한 “만약에” 실험실입니다. 픽셀 피치, 필터 두께, 실리콘 두께 같은 슬라이더를 움직이면 픽셀의 모든 요소가 서로 얽혀 있기 때문에 여러 지표가 동시에 변하는 모습을 볼 수 있습니다. 본격적인 RCWA/FDTD 시뮬레이션에 시간을 쓰기 전, 빠르게 감을 잡기 위한 1차 도구입니다.',
+    },
     formulas: [
       {
         label: { en: 'Stack response', ko: '스택 응답' },
@@ -382,6 +417,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'Silicon absorption depends strongly on wavelength. Blue light is absorbed near the surface, while red and NIR photons penetrate much deeper.',
       ko: '실리콘 흡수는 파장에 매우 강하게 의존합니다. 청색광은 표면 근처에서 흡수되고, 적색 및 NIR 광자는 훨씬 깊게 침투합니다.',
+    },
+    intuition: {
+      en: 'Silicon swallows different colours at different depths. Blue light is absorbed within the first few hundred nanometres near the surface, while red and near-infrared photons sneak much deeper before being absorbed — sometimes deeper than the photodiode reaches. That is why thin BSI pixels often lose near-IR sensitivity.',
+      ko: '실리콘은 색에 따라 흡수 깊이가 크게 다릅니다. 청색광은 표면에서 수백 nm 안에 거의 다 흡수되지만, 적색과 NIR은 훨씬 깊은 곳까지 침투해서야 흡수됩니다. 때로는 포토다이오드가 닿지 않는 깊이까지 가버려서, 얇은 BSI 픽셀에서 NIR 감도가 떨어지는 이유가 됩니다.',
     },
     formulas: [
       {
@@ -413,6 +452,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'This simulator traces rays through a smooth microlens surface using local surface normals and Snell refraction.',
       ko: '이 시뮬레이터는 매끄러운 마이크로렌즈 표면의 국소 법선과 스넬 굴절을 사용해 광선을 추적합니다.',
     },
+    intuition: {
+      en: 'A microlens sits on top of each pixel like a tiny magnifying glass, focusing incoming light onto the photodiode. This tool draws individual light rays through that lens — bending each one at the surface using basic Snell refraction — and counts how many hit the active area. It is the same idea as ray-tracing a camera lens, just at the micron scale.',
+      ko: '마이크로렌즈는 각 픽셀 위에 놓인 작은 돋보기처럼, 들어오는 빛을 포토다이오드로 집광합니다. 이 도구는 그 렌즈를 통과하는 광선 하나하나를 그려, 표면마다 스넬의 법칙으로 굴절시키고 활성 영역에 몇 개가 닿는지를 셉니다. 마이크론 단위로 축소된 카메라 렌즈 광선 추적이라 생각하면 됩니다.',
+    },
     formulas: [
       {
         label: { en: 'Superellipse lens profile', ko: '초타원 렌즈 프로파일' },
@@ -442,6 +485,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'The process predictor uses simplified conservation and empirical knobs to connect mask layout, thermal reflow, and etch-transfer settings to final lens geometry.',
       ko: '공정 형상 예측기는 단순화한 보존 법칙과 경험적 계수를 사용해 마스크 레이아웃, 열 리플로우, 식각 전사 조건을 최종 렌즈 형상과 연결합니다.',
+    },
+    intuition: {
+      en: 'When a foundry builds a microlens, it starts as a square block of photoresist, melts it into a dome (reflow), then etches that dome down into the underlying material. The final lens shape depends on the starting size, melt time, and etch settings. This tool predicts the final shape with simple physical rules — useful for first-cut layout-to-lens trends, not for an exact foundry recipe.',
+      ko: '공장에서 마이크로렌즈를 만들 때는 먼저 직사각형 모양의 포토레지스트에서 시작해, 열로 녹여 돔 모양으로 만들고(리플로우), 그 돔을 아래 층으로 식각해 옮깁니다. 최종 렌즈 모양은 시작 크기, 녹이는 시간, 식각 조건에 따라 달라집니다. 이 도구는 그 결과 형상을 단순한 물리 규칙으로 예측하므로, 정확한 공정 레시피보다는 레이아웃과 렌즈 모양의 1차 경향을 살피는 데 적합합니다.',
     },
     formulas: [
       {
@@ -473,6 +520,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'The MLA visualizer extends a single lens profile into periodic arrays and shows how pitch, curvature, asymmetry, and ray direction change array behavior.',
       ko: 'MLA 시각화는 단일 렌즈 프로파일을 주기 어레이로 확장하고 pitch, 곡률, 비대칭성, 광선 방향이 어레이 거동을 어떻게 바꾸는지 보여줍니다.',
     },
+    intuition: {
+      en: 'A real sensor has not one microlens but a whole grid of them — one per pixel, like an array of tiny bumps on a glass sheet. This visualiser stitches a single lens profile into that grid so you can see how pitch, asymmetry, and curvature interact across the array. Gaps between lenses or overlapping skirts both reduce optical fill factor.',
+      ko: '실제 센서는 단일 렌즈가 아니라 픽셀마다 하나씩 격자로 배열된 마이크로렌즈 어레이를 가집니다. 유리판 위에 작은 볼록들이 격자로 깔린 모습을 상상해 보세요. 이 시각화는 단일 렌즈 형상을 그 격자에 이어 붙여 pitch, 비대칭, 곡률이 어레이에서 어떻게 결합되는지를 보여줍니다. 렌즈 사이의 틈이나 가장자리 겹침은 모두 광학 fill factor를 떨어뜨립니다.',
+    },
     formulas: [
       {
         label: { en: 'Anisotropic normalized radius', ko: '비등방 정규화 반경' },
@@ -502,6 +553,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'Deep trench isolation reduces optical crosstalk by redirecting or blocking lateral light leakage between neighboring pixels.',
       ko: 'Deep trench isolation은 인접 픽셀 사이로 새는 횡방향 빛을 반사하거나 차단해 광학 크로스토크를 줄입니다.',
+    },
+    intuition: {
+      en: 'Picture each pixel as a small room. Without walls, light leaking sideways from one room shows up as colour bleeding in the neighbour — that is optical crosstalk. DTI (Deep Trench Isolation) builds tiny vertical walls between pixels, reflecting or blocking that sideways light so each pixel mostly sees its own photons.',
+      ko: '각 픽셀을 작은 방이라고 생각해 보세요. 벽이 없으면 한 방에서 옆방으로 빛이 새어 나가 색이 번지는 현상(광학 크로스토크)이 생깁니다. DTI(Deep Trench Isolation)는 픽셀 사이에 수직 벽을 세워 옆으로 새는 빛을 반사하거나 차단함으로써, 각 픽셀이 자기 광자를 위주로 받도록 만듭니다.',
     },
     formulas: [
       {
@@ -533,6 +588,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'Fabry-Perot behavior comes from repeated internal reflections whose phase can add constructively or destructively.',
       ko: '파브리-페로 거동은 박막 내부에서 반복 반사된 빛의 위상이 보강 또는 상쇄 간섭을 일으키면서 발생합니다.',
     },
+    intuition: {
+      en: 'A single thin transparent film acts as a tiny resonator: light bounces back and forth between its two surfaces, and depending on the thickness, certain wavelengths come out strong (transmission peaks) while others are reflected. This is the same effect that paints rainbow colours on soap films and oily puddles, and it is the basic building block of nearly every thin-film optical filter.',
+      ko: '하나의 얇은 투명 박막은 작은 공진기처럼 동작합니다. 빛이 두 표면 사이를 왕복하면서, 두께에 따라 특정 파장은 강하게 통과하고(투과 피크) 다른 파장은 반사됩니다. 비누 막이나 길 위의 기름띠가 무지개색을 띠게 만드는 원리와 같으며, 거의 모든 박막 광학 필터의 기본 구성 요소이기도 합니다.',
+    },
     formulas: [
       {
         label: { en: 'Round-trip phase', ko: '왕복 위상' },
@@ -562,6 +621,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'A circular aperture forms an Airy diffraction pattern, which spreads energy across multiple pixels as f-number or wavelength increases.',
       ko: '원형 개구는 에어리 회절 패턴을 만들며, f-number 또는 파장이 증가하면 에너지가 여러 픽셀로 퍼집니다.',
+    },
+    intuition: {
+      en: 'Even a perfect lens cannot focus light to a single mathematical point — diffraction smears it into a bright central disk surrounded by faint rings (the Airy pattern). The smaller the aperture or the longer the wavelength, the bigger the smear. When that smear grows larger than one pixel, neighbouring pixels start sharing the same point of light and resolution suffers.',
+      ko: '이상적인 렌즈조차 빛을 수학적인 한 점에 모을 수는 없습니다. 회절 때문에 중심부의 밝은 원반과 그 주위의 희미한 고리(에어리 패턴)로 퍼지죠. 개구가 작거나 파장이 길수록 더 크게 퍼집니다. 이 퍼짐이 픽셀 하나보다 커지면 이웃 픽셀들이 같은 점의 빛을 나눠 받게 되어 해상도가 떨어집니다.',
     },
     formulas: [
       {
@@ -593,6 +656,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'MTF describes how contrast is transferred as a function of spatial frequency. The analyzer combines pixel aperture and diffraction limits.',
       ko: 'MTF는 공간 주파수에 따라 대비가 얼마나 전달되는지를 나타냅니다. 이 분석기는 픽셀 개구와 회절 한계를 결합합니다.',
     },
+    intuition: {
+      en: 'MTF asks a simple question: how much contrast survives as image detail gets finer? Big bold patterns transfer almost perfectly, but as you zoom into stripe patterns close to the pixel size, contrast falls away. This analyser combines two limits — finite pixel size acting as a low-pass filter, and lens diffraction blur — to predict where the detail finally vanishes.',
+      ko: 'MTF는 간단한 질문에 답합니다. “이미지의 세부 패턴이 얼마나 또렷이 전달되는가?” 크고 굵은 무늬는 거의 그대로 전달되지만, 픽셀 크기에 가까운 줄무늬로 갈수록 대비가 사라집니다. 이 분석기는 두 가지 한계 — 픽셀 크기가 만드는 저역통과 효과와 렌즈 회절 흐림 — 을 결합해 디테일이 어디서 사라지는지를 예측합니다.',
+    },
     formulas: [
       {
         label: { en: 'Pixel aperture MTF', ko: '픽셀 개구 MTF' },
@@ -622,6 +689,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'Shrinking pixels changes photon count, full well capacity, crosstalk, diffraction sensitivity, and read-noise requirements together.',
       ko: '픽셀 축소는 광자 수, 풀웰 용량, 크로스토크, 회절 민감도, 읽기 노이즈 요구조건을 동시에 바꿉니다.',
+    },
+    intuition: {
+      en: 'Making a pixel smaller is not just shrinking — it changes everything at once. Smaller pixels collect fewer photons (lower SNR), hold less charge (lower full-well), are hit harder by diffraction blur, and demand much stronger read-noise reduction. This tool lays out those trade-offs side by side so you can see what scales how.',
+      ko: '픽셀을 작게 만드는 것은 단순한 축소가 아닙니다. 모든 특성이 동시에 바뀝니다. 작은 픽셀은 광자를 적게 모으고(SNR 저하), 전하 용량이 작아지고(풀웰 저하), 회절 흐림의 영향을 더 받으며, 읽기 노이즈도 훨씬 더 줄여야 합니다. 이 도구는 그 트레이드오프를 한눈에 비교해 어떤 항목이 어떻게 스케일링되는지 보여줍니다.',
     },
     formulas: [
       {
@@ -653,6 +724,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'The analyzer maps simulated camera RGB responses to reference colorimetry with a color correction matrix, then measures perceptual error.',
       ko: '이 분석기는 시뮬레이션된 카메라 RGB 응답을 색 보정 행렬로 기준 색도계 값에 매핑하고 지각 색차를 측정합니다.',
     },
+    intuition: {
+      en: 'A camera does not see colour exactly like a human eye, so its raw RGB values must be translated to match what we would expect — that translation is the colour correction matrix (CCM). Delta E then measures how close the final colours are to the reference, scaled to match human perception (a Delta E of 1 is roughly the smallest difference an eye can spot). Better filters and more light make the translation easier and more accurate.',
+      ko: '카메라는 사람의 눈과 똑같이 색을 보지는 않습니다. 그래서 raw RGB 값을 우리가 인식하는 색에 맞게 “번역”해야 하는데, 이것이 색 보정 행렬(CCM)입니다. Delta E는 번역된 최종 색이 기준 색과 얼마나 가까운지를 사람의 지각 감각에 맞춰 측정합니다(Delta E ≈ 1은 사람이 겨우 구분할 수 있는 최소 색차). 좋은 필터와 충분한 광량은 이 번역을 더 쉽고 정확하게 만듭니다.',
+    },
     formulas: [
       {
         label: { en: 'Least-squares CCM', ko: '최소제곱 CCM' },
@@ -682,6 +757,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'Dark current is thermally generated charge accumulated during exposure. It rises rapidly with temperature and contributes shot noise.',
       ko: '암전류는 노출 중 열적으로 생성되어 축적되는 전하입니다. 온도에 따라 빠르게 증가하며 샷 노이즈를 더합니다.',
+    },
+    intuition: {
+      en: 'Even in total darkness, silicon pixels slowly accumulate electrons just from heat — like a faint hiss on a turned-off radio. The hotter the sensor and the longer the exposure, the more of these dark electrons pile up, adding their own random noise on top of any real signal. This is especially painful for long-exposure or astrophotography use cases.',
+      ko: '완전히 어두운 곳에서도 실리콘 픽셀에는 열에 의해 전자가 천천히 쌓입니다. 꺼놓은 라디오에서 들리는 희미한 잡음 같은 거죠. 센서가 뜨겁고 노출 시간이 길수록 이 “암전자”가 더 많이 쌓이고, 실제 신호 위에 자체적인 무작위 노이즈를 더합니다. 장노출이나 천체 촬영에서 특히 큰 문제가 됩니다.',
     },
     formulas: [
       {
@@ -713,6 +792,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'PTC uses the relationship between mean signal and variance to estimate conversion gain, read noise, full well, and PRNU.',
       ko: 'PTC는 평균 신호와 분산의 관계를 이용해 conversion gain, 읽기 노이즈, 풀웰, PRNU를 추정합니다.',
     },
+    intuition: {
+      en: 'If you measure how noisy a pixel is at many different brightness levels and plot it on log-log axes, three distinct regions appear: a flat read-noise floor (in the dark), a 1/2-slope photon shot-noise region (mid tones), and an upturning PRNU region (bright). This shape is so consistent across silicon pixels that engineers use it as a fingerprint to reverse-engineer the sensor gain, read noise, and full-well from real measurements.',
+      ko: '다양한 밝기에서 픽셀의 노이즈를 측정해 로그-로그로 그리면, 세 구간이 뚜렷이 나타나는 곡선이 됩니다. 어두운 영역의 평평한 읽기 노이즈 바닥, 중간 영역의 기울기 1/2 광자 샷 노이즈, 밝은 영역의 위로 휘는 PRNU. 이 형태가 실리콘 픽셀에서 매우 일관되기 때문에 엔지니어들은 실제 측정값에서 센서의 gain, 읽기 노이즈, 풀웰을 지문처럼 역산할 수 있습니다.',
+    },
     formulas: [
       {
         label: { en: 'Shot-noise region', ko: '샷 노이즈 영역' },
@@ -742,6 +825,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'Dynamic range compares the largest usable signal to the smallest distinguishable signal, usually limited by full well and noise floor.',
       ko: '다이나믹 레인지는 최대 사용 가능 신호와 구분 가능한 최소 신호의 비이며, 보통 풀웰과 노이즈 플로어가 제한합니다.',
+    },
+    intuition: {
+      en: 'Dynamic range is the gap between the brightest highlight a pixel can record before it saturates and the faintest detail it can pull out of the noise. Wide DR means you can see both bright clouds and dark shadows in the same shot. Lifting the ceiling (larger full-well) helps highlights; lowering the floor (less read noise, less dark current) helps shadows.',
+      ko: '다이나믹 레인지는 픽셀이 포화되기 직전의 가장 밝은 신호와 노이즈에서 겨우 구분되는 가장 어두운 신호 사이의 폭입니다. 넓을수록 한 장면 안에서 밝은 구름과 어두운 그림자를 모두 살릴 수 있죠. 천장(풀웰)을 높이면 하이라이트가, 바닥(읽기 노이즈·암전류)을 낮추면 섀도가 좋아집니다.',
     },
     formulas: [
       {
@@ -773,6 +860,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'The dashboard groups sensor metrics using the EMVA 1288 measurement vocabulary: sensitivity, noise, saturation, dynamic range, and SNR.',
       ko: '이 대시보드는 EMVA 1288 측정 용어에 따라 감도, 노이즈, 포화, 다이나믹 레인지, SNR 지표를 묶어 보여줍니다.',
     },
+    intuition: {
+      en: 'EMVA 1288 is the industry standard sensor report card — a fixed set of measurements every manufacturer can run, so cameras from different vendors can be compared apples-to-apples. This dashboard groups those metrics (sensitivity, noise, full-well, dynamic range, SNR) in one place using EMVA vocabulary, so you can read every sensor with the same yardstick.',
+      ko: 'EMVA 1288은 업계 표준 “센서 성적표”입니다. 모든 제조사가 동일한 방식으로 시험하기 때문에 서로 다른 회사의 카메라끼리 사과 대 사과로 비교할 수 있죠. 이 대시보드는 EMVA 용어에 맞춰 감도, 노이즈, 풀웰, 다이나믹 레인지, SNR을 한 화면에 묶어 보여주므로, 모든 센서를 같은 잣대로 읽을 수 있습니다.',
+    },
     formulas: [
       {
         label: { en: 'Absolute sensitivity threshold', ko: '절대 감도 임계값' },
@@ -802,6 +893,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'Lens shading combines optical cos-fourth falloff, chief-ray angle mismatch, microlens offset, and color-channel angular response.',
       ko: '렌즈 쉐이딩은 cos^4 상대 조도 저하, 주광선각 mismatch, 마이크로렌즈 offset, 색 채널별 각도 응답이 결합된 결과입니다.',
+    },
+    intuition: {
+      en: 'Even with a perfect lens, the corners of every image come out darker than the centre — it is geometry, not a defect. Light arrives at edge pixels at a steep angle while the pixel optics are tuned for straight-on rays, so corner response drops. Modern sensors compensate by shifting microlenses inward at the edges, and image processing fills in the rest.',
+      ko: '완벽한 렌즈를 써도 모든 이미지의 모서리는 중심보다 어둡게 나옵니다. 결함이 아니라 기하학적인 이유 때문이죠. 모서리 픽셀에는 빛이 비스듬히 들어오는데 픽셀 광학은 수직 입사에 최적화되어 있어 응답이 떨어집니다. 현대 센서는 모서리 쪽 마이크로렌즈를 안쪽으로 시프트해 보정하고, 나머지는 이미지 처리로 채웁니다.',
     },
     formulas: [
       {
@@ -833,6 +928,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'PRNU and DSNU model pixel-to-pixel response variation that remains spatially fixed across frames.',
       ko: 'PRNU와 DSNU는 프레임 사이에서 공간적으로 고정되어 남는 픽셀 간 응답 변동을 모델링합니다.',
     },
+    intuition: {
+      en: 'No two pixels are exactly identical — tiny manufacturing variations make some slightly more sensitive than others. PRNU is the fingerprint of those per-pixel sensitivity differences (visible in bright frames), and DSNU is the equivalent pattern in the dark baseline. Unlike random noise, these patterns are fixed in place from frame to frame, so they can largely be calibrated out.',
+      ko: '두 픽셀이 완전히 똑같지는 않습니다. 미세한 공정 변동 때문에 어떤 픽셀은 다른 픽셀보다 약간 더 민감합니다. PRNU는 이러한 픽셀별 감도 차이의 “지문”(밝은 프레임에서 보임)이고, DSNU는 어두운 기준점에서의 같은 패턴입니다. 무작위 노이즈와 달리 프레임마다 동일한 위치에 고정되어 나타나므로 보정으로 대부분 제거할 수 있습니다.',
+    },
     formulas: [
       {
         label: { en: 'Pixel signal model', ko: '픽셀 신호 모델' },
@@ -862,6 +961,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'This tool shows how scene illuminance becomes photons, photoelectrons, and finally SNR after adding sensor noise sources.',
       ko: '이 도구는 장면 조도가 광자, 광전자, 그리고 센서 노이즈를 포함한 최종 SNR로 변환되는 과정을 보여줍니다.',
+    },
+    intuition: {
+      en: 'How does scene brightness (measured in lux) turn into image quality? This tool walks the whole chain: lux becomes photons per second per pixel, photons become electrons through QE, and electrons then compete with shot, dark, and read noise. The output curve shows where you are read-noise-limited (low light) versus shot-noise-limited (well-lit).',
+      ko: '장면의 밝기(lux)는 어떻게 이미지 품질로 이어질까요? 이 도구는 그 변환 과정을 단계별로 보여줍니다. lux는 픽셀당 광자 수가 되고, 광자는 QE를 거쳐 전자가 되며, 전자는 샷·암전류·읽기 노이즈와 경쟁합니다. 결과 곡선은 어디서부터 읽기 노이즈가 제한 요인인지(저조도)와 샷 노이즈가 지배적인지(충분한 조명)를 보여줍니다.',
     },
     formulas: [
       {
@@ -893,6 +996,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'Spectral responsivity converts optical power at a wavelength into photocurrent, using the photon energy and quantum efficiency.',
       ko: '분광 응답도는 파장별 광파워를 광전류로 변환하며, 광자 에너지와 양자 효율을 사용합니다.',
     },
+    intuition: {
+      en: 'QE tells you what fraction of photons turn into electrons — a number between 0 and 1. But circuit designers usually need current per watt of optical power (A/W) instead. Responsivity converts between the two using the energy of one photon, and it naturally grows with wavelength: longer-wavelength photons carry less energy each, so the same QE produces more current per watt.',
+      ko: 'QE는 광자 중 몇 %가 전자로 바뀌는지(0~1 사이 값)를 알려줍니다. 그런데 회로 설계자에게는 보통 “와트당 전류(A/W)”가 더 필요합니다. 응답도는 광자 하나의 에너지를 이용해 두 값 사이를 변환하며, 긴 파장의 광자는 에너지가 작기 때문에 같은 QE라도 더 큰 A/W가 나옵니다.',
+    },
     formulas: [
       {
         label: { en: 'Photon energy', ko: '광자 에너지' },
@@ -922,6 +1029,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
     summary: {
       en: 'Linearity measures how closely output code follows input exposure before saturation or knee compression.',
       ko: '선형성은 포화 또는 knee 압축 전까지 출력 코드가 입력 노출을 얼마나 선형적으로 따르는지를 측정합니다.',
+    },
+    intuition: {
+      en: 'An ideal sensor doubles its output when the light doubles — a perfectly straight line on a chart. Real sensors curve slightly, especially near saturation, and that curvature breaks precise photometry, HDR stitching, and colour correction. Linearity analysis hunts for the curvature using the residual between measured points and a fitted straight line.',
+      ko: '이상적인 센서는 빛이 두 배가 되면 출력도 두 배가 됩니다. 그래프상 완벽한 직선이죠. 실제 센서는 특히 포화 근처에서 살짝 곡선을 그리고, 그 곡률이 정밀 광도 측정, HDR 합성, 색 보정을 망칩니다. 선형성 분석은 측정점과 적합 직선의 잔차에서 그 곡률을 찾아냅니다.',
     },
     formulas: [
       {
@@ -986,6 +1097,30 @@ const entry = computed(() => theoryEntries[props.slug])
 .sim-theory-summary {
   margin: 0 0 16px;
   color: var(--vp-c-text-2);
+}
+
+.sim-theory-intuition {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--vp-c-brand-1);
+  border-radius: 6px;
+  background: var(--vp-c-brand-soft);
+}
+
+.intuition-eyebrow {
+  margin-bottom: 4px;
+  color: var(--vp-c-brand-1);
+  font-size: 0.78em;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.sim-theory-intuition p {
+  margin: 0;
+  color: var(--vp-c-text-1);
+  font-size: 0.95em;
+  line-height: 1.55;
 }
 
 .sim-theory-grid {
