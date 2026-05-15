@@ -412,6 +412,23 @@ export default withMermaid(defineConfig({
     ['meta', { name: 'twitter:description', content: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation' }],
     ['meta', { name: 'theme-color', content: '#3451b2' }],
     ['meta', { name: 'keywords', content: 'RCWA, FDTD, image sensor, pixel simulation, quantum efficiency, optical simulation, CMOS' }],
+    ['script', {}, `window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+        displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']],
+        processEscapes: true,
+      },
+      svg: { fontCache: 'global' },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+        ignoreHtmlClass: 'no-mathjax|vp-doc',
+        processHtmlClass: 'formula-equation|tex2jax_process',
+      },
+      startup: {
+        typeset: false,
+      },
+    };`],
+    ['script', { src: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js', async: '' }],
   ],
 
   locales: {
