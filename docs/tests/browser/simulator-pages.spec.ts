@@ -72,6 +72,13 @@ test.describe('simulator pages', () => {
     { path: '/simulator/barl-optimizer.html', formulas: 6, heading: 'Tuning Workflow' },
     { path: '/simulator/energy-budget.html', formulas: 6, heading: 'Diagnosis Workflow' },
     { path: '/simulator/angular-response.html', formulas: 6, heading: 'CRA Design Implications' },
+    { path: '/simulator/snr-calculator.html', formulas: 3, heading: 'Regime Map' },
+    { path: '/simulator/color-filter.html', formulas: 3, heading: 'Design Tradeoff' },
+    { path: '/simulator/si-absorption.html', formulas: 3, heading: 'Wavelength Regimes' },
+    { path: '/simulator/mtf-analyzer.html', formulas: 3, heading: 'Frequency Landmarks' },
+    { path: '/simulator/dark-current.html', formulas: 3, heading: 'Temperature Scaling' },
+    { path: '/simulator/responsivity-calculator.html', formulas: 3, heading: 'QE Versus A/W' },
+    { path: '/simulator/linearity-analyzer.html', formulas: 3, heading: 'Residual Interpretation' },
   ]
 
   for (const { path, formulas, heading } of expandedTheoryPages) {
