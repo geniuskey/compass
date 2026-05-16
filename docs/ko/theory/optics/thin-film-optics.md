@@ -99,6 +99,14 @@ $$\Delta\lambda \approx \frac{\lambda^2}{2 n d}$$
 QE 스펙트럼이 들쭉날쭉하거나 예상치 못한 진동을 보이는 경우, 파장 간격이 박막 프린지를 분해하기에 충분히 작은지 확인하십시오. 10 nm 이하의 간격을 권장합니다.
 :::
 
+### 각도에 의한 피크 이동
+
+파브리-페로 공진기 형태의 구조(컬러 필터나 센서에 통합된 박막 대역통과 필터 등)에서, 파장 $\lambda_0$에서의 투과 피크는 경사 입사 시 다음과 같이 단파장으로 이동합니다:
+
+$$\lambda(\theta) \approx \lambda_0 \sqrt{1 - \left(\frac{\sin\theta}{n_\text{eff}}\right)^2}$$
+
+여기서 $n_\text{eff}$는 공동 모드(cavity mode)의 유효 굴절률입니다. 실제 렌즈가 픽셀에 빛을 집광할 때, 시뮬레이션은 f-number와 주광선각(CRA)에 의해 결정되는 입사각의 원뿔(cone)에 대해 적분해야 합니다. 측정된 피크는 평면파 결과에 비해 넓어지고 청색 이동(blue-shift)하게 됩니다. Goossens 등(2018)은 이 이동에 대한 폐쇄형 컨벌루션 모델과 간결한 보정식을 도출했습니다 -- [주요 논문 § 6.4](/ko/research/key-papers#_6-4-goossens-et-al-2018-finite-aperture-correction-for-fabry-perot-filters)를 참조하세요. COMPASS에서는 `cone_illumination` 광원을 통해 이 효과를 포착합니다.
+
 ## COMPASS 구현
 
 COMPASS는 솔버에 따라 박막을 다르게 처리합니다:

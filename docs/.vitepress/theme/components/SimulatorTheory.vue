@@ -187,7 +187,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
     formulas: [
       {
         label: { en: 'Layer phase', ko: '레이어 위상' },
-        equation: '\\delta_j = \\frac{2\\pi n_j d_j \\cos(\\theta_j)}{\\lambda}',
+        equation: '\\delta_j = \\frac{2\\pi n_j d_j \\cos\\theta_j}{\\lambda}',
         note: { en: 'Each layer contributes a wavelength- and angle-dependent phase delay.', ko: '각 레이어는 파장과 입사각에 의존하는 위상 지연을 만듭니다.' },
       },
       {
@@ -362,7 +362,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
       },
       {
         label: { en: 'CIE tristimulus integration', ko: 'CIE 삼자극 적분' },
-        equation: 'X = \\int S(\\lambda) \\bar{x}(\\lambda) d\\lambda',
+        equation: 'X = \\int S(\\lambda) \\bar{x}(\\lambda) \\,d\\lambda',
         note: { en: 'The same integration is used for Y and Z with ybar and zbar.', ko: 'Y와 Z도 각각 ybar, zbar로 같은 방식으로 적분합니다.' },
       },
       {

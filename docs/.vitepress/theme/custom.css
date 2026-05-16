@@ -23,8 +23,10 @@
   --vp-home-hero-image-filter: blur(44px);
 }
 
-.VPDoc.has-aside .content-container {
-  max-width: 900px !important;
+@media (min-width: 1280px) {
+  .VPDoc.has-aside .content-container {
+    max-width: 900px !important;
+  }
 }
 
 .dark {

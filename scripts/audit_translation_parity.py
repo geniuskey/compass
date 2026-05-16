@@ -27,7 +27,7 @@ SKIP_DIRS = ("/node_modules/", "/.vitepress/")
 
 
 def content_lines(path: Path) -> int:
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     if text.startswith("---\n"):
         end = text.find("\n---\n", 4)
         if end != -1:
@@ -74,7 +74,7 @@ def main() -> int:
 
     under_translated: list[tuple[Path, float, int, int]] = []
     for ko in sorted(DOCS.glob("ko/**/*.md")):
-        text = strip_for_lang(ko.read_text())
+        text = strip_for_lang(ko.read_text(encoding="utf-8"))
         h = len(HANGUL.findall(text))
         a = len(ASCII_LETTER.findall(text))
         if h + a < 200:
