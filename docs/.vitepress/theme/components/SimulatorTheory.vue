@@ -1650,7 +1650,7 @@ const entry = computed(() => theoryEntries[props.slug])
 
 .sim-theory-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 
