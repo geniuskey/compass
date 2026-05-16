@@ -1,5 +1,5 @@
 <template>
-  <section v-if="entry" class="sim-theory">
+  <section v-if="entry" ref="theoryRoot" class="sim-theory">
     <div class="sim-theory-eyebrow">{{ t('Physics Notes', '물리 수식과 이론') }}</div>
     <h2>{{ pick(entry.title) }}</h2>
 
@@ -53,11 +53,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch, nextTick } from 'vue'
+import { computed, onMounted, watch, nextTick, ref } from 'vue'
 import { useLocale } from '../composables/useLocale'
 
 const props = defineProps<{ slug: string }>()
 const { isKo, t } = useLocale()
+const theoryRoot = ref<HTMLElement | null>(null)
 
 function pick(value: Localized) {
   return isKo.value ? value.ko : value.en
@@ -82,7 +83,13 @@ const typesetMath = async () => {
   const mj = await waitForMathJax()
   if (mj) {
     try {
-      await mj.typesetPromise()
+      const target = theoryRoot.value
+      if (target) {
+        mj.typesetClear?.([target])
+        await mj.typesetPromise([target])
+      } else {
+        await mj.typesetPromise()
+      }
     } catch {
       /* ignore typeset errors */
     }
@@ -90,7 +97,7 @@ const typesetMath = async () => {
 }
 
 onMounted(typesetMath)
-watch(() => props.slug, typesetMath)
+watch([() => props.slug, isKo], typesetMath)
 
 type Localized = { en: string; ko: string }
 

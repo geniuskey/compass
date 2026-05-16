@@ -422,7 +422,7 @@ export default withMermaid(defineConfig({
       options: {
         skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
         ignoreHtmlClass: 'no-mathjax|vp-doc',
-        processHtmlClass: 'formula-equation|tex2jax_process',
+        processHtmlClass: 'formula-equation|formula-variables|tex2jax_process',
       },
       startup: {
         typeset: false,

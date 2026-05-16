@@ -43,6 +43,7 @@ test.describe('simulator pages', () => {
 
       await expect(page.locator('.sim-theory')).toHaveCount(1)
       await expect(page.locator('.sim-theory .formula-equation').first()).toBeVisible()
+      await expect(page.locator('.sim-theory .formula-variables mjx-container').first()).toBeVisible()
       await expect(page.locator('.sim-theory a').first()).toBeVisible()
     })
   }
