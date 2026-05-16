@@ -47,4 +47,14 @@ test.describe('simulator pages', () => {
       await expect(page.locator('.sim-theory a').first()).toBeVisible()
     })
   }
+
+  test('renders expanded theory notes on the microlens process simulator', async ({ page }) => {
+    await gotoDocs(page, '/simulator/microlens-process-shape.html')
+
+    await expect(page.locator('.sim-theory .formula-row')).toHaveCount(7)
+    await expect(page.locator('.sim-theory-detail-grid')).toBeVisible()
+    await expect(page.getByText('How To Calibrate This Surrogate')).toBeVisible()
+    await expect(page.getByText('Known Missing Physics')).toBeVisible()
+    await expect(page.locator('.sim-theory .formula-variables mjx-container').first()).toBeVisible()
+  })
 })

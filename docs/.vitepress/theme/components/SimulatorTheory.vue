@@ -1,5 +1,5 @@
 <template>
-  <section v-if="entry" ref="theoryRoot" class="sim-theory">
+  <section v-if="entry" ref="theoryRoot" class="sim-theory tex2jax_process">
     <div class="sim-theory-eyebrow">{{ t('Physics Notes', '물리 수식과 이론') }}</div>
     <h2>{{ pick(entry.title) }}</h2>
 
@@ -35,6 +35,15 @@
         <h3>{{ t('Model Interpretation', '모델 해석') }}</h3>
         <ul>
           <li v-for="item in entry.concepts" :key="pick(item)">{{ pick(item) }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div v-if="entry.sections?.length" class="sim-theory-detail-grid">
+      <div v-for="section in entry.sections" :key="pick(section.title)" class="sim-theory-card">
+        <h3>{{ pick(section.title) }}</h3>
+        <ul>
+          <li v-for="item in section.items" :key="pick(item)">{{ pick(item) }}</li>
         </ul>
       </div>
     </div>
@@ -119,12 +128,18 @@ interface Reference {
   note?: Localized
 }
 
+interface TheorySection {
+  title: Localized
+  items: Localized[]
+}
+
 interface TheoryEntry {
   title: Localized
   summary: Localized
   intuition?: Localized
   formulas: Formula[]
   concepts: Localized[]
+  sections?: TheorySection[]
   references: Reference[]
 }
 
@@ -172,6 +187,14 @@ const refs = {
   baillie2004: {
     label: 'Baillie & Gendler, "Zero-space microlenses for CMOS image sensors", SPIE, 2004',
     href: 'https://doi.org/10.1117/12.533453',
+  },
+  jin2011: {
+    label: 'Jin, Liu & Yang, "Design, characterization and evaluation of high performance 2.8 um pitch zero space microlens", Optics Communications, 2011',
+    href: 'https://doi.org/10.1016/j.optcom.2010.11.073',
+  },
+  tan2020: {
+    label: 'Tan, Goh & Kim, "Microfabrication of Microlens by Timed-Development-and-Thermal-Reflow (TDTR) Process for Projection Lithography", Micromachines, 2020',
+    href: 'https://doi.org/10.3390/mi11030277',
   },
   emva: {
     label: 'EMVA 1288 Standard, Release 4.0',
@@ -624,50 +647,145 @@ const theoryEntries: Record<string, TheoryEntry> = {
     references: [refs.agranov2003, refs.hwang2023, refs.catrysse2002],
   },
   'microlens-process-shape': {
-    title: { en: 'Layout-to-Reflow Shape Surrogate', ko: '레이아웃-리플로우 형상 대리 모델' },
+    title: { en: 'Layout-to-Etch Microlens Shape Model', ko: '레이아웃-식각 마이크로렌즈 형상 모델' },
     summary: {
-      en: 'The process predictor uses simplified conservation and empirical knobs to connect mask layout, thermal reflow, and etch-transfer settings to final lens geometry.',
-      ko: '공정 형상 예측기는 단순화한 보존 법칙과 경험적 계수를 사용해 마스크 레이아웃, 열 리플로우, 식각 전사 조건을 최종 렌즈 형상과 연결합니다.',
+      en: 'This page treats microlens formation as a three-stage surrogate: lithographic resist volume, volume-conserving thermal reflow, and plasma etch transfer that closes residual gap while eroding height. The goal is not a foundry recipe, but a transparent model that can later be fitted to AFM/SEM metrology.',
+      ko: '이 페이지는 마이크로렌즈 형성을 lithography resist 체적, 체적 보존형 thermal reflow, 그리고 잔류 gap을 닫는 동시에 높이를 손실시키는 plasma etch transfer의 3단계 surrogate로 봅니다. 목표는 foundry recipe가 아니라, 나중에 AFM/SEM 계측으로 보정할 수 있는 투명한 모델입니다.',
     },
     intuition: {
-      en: 'When a foundry builds a microlens, it starts as a square block of photoresist, melts it into a dome (reflow), then etches that dome down into the underlying material. The final lens shape depends on the starting size, melt time, and etch settings. This tool predicts the final shape with simple physical rules — useful for first-cut layout-to-lens trends, not for an exact foundry recipe.',
-      ko: '공장에서 마이크로렌즈를 만들 때는 먼저 직사각형 모양의 포토레지스트에서 시작해, 열로 녹여 돔 모양으로 만들고(리플로우), 그 돔을 아래 층으로 식각해 옮깁니다. 최종 렌즈 모양은 시작 크기, 녹이는 시간, 식각 조건에 따라 달라집니다. 이 도구는 그 결과 형상을 단순한 물리 규칙으로 예측하므로, 정확한 공정 레시피보다는 레이아웃과 렌즈 모양의 1차 경향을 살피는 데 적합합니다.',
+      en: 'Start with a printed resist island. Heating lets surface tension round it into a lens cap, so a wider cap usually means a lower cap if the same material volume is spread out. Plasma etch then transfers that cap into the target layer: longer etch can remove the valley between lenses, but it can also flatten the lens. The useful process window is therefore a compromise between zero gap, enough height, acceptable curvature, and no lens merger.',
+      ko: '먼저 포토레지스트 island가 인쇄됩니다. 가열하면 표면장력이 이를 둥근 렌즈 cap으로 만들고, 같은 재료 체적이 더 넓게 퍼질수록 cap 높이는 낮아지는 경향이 있습니다. 그 다음 plasma etch가 이 cap을 목표층으로 전사합니다. Etch 시간이 길면 렌즈 사이 valley를 없앨 수 있지만 동시에 렌즈가 납작해질 수 있습니다. 따라서 유효 공정 창은 zero gap, 충분한 높이, 적절한 곡률, lens merger 회피 사이의 절충입니다.',
     },
     formulas: [
       {
-        label: { en: 'Volume conservation', ko: '체적 보존' },
-        equation: 'V_{\\text{resist}} \\approx V_{\\text{lens, final}}',
+        label: { en: 'Lithographic starting gap', ko: 'Lithography 시작 gap' },
+        equation: 'g_0 = \\max(0, p - w_m)',
         variables: [
-          { symbol: 'V', description: { en: 'Material volume', ko: '재료 체적 $V$' } },
+          { symbol: 'g_0', description: { en: 'Initial space between neighboring resist islands', ko: '인접 resist island 사이의 초기 간격' } },
+          { symbol: 'p', description: { en: 'Pixel pitch or microlens array pitch', ko: '픽셀 pitch 또는 마이크로렌즈 어레이 pitch' } },
+          { symbol: 'w_m', description: { en: 'Lithographic mask island width after clamping to allowed pitch limits', ko: '허용 pitch 범위로 제한된 lithographic mask island 폭' } },
         ],
-        note: { en: 'Reflow reshapes the resist island while approximately conserving material volume.', ko: '리플로우는 resist island의 형상을 바꾸지만 재료 체적은 대략 보존합니다.' },
+        note: { en: 'A small layout gap helps optical fill factor but increases the chance that resist islands touch or merge during reflow.', ko: '작은 layout gap은 광학 fill factor에는 유리하지만 reflow 중 resist island가 닿거나 합쳐질 위험을 키웁니다.' },
       },
       {
-        label: { en: 'Sag-radius relation', ko: 'sag-곡률 관계' },
-        equation: 'R_{\\text{vtx}} \\approx \\frac{a^2 + h^2}{2h}',
+        label: { en: 'Normalized reflow budget', ko: '정규화된 reflow budget' },
+        equation: 'B_r = c_T \\hat{T} + c_t \\hat{t}, \\quad \\hat{T}=\\frac{T_r-T_{\\min}}{T_{\\max}-T_{\\min}}, \\quad \\hat{t}=\\frac{\\log(1+t_r/t_0)}{\\log(1+t_{\\max}/t_0)}',
         variables: [
-          { symbol: 'R_{\\text{vtx}}', description: { en: 'Vertex radius of curvature', ko: '꼭짓점 곡률 반경' } },
-          { symbol: 'a', description: { en: 'Lens aperture radius', ko: '렌즈 개구 반경 $a$' } },
-          { symbol: 'h', description: { en: 'Lens sag (height)', ko: '렌즈 sag (높이) $h$' } },
+          { symbol: 'B_r', description: { en: 'Dimensionless reflow budget used by the simulator', ko: '시뮬레이터가 사용하는 무차원 reflow budget' } },
+          { symbol: 'T_r', description: { en: 'Reflow temperature', ko: 'Reflow 온도' } },
+          { symbol: 't_r', description: { en: 'Reflow time', ko: 'Reflow 시간' } },
+          { symbol: 'c_T, c_t', description: { en: 'Temperature and time weights; defaults encode a directional surrogate, not universal kinetics', ko: '온도 및 시간 가중치; 기본값은 범용 kinetics가 아니라 방향성 surrogate입니다.' } },
         ],
-        note: { en: 'For a spherical-cap approximation, aperture radius a and sag h set vertex curvature.', ko: '구면 cap 근사에서 개구 반경 a와 sag h가 꼭짓점 곡률을 결정합니다.' },
+        note: { en: 'The logarithmic time term makes early reflow changes stronger than late soak changes, matching the qualitative behavior of many resist reflow processes.', ko: '로그 시간 항은 초기 reflow 변화가 장시간 soak 변화보다 크도록 하며, 많은 resist reflow 공정의 정성적 거동과 맞습니다.' },
       },
       {
-        label: { en: 'Gap closure trend', ko: 'gap closure 경향' },
-        equation: 'g_{\\text{final}} = \\max(0, g_{\\text{lay}} - \\Delta_{\\text{reflow}} - \\Delta_{\\text{etch}})',
+        label: { en: 'Reflow spread and residual gap', ko: 'Reflow spread 및 잔류 gap' },
+        equation: '\\Delta_r = B_r(k_0+k_h h_0+k_g g_0), \\quad w_r=\\min(1.04p, w_m+2\\Delta_r), \\quad g_r=\\max(0,p-w_r)',
         variables: [
-          { symbol: 'g', description: { en: 'Gap between lenses', ko: '렌즈 간 간격 $g$' } },
-          { symbol: '\\Delta', description: { en: 'Process-induced gap reduction', ko: '공정에 의한 간격 감소량 $\\Delta$' } },
+          { symbol: '\\Delta_r', description: { en: 'Lateral spread per side during reflow', ko: 'Reflow 중 한쪽 방향 lateral spread' } },
+          { symbol: 'h_0', description: { en: 'Initial resist thickness', ko: '초기 resist 두께' } },
+          { symbol: 'w_r', description: { en: 'Post-reflow lens footprint width', ko: 'Reflow 후 렌즈 footprint 폭' } },
+          { symbol: 'g_r', description: { en: 'Gap after reflow but before etch transfer', ko: 'Reflow 후, etch transfer 전 gap' } },
         ],
-        note: { en: 'The simulator keeps the directional trend explicit so coefficients can later be calibrated.', ko: '나중에 계수를 보정할 수 있도록 방향성 관계를 명시적으로 둡니다.' },
+        note: { en: 'The constants are intentionally exposed as surrogate coefficients: a real process should replace them with DOE-fitted values.', ko: '상수들은 의도적으로 surrogate coefficient로 둔 것입니다. 실제 공정에서는 DOE fitting 값으로 치환해야 합니다.' },
+      },
+      {
+        label: { en: 'Volume-constrained reflow height', ko: '체적 제약 기반 reflow 높이' },
+        equation: 'V_0 \\approx A_m h_0, \\quad V_r \\approx C_{\\text{cap}} A_r h_r, \\quad h_r \\approx \\frac{\\eta_v A_m h_0}{C_{\\text{cap}}A_r}',
+        variables: [
+          { symbol: 'V_0, V_r', description: { en: 'Resist volume before and after reflow', ko: 'Reflow 전후 resist 체적' } },
+          { symbol: 'A_m, A_r', description: { en: 'Mask island area and reflowed lens footprint area', ko: 'Mask island 면적 및 reflow 후 렌즈 footprint 면적' } },
+          { symbol: 'C_{\\text{cap}}', description: { en: 'Shape factor for the cap profile; a parabolic cap has a different value from a spherical cap', ko: 'Cap profile의 형상 계수; 포물면 cap과 구면 cap은 다른 값을 가집니다.' } },
+          { symbol: '\\eta_v', description: { en: 'Effective volume retention after reflow', ko: 'Reflow 후 유효 체적 보존율' } },
+          { symbol: 'h_r', description: { en: 'Reflowed lens height before etch transfer', ko: 'Etch transfer 전 reflow 렌즈 높이' } },
+        ],
+        note: { en: 'This is the key physical constraint: if the footprint grows faster than volume, lens height must drop.', ko: '핵심 물리 제약입니다. Footprint가 체적보다 빠르게 커지면 렌즈 높이는 낮아져야 합니다.' },
+      },
+      {
+        label: { en: 'Etch-transfer gap closure and height loss', ko: 'Etch-transfer gap closure 및 height loss' },
+        equation: 'g_f=\\max(0,g_r-2v_{\\ell}t_e), \\quad h_f=h_r(1-L_e), \\quad L_e=\\operatorname{clip}(v_z t_e,0,L_{\\max})',
+        variables: [
+          { symbol: 'g_f', description: { en: 'Final gap after etch transfer', ko: 'Etch transfer 후 최종 gap' } },
+          { symbol: 'h_f', description: { en: 'Final transferred lens height', ko: '전사 후 최종 렌즈 높이' } },
+          { symbol: 'v_{\\ell}', description: { en: 'Effective lateral closure rate driven by etch chemistry and mask robustness', ko: '식각 chemistry 및 mask robustness에 의해 정해지는 유효 lateral closure rate' } },
+          { symbol: 'v_z', description: { en: 'Effective vertical flattening or height-loss rate', ko: '유효 vertical flattening 또는 height-loss rate' } },
+          { symbol: 't_e', description: { en: 'Etch time', ko: 'Etch 시간' } },
+        ],
+        note: { en: 'In this surrogate, polymerizing gas increases lateral gap closure and reduces height loss; mask thickness changes transfer robustness.', ko: '이 surrogate에서 polymerizing gas는 lateral gap closure를 키우고 height loss를 줄이며, mask thickness는 transfer robustness를 바꿉니다.' },
+      },
+      {
+        label: { en: 'Final 3D surface profile', ko: '최종 3D 표면 profile' },
+        equation: '\\rho=\\left[\\left|\\frac{x}{a}\\right|^n+\\left|\\frac{y}{a}\\right|^n\\right]^{1/n}, \\quad z(x,y)=h_f\\max(0,1-\\rho^q)',
+        variables: [
+          { symbol: '\\rho', description: { en: 'Normalized superellipse radius', ko: '정규화된 superellipse 반경' } },
+          { symbol: 'a', description: { en: 'Final half-width or aperture radius of the lens footprint', ko: '최종 lens footprint의 반폭 또는 개구 반경' } },
+          { symbol: 'n', description: { en: 'Footprint exponent: 2 is circular, larger values approach rounded-square or square footprints', ko: 'Footprint 지수: 2는 원형, 더 큰 값은 rounded-square 또는 square footprint에 가까워집니다.' } },
+          { symbol: 'q', description: { en: 'Profile exponent controlling edge steepness and cap flatness', ko: '가장자리 기울기와 cap flatness를 제어하는 profile 지수' } },
+        ],
+        note: { en: 'This links the 2D layout aperture to the 3D height field used in the wireframe view.', ko: '2D layout aperture를 wireframe view에서 쓰는 3D height field와 연결합니다.' },
+      },
+      {
+        label: { en: 'Curvature, focal length, and f-number proxy', ko: '곡률, 초점거리, f-number 근사' },
+        equation: 'R_{\\text{vtx}}\\approx\\frac{a^2+h_f^2}{2h_f}, \\quad f\\approx\\frac{R_{\\text{vtx}}}{n_{\\ell}-1}, \\quad N\\approx\\frac{f}{2a}',
+        variables: [
+          { symbol: 'R_{\\text{vtx}}', description: { en: 'Vertex radius of curvature estimated from a spherical-cap approximation', ko: '구면 cap 근사로 추정한 꼭짓점 곡률 반경' } },
+          { symbol: 'f', description: { en: 'Thin-lens focal length proxy', ko: 'Thin-lens 초점거리 근사값' } },
+          { symbol: 'n_{\\ell}', description: { en: 'Microlens refractive index', ko: '마이크로렌즈 굴절률' } },
+          { symbol: 'N', description: { en: 'Microlens f-number proxy', ko: '마이크로렌즈 f-number 근사값' } },
+        ],
+        note: { en: 'The optical numbers are screening metrics only; diffraction, finite stack thickness, and CRA shift require ray tracing or EM simulation.', ko: '광학 수치는 screening metric입니다. 회절, 유한 stack 두께, CRA shift는 ray tracing 또는 EM simulation이 필요합니다.' },
       },
     ],
     concepts: [
-      { en: 'Public papers usually report DOE trends, not universal foundry recipes.', ko: '공개 논문은 대개 범용 foundry recipe가 아니라 DOE 경향을 보고합니다.' },
-      { en: 'AFM/SEM metrology is needed to calibrate real process coefficients.', ko: '실제 공정 계수 보정에는 AFM/SEM 계측이 필요합니다.' },
-      { en: 'The output is best read as sensitivity and failure-mode guidance.', ko: '출력은 정량 recipe보다 민감도와 failure mode 지침으로 해석하는 것이 좋습니다.' },
+      { en: 'The model separates layout-limited gap, reflow-limited spread/height, and etch-limited transfer loss so each failure mode is visible.', ko: '모델은 layout-limited gap, reflow-limited spread/height, etch-limited transfer loss를 분리해 각 failure mode가 보이도록 합니다.' },
+      { en: 'Zero gap is not automatically good: over-reflow can merge lenses, while over-etch can erase sag and weaken focusing.', ko: 'Zero gap이 항상 좋은 것은 아닙니다. 과도한 reflow는 lens merger를 만들 수 있고, 과도한 etch는 sag를 지워 집광을 약화시킬 수 있습니다.' },
+      { en: 'The browser result should be interpreted as a process-window map before calibration, not as a released process recipe.', ko: '브라우저 결과는 calibration 전에는 release된 공정 recipe가 아니라 process-window map으로 해석해야 합니다.' },
     ],
-    references: [refs.ristoiu2020, refs.baillie2004],
+    sections: [
+      {
+        title: { en: 'How To Calibrate This Surrogate', ko: '이 surrogate를 보정하는 방법' },
+        items: [
+          { en: 'Measure $g_f$, $h_f$, footprint width, and profile exponent from AFM/SEM across a DOE grid of mask thickness, polymerizing gas flow, and etch time.', ko: 'Mask thickness, polymerizing gas flow, etch time DOE grid에서 AFM/SEM으로 $g_f$, $h_f$, footprint width, profile exponent를 측정합니다.' },
+          { en: 'Fit the reflow coefficients first using pre-etch or short-etch samples, then fit $v_{\\ell}$ and $v_z$ from etch-time sweeps.', ko: '먼저 pre-etch 또는 short-etch sample로 reflow coefficient를 맞추고, etch-time sweep으로 $v_{\\ell}$ 및 $v_z$를 fitting합니다.' },
+          { en: 'Validate the optical proxy by comparing predicted $R_{\\text{vtx}}$, $N$, and fill factor against ray-trace collection or silicon-level QE/crosstalk data.', ko: '예측된 $R_{\\text{vtx}}$, $N$, fill factor를 ray-trace collection 또는 silicon-level QE/crosstalk data와 비교해 optical proxy를 검증합니다.' },
+        ],
+      },
+      {
+        title: { en: 'What The References Contribute', ko: '레퍼런스가 제공하는 역할' },
+        items: [
+          { en: 'Ristoiu et al. motivates the DOE variables used here: mask thickness, polymerizing gas, and etch time as drivers of final microlens gap and height.', ko: 'Ristoiu et al.은 여기서 쓰는 DOE 변수, 즉 mask thickness, polymerizing gas, etch time이 최종 microlens gap/height를 움직인다는 근거를 제공합니다.' },
+          { en: 'Baillie and Gendler frame the zero-space problem: residual space reduces optical fill factor, but insufficient lithographic space can cause reflow merger.', ko: 'Baillie and Gendler는 zero-space 문제를 정의합니다. Residual space는 optical fill factor를 낮추지만, lithographic space가 너무 작으면 reflow merger가 발생할 수 있습니다.' },
+          { en: 'Jin, Liu, and Yang connect zero-space microlens geometry to AFM characterization and sensor-level sensitivity/crosstalk tests.', ko: 'Jin, Liu, Yang은 zero-space microlens geometry를 AFM characterization 및 sensor-level sensitivity/crosstalk test와 연결합니다.' },
+          { en: 'Tan, Goh, and Kim support the aperture-geometry and regression view of thermal-reflow microlens fabrication.', ko: 'Tan, Goh, Kim은 thermal-reflow microlens fabrication에서 aperture geometry와 regression 기반 모델링 관점을 뒷받침합니다.' },
+        ],
+      },
+      {
+        title: { en: 'Known Missing Physics', ko: '아직 빠진 물리' },
+        items: [
+          { en: 'The model does not solve surface-tension fluid dynamics, resist viscosity, contact-angle pinning, or plasma sheath chemistry.', ko: '이 모델은 표면장력 유체역학, resist viscosity, contact-angle pinning, plasma sheath chemistry를 직접 풀지 않습니다.' },
+          { en: 'It does not include color-filter topography, neighboring-lens wetting asymmetry, wafer-edge non-uniformity, or lens shift for CRA compensation.', ko: 'Color-filter topography, 인접 lens wetting asymmetry, wafer-edge non-uniformity, CRA 보정용 lens shift는 포함하지 않습니다.' },
+          { en: 'Use this page to choose DOE regions; use measured profiles plus optical simulation before making device-performance claims.', ko: '이 페이지는 DOE 영역 선택에 사용하고, device-performance 주장은 실측 profile과 optical simulation을 함께 사용해야 합니다.' },
+        ],
+      },
+    ],
+    references: [
+      {
+        ...refs.ristoiu2020,
+        note: { en: 'Closest direct CIS DOE reference for plasma etch transfer of reflowed microlenses.', ko: 'Reflowed microlens의 plasma etch transfer를 다룬 가장 직접적인 CIS DOE 레퍼런스입니다.' },
+      },
+      {
+        ...refs.baillie2004,
+        note: { en: 'Defines the zero-space layout/fabrication motivation and merger-risk tradeoff.', ko: 'Zero-space layout/fabrication 동기와 merger-risk tradeoff를 설명합니다.' },
+      },
+      {
+        ...refs.jin2011,
+        note: { en: 'Connects zero-space geometry to AFM and silicon-level sensitivity/crosstalk measurements.', ko: 'Zero-space geometry를 AFM 및 silicon-level sensitivity/crosstalk 계측과 연결합니다.' },
+      },
+      {
+        ...refs.tan2020,
+        note: { en: 'Useful for aperture-geometry and regression-based thermal-reflow profile thinking.', ko: 'Aperture geometry 및 regression 기반 thermal-reflow profile 사고에 유용합니다.' },
+      },
+    ],
   },
   'mla-array': {
     title: { en: 'Microlens Array Surface Geometry', ko: '마이크로렌즈 어레이 표면 형상' },
@@ -1452,6 +1570,13 @@ const entry = computed(() => theoryEntries[props.slug])
   gap: 14px;
 }
 
+.sim-theory-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
 .sim-theory-card {
   padding: 14px;
   border: 1px solid var(--vp-c-divider);
@@ -1540,6 +1665,10 @@ const entry = computed(() => theoryEntries[props.slug])
   }
 
   .sim-theory-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sim-theory-detail-grid {
     grid-template-columns: 1fr;
   }
 }
