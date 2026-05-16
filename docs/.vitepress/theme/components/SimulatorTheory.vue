@@ -356,143 +356,356 @@ const theoryEntries: Record<string, TheoryEntry> = {
   'barl-optimizer': {
     title: { en: 'Thin-Film Anti-Reflection Theory', ko: '박막 반사 방지 이론' },
     summary: {
-      en: 'BARL and coating stacks reduce Fresnel reflection by arranging multiple reflected waves to cancel at target wavelengths.',
-      ko: 'BARL 및 박막 코팅은 여러 계면 반사파가 목표 파장에서 상쇄되도록 두께와 굴절률을 조합해 프레넬 반사를 줄입니다.',
+      en: 'The BARL optimizer searches thin-film thicknesses that reduce reflection and parasitic loss before photons reach silicon. It is a constrained multilayer interference problem: each film changes phase, admittance, absorption, and therefore the color-channel QE tradeoff.',
+      ko: 'BARL optimizer는 광자가 silicon에 도달하기 전에 생기는 반사와 기생 손실을 줄이는 박막 두께를 탐색합니다. 이는 제한 조건이 있는 multilayer interference 문제입니다. 각 박막은 위상, 어드미턴스, 흡수율을 바꾸고 결국 색 채널 QE tradeoff를 만듭니다.',
     },
     intuition: {
-      en: 'Anti-reflection layers work like noise-cancelling headphones for light. By stacking the right films at the right thicknesses, the unwanted reflections from each interface cancel each other out, so more light passes through and reaches the sensor instead of bouncing back into the lens.',
-      ko: '반사 방지 박막은 빛에 대한 노이즈 캔슬링 이어폰처럼 동작합니다. 알맞은 두께의 박막을 잘 쌓으면 각 경계면의 반사파끼리 서로 상쇄되어, 빛이 렌즈 쪽으로 튀어나가지 않고 더 많이 센서로 들어옵니다.',
+      en: 'Anti-reflection layers work like timing control for echoes. A wave reflected from the top of a film can meet a wave reflected from the bottom of the film with opposite phase, canceling the return wave. But the cancellation only holds over a limited wavelength and angle range, so a CIS BARL stack is always a compromise between blue, green, red, angle, process limits, and absorption.',
+      ko: '반사 방지 박막은 빛의 echo timing을 조절하는 장치와 비슷합니다. 박막 윗면에서 반사된 파동과 아랫면에서 반사된 파동이 반대 위상으로 만나면 되돌아가는 파동이 상쇄됩니다. 하지만 이 상쇄는 제한된 파장/각도 범위에서만 성립하므로, CIS BARL 스택은 항상 blue, green, red, angle, 공정 한계, 흡수 사이의 절충입니다.',
     },
     formulas: [
       {
-        label: { en: 'Normal-incidence Fresnel reflection', ko: '수직 입사 프레넬 반사' },
-        equation: 'R = \\left| \\frac{n_0 - n_s}{n_0 + n_s} \\right|^2',
+        label: { en: 'Bare-interface reflection', ko: 'Bare 계면 반사' },
+        equation: 'r_{0s}=\\frac{n_0-n_s}{n_0+n_s}, \\quad R_{0s}=|r_{0s}|^2',
         variables: [
-          { symbol: 'R', description: { en: 'Reflectance coefficient', ko: '반사 계수 $R$' } },
-          { symbol: 'n_0', description: { en: 'Refractive index of the incident medium', ko: '입사 매질의 굴절률 $n_0$' } },
-          { symbol: 'n_s', description: { en: 'Refractive index of the substrate', ko: '기판의 굴절률 $n_s$' } },
+          { symbol: 'r_{0s}', description: { en: 'Complex amplitude reflection coefficient between incident medium and substrate', ko: '입사 매질과 기판 사이의 복소 진폭 반사 계수' } },
+          { symbol: 'R_{0s}', description: { en: 'Bare-interface reflectance', ko: 'Bare 계면 반사율' } },
+          { symbol: 'n_0,n_s', description: { en: 'Incident and substrate refractive indices', ko: '입사 매질 및 기판 굴절률' } },
         ],
-        note: { en: 'A bare polymer/silicon or oxide/silicon interface has high reflection because the index contrast is large.', ko: '폴리머/실리콘 또는 산화막/실리콘 계면은 굴절률 차이가 커서 반사가 큽니다.' },
+        note: { en: 'The optimizer is useful because polymer/oxide-to-silicon index contrast creates a large reflection penalty without a matching layer.', ko: 'Polymer/oxide-to-silicon 굴절률 차이가 크면 matching layer 없이 큰 반사 손실이 생기므로 optimizer가 유용합니다.' },
       },
       {
-        label: { en: 'Quarter-wave seed thickness', ko: '1/4파장 초기 두께' },
-        equation: 'd \\approx \\frac{\\lambda_0}{4n_{\\text{layer}}}',
+        label: { en: 'Quarter-wave phase target', ko: '1/4파장 위상 조건' },
+        equation: '\\delta_1=\\frac{2\\pi n_1d_1}{\\lambda_0}\\approx\\frac{\\pi}{2}, \\quad d_1\\approx\\frac{\\lambda_0}{4n_1}',
         variables: [
-          { symbol: 'd', description: { en: 'Optimal thickness for destructive interference', ko: '상쇄 간섭을 위한 최적 두께 $d$' } },
-          { symbol: '\\lambda_0', description: { en: 'Target wavelength', ko: '목표 파장 $\\lambda_0$' } },
-          { symbol: 'n_{\\text{layer}}', description: { en: 'Refractive index of the layer', ko: '박막 레이어의 굴절률 $n_{\\text{layer}}$' } },
+          { symbol: '\\delta_1', description: { en: 'Phase thickness of a single anti-reflection layer', ko: '단일 반사 방지층의 위상 두께' } },
+          { symbol: 'd_1', description: { en: 'Physical thickness of the layer', ko: '레이어의 물리적 두께' } },
+          { symbol: 'n_1', description: { en: 'Refractive index of the anti-reflection layer', ko: '반사 방지층 굴절률' } },
+          { symbol: '\\lambda_0', description: { en: 'Design wavelength', ko: '설계 중심 파장' } },
         ],
-        note: { en: 'A quarter-wave layer gives a useful starting point, but broadband stacks require numerical tuning.', ko: '1/4파장 두께는 좋은 출발점이지만 광대역 스택은 수치 최적화가 필요합니다.' },
+        note: { en: 'Quarter-wave thickness is a seed, not the final answer, because CIS stacks are absorbing, broadband, and angle dependent.', ko: '1/4파장 두께는 초기값일 뿐입니다. CIS 스택은 흡수성, 광대역, 각도 의존성을 갖기 때문입니다.' },
       },
       {
-        label: { en: 'Merit function', ko: '목적 함수' },
-        equation: '\\mathcal{L} = \\langle R(\\lambda) \\rangle_{\\lambda \\in \\text{band}}',
+        label: { en: 'Single-layer cancellation condition', ko: '단일층 상쇄 조건' },
+        equation: 'r_{01}+r_{1s}e^{2i\\delta_1}\\approx0, \\quad n_1\\approx\\sqrt{n_0n_s}\\;\\text{(lossless normal-incidence limit)}',
         variables: [
-          { symbol: '\\mathcal{L}', description: { en: 'Loss function to be minimized', ko: '최소화해야 할 손실 함수 $\\mathcal{L}$' } },
-          { symbol: '\\langle R(\\lambda) \\rangle', description: { en: 'Mean reflectance across the band', ko: '대역 내 평균 반사율' } },
+          { symbol: 'r_{01},r_{1s}', description: { en: 'Fresnel reflection amplitudes at the two interfaces of the layer', ko: '박막 양쪽 계면의 프레넬 반사 진폭' } },
+          { symbol: 'e^{2i\\delta_1}', description: { en: 'Round-trip phase factor inside the layer', ko: '박막 내부 왕복 위상 인자' } },
+          { symbol: '\\sqrt{n_0n_s}', description: { en: 'Ideal matching index for a lossless single layer', ko: '무손실 단일층에서의 이상적 matching index' } },
         ],
-        note: { en: 'The optimizer minimizes average reflectance over the selected spectral band.', ko: '최적화기는 선택한 파장 대역의 평균 반사율을 줄입니다.' },
+        note: { en: 'Real BARL material choices rarely hit the ideal index, so multiple layers and numerical search are used.', ko: '실제 BARL 재료는 이상적 굴절률과 잘 맞지 않는 경우가 많아 다층 구조와 수치 탐색을 사용합니다.' },
+      },
+      {
+        label: { en: 'Oblique-incidence admittance', ko: '경사 입사 어드미턴스' },
+        equation: '\\eta_j^{(s)}=\\tilde{n}_j\\cos\\theta_j, \\quad \\eta_j^{(p)}=\\frac{\\tilde{n}_j}{\\cos\\theta_j}',
+        variables: [
+          { symbol: '\\eta_j^{(s)},\\eta_j^{(p)}', description: { en: 'Layer optical admittance for s and p polarization', ko: 's/p 편광에 대한 레이어 광학 어드미턴스' } },
+          { symbol: '\\tilde{n}_j', description: { en: 'Complex refractive index of layer $j$', ko: '레이어 $j$의 복소 굴절률' } },
+          { symbol: '\\theta_j', description: { en: 'Internal propagation angle', ko: '레이어 내부 전파각' } },
+        ],
+        note: { en: 'A coating optimized at normal incidence may fail at high CRA because s and p admittances diverge.', ko: '수직 입사에서 최적화된 코팅도 큰 CRA에서는 s/p 어드미턴스가 갈라져 성능이 나빠질 수 있습니다.' },
+      },
+      {
+        label: { en: 'Optimization objective', ko: '최적화 목적 함수' },
+        equation: '\\mathcal{L}=\\sum_{c\\in\\{R,G,B\\}}w_c\\left\\langle R_c(\\lambda,\\theta)+\\gamma A_{\\text{parasitic},c}(\\lambda,\\theta)\\right\\rangle_{\\lambda\\in\\Omega_c}',
+        variables: [
+          { symbol: '\\mathcal{L}', description: { en: 'Weighted loss minimized by the optimizer', ko: 'Optimizer가 최소화하는 가중 손실 함수' } },
+          { symbol: 'w_c', description: { en: 'Channel weight for color $c$', ko: '색 채널 $c$의 가중치' } },
+          { symbol: '\\Omega_c', description: { en: 'Wavelength band of interest for channel $c$', ko: '색 채널 $c$의 관심 파장 대역' } },
+          { symbol: '\\gamma', description: { en: 'Penalty weight for parasitic non-silicon absorption', ko: '비실리콘 기생 흡수 penalty 가중치' } },
+        ],
+        note: { en: 'In practice, the best stack minimizes reflection without moving too much power into lossy BARL or color-filter absorption.', ko: '실제로 좋은 스택은 반사를 줄이되 BARL 또는 color-filter 기생 흡수로 파워를 너무 많이 보내지 않아야 합니다.' },
+      },
+      {
+        label: { en: 'QE improvement budget', ko: 'QE 개선 예산' },
+        equation: '\\Delta A_{\\text{Si}}\\approx-\\Delta R-\\Delta T_{\\text{escape}}-\\Delta A_{\\text{parasitic}}',
+        variables: [
+          { symbol: '\\Delta A_{\\text{Si}}', description: { en: 'Change in useful silicon absorption', ko: '유효 실리콘 흡수율 변화' } },
+          { symbol: '\\Delta R', description: { en: 'Change in reflected power', ko: '반사 파워 변화' } },
+          { symbol: '\\Delta T_{\\text{escape}}', description: { en: 'Change in power transmitted past the active silicon region', ko: '활성 실리콘 영역을 지나 빠져나가는 파워 변화' } },
+          { symbol: '\\Delta A_{\\text{parasitic}}', description: { en: 'Change in absorption outside the photodiode silicon', ko: '포토다이오드 실리콘 외부 흡수 변화' } },
+        ],
+        note: { en: 'A lower reflectance curve is only valuable if the saved photons are redirected into silicon absorption.', ko: '반사율 감소는 절약된 광자가 실리콘 흡수로 이동할 때만 QE 개선이 됩니다.' },
       },
     ],
     concepts: [
-      { en: 'The optimum depends on the incident medium, substrate, wavelength band, and angle.', ko: '최적점은 입사 매질, 기판, 파장 대역, 입사각에 따라 달라집니다.' },
-      { en: 'A stack optimized for green peak QE can hurt blue or NIR response.', ko: '녹색 피크 QE에 맞춘 스택은 청색 또는 NIR 응답을 악화시킬 수 있습니다.' },
-      { en: 'Real CIS BARL recipes are process-specific and usually use constrained material sets.', ko: '실제 CIS BARL 레시피는 공정별로 다르며 사용할 수 있는 재료 조합도 제한됩니다.' },
+      { en: 'The optimum depends on incident medium, silicon optical constants, color-filter absorption, angle, polarization, and allowed process materials.', ko: '최적점은 입사 매질, silicon optical constant, color-filter absorption, angle, polarization, 허용 공정 재료에 따라 달라집니다.' },
+      { en: 'A stack optimized for green peak QE can hurt blue, red, or off-axis response because phase cancellation is narrowband.', ko: 'Phase cancellation은 narrowband이므로 green peak QE에 맞춘 스택이 blue, red, off-axis response를 악화시킬 수 있습니다.' },
+      { en: 'BARL optimization should be judged by silicon absorption and total color-channel balance, not reflectance alone.', ko: 'BARL 최적화는 reflectance만이 아니라 silicon absorption과 전체 색 채널 balance로 판단해야 합니다.' },
     ],
-    references: [refs.macleod, refs.bornWolf, refs.green2008],
+    sections: [
+      {
+        title: { en: 'Tuning Workflow', ko: '튜닝 절차' },
+        items: [
+          { en: 'Start from quarter-wave thickness near the target band, then sweep thickness around that seed because real stacks are absorbing and multilayered.', ko: '목표 대역 주변의 quarter-wave 두께에서 시작한 뒤, 실제 스택은 흡수성 다층계이므로 그 주변 두께를 sweep합니다.' },
+          { en: 'Check $R$, $T$, parasitic absorption, and $A_{\\text{Si}}$ together; a reflectance minimum alone can be misleading.', ko: '$R$, $T$, 기생 흡수, $A_{\\text{Si}}$를 함께 확인해야 합니다. Reflectance minimum만 보면 오해할 수 있습니다.' },
+          { en: 'Re-run the candidate at oblique incidence and both polarizations before treating it as a camera-edge solution.', ko: '후보 구조를 camera edge solution으로 보기 전에 경사 입사 및 양 편광에서 다시 확인해야 합니다.' },
+        ],
+      },
+      {
+        title: { en: 'Process Constraints', ko: '공정 제약' },
+        items: [
+          { en: 'Allowed materials, minimum thickness, etch selectivity, stress, thermal budget, and contamination rules usually restrict the mathematical optimum.', ko: '허용 재료, 최소 두께, etch selectivity, stress, thermal budget, contamination rule이 수학적 최적점을 제한합니다.' },
+          { en: 'The same BARL stack may behave differently under different color-filter refractive-index and absorption spectra.', ko: '동일한 BARL 스택도 color-filter 굴절률과 흡수 spectrum에 따라 다르게 동작할 수 있습니다.' },
+          { en: 'Thickness tolerance should be checked because narrow interference minima can be fragile to wafer non-uniformity.', ko: '좁은 간섭 minimum은 wafer non-uniformity에 취약할 수 있으므로 두께 tolerance를 확인해야 합니다.' },
+        ],
+      },
+      {
+        title: { en: 'Known Missing Physics', ko: '아직 빠진 물리' },
+        items: [
+          { en: 'The optimizer is a planar-film model; it does not include microlens focusing, metal-grid diffraction, DTI, roughness scattering, or color-filter relief.', ko: 'Optimizer는 planar-film 모델이므로 microlens focusing, metal-grid diffraction, DTI, roughness scattering, color-filter relief를 포함하지 않습니다.' },
+          { en: 'It treats optical constants as known inputs; process drift in $n,k$ can move the optimum.', ko: 'Optical constant를 알려진 입력으로 취급하지만, 공정 drift로 $n,k$가 바뀌면 최적점도 이동합니다.' },
+          { en: 'For sub-wavelength lateral features, validate BARL candidates with RCWA/FDTD after TMM screening.', ko: '서브파장 lateral feature가 있으면 TMM screening 이후 RCWA/FDTD로 BARL 후보를 검증해야 합니다.' },
+        ],
+      },
+    ],
+    references: [
+      {
+        ...refs.macleod,
+        note: { en: 'Thin-film coating design, characteristic matrices, and anti-reflection stack interpretation.', ko: '박막 코팅 설계, characteristic matrix, anti-reflection stack 해석 레퍼런스입니다.' },
+      },
+      {
+        ...refs.bornWolf,
+        note: { en: 'Background for Fresnel coefficients, polarization, and coherent interference.', ko: 'Fresnel coefficient, polarization, coherent interference의 배경 이론입니다.' },
+      },
+      {
+        ...refs.green2008,
+        note: { en: 'Silicon optical constants used when judging whether saved photons are absorbed usefully.', ko: '절약된 광자가 유효하게 흡수되는지 판단할 때 필요한 silicon optical constant 레퍼런스입니다.' },
+      },
+    ],
   },
   'energy-budget': {
     title: { en: 'Photon Energy Accounting', ko: '광자 에너지 예산' },
     summary: {
-      en: 'The analyzer decomposes incident optical power into reflected power, transmitted power, and absorption in each stack layer.',
-      ko: '이 분석기는 입사 광파워를 반사, 투과, 각 스택 레이어에서의 흡수로 분해합니다.',
+      en: 'The energy-budget view decomposes incident optical power into reflection, escape transmission, useful silicon absorption, and parasitic absorption in non-silicon layers. It is a diagnostic layer on top of the TMM result: it explains why QE changes, not just that QE changes.',
+      ko: 'Energy-budget view는 입사 광파워를 반사, escape transmission, 유효 silicon absorption, 비실리콘 레이어의 기생 흡수로 분해합니다. 이는 TMM 결과 위의 진단 레이어로, QE가 변했다는 사실뿐 아니라 왜 변했는지를 설명합니다.',
     },
     intuition: {
-      en: 'Think of incoming light as a budget. Some of it is lost to reflection (bounces away), some is spent as toll fees inside the colour filter or metal layers, and only the part absorbed in silicon becomes a useful electrical signal. This tool gives you an itemised receipt that shows exactly where every percent of the budget went.',
-      ko: '들어오는 빛을 예산이라고 생각해 보세요. 일부는 반사로 튕겨 나가 잃어버리고, 일부는 컬러 필터와 금속층에서 통행료로 쓰이며, 실리콘 내부에서 흡수된 부분만 실제 전기 신호가 됩니다. 이 도구는 예산의 몇 %가 어디로 사용되었는지를 영수증처럼 항목별로 보여줍니다.',
+      en: 'Think of every incoming photon as a coin. Some coins bounce off the stack, some pass through the active silicon without being used, some are spent heating filters or coatings, and only the coins absorbed in the photodiode silicon can become signal. The budget tells you which bucket is stealing photons.',
+      ko: '입사 광자 하나하나를 동전으로 생각하면 됩니다. 일부 동전은 스택에서 반사되고, 일부는 활성 실리콘을 지나쳐 빠져나가며, 일부는 필터나 코팅을 데우는 데 쓰이고, 포토다이오드 실리콘에서 흡수된 동전만 신호가 될 수 있습니다. 에너지 예산은 어떤 bucket이 광자를 빼앗는지 보여줍니다.',
     },
     formulas: [
       {
-        label: { en: 'Conservation check', ko: '보존성 검증' },
-        equation: '1 = R + T + A_{\\text{CF}} + A_{\\text{BARL}} + A_{\\text{Si}} + \\dots',
+        label: { en: 'Incident power normalization', ko: '입사 파워 정규화' },
+        equation: 'P_{\\text{inc}}(\\lambda)=1',
         variables: [
-          { symbol: 'R', description: { en: 'Total reflectance', ko: '전체 반사율 $R$' } },
-          { symbol: 'T', description: { en: 'Total transmittance', ko: '전체 투과율 $T$' } },
-          { symbol: 'A_{\\text{Si}}', description: { en: 'Useful absorption in silicon photodiode', ko: '실리콘 포토다이오드에서의 유효 흡수율 $A_{\\text{Si}}$' } },
+          { symbol: 'P_{\\text{inc}}', description: { en: 'Incident optical power at a wavelength, normalized to unity', ko: '해당 파장의 입사 광파워; 1로 정규화' } },
+          { symbol: '\\lambda', description: { en: 'Wavelength at which the stack is evaluated', ko: '스택을 평가하는 파장' } },
         ],
-        note: { en: 'The residual should stay near zero; otherwise the optical model or sampling is inconsistent.', ko: '잔차는 0에 가까워야 하며, 그렇지 않다면 광학 모델이나 샘플링을 의심해야 합니다.' },
+        note: { en: 'All bars in the budget are fractions of the same incident power, so channels and wavelengths can be compared directly.', ko: '예산 막대는 모두 같은 입사 파워에 대한 비율이므로 채널과 파장을 직접 비교할 수 있습니다.' },
       },
       {
-        label: { en: 'Layer absorption', ko: '레이어 흡수' },
-        equation: 'A_j = P_{\\text{in},j} - P_{\\text{out},j}',
+        label: { en: 'Power conservation residual', ko: '파워 보존 잔차' },
+        equation: '\\varepsilon = 1-R-T-\\sum_jA_j',
         variables: [
-          { symbol: 'A_j', description: { en: 'Absorption in specific layer $j$', ko: '특정 레이어 $j$에서의 흡수율' } },
-          { symbol: 'P_{\\text{in},j}', description: { en: 'Power flux entering layer $j$', ko: '레이어 $j$로 입사된 광파워 플럭스' } },
-          { symbol: 'P_{\\text{out},j}', description: { en: 'Power flux exiting layer $j$', ko: '레이어 $j$를 빠져나간 광파워 플럭스' } },
+          { symbol: '\\varepsilon', description: { en: 'Numerical energy-balance residual', ko: '수치적 에너지 보존 잔차' } },
+          { symbol: 'R,T', description: { en: 'Reflected and transmitted power fractions', ko: '반사 및 투과 파워 비율' } },
+          { symbol: 'A_j', description: { en: 'Absorption fraction in layer $j$', ko: '레이어 $j$의 흡수 파워 비율' } },
         ],
-        note: { en: 'Absorption is assigned by tracking the power flux entering and leaving a layer.', ko: '흡수는 해당 레이어로 들어간 파워와 나간 파워의 차이로 배분합니다.' },
+        note: { en: 'A large residual means the optical model, interpolation, or layer accounting should be inspected before interpreting QE.', ko: '잔차가 크면 QE 해석 전에 광학 모델, 보간, 레이어 accounting을 점검해야 합니다.' },
       },
       {
-        label: { en: 'Useful absorption', ko: '유효 흡수' },
-        equation: 'QE_{\\text{opt}} \\leq A_{\\text{Si}}',
+        label: { en: 'Layer absorption from flux difference', ko: '플럭스 차이 기반 레이어 흡수' },
+        equation: 'A_j=P_{\\text{top},j}-P_{\\text{bot},j}, \\quad P=\\frac{\\operatorname{Re}(EH^*)}{P_{\\text{inc}}}',
         variables: [
-          { symbol: 'QE_{\\text{opt}}', description: { en: 'External quantum efficiency estimate', ko: '외부 양자 효율 추정치 $QE_{\\text{opt}}$' } },
+          { symbol: 'P_{\\text{top},j},P_{\\text{bot},j}', description: { en: 'Normalized Poynting flux at the top and bottom of layer $j$', ko: '레이어 $j$ 상단 및 하단의 정규화된 포인팅 플럭스' } },
+          { symbol: 'E,H', description: { en: 'Electric and magnetic field amplitudes recovered from the transfer matrix', ko: '전달 행렬에서 복원한 전기장 및 자기장 진폭' } },
+          { symbol: 'H^*', description: { en: 'Complex conjugate of magnetic field amplitude', ko: '자기장 진폭의 복소 켤레' } },
         ],
-        note: { en: 'Only absorption inside the photodiode silicon can become collected charge.', ko: '포토다이오드 실리콘 내부 흡수만 수집 전하로 변환될 수 있습니다.' },
+        note: { en: 'This assigns absorption to physical layers instead of only reporting total stack loss.', ko: '이 방식은 전체 스택 손실만 보는 대신 흡수를 물리 레이어별로 배정합니다.' },
+      },
+      {
+        label: { en: 'Useful and parasitic buckets', ko: '유효/기생 흡수 bucket' },
+        equation: 'A_{\\text{use}}=A_{\\text{Si}}, \\quad A_{\\text{parasitic}}=\\sum_{j\\notin\\text{Si}}A_j',
+        variables: [
+          { symbol: 'A_{\\text{use}}', description: { en: 'Absorption that can potentially contribute to signal', ko: '신호에 기여할 수 있는 잠재적 흡수' } },
+          { symbol: 'A_{\\text{parasitic}}', description: { en: 'Absorption in filters, coatings, metal, or other non-photodiode layers', ko: '필터, 코팅, 금속, 기타 비포토다이오드 레이어의 흡수' } },
+          { symbol: 'A_{\\text{Si}}', description: { en: 'Absorption in the silicon photodiode layer', ko: '실리콘 포토다이오드 레이어 흡수' } },
+        ],
+        note: { en: 'A design that reduces reflection but increases parasitic absorption may not improve sensor signal.', ko: '반사를 줄였더라도 기생 흡수가 늘면 센서 신호는 개선되지 않을 수 있습니다.' },
+      },
+      {
+        label: { en: 'Optical QE upper bound', ko: '광학 QE 상한' },
+        equation: 'QE_{\\text{ext}}(\\lambda)=\\eta_{\\text{cc}}(\\lambda)A_{\\text{Si}}(\\lambda), \\quad QE_{\\text{ext}}\\le A_{\\text{Si}}',
+        variables: [
+          { symbol: 'QE_{\\text{ext}}', description: { en: 'External quantum efficiency after carrier collection effects', ko: '전하 수집 효과까지 포함한 외부 양자 효율' } },
+          { symbol: '\\eta_{\\text{cc}}', description: { en: 'Carrier-collection probability for generated electron-hole pairs', ko: '생성된 전자-정공쌍의 전하 수집 확률' } },
+        ],
+        note: { en: 'The budget reports optical absorption; electrical QE can only be lower unless carrier collection is ideal.', ko: '이 예산은 광학 흡수를 보고합니다. 전하 수집이 완전하지 않으면 전기적 QE는 이보다 낮습니다.' },
+      },
+      {
+        label: { en: 'Design sensitivity', ko: '설계 민감도' },
+        equation: 'S_{x_k}(\\lambda)=\\frac{\\partial A_{\\text{Si}}(\\lambda)}{\\partial x_k}',
+        variables: [
+          { symbol: 'S_{x_k}', description: { en: 'Sensitivity of silicon absorption to design variable $x_k$', ko: '설계 변수 $x_k$에 대한 silicon absorption 민감도' } },
+          { symbol: 'x_k', description: { en: 'Layer thickness, material index, angle, or wavelength-dependent filter parameter', ko: '레이어 두께, 재료 굴절률, 입사각, 또는 파장 의존 필터 파라미터' } },
+        ],
+        note: { en: 'Sensitivity helps identify whether a QE loss is controlled by BARL thickness, silicon depth, filter absorption, or angle.', ko: '민감도는 QE 손실이 BARL 두께, silicon depth, filter absorption, angle 중 무엇에 지배되는지 식별하는 데 유용합니다.' },
       },
     ],
     concepts: [
-      { en: 'Color-filter and metal absorption reduce throughput before photons reach silicon.', ko: '컬러 필터와 금속 흡수는 광자가 실리콘에 도달하기 전 처리량을 낮춥니다.' },
-      { en: 'Transmission out of the silicon layer is lost unless backside reflection or light trapping is modeled.', ko: '후면 반사나 광 포획을 모델링하지 않으면 실리콘을 통과한 빛은 손실로 봅니다.' },
-      { en: 'Use the budget to identify whether a QE loss is reflection-limited, filter-limited, or silicon-thickness-limited.', ko: '에너지 예산은 QE 손실이 반사, 필터, 실리콘 두께 중 무엇에 의해 제한되는지 구분하는 데 유용합니다.' },
+      { en: 'Reflection-limited loss points to coating or BARL work; parasitic absorption points to material or thickness choices; escape transmission points to silicon thickness or light trapping.', ko: 'Reflection-limited loss는 coating/BARL 문제를, parasitic absorption은 재료/두께 선택 문제를, escape transmission은 silicon thickness 또는 light trapping 문제를 가리킵니다.' },
+      { en: 'Energy accounting is the bridge between a spectral curve and an engineering action.', ko: 'Energy accounting은 spectral curve와 실제 engineering action을 연결하는 다리입니다.' },
+      { en: 'The budget is most useful when compared across a before/after design change rather than read as a standalone number.', ko: '예산은 단독 숫자로 읽기보다 설계 변경 전후를 비교할 때 가장 유용합니다.' },
     ],
-    references: [refs.catrysse2002, refs.green2008, refs.macleod],
+    sections: [
+      {
+        title: { en: 'Diagnosis Workflow', ko: '진단 절차' },
+        items: [
+          { en: 'First check $\\varepsilon$ to confirm power conservation, then inspect whether loss sits in $R$, $T$, $A_{\\text{parasitic}}$, or missing $A_{\\text{Si}}$.', ko: '먼저 $\\varepsilon$로 파워 보존을 확인한 뒤, 손실이 $R$, $T$, $A_{\\text{parasitic}}$, 부족한 $A_{\\text{Si}}$ 중 어디에 있는지 봅니다.' },
+          { en: 'If $R$ dominates, tune BARL/coating; if $A_{\\text{parasitic}}$ dominates, revisit color-filter or metal absorption; if $T$ dominates, adjust silicon thickness or backside trapping.', ko: '$R$이 지배적이면 BARL/coating을, $A_{\\text{parasitic}}$가 지배적이면 color-filter/metal absorption을, $T$가 지배적이면 silicon thickness 또는 backside trapping을 조정합니다.' },
+          { en: 'Compare the same budget for R/G/B because a fix for one channel can move loss into another channel.', ko: '한 채널 개선이 다른 채널 손실로 이동할 수 있으므로 R/G/B 예산을 함께 비교합니다.' },
+        ],
+      },
+      {
+        title: { en: 'Calibration Targets', ko: '보정 대상' },
+        items: [
+          { en: 'Use measured reflectance/transmittance spectra to anchor $R$ and $T$ before trusting layer absorption allocation.', ko: '레이어 흡수 배정을 신뢰하기 전에 실측 reflectance/transmittance spectrum으로 $R$ 및 $T$를 맞춥니다.' },
+          { en: 'Replace generic $n,k$ with process-specific ellipsometry for color filters, BARL layers, silicon, and passivation.', ko: 'Color filter, BARL layer, silicon, passivation에는 generic $n,k$ 대신 공정별 ellipsometry 데이터를 사용합니다.' },
+          { en: 'Validate $A_{\\text{Si}}$ against measured QE only after estimating carrier collection probability.', ko: '전하 수집 확률을 추정한 뒤에야 $A_{\\text{Si}}$를 실측 QE와 비교해야 합니다.' },
+        ],
+      },
+      {
+        title: { en: 'Known Missing Physics', ko: '아직 빠진 물리' },
+        items: [
+          { en: 'The budget does not include lateral redistribution: photons absorbed in silicon outside the photodiode ROI may become crosstalk.', ko: '이 예산은 lateral redistribution을 포함하지 않습니다. 포토다이오드 ROI 밖 실리콘에서 흡수된 광자는 crosstalk가 될 수 있습니다.' },
+          { en: 'It does not model electrical collection, diffusion, recombination, or depletion-region geometry.', ko: '전기적 collection, diffusion, recombination, depletion-region geometry는 모델링하지 않습니다.' },
+          { en: 'Structured pixels need RCWA/FDTD field maps to decide where within silicon absorption occurs.', ko: '구조화된 픽셀에서는 실리콘 내부 흡수 위치를 판단하기 위해 RCWA/FDTD field map이 필요합니다.' },
+        ],
+      },
+    ],
+    references: [
+      {
+        ...refs.catrysse2002,
+        note: { en: 'Image-sensor optical efficiency framing and connection between absorption and pixel-level efficiency.', ko: 'Image-sensor optical efficiency와 absorption/pixel-level efficiency 연결을 다룹니다.' },
+      },
+      {
+        ...refs.green2008,
+        note: { en: 'Silicon optical constants for wavelength-dependent absorption-depth and escape-loss analysis.', ko: '파장 의존 absorption-depth 및 escape-loss 분석에 필요한 silicon optical constant 레퍼런스입니다.' },
+      },
+      {
+        ...refs.macleod,
+        note: { en: 'Thin-film energy balance and multilayer optical power accounting background.', ko: '박막 에너지 보존 및 multilayer optical power accounting 배경 이론입니다.' },
+      },
+    ],
   },
   'angular-response': {
     title: { en: 'Chief-Ray Angle and Polarization Response', ko: '주광선각 및 편광 응답' },
     summary: {
-      en: 'Angular response combines Snell refraction, polarization-dependent Fresnel coefficients, and longer optical path length through absorbing layers.',
-      ko: '각도 응답은 스넬 굴절, 편광별 프레넬 계수, 흡수층 내 광경로 증가가 함께 만든 결과입니다.',
+      en: 'Angular response explains how QE changes when light enters a planar pixel stack away from normal incidence. It combines Snell refraction, s/p Fresnel behavior, TMM phase changes, longer absorption path length, and normalization against the on-axis response.',
+      ko: 'Angular response는 빛이 수직 입사가 아니라 기울어진 각도로 평면 픽셀 스택에 들어올 때 QE가 어떻게 변하는지를 설명합니다. 스넬 굴절, s/p 프레넬 거동, TMM 위상 변화, 길어진 흡수 경로, on-axis 응답 대비 정규화를 함께 다룹니다.',
     },
     intuition: {
-      en: 'Light coming straight down acts differently from light arriving at an angle, just as rain falling vertically differs from rain hitting a windshield. Tilted rays bend at each surface, travel a longer effective path through each absorbing layer, and behave differently for the two polarisations — so QE typically drops as the incidence angle grows.',
-      ko: '곧장 위에서 떨어지는 빛과 비스듬히 들어오는 빛은 동작이 다릅니다. 수직으로 내리는 비와 자동차 앞유리에 비스듬히 부딪히는 비가 다른 것과 같죠. 기울어진 광선은 각 경계에서 굴절되고, 흡수층 내부에서 더 긴 경로를 지나며, 편광에 따라 다르게 반응하기 때문에 입사각이 커질수록 보통 QE가 떨어집니다.',
+      en: 'A tilted ray does not simply travel through the same stack sideways. It refracts at each interface, sees different effective thicknesses, and splits into s and p polarization responses. At the edge of a camera field, that planar-film angular rolloff is only one part of the story; microlens shift and finite-cone averaging decide whether the focused spot still lands on the photodiode.',
+      ko: '기울어진 광선은 단순히 같은 스택을 옆으로 지나가는 것이 아닙니다. 각 계면에서 굴절되고, 다른 유효 두께를 통과하며, s/p 편광 응답으로 갈라집니다. 카메라 주변부에서는 이 planar-film angular rolloff가 전체 이야기의 일부일 뿐이고, microlens shift와 finite-cone averaging이 초점 spot이 여전히 포토다이오드에 닿는지를 결정합니다.',
     },
     formulas: [
       {
-        label: { en: 'Snell law', ko: '스넬 법칙' },
-        equation: 'n_0 \\sin(\\theta_0) = n_j \\sin(\\theta_j)',
+        label: { en: 'Layer refraction', ko: '레이어 굴절' },
+        equation: '\\tilde{n}_0\\sin\\theta_0=\\tilde{n}_j\\sin\\theta_j',
         variables: [
-          { symbol: 'n_0, n_j', description: { en: 'Refractive indices of incident and $j$-th media', ko: '입사 매질 및 $j$번째 매질의 굴절률' } },
-          { symbol: '\\theta_0, \\theta_j', description: { en: 'Angles of incidence and refraction', ko: '입사각 및 굴절각' } },
+          { symbol: '\\tilde{n}_0,\\tilde{n}_j', description: { en: 'Complex refractive indices of incident medium and layer $j$', ko: '입사 매질 및 레이어 $j$의 복소 굴절률' } },
+          { symbol: '\\theta_0', description: { en: 'External incidence angle or chief-ray angle in the planar-stack model', ko: '평면 스택 모델의 외부 입사각 또는 chief-ray angle' } },
+          { symbol: '\\theta_j', description: { en: 'Internal angle inside layer $j$', ko: '레이어 $j$ 내부 각도' } },
         ],
-        note: { en: 'Higher-index layers bend the ray toward normal and reduce the internal angle.', ko: '고굴절률 레이어는 광선을 법선 쪽으로 굴절시켜 내부 각도를 줄입니다.' },
+        note: { en: 'High-index silicon strongly reduces the internal ray angle, but upper polymer/filter layers can still see meaningful obliquity.', ko: '고굴절률 silicon은 내부 광선 각도를 크게 줄이지만, 상부 polymer/filter layer에서는 여전히 경사 입사 효과가 중요할 수 있습니다.' },
       },
       {
-        label: { en: 'Path length increase', ko: '광경로 증가' },
-        equation: 'd_{\\text{eff}} = \\frac{d}{\\cos(\\theta_j)}',
+        label: { en: 'Polarized Fresnel amplitudes', ko: '편광별 프레넬 진폭' },
+        equation: 'r_s=\\frac{n_i\\cos\\theta_i-n_t\\cos\\theta_t}{n_i\\cos\\theta_i+n_t\\cos\\theta_t}, \\quad r_p=\\frac{n_t\\cos\\theta_i-n_i\\cos\\theta_t}{n_t\\cos\\theta_i+n_i\\cos\\theta_t}',
         variables: [
-          { symbol: 'd_{\\text{eff}}', description: { en: 'Effective path length', ko: '유효 경로 길이' } },
-          { symbol: 'd', description: { en: 'Physical layer thickness', ko: '레이어의 물리적 두께' } },
+          { symbol: 'r_s,r_p', description: { en: 'Reflection amplitudes for s and p polarization', ko: 's/p 편광 반사 진폭' } },
+          { symbol: 'n_i,n_t', description: { en: 'Incident and transmitted side refractive indices', ko: '입사측 및 투과측 굴절률' } },
+          { symbol: '\\theta_i,\\theta_t', description: { en: 'Incident and transmitted angles at an interface', ko: '계면의 입사각 및 투과각' } },
         ],
-        note: { en: 'Oblique rays see a thicker effective absorber or filter.', ko: '경사 입사 광선은 흡수층이나 필터를 더 두껍게 통과합니다.' },
+        note: { en: 's and p responses can diverge strongly at high angles, especially near Brewster-like conditions.', ko: '큰 입사각에서는 특히 Brewster-like 조건 근처에서 s/p 응답이 크게 갈라질 수 있습니다.' },
       },
       {
-        label: { en: 'Relative angular QE', ko: '상대 각도 QE' },
-        equation: 'AR(\\theta, \\lambda) = \\frac{QE(\\theta, \\lambda)}{QE(0, \\lambda)}',
+        label: { en: 'TMM admittance at angle', ko: '각도 의존 TMM 어드미턴스' },
+        equation: '\\eta_j^{(s)}=\\tilde{n}_j\\cos\\theta_j, \\quad \\eta_j^{(p)}=\\frac{\\tilde{n}_j}{\\cos\\theta_j}',
         variables: [
-          { symbol: 'AR', description: { en: 'Angular Response', ko: '각도 응답' } },
-          { symbol: 'QE(\\theta)', description: { en: 'QE at angle $\\theta$', ko: '입사각 $\\theta$에서의 QE' } },
+          { symbol: '\\eta_j^{(s)},\\eta_j^{(p)}', description: { en: 'Optical admittance of layer $j$ for s and p polarization', ko: 's/p 편광에서 레이어 $j$의 광학 어드미턴스' } },
+          { symbol: '\\tilde{n}_j', description: { en: 'Complex refractive index', ko: '복소 굴절률' } },
+          { symbol: '\\cos\\theta_j', description: { en: 'Obliquity factor inside the layer', ko: '레이어 내부 경사 인자' } },
         ],
-        note: { en: 'This normalizes away the absolute calibration and highlights roll-off.', ko: '절대 보정을 제거하고 각도에 따른 롤오프를 보여줍니다.' },
+        note: { en: 'The same physical stack has different effective boundary conditions for the two polarization states.', ko: '같은 물리 스택도 두 편광 상태에서는 서로 다른 유효 경계조건을 갖습니다.' },
+      },
+      {
+        label: { en: 'Angular phase thickness', ko: '각도 의존 위상 두께' },
+        equation: '\\delta_j(\\theta_0)=\\frac{2\\pi}{\\lambda}\\tilde{n}_jd_j\\cos\\theta_j',
+        variables: [
+          { symbol: '\\delta_j(\\theta_0)', description: { en: 'Phase thickness induced by external incidence angle $\\theta_0$', ko: '외부 입사각 $\\theta_0$가 유도하는 위상 두께' } },
+          { symbol: 'd_j', description: { en: 'Layer physical thickness', ko: '레이어 물리 두께' } },
+          { symbol: '\\lambda', description: { en: 'Vacuum wavelength', ko: '진공 파장' } },
+        ],
+        note: { en: 'A phase shift with angle can move BARL minima and color-filter interference features across wavelength.', ko: '각도에 따른 위상 변화는 BARL minimum 및 color-filter 간섭 feature를 파장축에서 이동시킬 수 있습니다.' },
+      },
+      {
+        label: { en: 'Relative angular response', ko: '상대 각도 응답' },
+        equation: 'AR_{p/s}(\\theta,\\lambda)=\\frac{QE_{p/s}(\\theta,\\lambda)}{QE_{p/s}(0,\\lambda)}, \\quad AR_{\\text{unpol}}=\\frac{AR_s+AR_p}{2}',
+        variables: [
+          { symbol: 'AR_{p/s}', description: { en: 'Normalized angular response for each polarization', ko: '각 편광의 정규화된 각도 응답' } },
+          { symbol: 'QE_{p/s}', description: { en: 'Optical QE proxy for s or p polarization', ko: 's 또는 p 편광의 광학 QE proxy' } },
+          { symbol: 'AR_{\\text{unpol}}', description: { en: 'Unpolarized angular-response estimate', ko: '비편광 각도 응답 추정치' } },
+        ],
+        note: { en: 'Normalization removes absolute QE scale and highlights angular rolloff or angular gain.', ko: '정규화는 절대 QE scale을 제거하고 각도별 rolloff 또는 gain을 드러냅니다.' },
+      },
+      {
+        label: { en: 'Finite-cone average', ko: '유한 cone 평균' },
+        equation: '\\overline{AR}(\\lambda)=\\frac{\\int_{\\Omega}AR(\\theta,\\phi,\\lambda)W(\\theta,\\phi)d\\Omega}{\\int_{\\Omega}W(\\theta,\\phi)d\\Omega}',
+        variables: [
+          { symbol: '\\Omega', description: { en: 'Angular cone set by lens f-number and chief-ray direction', ko: '렌즈 f-number 및 chief-ray direction이 정하는 각도 cone' } },
+          { symbol: 'W(\\theta,\\phi)', description: { en: 'Angular weighting function of the optical system', ko: '광학계의 각도 가중 함수' } },
+          { symbol: '\\phi', description: { en: 'Azimuthal angle inside the cone', ko: 'Cone 내부 방위각' } },
+        ],
+        note: { en: 'A real camera pixel receives a cone of rays, not a single plane wave, so edge-pixel behavior needs cone averaging.', ko: '실제 카메라 픽셀은 단일 평면파가 아니라 ray cone을 받으므로 주변부 픽셀 거동에는 cone 평균이 필요합니다.' },
       },
     ],
     concepts: [
-      { en: 's- and p-polarization can diverge strongly near high angles.', ko: '큰 입사각에서는 s/p 편광 응답이 크게 달라질 수 있습니다.' },
-      { en: 'Real edge pixels also need microlens shift and finite-cone integration.', ko: '실제 주변부 픽셀은 마이크로렌즈 시프트와 유한 조리개 cone 적분도 필요합니다.' },
-      { en: 'The planar model is useful for stack sensitivity but incomplete for full-pixel CRA optimization.', ko: '평면 모델은 스택 민감도 분석에는 유용하지만 전체 픽셀 CRA 최적화에는 불충분합니다.' },
+      { en: 'Planar angular response is a stack property; full CRA response is a pixel property that also includes microlens focusing and lateral collection.', ko: 'Planar angular response는 스택 특성이고, 전체 CRA response는 microlens focusing 및 lateral collection까지 포함하는 픽셀 특성입니다.' },
+      { en: 's/p separation is not optional at high angle because coating minima and Fresnel loss can split by polarization.', ko: '큰 입사각에서는 coating minimum과 Fresnel loss가 편광별로 갈라질 수 있으므로 s/p 분리는 필수입니다.' },
+      { en: 'A good edge-pixel design usually needs stack tuning, microlens shift, and finite-cone validation together.', ko: '좋은 edge-pixel 설계에는 보통 stack tuning, microlens shift, finite-cone validation이 함께 필요합니다.' },
     ],
-    references: [refs.hwang2023, refs.goossens2018, refs.macleod],
+    sections: [
+      {
+        title: { en: 'How To Read The Plot', ko: '그래프 해석 방법' },
+        items: [
+          { en: 'If both s and p fall together, the loss is likely path-length or absorption driven; if they split, Fresnel/admittance effects are important.', ko: 's와 p가 함께 떨어지면 path-length 또는 absorption 영향일 가능성이 크고, 서로 갈라지면 Fresnel/admittance 효과가 중요합니다.' },
+          { en: 'A response above 1 at some angle can occur when interference minima shift in a favorable direction; it is not automatically an error.', ko: '특정 각도에서 응답이 1보다 커질 수 있는데, 간섭 minimum이 유리한 방향으로 이동한 결과일 수 있어 자동으로 오류는 아닙니다.' },
+          { en: 'Compare wavelength slices, not only broadband averages, because angular color shading is channel dependent.', ko: 'Angular color shading은 채널 의존적이므로 broadband average만 보지 말고 파장별 slice를 비교해야 합니다.' },
+        ],
+      },
+      {
+        title: { en: 'CRA Design Implications', ko: 'CRA 설계 의미' },
+        items: [
+          { en: 'At the sensor edge, the chief ray may enter at high angle even when the lens cone has many nearby angles.', ko: '센서 edge에서는 lens cone 안의 여러 각도와 함께 chief ray 자체가 큰 각도로 들어올 수 있습니다.' },
+          { en: 'Microlens shift compensates the lateral focus displacement, while stack tuning controls planar-film throughput at that angle.', ko: 'Microlens shift는 lateral focus displacement를 보정하고, stack tuning은 그 각도에서의 planar-film throughput을 제어합니다.' },
+          { en: 'Use this angular page before expensive ray/FDTD studies to identify angle bands and wavelengths at risk.', ko: '비싼 ray/FDTD 연구 전에 이 angular 페이지로 위험한 angle band와 wavelength를 식별합니다.' },
+        ],
+      },
+      {
+        title: { en: 'Known Missing Physics', ko: '아직 빠진 물리' },
+        items: [
+          { en: 'The model does not trace the focused spot to a finite photodiode or model microlens shift.', ko: '이 모델은 초점 spot이 유한한 포토다이오드에 닿는지 추적하거나 microlens shift를 모델링하지 않습니다.' },
+          { en: 'It ignores lateral diffraction, metal-grid shadowing, color-filter relief, and DTI-induced waveguide effects.', ko: 'Lateral diffraction, metal-grid shadowing, color-filter relief, DTI-induced waveguide effect를 무시합니다.' },
+          { en: 'For finite aperture filters or Fabry-Perot stacks, integrate the full angular cone rather than relying on a single angle.', ko: 'Finite aperture filter 또는 Fabry-Perot stack에서는 단일 각도 대신 전체 angular cone을 적분해야 합니다.' },
+        ],
+      },
+    ],
+    references: [
+      {
+        ...refs.hwang2023,
+        note: { en: 'Practical CIS context for aligning optical stacks under pixel-dependent chief-ray angle.', ko: 'Pixel-dependent chief-ray angle에서 optical stack alignment를 다루는 CIS 실무 맥락입니다.' },
+      },
+      {
+        ...refs.goossens2018,
+        note: { en: 'Finite-aperture angular averaging reference for spectral cameras with thin-film filters.', ko: 'Thin-film filter를 갖는 spectral camera의 finite-aperture angular averaging 레퍼런스입니다.' },
+      },
+      {
+        ...refs.macleod,
+        note: { en: 'Thin-film angular and polarization response theory.', ko: '박막의 각도 및 편광 응답 이론 레퍼런스입니다.' },
+      },
+    ],
   },
   'snr-calculator': {
     title: { en: 'Pixel Signal-to-Noise Model', ko: '픽셀 신호 대 잡음 모델' },

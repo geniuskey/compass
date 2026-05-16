@@ -67,4 +67,22 @@ test.describe('simulator pages', () => {
     await expect(page.getByText('Known Missing Physics')).toBeVisible()
     await expect(page.locator('.sim-theory .formula-variables mjx-container').first()).toBeVisible()
   })
+
+  const expandedTheoryPages = [
+    { path: '/simulator/barl-optimizer.html', formulas: 6, heading: 'Tuning Workflow' },
+    { path: '/simulator/energy-budget.html', formulas: 6, heading: 'Diagnosis Workflow' },
+    { path: '/simulator/angular-response.html', formulas: 6, heading: 'CRA Design Implications' },
+  ]
+
+  for (const { path, formulas, heading } of expandedTheoryPages) {
+    test(`renders expanded theory notes on ${path}`, async ({ page }) => {
+      await gotoDocs(page, path)
+
+      await expect(page.locator('.sim-theory .formula-row')).toHaveCount(formulas)
+      await expect(page.locator('.sim-theory-detail-grid')).toBeVisible()
+      await expect(page.getByText(heading)).toBeVisible()
+      await expect(page.getByText('Known Missing Physics')).toBeVisible()
+      await expect(page.locator('.sim-theory .formula-variables mjx-container').first()).toBeVisible()
+    })
+  }
 })
