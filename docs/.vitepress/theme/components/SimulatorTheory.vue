@@ -22,7 +22,7 @@
           <div v-if="formula.variables?.length" class="formula-variables">
             <ul>
               <li v-for="v in formula.variables" :key="v.symbol">
-                <span class="var-symbol">${{ v.symbol }}$</span>: {{ pick(v.description) }}
+                <span class="var-symbol">\({{ v.symbol }}\)</span>: {{ pick(v.description) }}
               </li>
             </ul>
           </div>
@@ -204,11 +204,11 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Layer phase', ko: '레이어 위상' },
         equation: '\\delta_j = \\frac{2\\pi n_j d_j \\cos\\theta_j}{\\lambda}',
         variables: [
-          { symbol: '\\delta_j', description: { en: 'Phase delay in layer j', ko: '레이어 j의 위상 지연' } },
-          { symbol: 'n_j', description: { en: 'Refractive index of layer j', ko: '레이어 j의 굴절률' } },
-          { symbol: 'd_j', description: { en: 'Thickness of layer j', ko: '레이어 j의 두께' } },
-          { symbol: '\\theta_j', description: { en: 'Angle of refraction in layer j', ko: '레이어 j 내의 굴절각' } },
-          { symbol: '\\lambda', description: { en: 'Wavelength of light', ko: '빛의 파장' } },
+          { symbol: '\\delta_j', description: { en: 'Phase delay in layer $j$', ko: '레이어 $j$의 위상 지연' } },
+          { symbol: 'n_j', description: { en: 'Refractive index of layer $j$', ko: '레이어 $j$의 굴절률' } },
+          { symbol: 'd_j', description: { en: 'Thickness of layer $j$', ko: '레이어 $j$의 두께' } },
+          { symbol: '\\theta_j', description: { en: 'Angle of refraction in layer $j$', ko: '레이어 $j$ 내의 굴절각' } },
+          { symbol: '\\lambda', description: { en: 'Wavelength of light', ko: '빛의 파장 $\\lambda$' } },
         ],
         note: { en: 'Each layer contributes a wavelength- and angle-dependent phase delay.', ko: '각 레이어는 파장과 입사각에 의존하는 위상 지연을 만듭니다.' },
       },
@@ -216,9 +216,9 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Energy balance', ko: '에너지 보존' },
         equation: 'R(\\lambda) + T(\\lambda) + \\sum_j A_j(\\lambda) = 1',
         variables: [
-          { symbol: 'R', description: { en: 'Reflectance (fraction of power reflected)', ko: '반사율' } },
-          { symbol: 'T', description: { en: 'Transmittance (fraction of power transmitted)', ko: '투과율' } },
-          { symbol: 'A_j', description: { en: 'Absorbance in layer j', ko: '레이어 j의 흡수율' } },
+          { symbol: 'R', description: { en: 'Reflectance (fraction of power reflected)', ko: '반사율 $R$' } },
+          { symbol: 'T', description: { en: 'Transmittance (fraction of power transmitted)', ko: '투과율 $T$' } },
+          { symbol: 'A_j', description: { en: 'Absorbance in layer $j$', ko: '레이어 $j$의 흡수율' } },
         ],
         note: { en: 'A physically consistent TMM result should conserve incident optical power.', ko: '물리적으로 일관된 TMM 결과는 입사 광파워를 보존해야 합니다.' },
       },
@@ -226,8 +226,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Optical QE proxy', ko: '광학 QE 근사' },
         equation: 'QE_{\\text{opt}}(\\lambda) \\approx A_{\\text{Si}}(\\lambda)',
         variables: [
-          { symbol: 'QE_{\\text{opt}}', description: { en: 'Optimistic estimate of quantum efficiency', ko: '낙관적으로 추정된 양자 효율' } },
-          { symbol: 'A_{\\text{Si}}', description: { en: 'Absorption fraction in the photodiode silicon', ko: '실리콘 광검출층에서의 흡수율' } },
+          { symbol: 'QE_{\\text{opt}}', description: { en: 'Optimistic estimate of quantum efficiency', ko: '낙관적으로 추정된 양자 효율 $QE_{\\text{opt}}$' } },
+          { symbol: 'A_{\\text{Si}}', description: { en: 'Absorption fraction in the photodiode silicon', ko: '실리콘 광검출층에서의 흡수율 $A_{\\text{Si}}$' } },
         ],
         note: { en: 'Carrier collection loss is not modeled, so silicon absorption is an optimistic QE estimate.', ko: '전하 수집 손실은 포함하지 않으므로 실리콘 흡수율은 낙관적인 QE 추정치입니다.' },
       },
@@ -254,9 +254,9 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Normal-incidence Fresnel reflection', ko: '수직 입사 프레넬 반사' },
         equation: 'R = \\left| \\frac{n_0 - n_s}{n_0 + n_s} \\right|^2',
         variables: [
-          { symbol: 'R', description: { en: 'Reflectance coefficient', ko: '반사 계수' } },
-          { symbol: 'n_0', description: { en: 'Refractive index of the incident medium', ko: '입사 매질의 굴절률' } },
-          { symbol: 'n_s', description: { en: 'Refractive index of the substrate', ko: '기판의 굴절률' } },
+          { symbol: 'R', description: { en: 'Reflectance coefficient', ko: '반사 계수 $R$' } },
+          { symbol: 'n_0', description: { en: 'Refractive index of the incident medium', ko: '입사 매질의 굴절률 $n_0$' } },
+          { symbol: 'n_s', description: { en: 'Refractive index of the substrate', ko: '기판의 굴절률 $n_s$' } },
         ],
         note: { en: 'A bare polymer/silicon or oxide/silicon interface has high reflection because the index contrast is large.', ko: '폴리머/실리콘 또는 산화막/실리콘 계면은 굴절률 차이가 커서 반사가 큽니다.' },
       },
@@ -264,9 +264,9 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Quarter-wave seed thickness', ko: '1/4파장 초기 두께' },
         equation: 'd \\approx \\frac{\\lambda_0}{4n_{\\text{layer}}}',
         variables: [
-          { symbol: 'd', description: { en: 'Optimal thickness for destructive interference', ko: '상쇄 간섭을 위한 최적 두께' } },
-          { symbol: '\\lambda_0', description: { en: 'Target wavelength', ko: '목표 파장' } },
-          { symbol: 'n_{\\text{layer}}', description: { en: 'Refractive index of the layer', ko: '박막 레이어의 굴절률' } },
+          { symbol: 'd', description: { en: 'Optimal thickness for destructive interference', ko: '상쇄 간섭을 위한 최적 두께 $d$' } },
+          { symbol: '\\lambda_0', description: { en: 'Target wavelength', ko: '목표 파장 $\\lambda_0$' } },
+          { symbol: 'n_{\\text{layer}}', description: { en: 'Refractive index of the layer', ko: '박막 레이어의 굴절률 $n_{\\text{layer}}$' } },
         ],
         note: { en: 'A quarter-wave layer gives a useful starting point, but broadband stacks require numerical tuning.', ko: '1/4파장 두께는 좋은 출발점이지만 광대역 스택은 수치 최적화가 필요합니다.' },
       },
@@ -274,7 +274,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Merit function', ko: '목적 함수' },
         equation: '\\mathcal{L} = \\langle R(\\lambda) \\rangle_{\\lambda \\in \\text{band}}',
         variables: [
-          { symbol: '\\mathcal{L}', description: { en: 'Loss function', ko: '손실 함수' } },
+          { symbol: '\\mathcal{L}', description: { en: 'Loss function to be minimized', ko: '최소화해야 할 손실 함수 $\\mathcal{L}$' } },
           { symbol: '\\langle R(\\lambda) \\rangle', description: { en: 'Mean reflectance across the band', ko: '대역 내 평균 반사율' } },
         ],
         note: { en: 'The optimizer minimizes average reflectance over the selected spectral band.', ko: '최적화기는 선택한 파장 대역의 평균 반사율을 줄입니다.' },
@@ -302,8 +302,9 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Conservation check', ko: '보존성 검증' },
         equation: '1 = R + T + A_{\\text{CF}} + A_{\\text{BARL}} + A_{\\text{Si}} + \\dots',
         variables: [
-          { symbol: 'R, T', description: { en: 'Total reflectance and transmittance', ko: '전체 반사율 및 투과율' } },
-          { symbol: 'A_j', description: { en: 'Absorption in specific layer group j', ko: '특정 레이어 그룹 j에서의 흡수율' } },
+          { symbol: 'R', description: { en: 'Total reflectance', ko: '전체 반사율 $R$' } },
+          { symbol: 'T', description: { en: 'Total transmittance', ko: '전체 투과율 $T$' } },
+          { symbol: 'A_{\\text{Si}}', description: { en: 'Useful absorption in silicon photodiode', ko: '실리콘 포토다이오드에서의 유효 흡수율 $A_{\\text{Si}}$' } },
         ],
         note: { en: 'The residual should stay near zero; otherwise the optical model or sampling is inconsistent.', ko: '잔차는 0에 가까워야 하며, 그렇지 않다면 광학 모델이나 샘플링을 의심해야 합니다.' },
       },
@@ -311,8 +312,9 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Layer absorption', ko: '레이어 흡수' },
         equation: 'A_j = P_{\\text{in},j} - P_{\\text{out},j}',
         variables: [
-          { symbol: 'P_{\\text{in},j}', description: { en: 'Optical power flux entering layer j', ko: '레이어 j로 입사된 광파워 플럭스' } },
-          { symbol: 'P_{\\text{out},j}', description: { en: 'Optical power flux exiting layer j', ko: '레이어 j를 빠져나간 광파워 플럭스' } },
+          { symbol: 'A_j', description: { en: 'Absorption in specific layer $j$', ko: '특정 레이어 $j$에서의 흡수율' } },
+          { symbol: 'P_{\\text{in},j}', description: { en: 'Power flux entering layer $j$', ko: '레이어 $j$로 입사된 광파워 플럭스' } },
+          { symbol: 'P_{\\text{out},j}', description: { en: 'Power flux exiting layer $j$', ko: '레이어 $j$를 빠져나간 광파워 플럭스' } },
         ],
         note: { en: 'Absorption is assigned by tracking the power flux entering and leaving a layer.', ko: '흡수는 해당 레이어로 들어간 파워와 나간 파워의 차이로 배분합니다.' },
       },
@@ -320,7 +322,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Useful absorption', ko: '유효 흡수' },
         equation: 'QE_{\\text{opt}} \\leq A_{\\text{Si}}',
         variables: [
-          { symbol: 'QE_{\\text{opt}}', description: { en: 'Optical quantum efficiency estimate', ko: '광학적 양자 효율 추정치' } },
+          { symbol: 'QE_{\\text{opt}}', description: { en: 'External quantum efficiency estimate', ko: '외부 양자 효율 추정치 $QE_{\\text{opt}}$' } },
         ],
         note: { en: 'Only absorption inside the photodiode silicon can become collected charge.', ko: '포토다이오드 실리콘 내부 흡수만 수집 전하로 변환될 수 있습니다.' },
       },
@@ -347,7 +349,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Snell law', ko: '스넬 법칙' },
         equation: 'n_0 \\sin(\\theta_0) = n_j \\sin(\\theta_j)',
         variables: [
-          { symbol: 'n_0, n_j', description: { en: 'Refractive indices of incident and j-th media', ko: '입사 매질 및 j번째 매질의 굴절률' } },
+          { symbol: 'n_0, n_j', description: { en: 'Refractive indices of incident and $j$-th media', ko: '입사 매질 및 $j$번째 매질의 굴절률' } },
           { symbol: '\\theta_0, \\theta_j', description: { en: 'Angles of incidence and refraction', ko: '입사각 및 굴절각' } },
         ],
         note: { en: 'Higher-index layers bend the ray toward normal and reduce the internal angle.', ko: '고굴절률 레이어는 광선을 법선 쪽으로 굴절시켜 내부 각도를 줄입니다.' },
@@ -366,7 +368,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         equation: 'AR(\\theta, \\lambda) = \\frac{QE(\\theta, \\lambda)}{QE(0, \\lambda)}',
         variables: [
           { symbol: 'AR', description: { en: 'Angular Response', ko: '각도 응답' } },
-          { symbol: 'QE(\\theta)', description: { en: 'QE at angle theta', ko: '입사각 theta에서의 QE' } },
+          { symbol: 'QE(\\theta)', description: { en: 'QE at angle $\\theta$', ko: '입사각 $\\theta$에서의 QE' } },
         ],
         note: { en: 'This normalizes away the absolute calibration and highlights roll-off.', ko: '절대 보정을 제거하고 각도에 따른 롤오프를 보여줍니다.' },
       },
@@ -442,7 +444,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Channel response', ko: '채널 응답' },
         equation: 'S_c(\\lambda) = T_c(\\lambda) \\cdot QE_{\\text{stack}}(\\lambda)',
         variables: [
-          { symbol: 'S_c', description: { en: 'Spectral response of channel c', ko: '채널 c의 분광 응답' } },
+          { symbol: 'S_c', description: { en: 'Spectral response of channel $c$', ko: '채널 $c$의 분광 응답' } },
           { symbol: 'T_c', description: { en: 'Filter transmittance', ko: '필터 투과율' } },
         ],
         note: { en: 'The sensor channel is the filter transmission multiplied by the optical stack QE.', ko: '센서 채널 응답은 필터 투과율과 광학 스택 QE의 곱입니다.' },
@@ -487,7 +489,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Stack response', ko: '스택 응답' },
         equation: 'QE_c(\\lambda) \\approx T_{\\text{CF},c}(\\lambda) \\cdot A_{\\text{Si}}(\\lambda; \\text{stack})',
         variables: [
-          { symbol: 'QE_c', description: { en: 'Quantum efficiency for color c', ko: '색상 c의 양자 효율' } },
+          { symbol: 'QE_c', description: { en: 'Quantum efficiency for color $c$', ko: '색상 $c$의 양자 효율' } },
           { symbol: 'T_{\\text{CF},c}', description: { en: 'Color filter transmittance', ko: '컬러 필터 투과율' } },
           { symbol: 'A_{\\text{Si}}', description: { en: 'Absorbance in the silicon photodiode', ko: '실리콘 포토다이오드의 흡수율' } },
         ],
@@ -534,7 +536,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Absorption coefficient', ko: '흡수 계수' },
         equation: '\\alpha(\\lambda) = \\frac{4\\pi k(\\lambda)}{\\lambda}',
         variables: [
-          { symbol: '\\alpha', description: { en: 'Absorption coefficient (1/μm)', ko: '흡수 계수' } },
+          { symbol: '\\alpha', description: { en: 'Absorption coefficient ($1/\\mu\\text{m}$)', ko: '흡수 계수' } },
           { symbol: 'k', description: { en: 'Extinction coefficient', ko: '소광 계수' } },
           { symbol: '\\lambda', description: { en: 'Incident wavelength', ko: '입사 파장' } },
         ],
@@ -544,8 +546,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Intensity decay', ko: '강도 감쇠' },
         equation: 'I(z, \\lambda) = I_0 e^{-\\alpha(\\lambda)z}',
         variables: [
-          { symbol: 'I(z)', description: { en: 'Intensity at depth z', ko: '깊이 z에서의 빛의 강도' } },
-          { symbol: 'I_0', description: { en: 'Intensity at the surface (z=0)', ko: '표면에서의 강도' } },
+          { symbol: 'I(z)', description: { en: 'Intensity at depth $z$', ko: '깊이 $z$에서의 빛의 강도' } },
+          { symbol: 'I_0', description: { en: 'Intensity at the surface ($z=0$)', ko: '표면에서의 강도' } },
         ],
         note: { en: 'This is the Beer-Lambert law for a uniform absorbing medium.', ko: '균일 흡수 매질에 대한 Beer-Lambert 법칙입니다.' },
       },
@@ -553,7 +555,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Absorbed fraction', ko: '흡수율' },
         equation: 'A(d, \\lambda) = 1 - e^{-\\alpha(\\lambda)d}',
         variables: [
-          { symbol: 'A(d)', description: { en: 'Absorbed fraction within thickness d', ko: '두께 d에서의 흡수율' } },
+          { symbol: 'A(d)', description: { en: 'Absorbed fraction within thickness $d$', ko: '두께 $d$에서의 흡수율' } },
           { symbol: 'd', description: { en: 'Silicon physical thickness', ko: '실리콘 물리적 두께' } },
         ],
         note: { en: 'This ignores front-surface reflection and interference.', ko: '이 식은 표면 반사와 간섭을 무시한 근사입니다.' },
@@ -574,14 +576,14 @@ const theoryEntries: Record<string, TheoryEntry> = {
     },
     intuition: {
       en: 'A microlens sits on top of each pixel like a tiny magnifying glass, focusing incoming light onto the photodiode. This tool draws individual light rays through that lens — bending each one at the surface using basic Snell refraction — and counts how many hit the active area. It is the same idea as ray-tracing a camera lens, just at the micron scale.',
-      ko: '마이크로렌즈는 각 픽셀 위에 놓인 작은 돋보기처럼, 들어오는 빛을 포토다이오드로 집광합니다. 이 도구는 그 렌즈를 통과하는 광선 하나하나를 그려, 표면마다 스넬의 법칙으로 굴절시키고 활성 영역에 몇 개가 닿는지를 셉니다. 마이크론 단위로 축소된 카메라 렌즈 광선 추적이라 생각하면 됩니다.',
+      ko: '마이크로렌즈은 각 픽셀 위에 놓인 작은 돋보기처럼, 들어오는 빛을 포토다이오드로 집광합니다. 이 도구는 그 렌즈를 통과하는 광선 하나하나를 그려, 표면마다 스넬의 법칙으로 굴절시키고 활성 영역에 몇 개가 닿는지를 셉니다. 마이크론 단위로 축소된 카메라 렌즈 광선 추적이라 생각하면 됩니다.',
     },
     formulas: [
       {
         label: { en: 'Superellipse lens profile', ko: '초타원 렌즈 프로파일' },
         equation: 'z(r) = h \\left[ 1 - \\left( \\frac{r}{R} \\right)^n \\right]^{1/n}',
         variables: [
-          { symbol: 'z(r)', description: { en: 'Height at radius r', ko: '반경 r에서의 높이' } },
+          { symbol: 'z(r)', description: { en: 'Height at radius $r$', ko: '반경 $r$에서의 높이' } },
           { symbol: 'h', description: { en: 'Lens vertex height (sag)', ko: '렌즈 꼭짓점 높이 (sag)' } },
           { symbol: 'R', description: { en: 'Lens aperture radius', ko: '렌즈 개구 반경' } },
           { symbol: 'n', description: { en: 'Superellipse exponent', ko: '초타원 지수' } },
@@ -629,7 +631,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Volume conservation', ko: '체적 보존' },
         equation: 'V_{\\text{resist}} \\approx V_{\\text{lens, final}}',
         variables: [
-          { symbol: 'V', description: { en: 'Material volume', ko: '재료 체적' } },
+          { symbol: 'V', description: { en: 'Material volume', ko: '재료 체적 $V$' } },
         ],
         note: { en: 'Reflow reshapes the resist island while approximately conserving material volume.', ko: '리플로우는 resist island의 형상을 바꾸지만 재료 체적은 대략 보존합니다.' },
       },
@@ -638,8 +640,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         equation: 'R_{\\text{vtx}} \\approx \\frac{a^2 + h^2}{2h}',
         variables: [
           { symbol: 'R_{\\text{vtx}}', description: { en: 'Vertex radius of curvature', ko: '꼭짓점 곡률 반경' } },
-          { symbol: 'a', description: { en: 'Lens aperture radius', ko: '렌즈 개구 반경' } },
-          { symbol: 'h', description: { en: 'Lens sag (height)', ko: '렌즈 sag (높이)' } },
+          { symbol: 'a', description: { en: 'Lens aperture radius', ko: '렌즈 개구 반경 $a$' } },
+          { symbol: 'h', description: { en: 'Lens sag (height)', ko: '렌즈 sag (높이) $h$' } },
         ],
         note: { en: 'For a spherical-cap approximation, aperture radius a and sag h set vertex curvature.', ko: '구면 cap 근사에서 개구 반경 a와 sag h가 꼭짓점 곡률을 결정합니다.' },
       },
@@ -647,8 +649,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Gap closure trend', ko: 'gap closure 경향' },
         equation: 'g_{\\text{final}} = \\max(0, g_{\\text{lay}} - \\Delta_{\\text{reflow}} - \\Delta_{\\text{etch}})',
         variables: [
-          { symbol: 'g', description: { en: 'Gap between lenses', ko: '렌즈 간 간격' } },
-          { symbol: '\\Delta', description: { en: 'Process-induced gap reduction', ko: '공정에 의한 간격 감소량' } },
+          { symbol: 'g', description: { en: 'Gap between lenses', ko: '렌즈 간 간격 $g$' } },
+          { symbol: '\\Delta', description: { en: 'Process-induced gap reduction', ko: '공정에 의한 간격 감소량 $\\Delta$' } },
         ],
         note: { en: 'The simulator keeps the directional trend explicit so coefficients can later be calibrated.', ko: '나중에 계수를 보정할 수 있도록 방향성 관계를 명시적으로 둡니다.' },
       },
@@ -675,8 +677,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Anisotropic normalized radius', ko: '비등방 정규화 반경' },
         equation: '\\rho = \\left( \\left| \\frac{x}{R_x} \\right|^n + \\left| \\frac{y}{R_y} \\right|^n \\right)^{1/n}',
         variables: [
-          { symbol: '\\rho', description: { en: 'Normalized radial coordinate', ko: '정규화된 반경 좌표' } },
-          { symbol: 'R_x, R_y', description: { en: 'Lateral radii of the lens', ko: '가로/세로 반경' } },
+          { symbol: '\\rho', description: { en: 'Normalized radial coordinate', ko: '정규화된 반경 좌표 $\\rho$' } },
+          { symbol: 'R_x, R_y', description: { en: 'Lateral radii of the lens', ko: '가로/세로 반경 $R_x, R_y$' } },
         ],
         note: { en: 'Different Rx and Ry produce astigmatic or rectangular-pixel lens footprints.', ko: 'Rx와 Ry가 다르면 비점수차 또는 직사각형 픽셀용 렌즈 footprint가 됩니다.' },
       },
@@ -684,8 +686,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Surface sag', ko: '표면 sag' },
         equation: 'z(x, y) = h \\cdot \\max(0, 1 - \\rho^\\alpha)',
         variables: [
-          { symbol: 'z', description: { en: 'Surface height', ko: '표면 높이' } },
-          { symbol: '\\alpha', description: { en: 'Curvature power factor', ko: '곡률 지수' } },
+          { symbol: 'z', description: { en: 'Surface height', ko: '표면 높이 $z$' } },
+          { symbol: '\\alpha', description: { en: 'Curvature power factor', ko: '곡률 지수 $\\alpha$' } },
         ],
         note: { en: 'Height h and curvature alpha set focusing strength and edge steepness.', ko: '높이 h와 곡률 alpha는 집광 세기와 가장자리 기울기를 결정합니다.' },
       },
@@ -693,8 +695,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Array pitch', ko: '어레이 피치' },
         equation: '(x, y)_{m,n} = (m P_x, n P_y)',
         variables: [
-          { symbol: 'P_x, P_y', description: { en: 'Unit cell spacing in X and Y', ko: 'X 및 Y 방향의 격자 간격' } },
-          { symbol: 'm, n', description: { en: 'Integer array indices', ko: '격자 인덱스' } },
+          { symbol: 'P_x, P_y', description: { en: 'Unit cell spacing in X and Y', ko: 'X 및 Y 방향의 격자 간격 $P_x, P_y$' } },
+          { symbol: 'm, n', description: { en: 'Integer array indices', ko: '격자 인덱스 $m, n$' } },
         ],
         note: { en: 'Array spacing controls gap, overlap risk, and fill factor.', ko: '어레이 간격은 gap, overlap 위험, fill factor를 결정합니다.' },
       },
@@ -721,8 +723,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Critical angle', ko: '임계각' },
         equation: '\\theta_c = \\arcsin\\left( \\frac{n_{\\text{trench}}}{n_{\\text{Si}}} \\right)',
         variables: [
-          { symbol: '\\theta_c', description: { en: 'Angle for Total Internal Reflection (TIR)', ko: '전반사 임계각' } },
-          { symbol: 'n_{\\text{trench}}', description: { en: 'Refractive index of trench filling', ko: '트렌치 충전재의 굴절률' } },
+          { symbol: '\\theta_c', description: { en: 'Angle for Total Internal Reflection (TIR)', ko: '전반사 임계각 $\\theta_c$' } },
+          { symbol: 'n_{\\text{trench}}', description: { en: 'Refractive index of trench filling', ko: '트렌치 충전재의 굴절률 $n_{\\text{trench}}$' } },
         ],
         note: { en: 'A low-index trench can confine silicon-guided rays by total internal reflection.', ko: '저굴절률 트렌치는 전반사를 통해 실리콘 내 광선을 가둘 수 있습니다.' },
       },
@@ -730,7 +732,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Optical crosstalk proxy', ko: '광학 크로스토크 근사' },
         equation: 'XT = \\frac{P_{\\text{neighbor}}}{P_{\\text{center}} + P_{\\text{neighbor}}}',
         variables: [
-          { symbol: 'P', description: { en: 'Optical power in center or neighbor pixel', ko: '중심 또는 이웃 픽셀의 광파워' } },
+          { symbol: 'P', description: { en: 'Optical power in pixel', ko: '픽셀의 광파워 $P$' } },
         ],
         note: { en: 'The simulator reports a structural optical trend, not carrier diffusion crosstalk.', ko: '시뮬레이터는 구조적 광학 경향을 보여주며 carrier diffusion 크로스토크는 포함하지 않습니다.' },
       },
@@ -738,7 +740,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Absorption path benefit', ko: '흡수 경로 이득' },
         equation: 'A = 1 - e^{-\\alpha L_{\\text{eff}}}',
         variables: [
-          { symbol: 'L_{\\text{eff}}', description: { en: 'Effective absorption path length', ko: '유효 흡수 경로 길이' } },
+          { symbol: 'L_{\\text{eff}}', description: { en: 'Effective absorption path length', ko: '유효 흡수 경로 길이 $L_{\\text{eff}}$' } },
         ],
         note: { en: 'DTI and backside structures can increase effective path length in silicon.', ko: 'DTI와 후면 구조는 실리콘 내 유효 경로 길이를 늘릴 수 있습니다.' },
       },
@@ -765,9 +767,9 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Round-trip phase', ko: '왕복 위상' },
         equation: '\\delta = \\frac{4\\pi n d \\cos(\\theta)}{\\lambda}',
         variables: [
-          { symbol: '\\delta', description: { en: 'Phase change for one round trip', ko: '1회 왕복 시의 위상 변화' } },
-          { symbol: 'n', description: { en: 'Refractive index of the film', ko: '박막의 굴절률' } },
-          { symbol: 'd', description: { en: 'Physical thickness', ko: '물리적 두께' } },
+          { symbol: '\\delta', description: { en: 'Phase change for one round trip', ko: '1회 왕복 시의 위상 변화 $\\delta$' } },
+          { symbol: 'n', description: { en: 'Refractive index of the film', ko: '박막의 굴절률 $n$' } },
+          { symbol: 'd', description: { en: 'Physical thickness', ko: '물리적 두께 $d$' } },
         ],
         note: { en: 'A small thickness or angle change can move the film between reflection peaks and valleys.', ko: '두께나 각도의 작은 변화만으로도 반사 피크와 밸리 사이를 이동할 수 있습니다.' },
       },
@@ -775,7 +777,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Constructive condition', ko: '보강 조건' },
         equation: '2nd \\cos(\\theta) = m\\lambda',
         variables: [
-          { symbol: 'm', description: { en: 'Integer order of interference', ko: '간섭 차수 (정수)' } },
+          { symbol: 'm', description: { en: 'Integer order of interference', ko: '간섭 차수 $m$ (정수)' } },
         ],
         note: { en: 'Integer round-trip phase gives resonant transmission or reflection depending on the stack.', ko: '왕복 위상이 정수배가 되면 스택에 따라 공진 투과 또는 반사가 나타납니다.' },
       },
@@ -783,7 +785,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Quarter-wave AR', ko: '1/4파장 AR' },
         equation: 'd = \\frac{\\lambda_0}{4n}',
         variables: [
-          { symbol: '\\lambda_0', description: { en: 'Reference design wavelength', ko: '기준 설계 파장' } },
+          { symbol: '\\lambda_0', description: { en: 'Reference design wavelength', ko: '기준 설계 파장 $\\lambda_0$' } },
         ],
         note: { en: 'The common AR seed thickness creates destructive interference for front-surface reflection.', ko: '일반적인 AR 초기 두께는 전면 반사를 상쇄 간섭시키도록 잡습니다.' },
       },
@@ -810,9 +812,9 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Airy intensity', ko: '에어리 강도' },
         equation: 'I(r) = I_0 \\left[ \\frac{2J_1(\\frac{\\pi r}{\\lambda N})}{\\frac{\\pi r}{\\lambda N}} \\right]^2',
         variables: [
-          { symbol: 'r', description: { en: 'Radial distance from image center', ko: '이미지 중심으로부터의 반경' } },
-          { symbol: 'J_1', description: { en: 'First-order Bessel function of the first kind', ko: '제1종 1차 베셀 함수' } },
-          { symbol: 'N', description: { en: 'Lens f-number', ko: '렌즈 조리개 수 (f-number)' } },
+          { symbol: 'r', description: { en: 'Radial distance from center', ko: '중심으로부터의 반경 $r$' } },
+          { symbol: 'J_1', description: { en: 'First-order Bessel function', ko: '1차 베셀 함수 $J_1$' } },
+          { symbol: 'N', description: { en: 'Lens f-number', ko: '렌즈 조립 f-number $N$' } },
         ],
         note: { en: 'J1 is the first-order Bessel function and N is the f-number.', ko: 'J1은 1차 베셀 함수이고 N은 f-number입니다.' },
       },
@@ -820,7 +822,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'First dark ring', ko: '첫 암환 반경' },
         equation: 'r_1 = 1.22 \\lambda N',
         variables: [
-          { symbol: 'r_1', description: { en: 'Radius of the first zero of the Airy pattern', ko: '에어리 패턴의 첫 번째 0점 반경' } },
+          { symbol: 'r_1', description: { en: 'Radius of first Airy zero', ko: '첫 번째 에어리 0점 반경 $r_1$' } },
         ],
         note: { en: 'This gives the common diffraction-limited spot radius estimate.', ko: '회절 한계 스폿 반경의 흔한 추정식입니다.' },
       },
@@ -828,7 +830,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Encircled energy', ko: '포위 에너지' },
         equation: 'EE(r) = \\int_0^r 2\\pi \\rho I(\\rho) \\,d\\rho',
         variables: [
-          { symbol: 'EE(r)', description: { en: 'Fraction of total energy inside radius r', ko: '반경 r 내부에 포함된 에너지 비율' } },
+          { symbol: 'EE(r)', description: { en: 'Energy inside radius $r$', ko: '반경 $r$ 내의 에너지 비율 $EE(r)$' } },
         ],
         note: { en: 'Pixel collection depends on how much PSF energy falls within the active aperture.', ko: '픽셀 수집은 PSF 에너지 중 얼마가 활성 개구 안에 들어오는지에 좌우됩니다.' },
       },
@@ -855,9 +857,9 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Pixel aperture MTF', ko: '픽셀 개구 MTF' },
         equation: 'MTF_{\\text{px}}(f) = \\left| \\text{sinc}(\\pi f \\cdot p \\cdot FF) \\right|',
         variables: [
-          { symbol: 'f', description: { en: 'Spatial frequency (cycles/μm)', ko: '공간 주파수' } },
-          { symbol: 'p', description: { en: 'Pixel pitch', ko: '픽셀 피치' } },
-          { symbol: 'FF', description: { en: 'Aperture fill factor', ko: '개구 fill factor' } },
+          { symbol: 'f', description: { en: 'Spatial frequency', ko: '공간 주파수 $f$' } },
+          { symbol: 'p', description: { en: 'Pixel pitch', ko: '픽셀 피치 $p$' } },
+          { symbol: 'FF', description: { en: 'Fill factor', ko: '필 팩터 $FF$' } },
         ],
         note: { en: 'A rectangular aperture low-pass filters the sampled image.', ko: '직사각형 개구는 샘플링된 이미지를 저역통과 필터링합니다.' },
       },
@@ -865,7 +867,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Diffraction cutoff', ko: '회절 cutoff' },
         equation: 'f_c = \\frac{1}{\\lambda N}',
         variables: [
-          { symbol: 'f_c', description: { en: 'Absolute spatial frequency cutoff', ko: '절대 공간 주파수 한계' } },
+          { symbol: 'f_c', description: { en: 'Cutoff frequency', ko: '차단 주파수 $f_c$' } },
         ],
         note: { en: 'No ideal incoherent diffraction-limited contrast remains beyond the cutoff.', ko: 'cutoff 이후에는 이상적인 비간섭 회절 제한 대비가 남지 않습니다.' },
       },
@@ -873,7 +875,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Nyquist frequency', ko: '나이퀴스트 주파수' },
         equation: 'f_N = \\frac{1}{2p}',
         variables: [
-          { symbol: 'f_N', description: { en: 'Maximum frequency without aliasing', ko: 'aliasing 없이 가능한 최대 주파수' } },
+          { symbol: 'f_N', description: { en: 'Nyquist sampling limit', ko: '나이퀴스트 샘플링 한계 $f_N$' } },
         ],
         note: { en: 'Sampling above Nyquist aliases into lower spatial frequencies.', ko: '나이퀴스트를 넘는 샘플링 성분은 낮은 주파수로 aliasing됩니다.' },
       },
@@ -900,8 +902,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Area scaling', ko: '면적 스케일링' },
         equation: 'A_{\\text{px}} = p^2',
         variables: [
-          { symbol: 'A_{\\text{px}}', description: { en: 'Pixel area', ko: '픽셀 면적' } },
-          { symbol: 'p', description: { en: 'Pixel pitch', ko: '픽셀 피치' } },
+          { symbol: 'A_{\\text{px}}', description: { en: 'Pixel area', ko: '픽셀 면적 $A_{\\text{px}}$' } },
         ],
         note: { en: 'Photon capture and approximate capacitance both scale with pixel area.', ko: '광자 수집과 대략적인 커패시턴스는 모두 픽셀 면적에 비례합니다.' },
       },
@@ -909,7 +910,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Shot-noise limit', ko: '샷 노이즈 한계' },
         equation: 'SNR_{\\text{shot}} = \\sqrt{N_e}',
         variables: [
-          { symbol: 'N_e', description: { en: 'Number of collected electrons', ko: '수집된 전자 수' } },
+          { symbol: 'N_e', description: { en: 'Number of electrons', ko: '전자 수 $N_e$' } },
         ],
         note: { en: 'If the collected electron count falls by 4x, shot-limited SNR falls by 2x.', ko: '수집 전자 수가 4배 줄면 샷 노이즈 한계 SNR은 2배 줄어듭니다.' },
       },
@@ -917,7 +918,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Diffraction ratio', ko: '회절 비율' },
         equation: '\\frac{D_{\\text{Airy}}}{p} \\approx \\frac{2.44 \\lambda N}{p}',
         variables: [
-          { symbol: 'D_{\\text{Airy}}', description: { en: 'Diameter of Airy disk', ko: '에어리 원반의 직경' } },
+          { symbol: 'D_{\\text{Airy}}', description: { en: 'Airy disk diameter', ko: '에어리 원반 직경 $D_{\\text{Airy}}$' } },
         ],
         note: { en: 'This ratio rises as pixels shrink, increasing optical sharing between pixels.', ko: '픽셀이 작아질수록 이 비율이 커져 픽셀 간 광학 공유가 증가합니다.' },
       },
@@ -944,9 +945,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Least-squares CCM', ko: '최소제곱 CCM' },
         equation: 'M = \\text{argmin}_M \\left\\| \\mathbf{R}_{\\text{cam}} M - \\mathbf{X}_{\\text{ref}} \\right\\|_2^2',
         variables: [
-          { symbol: 'M', description: { en: '3x3 Color Correction Matrix', ko: '3x3 색 보정 행렬' } },
-          { symbol: '\\mathbf{R}_{\\text{cam}}', description: { en: 'Matrix of raw camera RGB responses', ko: '카메라 raw RGB 응답 행렬' } },
-          { symbol: '\\mathbf{X}_{\\text{ref}}', description: { en: 'Matrix of target reference color values', ko: '목표 기준 색상값 행렬' } },
+          { symbol: 'M', description: { en: '3x3 CCM matrix', ko: '3x3 CCM 행렬 $M$' } },
+          { symbol: '\\mathbf{R}_{\\text{cam}}', description: { en: 'Camera response matrix', ko: '카메라 응답 행렬 $\\mathbf{R}_{\\text{cam}}$' } },
         ],
         note: { en: 'The CCM is fitted to map camera sensor responses to reference XYZ values.', ko: 'CCM은 카메라 센서 응답을 기준 XYZ 값에 맞추도록 피팅됩니다.' },
       },
@@ -954,7 +954,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'CIELAB error', ko: 'CIELAB 색차' },
         equation: '\\Delta E_{ab}^* = \\sqrt{(\\Delta L^*)^2 + (\\Delta a^*)^2 + (\\Delta b^*)^2}',
         variables: [
-          { symbol: '\\Delta L^*, \\Delta a^*, \\Delta b^*', description: { en: 'Coordinate differences in CIELAB space', ko: 'CIELAB 공간에서의 각 좌표 차이' } },
+          { symbol: '\\Delta E_{ab}^*', description: { en: 'Total color difference', ko: '전체 색차 $\\Delta E_{ab}^*$' } },
         ],
         note: { en: 'Delta E summarizes color mismatch after conversion to a perceptual color space.', ko: 'Delta E는 지각 색공간에서의 색 불일치를 요약합니다.' },
       },
@@ -962,7 +962,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Noise-perturbed RGB', ko: '노이즈 포함 RGB' },
         equation: 'R_{\\text{meas}} = R_{\\text{ideal}} + n_{\\text{shot}} + n_{\\text{read}}',
         variables: [
-          { symbol: 'n', description: { en: 'Random noise contributions', ko: '무작위 노이즈 기여분' } },
+          { symbol: 'n', description: { en: 'Noise terms', ko: '노이즈 항 $n$' } },
         ],
         note: { en: 'Color accuracy degrades when low-light noise perturbs channel ratios.', ko: '저조도 노이즈가 채널 비율을 흔들면 색 정확도가 나빠집니다.' },
       },
@@ -989,10 +989,9 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Arrhenius trend', ko: '아레니우스 경향' },
         equation: 'I_{\\text{dark}}(T) \\propto T^3 e^{-\\frac{E_a}{kT}}',
         variables: [
-          { symbol: 'I_{\\text{dark}}', description: { en: 'Dark current generation rate', ko: '암전류 생성률' } },
-          { symbol: 'T', description: { en: 'Absolute temperature (K)', ko: '절대 온도' } },
-          { symbol: 'E_a', description: { en: 'Activation energy', ko: '활성화 에너지' } },
-          { symbol: 'k', description: { en: 'Boltzmann constant', ko: '볼츠만 상수' } },
+          { symbol: 'I_{\\text{dark}}', description: { en: 'Dark current generation rate', ko: '암전류 생성률 $I_{\\text{dark}}$' } },
+          { symbol: 'E_a', description: { en: 'Activation energy', ko: '활성화 에너지 $E_a$' } },
+          { symbol: 'k', description: { en: 'Boltzmann constant', ko: '볼츠만 상수 $k$' } },
         ],
         note: { en: 'Activation energy controls how steeply dark current rises with temperature.', ko: '활성화 에너지는 온도 상승에 따른 암전류 증가 기울기를 결정합니다.' },
       },
@@ -1000,8 +999,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Dark signal', ko: '암신호' },
         equation: 'D = I_{\\text{dark}} \\cdot t_{\\text{exp}}',
         variables: [
-          { symbol: 'D', description: { en: 'Accumulated dark charge (electrons)', ko: '축적된 암전하 (전자 수)' } },
-          { symbol: 't_{\\text{exp}}', description: { en: 'Exposure integration time', ko: '노출 시간' } },
+          { symbol: 'D', description: { en: 'Accumulated dark charge', ko: '축적된 암전하 $D$' } },
+          { symbol: 't_{\\text{exp}}', description: { en: 'Integration time', ko: '노출 시간 $t_{\\text{exp}}$' } },
         ],
         note: { en: 'Longer exposure accumulates more dark electrons.', ko: '노출 시간이 길수록 더 많은 암전자가 축적됩니다.' },
       },
@@ -1009,7 +1008,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Dark shot noise', ko: '암전류 샷 노이즈' },
         equation: '\\sigma_{\\text{dark}} = \\sqrt{D}',
         variables: [
-          { symbol: '\\sigma_{\\text{dark}}', description: { en: 'RMS noise due to dark current', ko: '암전류에 의한 노이즈 (RMS 전자)' } },
+          { symbol: '\\sigma_{\\text{dark}}', description: { en: 'RMS noise due to dark current', ko: '암전류에 의한 노이즈 표준편차 $\\sigma_{\\text{dark}}$' } },
         ],
         note: { en: 'Thermal generation is a Poisson process in this simplified model.', ko: '이 단순 모델에서 열 생성은 포아송 과정으로 봅니다.' },
       },
@@ -1037,8 +1036,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         equation: '\\sigma_{\\text{DN}}^2 \\approx \\frac{\\mu_{\\text{DN}}}{K}',
         variables: [
           { symbol: '\\sigma_{\\text{DN}}^2', description: { en: 'Variance in digital numbers', ko: '디지털 값의 분산' } },
-          { symbol: '\\mu_{\\text{DN}}', description: { en: 'Mean digital signal', ko: '평균 디지털 신호' } },
-          { symbol: 'K', description: { en: 'Conversion gain (e-/DN)', ko: '변환 이득' } },
+          { symbol: 'K', description: { en: 'System gain ($e^-/\\text{DN}$)', ko: '시스템 이득 $K$' } },
         ],
         note: { en: 'The slope in the shot-noise region gives conversion gain K in e-/DN.', ko: '샷 노이즈 영역의 기울기에서 e-/DN 단위의 conversion gain K를 얻습니다.' },
       },
@@ -1054,8 +1052,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'PRNU region', ko: 'PRNU 영역' },
         equation: '\\sigma_{\\text{total}}^2 \\approx \\sigma_{\\text{shot}}^2 + (PRNU \\cdot S)^2',
         variables: [
-          { symbol: 'PRNU', description: { en: 'Multiplicative non-uniformity factor', ko: '곱셈성 비균일성 계수' } },
-          { symbol: 'S', description: { en: 'Average signal level', ko: '평균 신호 레벨' } },
+          { symbol: 'PRNU', description: { en: 'PRNU coefficient', ko: 'PRNU 계수' } },
         ],
         note: { en: 'At high signal, multiplicative non-uniformity bends the curve upward.', ko: '고신호에서는 곱셈성 비균일성이 곡선을 위쪽으로 휘게 합니다.' },
       },
@@ -1082,9 +1079,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Single-exposure DR', ko: '단일 노출 DR' },
         equation: 'DR_{\\text{dB}} = 20 \\log_{10} \\left( \\frac{FWC}{\\sigma_{\\text{floor}}} \\right)',
         variables: [
-          { symbol: 'DR', description: { en: 'Dynamic Range', ko: '다이나믹 레인지' } },
-          { symbol: 'FWC', description: { en: 'Full Well Capacity (electrons)', ko: '풀웰 용량' } },
-          { symbol: '\\sigma_{\\text{floor}}', description: { en: 'Total noise floor (electrons)', ko: '전체 노이즈 바닥' } },
+          { symbol: 'DR', description: { en: 'Dynamic Range', ko: '다이나믹 레인지 $DR$' } },
+          { symbol: 'FWC', description: { en: 'Full Well Capacity', ko: '풀웰 용량 $FWC$' } },
         ],
         note: { en: 'The noise floor often includes read noise plus dark noise.', ko: '노이즈 플로어에는 보통 읽기 노이즈와 암전류 노이즈가 포함됩니다.' },
       },
@@ -1092,7 +1088,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Saturation', ko: '포화' },
         equation: 'S_{\\text{clip}} = \\min(S, FWC)',
         variables: [
-          { symbol: 'S_{\\text{clip}}', description: { en: 'Recorded signal after saturation clipping', ko: '포화 제한 후의 기록 신호' } },
+          { symbol: 'S', description: { en: 'Input photoelectron signal', ko: '입사 광전자 신호 $S$' } },
         ],
         note: { en: 'No linear signal information remains above full well.', ko: '풀웰을 넘으면 선형 신호 정보가 남지 않습니다.' },
       },
@@ -1100,8 +1096,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'HDR exposure span', ko: 'HDR 노출 범위' },
         equation: 'DR_{\\text{HDR}} \\approx 20 \\log_{10} \\left( \\frac{S_{\\text{max, long}}}{S_{\\text{min, short}}} \\right)',
         variables: [
-          { symbol: 'S_{\\text{max, long}}', description: { en: 'Maximum signal in long exposure', ko: '장노출에서의 최대 신호' } },
-          { symbol: 'S_{\\text{min, short}}', description: { en: 'Minimum detectable signal in short exposure', ko: '단노출에서의 최소 검출 가능 신호' } },
+          { symbol: 'S_{\\text{max, long}}', description: { en: 'Max signal in long frame', ko: '장노출 프레임의 최대 신호' } },
+          { symbol: 'S_{\\text{min, short}}', description: { en: 'Min signal in short frame', ko: '단노출 프레임의 최소 신호' } },
         ],
         note: { en: 'Multi-exposure HDR extends range but introduces motion and merge constraints.', ko: '다중 노출 HDR은 범위를 넓히지만 motion 및 병합 제약을 만듭니다.' },
       },
@@ -1128,7 +1124,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Absolute sensitivity threshold', ko: '절대 감도 임계값' },
         equation: '\\mu_{p, \\text{min}} \\quad (\\text{at } SNR=1)',
         variables: [
-          { symbol: '\\mu_{p, \\text{min}}', description: { en: 'Number of incident photons for SNR=1', ko: 'SNR=1이 되기 위해 필요한 입사 광자 수' } },
+          { symbol: '\\mu_{p, \\text{min}}', description: { en: 'Minimum detectable photon count', ko: '최소 검출 가능 광자 수' } },
         ],
         note: { en: 'This estimates the photon count needed for signal to equal noise.', ko: '신호가 노이즈와 같아지는 데 필요한 광자 수를 추정합니다.' },
       },
@@ -1136,7 +1132,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Saturation capacity', ko: '포화 용량' },
         equation: 'S_{\\text{sat}} \\approx FWC',
         variables: [
-          { symbol: 'S_{\\text{sat}}', description: { en: 'Signal level at saturation', ko: '포화 시의 신호 레벨' } },
+          { symbol: 'S_{\\text{sat}}', description: { en: 'Saturation signal', ko: '포화 신호' } },
         ],
         note: { en: 'Full well is the charge capacity before clipping or nonlinearity dominates.', ko: '풀웰은 clipping 또는 비선형성이 지배하기 전 전하 용량입니다.' },
       },
@@ -1144,9 +1140,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'SNR', ko: 'SNR' },
         equation: 'SNR = \\frac{\\mu_e}{\\sqrt{\\sigma_d^2 + \\sigma_q^2 + \\mu_e}}',
         variables: [
-          { symbol: '\\mu_e', description: { en: 'Mean number of electrons', ko: '평균 전자 수' } },
-          { symbol: '\\sigma_d', description: { en: 'Dark noise', ko: '암전류 노이즈' } },
-          { symbol: '\\sigma_q', description: { en: 'Quantization noise', ko: '양자화 노이즈' } },
+          { symbol: '\\mu_e', description: { en: 'Mean photoelectron count', ko: '평균 광전자 수 $\\mu_e$' } },
+          { symbol: '\\sigma_d', description: { en: 'Dark noise std dev', ko: '암전류 노이즈 표준편차 $\\sigma_d$' } },
         ],
         note: { en: 'The simplified dashboard includes dark/read-like noise and shot noise terms.', ko: '단순화된 대시보드는 dark/read 계열 노이즈와 샷 노이즈 항을 포함합니다.' },
       },
@@ -1173,8 +1168,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Cos-fourth falloff', ko: 'cos^4 감쇠' },
         equation: 'RI(\\theta) \\approx \\cos^4(\\theta)',
         variables: [
-          { symbol: 'RI', description: { en: 'Relative Illumination', ko: '상대 조도' } },
-          { symbol: '\\theta', description: { en: 'Angle of incidence at the image plane', ko: '이미지 평면에서의 입사각' } },
+          { symbol: 'RI', description: { en: 'Relative Illumination', ko: '상대 조도 $RI$' } },
+          { symbol: '\\theta', description: { en: 'Chief Ray Angle (CRA)', ko: '주광선각(CRA) $\\theta$' } },
         ],
         note: { en: 'This is a classical first-order model for image-plane relative illumination.', ko: '이미지 평면 상대 조도의 고전적 1차 모델입니다.' },
       },
@@ -1182,8 +1177,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Microlens shift', ko: '마이크로렌즈 시프트' },
         equation: '\\text{shift} \\approx h_{\\text{stack}} \\cdot \\tan(CRA_{\\text{eff}})',
         variables: [
-          { symbol: 'h_{\\text{stack}}', description: { en: 'Optical stack height above photodiode', ko: '포토다이오드 위쪽의 광학 스택 높이' } },
-          { symbol: 'CRA_{\\text{eff}}', description: { en: 'Internal chief ray angle after refraction', ko: '굴절 후의 내부 주광선각' } },
+          { symbol: 'h_{\\text{stack}}', description: { en: 'Optical stack height', ko: '광학 스택 높이 $h_{\\text{stack}}$' } },
         ],
         note: { en: 'Refraction in the stack usually makes CRA_eff smaller than the air-side CRA.', ko: '스택 내 굴절 때문에 CRA_eff는 보통 공기 중 CRA보다 작습니다.' },
       },
@@ -1191,8 +1185,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Color shading', ko: '색 쉐이딩' },
         equation: 'G_c(r) = \\frac{S_c(0)}{S_c(r)}',
         variables: [
-          { symbol: 'G_c', description: { en: 'Shading gain correction for channel c', ko: '채널 c에 대한 쉐이딩 보정 게인' } },
-          { symbol: 'r', description: { en: 'Radial image coordinate', ko: '이미지의 반경 좌표' } },
+          { symbol: 'G_c(r)', description: { en: 'Spatial gain correction', ko: '공간적 이득 보정 계수 $G_c(r)$' } },
         ],
         note: { en: 'Per-channel lens-shading correction equalizes radial response.', ko: '채널별 렌즈 쉐이딩 보정은 반경별 응답을 맞춥니다.' },
       },
@@ -1219,10 +1212,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Pixel signal model', ko: '픽셀 신호 모델' },
         equation: 'Y_{ij} = (1 + g_{ij})S + d_{ij} + n_{ij}',
         variables: [
-          { symbol: 'Y_{ij}', description: { en: 'Digital output of pixel (i,j)', ko: '픽셀 (i,j)의 디지털 출력값' } },
-          { symbol: 'g_{ij}', description: { en: 'Local gain factor (PRNU)', ko: '국소 이득 계수 (PRNU)' } },
-          { symbol: 'd_{ij}', description: { en: 'Local dark offset (DSNU)', ko: '국소 다크 오프셋 (DSNU)' } },
-          { symbol: 'n_{ij}', description: { en: 'Random temporal noise', ko: '무작위 시간적 노이즈' } },
+          { symbol: 'g_{ij}', description: { en: 'Local gain deviation (PRNU)', ko: '국소 이득 편차 (PRNU) $g_{ij}$' } },
+          { symbol: 'd_{ij}', description: { en: 'Local dark offset (DSNU)', ko: '국소 암전류 오프셋 (DSNU) $d_{ij}$' } },
         ],
         note: { en: 'g_ij is PRNU and d_ij is DSNU/dark offset.', ko: 'g_ij는 PRNU, d_ij는 DSNU 또는 dark offset입니다.' },
       },
@@ -1230,8 +1221,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'PRNU', ko: 'PRNU' },
         equation: 'PRNU = \\frac{\\sigma_{\\text{flat}}}{\\mu_{\\text{flat}}}',
         variables: [
-          { symbol: '\\sigma_{\\text{flat}}', description: { en: 'Spatial standard deviation over a flat field', ko: '평탄 필드에서의 공간적 표준편차' } },
-          { symbol: '\\mu_{\\text{flat}}', description: { en: 'Mean signal over a flat field', ko: '평탄 필드에서의 평균 신호' } },
+          { symbol: '\\sigma_{\\text{flat}}', description: { en: 'Std dev of flat field', ko: '평탄 필드의 표준편차 $\\sigma_{\\text{flat}}$' } },
         ],
         note: { en: 'PRNU is measured from illuminated flat-field frames after offset correction.', ko: 'PRNU는 offset 보정 후 조명 flat-field 프레임에서 측정합니다.' },
       },
@@ -1239,7 +1229,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'DSNU', ko: 'DSNU' },
         equation: 'DSNU = \\sigma_{\\text{dark}}',
         variables: [
-          { symbol: '\\sigma_{\\text{dark}}', description: { en: 'Spatial standard deviation in the dark', ko: '암흑 상태에서의 공간적 표준편차' } },
+          { symbol: '\\sigma_{\\text{dark}}', description: { en: 'Std dev in the dark', ko: '암흑 상태의 표준편차 $\\sigma_{\\text{dark}}$' } },
         ],
         note: { en: 'DSNU describes spatial variation of dark signal.', ko: 'DSNU는 암신호의 공간적 변동을 나타냅니다.' },
       },
@@ -1266,7 +1256,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Electron signal', ko: '전자 신호' },
         equation: 'S = N_{\\text{ph}} \\cdot QE',
         variables: [
-          { symbol: 'N_{\\text{ph}}', description: { en: 'Number of incident photons', ko: '입사 광자 수' } },
+          { symbol: 'N_{\\text{ph}}', description: { en: 'Incident photons', ko: '입사 광자 수 $N_{\\text{ph}}$' } },
         ],
         note: { en: 'Optical throughput and quantum efficiency turn photons into collected electrons.', ko: '광학 처리량과 양자 효율이 광자를 수집 전자로 바꿉니다.' },
       },
@@ -1274,7 +1264,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Total noise', ko: '전체 노이즈' },
         equation: '\\sigma = \\sqrt{S + D \\cdot t + \\sigma_{\\text{read}}^2}',
         variables: [
-          { symbol: 'D \\cdot t', description: { en: 'Dark current accumulation', ko: '축적된 암전하' } },
+          { symbol: '\\sigma', description: { en: 'Total RMS noise', ko: '전체 노이즈 표준편차 $\\sigma$' } },
         ],
         note: { en: 'The simulator separates shot, dark, and read-noise contributions.', ko: '시뮬레이터는 샷, 암전류, 읽기 노이즈 기여를 구분합니다.' },
       },
@@ -1282,7 +1272,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Ideal limit', ko: '이상적 한계' },
         equation: '\\text{SNR}_{\\text{ideal}} = \\sqrt{S}',
         variables: [
-          { symbol: 'S', description: { en: 'Number of collected electrons', ko: '수집된 전자 수' } },
+          { symbol: 'S', description: { en: 'Signal charge', ko: '신호 전하량 $S$' } },
         ],
         note: { en: 'This is the best possible photon shot-noise limit for a given signal.', ko: '주어진 신호에서 가능한 최선의 광자 샷 노이즈 한계입니다.' },
       },
@@ -1309,8 +1299,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Photon energy', ko: '광자 에너지' },
         equation: 'E_{\\text{ph}} = \\frac{hc}{\\lambda}',
         variables: [
-          { symbol: 'h', description: { en: 'Planck constant', ko: '플랑크 상수' } },
-          { symbol: 'c', description: { en: 'Speed of light', ko: '빛의 속도' } },
+          { symbol: 'h', description: { en: 'Planck constant', ko: '플랑크 상수 $h$' } },
+          { symbol: 'c', description: { en: 'Speed of light', ko: '빛의 속도 $c$' } },
         ],
         note: { en: 'Longer wavelengths carry less energy per photon.', ko: '긴 파장의 광자는 하나당 에너지가 더 낮습니다.' },
       },
@@ -1318,8 +1308,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Responsivity', ko: '응답도' },
         equation: '\\mathcal{R}(\\lambda) = \\frac{QE(\\lambda) \\cdot q \\lambda}{hc}',
         variables: [
-          { symbol: '\\mathcal{R}', description: { en: 'Spectral responsivity (A/W)', ko: '분광 응답도' } },
-          { symbol: 'q', description: { en: 'Elementary charge', ko: '기본 전하량' } },
+          { symbol: '\\mathcal{R}', description: { en: 'Responsivity (A/W)', ko: '응답도 $\\mathcal{R}$' } },
+          { symbol: 'q', description: { en: 'Elementary charge', ko: '기본 전하량 $q$' } },
         ],
         note: { en: 'With lambda in micrometers, R ~= QE*lambda/1.2398 A/W.', ko: 'lambda를 micrometer로 쓰면 R ~= QE*lambda/1.2398 A/W입니다.' },
       },
@@ -1327,8 +1317,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Photocurrent', ko: '광전류' },
         equation: 'I_{\\text{ph}} = \\mathcal{R}(\\lambda) \\cdot P_{\\text{opt}}',
         variables: [
-          { symbol: 'I_{\\text{ph}}', description: { en: 'Photocurrent (A)', ko: '광전류' } },
-          { symbol: 'P_{\\text{opt}}', description: { en: 'Incident optical power (W)', ko: '입사 광파워' } },
+          { symbol: 'I_{\\text{ph}}', description: { en: 'Photocurrent', ko: '광전류 $I_{\\text{ph}}$' } },
+          { symbol: 'P_{\\text{opt}}', description: { en: 'Optical power', ko: '입사 광파워 $P_{\\text{opt}}$' } },
         ],
         note: { en: 'Responsivity links optical simulation to electrical current.', ko: '응답도는 광학 시뮬레이션을 전기적 전류와 연결합니다.' },
       },
@@ -1355,9 +1345,8 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Ideal response', ko: '이상 응답' },
         equation: 'Y_{\\text{ideal}} = gX + \\text{offset}',
         variables: [
-          { symbol: 'Y', description: { en: 'Digital output value', ko: '디지털 출력값' } },
-          { symbol: 'X', description: { en: 'Input exposure or intensity', ko: '입력 노출량 또는 강도' } },
-          { symbol: 'g', description: { en: 'Ideal responsivity gain', ko: '이상적인 응답 이득' } },
+          { symbol: 'g', description: { en: 'Slope (gain)', ko: '기울기 (이득) $g$' } },
+          { symbol: 'X', description: { en: 'Input signal', ko: '입력 신호 $X$' } },
         ],
         note: { en: 'A linear sensor has constant slope over the usable exposure range.', ko: '선형 센서는 사용 가능한 노출 범위에서 일정한 기울기를 가집니다.' },
       },
@@ -1365,8 +1354,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Residual', ko: '잔차' },
         equation: '\\text{residual} = Y_{\\text{meas}} - Y_{\\text{fit}}',
         variables: [
-          { symbol: 'Y_{\\text{meas}}', description: { en: 'Measured output', ko: '실제 측정된 출력' } },
-          { symbol: 'Y_{\\text{fit}}', description: { en: 'Best-fit linear model output', ko: '최적 적합된 선형 모델 출력' } },
+          { symbol: 'Y_{\\text{meas}}', description: { en: 'Measured digital value', ko: '실제 측정된 디지털 값 $Y_{\\text{meas}}$' } },
         ],
         note: { en: 'Residual plots reveal curvature that is hidden in the main transfer curve.', ko: '잔차 플롯은 주 전달 곡선에서 잘 보이지 않는 곡률을 드러냅니다.' },
       },
@@ -1374,7 +1362,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
         label: { en: 'Integral nonlinearity', ko: '적분 비선형성' },
         equation: 'INL = \\frac{\\max(|\\text{residual}|)}{\\text{full scale}}',
         variables: [
-          { symbol: 'INL', description: { en: 'Integral Non-Linearity', ko: '적분 비선형성' } },
+          { symbol: 'INL', description: { en: 'Integral Non-Linearity', ko: '적분 비선형성 $INL$' } },
         ],
         note: { en: 'INL normalizes the worst deviation by full-scale output.', ko: 'INL은 최대 편차를 full-scale 출력으로 정규화합니다.' },
       },
