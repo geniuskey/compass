@@ -57,4 +57,14 @@ test.describe('simulator pages', () => {
     await expect(page.getByText('Known Missing Physics')).toBeVisible()
     await expect(page.locator('.sim-theory .formula-variables mjx-container').first()).toBeVisible()
   })
+
+  test('renders expanded theory notes on the TMM QE simulator', async ({ page }) => {
+    await gotoDocs(page, '/simulator/tmm-qe.html')
+
+    await expect(page.locator('.sim-theory .formula-row')).toHaveCount(7)
+    await expect(page.locator('.sim-theory-detail-grid')).toBeVisible()
+    await expect(page.getByText('Calibration Checklist')).toBeVisible()
+    await expect(page.getByText('Known Missing Physics')).toBeVisible()
+    await expect(page.locator('.sim-theory .formula-variables mjx-container').first()).toBeVisible()
+  })
 })

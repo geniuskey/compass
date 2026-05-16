@@ -222,52 +222,136 @@ const theoryEntries: Record<string, TheoryEntry> = {
   'tmm-qe': {
     title: { en: 'Transfer-Matrix QE Model', ko: '전달 행렬 기반 QE 모델' },
     summary: {
-      en: 'The calculator treats the pixel stack as a one-dimensional sequence of planar films. It solves coherent reflection and transmission first, then reports silicon-layer absorption as the optical upper bound for quantum efficiency.',
-      ko: '이 계산기는 픽셀 스택을 1차원 평면 박막의 연속으로 보고, 먼저 간섭에 의한 반사/투과를 푼 뒤 실리콘층 흡수를 양자 효율의 광학적 상한으로 표시합니다.',
+      en: 'The calculator treats the BSI pixel stack as a coherent one-dimensional thin-film system: air, polymer microlens proxy, planarization, color filter, BARL, and silicon. It computes wavelength- and angle-dependent reflection, transmission, and layer absorption; the plotted QE is the silicon-layer absorption proxy.',
+      ko: '이 계산기는 BSI 픽셀 스택을 air, polymer microlens proxy, planarization, color filter, BARL, silicon으로 이어지는 coherent 1차원 박막계로 취급합니다. 파장과 입사각에 따른 반사, 투과, 레이어별 흡수를 계산하고, 표시되는 QE는 silicon layer absorption proxy입니다.',
     },
     intuition: {
-      en: 'Imagine sunlight hitting a stack of clear films layered like a sandwich. At every boundary some light bounces back and some passes through, and those waves can either reinforce or cancel each other — the same trick that paints rainbow colours on a soap bubble. This tool tracks every bouncing wave and reports how much light actually reaches the silicon, where photons become electrons.',
-      ko: '햇빛이 투명한 필름이 여러 겹 쌓인 샌드위치를 통과한다고 상상해 보세요. 경계마다 빛의 일부는 반사되고 일부는 통과하며, 이 파동들이 서로 보강하거나 상쇄되어 비누 거품의 무지개색 같은 간섭을 만듭니다. 이 도구는 그 모든 반사파를 추적해 광자가 전자로 바뀌는 곳, 즉 실리콘에 빛이 얼마나 도달하는지를 알려줍니다.',
+      en: 'Think of the pixel stack as many transparent plates. Each interface reflects a small wave; each layer adds phase delay and absorption. The transfer matrix keeps the amplitude and phase of all forward and backward waves coherent, so a thin BARL layer can increase QE by canceling reflection at one wavelength while hurting another wavelength.',
+      ko: '픽셀 스택을 여러 장의 투명한 판으로 생각하면 됩니다. 각 계면은 작은 반사파를 만들고, 각 레이어는 위상 지연과 흡수를 더합니다. 전달 행렬은 전진파와 후진파의 진폭 및 위상을 coherent하게 추적하므로, 얇은 BARL 레이어가 한 파장에서는 반사를 상쇄해 QE를 올리면서 다른 파장에서는 QE를 낮출 수도 있습니다.',
     },
     formulas: [
       {
-        label: { en: 'Layer phase', ko: '레이어 위상' },
-        equation: '\\delta_j = \\frac{2\\pi n_j d_j \\cos\\theta_j}{\\lambda}',
+        label: { en: 'Complex refractive index', ko: '복소 굴절률' },
+        equation: '\\tilde{n}_j(\\lambda)=n_j(\\lambda)+i k_j(\\lambda)',
         variables: [
-          { symbol: '\\delta_j', description: { en: 'Phase delay in layer $j$', ko: '레이어 $j$의 위상 지연' } },
-          { symbol: 'n_j', description: { en: 'Refractive index of layer $j$', ko: '레이어 $j$의 굴절률' } },
-          { symbol: 'd_j', description: { en: 'Thickness of layer $j$', ko: '레이어 $j$의 두께' } },
-          { symbol: '\\theta_j', description: { en: 'Angle of refraction in layer $j$', ko: '레이어 $j$ 내의 굴절각' } },
-          { symbol: '\\lambda', description: { en: 'Wavelength of light', ko: '빛의 파장 $\\lambda$' } },
+          { symbol: '\\tilde{n}_j', description: { en: 'Complex refractive index of layer $j$', ko: '레이어 $j$의 복소 굴절률' } },
+          { symbol: 'n_j', description: { en: 'Real refractive index controlling phase velocity', ko: '위상 속도를 결정하는 실수 굴절률' } },
+          { symbol: 'k_j', description: { en: 'Extinction coefficient controlling absorption', ko: '흡수를 결정하는 소광 계수' } },
+          { symbol: '\\lambda', description: { en: 'Vacuum wavelength', ko: '진공 파장' } },
         ],
-        note: { en: 'Each layer contributes a wavelength- and angle-dependent phase delay.', ko: '각 레이어는 파장과 입사각에 의존하는 위상 지연을 만듭니다.' },
+        note: { en: 'The browser model uses tabulated, Sellmeier, Cauchy, or constant material data depending on the layer.', ko: '브라우저 모델은 레이어에 따라 tabulated, Sellmeier, Cauchy, constant material data를 사용합니다.' },
       },
       {
-        label: { en: 'Energy balance', ko: '에너지 보존' },
-        equation: 'R(\\lambda) + T(\\lambda) + \\sum_j A_j(\\lambda) = 1',
+        label: { en: 'Snell relation in each film', ko: '각 박막의 스넬 관계' },
+        equation: '\\tilde{n}_0\\sin\\theta_0=\\tilde{n}_j\\sin\\theta_j, \\quad \\cos\\theta_j=\\sqrt{1-\\left(\\frac{\\tilde{n}_0\\sin\\theta_0}{\\tilde{n}_j}\\right)^2}',
         variables: [
-          { symbol: 'R', description: { en: 'Reflectance (fraction of power reflected)', ko: '반사율 $R$' } },
-          { symbol: 'T', description: { en: 'Transmittance (fraction of power transmitted)', ko: '투과율 $T$' } },
-          { symbol: 'A_j', description: { en: 'Absorbance in layer $j$', ko: '레이어 $j$의 흡수율' } },
+          { symbol: '\\theta_0', description: { en: 'External angle of incidence selected in the simulator', ko: '시뮬레이터에서 선택한 외부 입사각' } },
+          { symbol: '\\theta_j', description: { en: 'Internal propagation angle in layer $j$', ko: '레이어 $j$ 내부 전파각' } },
+          { symbol: '\\tilde{n}_0', description: { en: 'Incident medium index, air in this simulator', ko: '입사 매질 굴절률; 이 시뮬레이터에서는 air' } },
         ],
-        note: { en: 'A physically consistent TMM result should conserve incident optical power.', ko: '물리적으로 일관된 TMM 결과는 입사 광파워를 보존해야 합니다.' },
+        note: { en: 'At oblique incidence, every layer gets a different optical path length and different s/p polarization response.', ko: '경사 입사에서는 각 레이어의 광경로와 s/p 편광 응답이 달라집니다.' },
       },
       {
-        label: { en: 'Optical QE proxy', ko: '광학 QE 근사' },
-        equation: 'QE_{\\text{opt}}(\\lambda) \\approx A_{\\text{Si}}(\\lambda)',
+        label: { en: 'Layer phase thickness', ko: '레이어 위상 두께' },
+        equation: '\\delta_j = \\frac{2\\pi}{\\lambda}\\tilde{n}_j d_j\\cos\\theta_j',
         variables: [
-          { symbol: 'QE_{\\text{opt}}', description: { en: 'Optimistic estimate of quantum efficiency', ko: '낙관적으로 추정된 양자 효율 $QE_{\\text{opt}}$' } },
-          { symbol: 'A_{\\text{Si}}', description: { en: 'Absorption fraction in the photodiode silicon', ko: '실리콘 광검출층에서의 흡수율 $A_{\\text{Si}}$' } },
+          { symbol: '\\delta_j', description: { en: 'Complex phase thickness of layer $j$', ko: '레이어 $j$의 복소 위상 두께' } },
+          { symbol: 'd_j', description: { en: 'Physical thickness of layer $j$', ko: '레이어 $j$의 물리적 두께' } },
+          { symbol: '\\cos\\theta_j', description: { en: 'Obliquity factor inside the layer', ko: '레이어 내부 경사 입사 보정 인자' } },
         ],
-        note: { en: 'Carrier collection loss is not modeled, so silicon absorption is an optimistic QE estimate.', ko: '전하 수집 손실은 포함하지 않으므로 실리콘 흡수율은 낙관적인 QE 추정치입니다.' },
+        note: { en: 'Interference fringes shift when layer thickness, wavelength, or angle changes because this phase term changes.', ko: '레이어 두께, 파장, 입사각이 바뀌면 이 위상 항이 변하기 때문에 간섭 fringe가 이동합니다.' },
+      },
+      {
+        label: { en: 'Characteristic matrix', ko: '특성 행렬' },
+        equation: 'M_j=\\begin{bmatrix}\\cos\\delta_j & -i\\sin\\delta_j/\\eta_j \\\\ -i\\eta_j\\sin\\delta_j & \\cos\\delta_j\\end{bmatrix}, \\quad M=\\prod_j M_j',
+        variables: [
+          { symbol: 'M_j', description: { en: 'Transfer matrix of layer $j$', ko: '레이어 $j$의 전달 행렬' } },
+          { symbol: 'M', description: { en: 'Total stack transfer matrix', ko: '전체 스택 전달 행렬' } },
+          { symbol: '\\eta_j', description: { en: 'Optical admittance; $\\eta_j=\\tilde{n}_j\\cos\\theta_j$ for s polarization and $\\eta_j=\\tilde{n}_j/\\cos\\theta_j$ for p polarization in this implementation', ko: '광학 어드미턴스; 이 구현에서는 s 편광에서 $\\eta_j=\\tilde{n}_j\\cos\\theta_j$, p 편광에서 $\\eta_j=\\tilde{n}_j/\\cos\\theta_j$' } },
+        ],
+        note: { en: 'The total matrix maps the boundary fields at the incident side to those at the substrate side.', ko: '전체 행렬은 입사측 경계장의 전기장/자기장을 기판측 경계장과 연결합니다.' },
+      },
+      {
+        label: { en: 'Reflection and transmission amplitudes', ko: '반사 및 투과 진폭' },
+        equation: 'r=\\frac{\\eta_0M_{00}+\\eta_0\\eta_sM_{01}-M_{10}-\\eta_sM_{11}}{\\eta_0M_{00}+\\eta_0\\eta_sM_{01}+M_{10}+\\eta_sM_{11}}, \\quad t=\\frac{2\\eta_0}{\\eta_0M_{00}+\\eta_0\\eta_sM_{01}+M_{10}+\\eta_sM_{11}}',
+        variables: [
+          { symbol: 'r,t', description: { en: 'Complex reflection and transmission amplitudes', ko: '복소 반사 및 투과 진폭' } },
+          { symbol: '\\eta_0', description: { en: 'Incident-side optical admittance', ko: '입사측 광학 어드미턴스' } },
+          { symbol: '\\eta_s', description: { en: 'Substrate-side optical admittance', ko: '기판측 광학 어드미턴스' } },
+          { symbol: 'M_{mn}', description: { en: 'Elements of the total transfer matrix', ko: '전체 전달 행렬의 원소' } },
+        ],
+        note: { en: 'The implementation averages separate s and p calculations for unpolarized light.', ko: '비편광 조건에서는 s와 p 계산 결과를 평균합니다.' },
+      },
+      {
+        label: { en: 'Power balance and layer absorption', ko: '파워 보존 및 레이어 흡수' },
+        equation: 'R=|r|^2, \\quad T=\\frac{\\operatorname{Re}(\\eta_s)}{\\operatorname{Re}(\\eta_0)}|t|^2, \\quad A_j=P_{\\text{top},j}-P_{\\text{bot},j}',
+        variables: [
+          { symbol: 'R,T', description: { en: 'Reflected and transmitted power fractions', ko: '반사 및 투과 파워 비율' } },
+          { symbol: 'A_j', description: { en: 'Absorbed power fraction assigned to layer $j$', ko: '레이어 $j$에 배정된 흡수 파워 비율' } },
+          { symbol: 'P_{\\text{top},j}, P_{\\text{bot},j}', description: { en: 'Normalized Poynting flux at the top and bottom of layer $j$', ko: '레이어 $j$ 상단 및 하단의 정규화된 포인팅 플럭스' } },
+        ],
+        note: { en: 'For a consistent passive stack, $R+T+\\sum_j A_j\\approx1$; numerical clipping only prevents tiny negative absorption artifacts.', ko: '수동 스택에서는 $R+T+\\sum_j A_j\\approx1$이어야 하며, 수치 clipping은 작은 음수 흡수 artifact를 막기 위한 것입니다.' },
+      },
+      {
+        label: { en: 'Displayed QE proxy', ko: '표시 QE proxy' },
+        equation: 'QE_{c,\\text{opt}}(\\lambda)=100\\,A_{\\text{Si},c}(\\lambda)',
+        variables: [
+          { symbol: 'QE_{c,\\text{opt}}', description: { en: 'Displayed optical QE proxy for color channel $c$', ko: '색 채널 $c$에 대해 표시되는 광학 QE proxy' } },
+          { symbol: 'A_{\\text{Si},c}', description: { en: 'Absorption fraction in the silicon layer of the selected color-filter stack', ko: '선택한 컬러 필터 스택의 silicon layer 흡수율' } },
+          { symbol: 'c', description: { en: 'Color channel: red, green, or blue', ko: '색 채널: red, green, blue' } },
+        ],
+        note: { en: 'This is an optical upper bound: carrier collection efficiency, recombination, electrical conversion gain, and pixel aperture effects are outside the model.', ko: '이는 광학적 상한입니다. 전하 수집 효율, 재결합, 전기적 conversion gain, pixel aperture effect는 모델 밖입니다.' },
       },
     ],
     concepts: [
-      { en: 'Best for flat BSI stacks, BARL tuning, and first-pass spectral trends.', ko: '평탄 BSI 스택, BARL 조정, 1차 분광 경향 확인에 적합합니다.' },
-      { en: 'It cannot capture lateral diffraction, metal-grid shadowing, DTI crosstalk, or microlens focusing.', ko: '횡방향 회절, 금속 그리드 차광, DTI 크로스토크, 마이크로렌즈 집광은 포착하지 못합니다.' },
-      { en: 'Large angle sweeps should be read as planar-film angular response, not full camera CRA behavior.', ko: '큰 각도 스윕은 전체 카메라 CRA가 아니라 평면 박막의 각도 응답으로 해석해야 합니다.' },
+      { en: 'Best for flat BSI stack trends, BARL thickness tuning, color-filter absorption intuition, and angle/polarization sensitivity screening.', ko: '평탄 BSI 스택 경향, BARL 두께 조정, 컬러 필터 흡수 직관, 입사각/편광 민감도 screening에 적합합니다.' },
+      { en: 'The color-filter curves in this browser tool are compact pedagogical spectra, not proprietary process-verified pigment data.', ko: '이 브라우저 도구의 color-filter curve는 교육용 compact spectrum이며, proprietary process-verified pigment data가 아닙니다.' },
+      { en: 'The polymer microlens layer is treated as a planar film, so focusing, lens shift, fill factor, and CRA-dependent spot displacement are not solved.', ko: 'Polymer microlens layer는 평면 박막으로 처리되므로 focusing, lens shift, fill factor, CRA-dependent spot displacement는 풀지 않습니다.' },
     ],
-    references: [refs.macleod, refs.green2008, refs.catrysse2002],
+    sections: [
+      {
+        title: { en: 'How To Read The Plot', ko: '그래프 해석 방법' },
+        items: [
+          { en: 'A QE peak moving with silicon thickness usually indicates interference and absorption-depth tradeoff, not a direct change in electrical quantum yield.', ko: '실리콘 두께에 따라 QE peak가 이동하면 보통 전기적 quantum yield 변화가 아니라 간섭과 absorption-depth tradeoff를 의미합니다.' },
+          { en: 'A BARL layer that improves green may reduce blue or red because the phase-cancellation condition is wavelength dependent.', ko: 'Green을 개선하는 BARL layer가 blue 또는 red를 낮출 수 있는데, phase-cancellation 조건이 파장 의존적이기 때문입니다.' },
+          { en: 'Angle sweeps should be interpreted as planar-stack angular response; they are not a full chief-ray-angle pixel model.', ko: '입사각 sweep은 planar-stack angular response로 해석해야 하며, 전체 chief-ray-angle pixel model은 아닙니다.' },
+        ],
+      },
+      {
+        title: { en: 'Calibration Checklist', ko: '보정 체크리스트' },
+        items: [
+          { en: 'Replace simplified $n,k$ data with process-specific ellipsometry for BARL, color filter, polymer, and silicon if quantitative accuracy matters.', ko: '정량 정확도가 필요하면 BARL, color filter, polymer, silicon의 단순화된 $n,k$ 데이터를 공정별 ellipsometry 데이터로 교체해야 합니다.' },
+          { en: 'Compare $R(\\lambda)$ and $T(\\lambda)$ against wafer optical metrology before trusting silicon absorption trends.', ko: 'Silicon absorption 경향을 신뢰하기 전에 wafer optical metrology의 $R(\\lambda)$ 및 $T(\\lambda)$와 비교해야 합니다.' },
+          { en: 'Use RCWA/FDTD when the stack has lateral structures: metal grids, DTI, color-filter relief, sub-wavelength texture, or microlens curvature.', ko: 'Metal grid, DTI, color-filter relief, sub-wavelength texture, microlens curvature 같은 lateral structure가 있으면 RCWA/FDTD를 사용해야 합니다.' },
+        ],
+      },
+      {
+        title: { en: 'Known Missing Physics', ko: '아직 빠진 물리' },
+        items: [
+          { en: 'No diffraction, scattering, lateral crosstalk, finite pixel aperture, or microlens focusing is included.', ko: '회절, 산란, lateral crosstalk, finite pixel aperture, microlens focusing은 포함하지 않습니다.' },
+          { en: 'Silicon absorption is not the same as collected charge; depletion depth, recombination, and carrier collection probability are omitted.', ko: 'Silicon absorption은 collected charge와 동일하지 않습니다. Depletion depth, recombination, carrier collection probability가 빠져 있습니다.' },
+          { en: 'The calculation assumes laterally infinite coherent films, so roughness, thickness non-uniformity, and incoherent thick-layer effects are approximated away.', ko: '계산은 횡방향 무한 coherent film을 가정하므로 roughness, thickness non-uniformity, incoherent thick-layer effect는 근사적으로 제외됩니다.' },
+        ],
+      },
+    ],
+    references: [
+      {
+        ...refs.macleod,
+        note: { en: 'Reference for thin-film characteristic matrices, optical admittance, and multilayer coating interpretation.', ko: '박막 characteristic matrix, optical admittance, multilayer coating 해석의 기준 레퍼런스입니다.' },
+      },
+      {
+        ...refs.green2008,
+        note: { en: 'Useful source for wavelength-dependent intrinsic silicon optical constants.', ko: '파장 의존 intrinsic silicon optical constant에 유용한 레퍼런스입니다.' },
+      },
+      {
+        ...refs.catrysse2002,
+        note: { en: 'Connects optical efficiency modeling to image-sensor pixel stacks and QE interpretation.', ko: 'Optical efficiency modeling을 image-sensor pixel stack 및 QE 해석과 연결합니다.' },
+      },
+      {
+        ...refs.bornWolf,
+        note: { en: 'Background for electromagnetic boundary conditions, polarization, and coherent optics.', ko: '전자기 경계조건, 편광, coherent optics의 배경 이론입니다.' },
+      },
+    ],
   },
   'barl-optimizer': {
     title: { en: 'Thin-Film Anti-Reflection Theory', ko: '박막 반사 방지 이론' },
