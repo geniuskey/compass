@@ -48,7 +48,7 @@
           <div v-if="formula.variables?.length" class="formula-variables">
             <ul>
               <li v-for="v in formula.variables" :key="v.symbol">
-                <span class="var-symbol">\({{ v.symbol }}\)</span>: {{ pick(v.description) }}
+                <span class="var-symbol">\({{ v.symbol }}\)</span>: {{ variableDescription(v) }}
               </li>
             </ul>
           </div>
@@ -97,6 +97,28 @@ const theoryRoot = ref<HTMLElement | null>(null)
 
 function pick(value: Localized) {
   return isKo.value ? value.ko : value.en
+}
+
+function normalizeMathToken(value: string) {
+  return value
+    .replace(/\\(?:text|mathrm|mathbf|mathcal|operatorname)\{([^{}]*)\}/g, '$1')
+    .replace(/\\left|\\right/g, '')
+    .replace(/[\\{}\s]/g, '')
+}
+
+function removeTrailingDuplicateSymbol(description: string, symbol: string) {
+  const trimmed = description.trim()
+  const match = trimmed.match(/^(.*?)(?:\s*[\(（]?\s*\$([^$]+)\$\s*[\)）]?)$/)
+  if (!match) return description
+
+  const trailingToken = match[2]
+  if (normalizeMathToken(trailingToken) !== normalizeMathToken(symbol)) return description
+
+  return match[1].replace(/\s*[\(（:：,\-–—]+\s*$/, '').trim()
+}
+
+function variableDescription(variable: Variable) {
+  return removeTrailingDuplicateSymbol(pick(variable.description), variable.symbol)
 }
 
 const waitForMathJax = async (timeoutMs = 8000) => {
