@@ -194,6 +194,8 @@ interface TheoryEntry {
   references: Reference[]
 }
 
+type TheorySupplement = Partial<Pick<TheoryEntry, 'assumptions' | 'outputs' | 'validationExamples'>>
+
 const refs = {
   catrysse2002: {
     label: 'Catrysse & Wandell, "Optical efficiency of image sensor pixels", JOSA A, 2002',
@@ -2424,7 +2426,375 @@ const theoryEntries: Record<string, TheoryEntry> = {
   },
 }
 
-const entry = computed(() => theoryEntries[props.slug])
+const supplementalTheoryDetails: Record<string, TheorySupplement> = {
+  'barl-optimizer': {
+    assumptions: [
+      { en: 'All candidate BARL layers are planar, laterally infinite films evaluated with coherent thin-film optics.', ko: '후보 BARL 레이어는 모두 평탄하고 횡방향으로 무한한 박막이며 coherent thin-film optics로 평가합니다.' },
+      { en: 'Material optical constants and thickness limits are treated as known inputs; process drift and roughness are not fitted here.', ko: '재료 optical constant와 두께 한계는 알려진 입력으로 두며, 공정 drift와 roughness는 여기서 fitting하지 않습니다.' },
+      { en: 'The objective is optical: it balances reflection, useful silicon absorption, and parasitic absorption before electrical collection.', ko: '목적 함수는 광학 기준입니다. 전기적 수집 전에 reflection, useful silicon absorption, parasitic absorption을 균형 있게 봅니다.' },
+    ],
+    outputs: [
+      { en: 'Recommended layer thicknesses, channel-weighted loss, reflectance trend, silicon absorption trend, and parasitic absorption warning signs.', ko: '추천 레이어 두께, 채널 가중 손실, reflectance trend, silicon absorption trend, parasitic absorption warning을 출력합니다.' },
+      { en: 'A first-pass coating design that should be rechecked with full TMM/RCWA once the surrounding pixel stack is fixed.', ko: '주변 pixel stack이 확정된 뒤 full TMM/RCWA로 다시 확인해야 하는 1차 coating design을 제공합니다.' },
+    ],
+    validationExamples: [
+      { en: 'For a single lossless quarter-wave layer with $n_1\\approx\\sqrt{n_0n_s}$, reflectance should dip near the design wavelength.', ko: '$n_1\\approx\\sqrt{n_0n_s}$인 무손실 quarter-wave 단일층에서는 설계 파장 근처에서 반사율이 낮아져야 합니다.' },
+      { en: 'If a proposed BARL increases silicon absorption while also increasing parasitic absorption strongly, inspect the energy budget before accepting it.', ko: '제안 BARL이 silicon absorption과 parasitic absorption을 동시에 크게 올리면 채택 전에 energy budget을 확인해야 합니다.' },
+    ],
+  },
+  'energy-budget': {
+    assumptions: [
+      { en: 'The stack is treated as passive, so incident energy must split into reflection, transmission, and layer absorption.', ko: '스택은 수동계로 취급하므로 입사 에너지는 reflection, transmission, layer absorption으로 나뉘어야 합니다.' },
+      { en: 'Layer absorption is an optical power bookkeeping term; it does not guarantee charge collection in the photodiode.', ko: 'Layer absorption은 광파워 장부 항목이며, photodiode charge collection을 보장하지 않습니다.' },
+      { en: 'The browser model uses simplified layer spectra and therefore supports diagnosis rather than process sign-off.', ko: '브라우저 모델은 단순화된 layer spectrum을 사용하므로 process sign-off보다는 진단용입니다.' },
+    ],
+    outputs: [
+      { en: 'Per-wavelength fractions for reflected, transmitted, useful silicon-absorbed, and parasitic absorbed energy.', ko: '파장별 reflected, transmitted, useful silicon-absorbed, parasitic absorbed energy 비율을 출력합니다.' },
+      { en: 'A diagnosis of whether QE loss is dominated by front-surface reflection, filter/coating absorption, or insufficient silicon absorption.', ko: 'QE 손실이 front-surface reflection, filter/coating absorption, insufficient silicon absorption 중 어디에서 오는지 진단합니다.' },
+    ],
+    validationExamples: [
+      { en: 'For every wavelength, verify that $R+T+\\sum A_j$ stays close to 1 before interpreting layer tradeoffs.', ko: '레이어 tradeoff를 해석하기 전 모든 파장에서 $R+T+\\sum A_j$가 1에 가까운지 확인합니다.' },
+      { en: 'Removing an absorbing filter should reduce parasitic absorption and move that energy into reflection, transmission, or silicon absorption.', ko: '흡수성 filter를 제거하면 parasitic absorption이 줄고 그 에너지가 reflection, transmission, silicon absorption 중 하나로 이동해야 합니다.' },
+    ],
+  },
+  'angular-response': {
+    assumptions: [
+      { en: 'The page evaluates planar-stack angular response, not a complete off-axis pixel with shifted microlenses and finite aperture.', ko: '이 페이지는 shifted microlens와 finite aperture를 포함한 전체 off-axis pixel이 아니라 planar-stack angular response를 평가합니다.' },
+      { en: 's and p polarization are computed separately and can be averaged for unpolarized illumination.', ko: 's/p 편광을 따로 계산하고 비편광 조명에서는 평균할 수 있습니다.' },
+      { en: 'CRA is represented as incidence angle at the stack entrance; lens-pupil cone averaging is handled by separate cone-illumination tools.', ko: 'CRA는 stack entrance의 incidence angle로 표현하며, lens-pupil cone averaging은 별도 cone-illumination 도구에서 다룹니다.' },
+    ],
+    outputs: [
+      { en: 'Normalized QE or transmission versus angle, with separate s, p, and unpolarized trends.', ko: '각도에 따른 normalized QE 또는 transmission을 s, p, unpolarized trend로 보여줍니다.' },
+      { en: 'Screening information for angular rolloff, color-channel imbalance, and when CRA compensation needs microlens or stack redesign.', ko: 'Angular rolloff, color-channel imbalance, CRA 보정을 위한 microlens/stack redesign 필요 여부를 선별합니다.' },
+    ],
+    validationExamples: [
+      { en: 'At $\\theta=0$, s and p responses should coincide for an isotropic planar stack.', ko: '$\\theta=0$에서는 등방성 평면 스택의 s/p 응답이 같아야 합니다.' },
+      { en: 'Increasing angle should generally lengthen optical path and shift thin-film features; if no feature moves, check whether the stack is too simplified.', ko: '각도가 증가하면 일반적으로 optical path가 길어지고 thin-film feature가 이동해야 합니다. 아무 변화가 없으면 스택이 지나치게 단순한지 확인합니다.' },
+    ],
+  },
+  'snr-calculator': {
+    assumptions: [
+      { en: 'Signal and noise are expressed in electrons before ADC conversion unless a conversion gain is explicitly applied.', ko: 'Conversion gain을 명시적으로 적용하기 전에는 signal과 noise를 electron 단위로 표현합니다.' },
+      { en: 'Shot noise, dark-current noise, read noise, and PRNU are combined as independent variance terms.', ko: 'Shot noise, dark-current noise, read noise, PRNU를 독립 분산 항으로 결합합니다.' },
+      { en: 'Spatial image processing, temporal denoise, demosaic, and tone mapping are outside the scalar SNR model.', ko: 'Spatial image processing, temporal denoise, demosaic, tone mapping은 scalar SNR 모델 밖입니다.' },
+    ],
+    outputs: [
+      { en: 'SNR, dynamic range proxy, noise-regime breakdown, and full-well or read-noise bottleneck indicators.', ko: 'SNR, dynamic range proxy, noise-regime breakdown, full-well 또는 read-noise 병목 지표를 출력합니다.' },
+      { en: 'A quick comparison of how QE, pixel area, exposure, dark current, read noise, and full well move image-quality limits.', ko: 'QE, pixel area, exposure, dark current, read noise, full well이 image-quality limit를 어떻게 움직이는지 빠르게 비교합니다.' },
+    ],
+    validationExamples: [
+      { en: 'With read noise and dark current set near zero, the curve should approach the photon limit $SNR\\approx\\sqrt{S}$.', ko: 'Read noise와 dark current를 거의 0으로 두면 곡선은 photon limit $SNR\\approx\\sqrt{S}$에 접근해야 합니다.' },
+      { en: 'At very low signal, increasing read noise should move the SNR floor almost directly.', ko: '매우 낮은 신호에서는 read noise 증가가 SNR floor를 거의 직접 움직여야 합니다.' },
+    ],
+  },
+  'color-filter': {
+    assumptions: [
+      { en: 'RGB filters are represented by compact spectral models or illustrative dye curves, not proprietary pigment stacks.', ko: 'RGB filter는 proprietary pigment stack이 아니라 compact spectral model 또는 설명용 dye curve로 표현합니다.' },
+      { en: 'The filter model is optical and spectral; it does not solve lateral CFA topography, diffraction, or process variation.', ko: 'Filter model은 optical/spectral 모델이며 lateral CFA topography, diffraction, process variation을 풀지 않습니다.' },
+      { en: 'Color metrics depend on the selected illuminant, observer functions, and camera response assumptions.', ko: 'Color metric은 선택한 illuminant, observer function, camera response 가정에 의존합니다.' },
+    ],
+    outputs: [
+      { en: 'Filter spectra, approximate QE overlay, channel overlap, crosstalk proxy, CIE gamut, CCM quality, and Vora-Value.', ko: 'Filter spectra, approximate QE overlay, channel overlap, crosstalk proxy, CIE gamut, CCM quality, Vora-Value를 출력합니다.' },
+      { en: 'A design-space view of bandwidth, peak transmission, IR leakage, and color-separation tradeoffs.', ko: 'Bandwidth, peak transmission, IR leakage, color-separation tradeoff를 설계 공간 관점에서 보여줍니다.' },
+    ],
+    validationExamples: [
+      { en: 'Narrowing filter FWHM should reduce channel overlap but also lower total signal throughput.', ko: 'Filter FWHM을 줄이면 channel overlap은 감소하지만 total signal throughput도 낮아져야 합니다.' },
+      { en: 'Enabling an IR cut should reduce red/NIR leakage and can improve color accuracy while reducing long-wavelength signal.', ko: 'IR cut을 켜면 red/NIR leakage가 줄고 color accuracy가 개선될 수 있지만 장파장 signal은 줄어야 합니다.' },
+    ],
+  },
+  'pixel-playground': {
+    assumptions: [
+      { en: 'The playground combines simplified optical, geometry, and sensor-metric models into one exploratory view.', ko: 'Playground는 단순화된 optical, geometry, sensor-metric model을 하나의 탐색 화면으로 결합합니다.' },
+      { en: 'Interactions between microlens, CFA, BARL, DTI, silicon, and noise are approximate and should be validated in dedicated tools.', ko: 'Microlens, CFA, BARL, DTI, silicon, noise 사이의 상호작용은 근사이며 전용 도구에서 검증해야 합니다.' },
+      { en: 'The goal is relative trend ranking, not final quantitative device prediction.', ko: '목표는 최종 정량 device prediction이 아니라 relative trend ranking입니다.' },
+    ],
+    outputs: [
+      { en: 'Multi-panel summaries for optical efficiency, crosstalk tendency, full well, SNR, dynamic range, and scaling tradeoffs.', ko: 'Optical efficiency, crosstalk tendency, full well, SNR, dynamic range, scaling tradeoff를 multi-panel로 요약합니다.' },
+      { en: 'A first-pass parameter screening table before running slower RCWA/FDTD or calibrated compact-model studies.', ko: '느린 RCWA/FDTD 또는 calibrated compact-model study 전에 쓰는 1차 parameter screening table을 제공합니다.' },
+    ],
+    validationExamples: [
+      { en: 'Increasing pitch should generally raise photon collection and full well while easing diffraction pressure.', ko: 'Pitch를 키우면 일반적으로 photon collection과 full well이 증가하고 diffraction pressure가 완화되어야 합니다.' },
+      { en: 'Turning off DTI or reducing isolation should increase crosstalk indicators rather than improve every metric simultaneously.', ko: 'DTI를 끄거나 isolation을 줄이면 모든 metric이 동시에 좋아지는 대신 crosstalk indicator가 증가해야 합니다.' },
+    ],
+  },
+  'si-absorption': {
+    assumptions: [
+      { en: 'Silicon absorption follows Beer-Lambert attenuation using wavelength-dependent absorption coefficient data.', ko: 'Silicon absorption은 파장 의존 absorption coefficient data를 사용한 Beer-Lambert attenuation을 따릅니다.' },
+      { en: 'The model treats silicon as a uniform slab and does not include surface texturing, interference, or carrier collection probability.', ko: '모델은 silicon을 균일 slab으로 보며 surface texturing, interference, carrier collection probability를 포함하지 않습니다.' },
+      { en: 'Absorbed photons are optical absorption events, not automatically collected electrons.', ko: '흡수된 photon은 optical absorption event이며 자동으로 수집 electron이 되는 것은 아닙니다.' },
+    ],
+    outputs: [
+      { en: 'Absorption coefficient, penetration depth, and absorbed fraction versus wavelength and silicon thickness.', ko: '파장과 silicon thickness에 따른 absorption coefficient, penetration depth, absorbed fraction을 출력합니다.' },
+      { en: 'A wavelength-regime map showing why blue absorbs near the surface and red/NIR requires thicker silicon.', ko: 'Blue는 표면 근처에서 흡수되고 red/NIR은 더 두꺼운 silicon이 필요한 이유를 wavelength-regime map으로 보여줍니다.' },
+    ],
+    validationExamples: [
+      { en: 'At fixed thickness, blue absorption should be higher than red/NIR absorption for typical visible silicon data.', ko: '두께를 고정하면 일반적인 visible silicon data에서 blue absorption이 red/NIR absorption보다 높아야 합니다.' },
+      { en: 'Increasing silicon thickness should help long wavelengths more than short wavelengths once blue absorption is already saturated.', ko: 'Blue absorption이 이미 포화된 뒤에는 silicon thickness 증가가 short wavelength보다 long wavelength에 더 크게 작용해야 합니다.' },
+    ],
+  },
+  'microlens-raytrace': {
+    assumptions: [
+      { en: 'Rays obey geometric optics and Snell refraction at a smooth superellipse microlens surface.', ko: 'Ray는 geometric optics와 smooth superellipse microlens surface의 Snell refraction을 따른다고 가정합니다.' },
+      { en: 'Diffraction, interference, polarization, and wavelength-scale scattering are not solved.', ko: 'Diffraction, interference, polarization, wavelength-scale scattering은 풀지 않습니다.' },
+      { en: 'The photodiode is represented by a geometric target plane, not by an electrical collection probability field.', ko: 'Photodiode는 electrical collection probability field가 아니라 geometric target plane으로 표현됩니다.' },
+    ],
+    outputs: [
+      { en: 'Ray paths, focus position, spot spread, collection efficiency proxy, and CRA sensitivity for a chosen microlens profile.', ko: '선택한 microlens profile에 대한 ray path, focus position, spot spread, collection efficiency proxy, CRA sensitivity를 출력합니다.' },
+      { en: 'A quick indication of whether lens height, radius, index, or lateral shift moves light toward the intended photodiode.', ko: 'Lens height, radius, index, lateral shift가 빛을 intended photodiode로 움직이는지 빠르게 보여줍니다.' },
+    ],
+    validationExamples: [
+      { en: 'At normal incidence and symmetric geometry, the focused distribution should remain centered on the pixel axis.', ko: 'Normal incidence와 symmetric geometry에서는 focused distribution이 pixel axis 중심에 남아야 합니다.' },
+      { en: 'Increasing CRA without lens shift should move the focus laterally; adding compensating shift should pull it back toward the target.', ko: 'Lens shift 없이 CRA를 키우면 focus가 lateral로 이동해야 하며, 보정 shift를 추가하면 target 쪽으로 돌아와야 합니다.' },
+    ],
+  },
+  'mla-array': {
+    assumptions: [
+      { en: 'The array is built by periodically repeating a parametric single-lens height field.', ko: 'Array는 parametric single-lens height field를 주기적으로 반복해 구성합니다.' },
+      { en: 'Lens interaction is geometric and surface-based; resist flow, diffraction, and electromagnetic coupling are not solved.', ko: 'Lens interaction은 geometry/surface 기반이며 resist flow, diffraction, electromagnetic coupling은 풀지 않습니다.' },
+      { en: 'Asymmetric radii and pitch changes represent layout intent, not measured wafer topography.', ko: '비대칭 반경과 pitch 변화는 layout intent를 표현하며 measured wafer topography가 아닙니다.' },
+    ],
+    outputs: [
+      { en: 'Contour maps, equal-aspect cross sections, 3D wireframe, ray sketches, fill factor, and gap or overlap indicators.', ko: 'Contour map, equal-aspect cross section, 3D wireframe, ray sketch, fill factor, gap/overlap indicator를 출력합니다.' },
+      { en: 'A visual check of whether a lens array is sparse, near zero-space, asymmetric, or likely to create steep edge slopes.', ko: 'Lens array가 sparse, near zero-space, asymmetric, steep edge slope 가능 상태인지 시각적으로 확인합니다.' },
+    ],
+    validationExamples: [
+      { en: 'When $R_x=R_y$ and pitch is equal in both axes, the top-view contour should be symmetric.', ko: '$R_x=R_y$이고 양축 pitch가 같으면 top-view contour가 대칭이어야 합니다.' },
+      { en: 'Reducing pitch at fixed lens radius should reduce gap and eventually show overlap or merger risk.', ko: 'Lens radius를 고정하고 pitch를 줄이면 gap이 감소하고 결국 overlap 또는 merger risk가 나타나야 합니다.' },
+    ],
+  },
+  'fdti-pixel': {
+    assumptions: [
+      { en: 'DTI is represented by compact geometric confinement and leakage proxies, not a full electromagnetic trench solve.', ko: 'DTI는 full electromagnetic trench solve가 아니라 compact geometric confinement 및 leakage proxy로 표현됩니다.' },
+      { en: 'Trench depth, fill material, and geometry are treated as idealized parameters without etch profile roughness.', ko: 'Trench depth, fill material, geometry는 etch profile roughness 없이 이상화된 파라미터로 취급합니다.' },
+      { en: 'Optical crosstalk indicators are qualitative unless calibrated against RCWA/FDTD or silicon measurements.', ko: 'Optical crosstalk indicator는 RCWA/FDTD 또는 silicon measurement로 보정하지 않으면 정성적입니다.' },
+    ],
+    outputs: [
+      { en: 'FDTI/BDTI geometry comparison, confinement proxy, crosstalk trend, absorption path-length proxy, and field sketch.', ko: 'FDTI/BDTI geometry 비교, confinement proxy, crosstalk trend, absorption path-length proxy, field sketch를 출력합니다.' },
+      { en: 'A design-space view of how trench depth and refractive-index contrast trade sensitivity against isolation.', ko: 'Trench depth와 refractive-index contrast가 sensitivity와 isolation 사이에서 만드는 tradeoff를 보여줍니다.' },
+    ],
+    validationExamples: [
+      { en: 'Increasing trench depth or lowering trench index should generally improve confinement and reduce crosstalk indicators.', ko: 'Trench depth를 키우거나 trench index를 낮추면 일반적으로 confinement가 개선되고 crosstalk indicator가 줄어야 합니다.' },
+      { en: 'If isolation improves without any optical cost in every case, treat the result as a qualitative proxy and verify with full-wave simulation.', ko: '모든 경우에서 optical cost 없이 isolation만 좋아진다면 qualitative proxy로 보고 full-wave simulation으로 검증해야 합니다.' },
+    ],
+  },
+  'fabry-perot': {
+    assumptions: [
+      { en: 'The cavity is represented as a single coherent thin film between two reflecting interfaces.', ko: 'Cavity는 두 reflecting interface 사이의 단일 coherent thin film으로 표현됩니다.' },
+      { en: 'Surface roughness, finite aperture averaging, absorption dispersion, and lateral patterning are omitted unless approximated by input parameters.', ko: 'Surface roughness, finite aperture averaging, absorption dispersion, lateral patterning은 입력 파라미터로 근사하지 않는 한 생략됩니다.' },
+      { en: 'The phasor diagram is an explanatory model for phase addition, not a complete multilayer solver.', ko: 'Phasor diagram은 phase addition 설명 모델이며 complete multilayer solver가 아닙니다.' },
+    ],
+    outputs: [
+      { en: 'Round-trip phase, constructive/destructive interference condition, phasor geometry, and resonance shift with thickness or angle.', ko: 'Round-trip phase, constructive/destructive interference condition, phasor geometry, thickness/angle에 따른 resonance shift를 출력합니다.' },
+      { en: 'A compact intuition for why BARL, CFA, and cavity-like stacks move spectral peaks with angle and thickness.', ko: 'BARL, CFA, cavity-like stack의 spectral peak가 angle/thickness에 따라 이동하는 이유를 간결하게 보여줍니다.' },
+    ],
+    validationExamples: [
+      { en: 'Increasing film thickness should move a fixed interference order toward longer wavelength.', ko: 'Film thickness를 늘리면 고정 interference order가 긴 파장 쪽으로 이동해야 합니다.' },
+      { en: 'At oblique incidence, the effective phase term should change through $\\cos\\theta$ and shift the resonance condition.', ko: '경사 입사에서는 effective phase term이 $\\cos\\theta$를 통해 바뀌고 resonance condition이 이동해야 합니다.' },
+    ],
+  },
+  'diffraction-psf': {
+    assumptions: [
+      { en: 'The optical aperture is ideal, circular, aberration-free, and diffraction limited.', ko: 'Optical aperture는 이상적인 원형, 무수차, diffraction-limited aperture로 가정합니다.' },
+      { en: 'The PSF is scalar and monochromatic for the selected wavelength; broadband color blur requires spectral integration.', ko: 'PSF는 선택 파장에 대한 scalar monochromatic PSF이며 broadband color blur는 spectral integration이 필요합니다.' },
+      { en: 'Pixel collection is geometric area overlap with the PSF, not a full EM or carrier-transport calculation.', ko: 'Pixel collection은 PSF와의 geometric area overlap이며 full EM 또는 carrier-transport 계산이 아닙니다.' },
+    ],
+    outputs: [
+      { en: 'Airy intensity profile, first dark-ring radius, encircled energy, and pixel-grid overlay.', ko: 'Airy intensity profile, first dark-ring radius, encircled energy, pixel-grid overlay를 출력합니다.' },
+      { en: 'A check of whether diffraction blur is smaller than, comparable to, or larger than the pixel pitch.', ko: 'Diffraction blur가 pixel pitch보다 작은지, 비슷한지, 큰지 확인합니다.' },
+    ],
+    validationExamples: [
+      { en: 'The first Airy zero should scale linearly with wavelength and f-number: $r_1=1.22\\lambda N$.', ko: 'First Airy zero는 $r_1=1.22\\lambda N$에 따라 wavelength와 f-number에 선형 비례해야 합니다.' },
+      { en: 'Doubling f-number at fixed wavelength should roughly double the plotted Airy radius.', ko: '파장을 고정하고 f-number를 두 배로 하면 표시 Airy radius도 대략 두 배가 되어야 합니다.' },
+    ],
+  },
+  'mtf-analyzer': {
+    assumptions: [
+      { en: 'The compact MTF model assumes linear, shift-invariant transfer and separable aperture/diffraction effects.', ko: 'Compact MTF model은 linear shift-invariant transfer와 분리 가능한 aperture/diffraction effect를 가정합니다.' },
+      { en: 'Lens aberration, demosaic, sharpening, motion blur, and charge diffusion are not explicitly solved.', ko: 'Lens aberration, demosaic, sharpening, motion blur, charge diffusion은 명시적으로 풀지 않습니다.' },
+      { en: 'Pixel aperture is treated as an ideal rectangular integration window controlled by pitch and fill factor.', ko: 'Pixel aperture는 pitch와 fill factor로 제어되는 이상적인 rectangular integration window로 취급합니다.' },
+    ],
+    outputs: [
+      { en: 'Pixel aperture MTF, diffraction cutoff, Nyquist frequency, combined MTF proxy, and MTF50-style landmarks.', ko: 'Pixel aperture MTF, diffraction cutoff, Nyquist frequency, combined MTF proxy, MTF50-style landmark를 출력합니다.' },
+      { en: 'A diagnosis of whether sampling, aperture blur, or diffraction is the first-order resolution limiter.', ko: 'Sampling, aperture blur, diffraction 중 무엇이 1차 resolution limiter인지 진단합니다.' },
+    ],
+    validationExamples: [
+      { en: 'Reducing pixel pitch should raise Nyquist frequency but can make diffraction and aperture effects more visible relative to pitch.', ko: 'Pixel pitch를 줄이면 Nyquist frequency는 올라가지만 diffraction과 aperture effect가 pitch 대비 더 두드러질 수 있습니다.' },
+      { en: 'Increasing f-number should lower diffraction cutoff and suppress high-frequency contrast.', ko: 'F-number를 키우면 diffraction cutoff가 낮아지고 high-frequency contrast가 억제되어야 합니다.' },
+    ],
+  },
+  'pixel-scaling': {
+    assumptions: [
+      { en: 'Scaling laws are first-order proportionalities; real process nodes add architecture-specific offsets and improvements.', ko: 'Scaling law는 1차 비례식이며 실제 process node는 architecture-specific offset과 개선을 포함합니다.' },
+      { en: 'Photon count and approximate full well follow area trends unless microlens, BSI, DTI, and capacitance design compensate.', ko: 'Microlens, BSI, DTI, capacitance design이 보상하지 않는 한 photon count와 approximate full well은 면적 trend를 따릅니다.' },
+      { en: 'Diffraction pressure is evaluated against pitch using a simplified Airy diameter proxy.', ko: 'Diffraction pressure는 단순화된 Airy diameter proxy를 pitch와 비교해 평가합니다.' },
+    ],
+    outputs: [
+      { en: 'Pitch-dependent area, photon/SNR tendency, full-well tendency, diffraction ratio, and mitigation context.', ko: 'Pitch-dependent area, photon/SNR tendency, full-well tendency, diffraction ratio, mitigation context를 출력합니다.' },
+      { en: 'A tradeoff map for when shrinking pitch starts requiring stronger optics, isolation, binning, or read-noise reduction.', ko: 'Pitch 축소가 더 강한 optics, isolation, binning, read-noise reduction을 요구하기 시작하는 tradeoff map을 제공합니다.' },
+    ],
+    validationExamples: [
+      { en: 'Halving pitch should reduce area by 4x and reduce shot-limited SNR by roughly 2x at fixed illuminance and exposure.', ko: 'Pitch를 절반으로 줄이면 동일 조도/노출에서 area는 4배 줄고 shot-limited SNR은 대략 2배 낮아져야 합니다.' },
+      { en: 'The ratio $D_{\\text{Airy}}/p$ should increase as pitch shrinks or f-number grows.', ko: 'Pitch가 줄거나 f-number가 커지면 $D_{\\text{Airy}}/p$ 비율은 증가해야 합니다.' },
+    ],
+  },
+  'color-accuracy': {
+    assumptions: [
+      { en: 'Scene spectra, illuminants, filter responses, and ColorChecker patches are simplified public or illustrative spectra.', ko: 'Scene spectra, illuminants, filter responses, ColorChecker patch는 단순화된 공개 또는 설명용 spectrum입니다.' },
+      { en: 'The CCM is a linear 3x3 correction and cannot fully fix metamerism, saturation, clipping, or nonlinear image processing.', ko: 'CCM은 선형 3x3 보정이며 metamerism, saturation, clipping, nonlinear image processing을 완전히 보정할 수 없습니다.' },
+      { en: 'Noise and color error are evaluated in a compact signal-chain model, not a full ISP.', ko: 'Noise와 color error는 full ISP가 아니라 compact signal-chain model에서 평가됩니다.' },
+    ],
+    outputs: [
+      { en: 'Camera responses, fitted CCM, CIE tristimulus comparison, Delta E summary, and sensitivity to illuminant or noise.', ko: 'Camera response, fitted CCM, CIE tristimulus comparison, Delta E summary, illuminant/noise 민감도를 출력합니다.' },
+      { en: 'A design view of when spectral overlap, weak channels, or illuminant mismatch dominate color error.', ko: 'Spectral overlap, weak channel, illuminant mismatch 중 무엇이 color error를 지배하는지 보여줍니다.' },
+    ],
+    validationExamples: [
+      { en: 'With very broad overlapping filters, color error should increase because the camera responses become less independent.', ko: '매우 넓고 겹치는 filter에서는 camera response가 덜 독립적이므로 color error가 증가해야 합니다.' },
+      { en: 'Changing illuminant should change fitted CCM performance unless the sensor spectra are ideally matched to the observer functions.', ko: 'Sensor spectra가 observer function에 이상적으로 맞지 않는 한 illuminant 변경은 fitted CCM 성능을 바꿔야 합니다.' },
+    ],
+  },
+  'dark-current': {
+    assumptions: [
+      { en: 'Dark current follows an Arrhenius-like temperature dependence with a compact activation-energy parameter.', ko: 'Dark current는 compact activation-energy parameter를 갖는 Arrhenius-like temperature dependence를 따른다고 가정합니다.' },
+      { en: 'The model treats average dark current and noise, not pixel-level hot pixels, RTS, or column offsets.', ko: '모델은 pixel-level hot pixel, RTS, column offset이 아니라 평균 dark current와 noise를 다룹니다.' },
+      { en: 'Temperature, exposure time, and read noise are assumed stable over the simulated frame.', ko: 'Temperature, exposure time, read noise는 simulated frame 동안 안정적이라고 가정합니다.' },
+    ],
+    outputs: [
+      { en: 'Dark charge, dark-current shot noise, total noise impact, temperature scaling, and low-light image-quality warning.', ko: 'Dark charge, dark-current shot noise, total noise impact, temperature scaling, low-light image-quality warning을 출력합니다.' },
+      { en: 'A quick estimate of when cooling, shorter exposure, or read-noise reduction matters most.', ko: 'Cooling, shorter exposure, read-noise reduction 중 무엇이 가장 중요한지 빠르게 추정합니다.' },
+    ],
+    validationExamples: [
+      { en: 'Increasing temperature should raise dark current rapidly, often much faster than a linear trend.', ko: 'Temperature를 높이면 dark current가 선형보다 훨씬 빠르게 증가해야 합니다.' },
+      { en: 'Doubling exposure time should double accumulated dark charge and increase dark shot noise by roughly $\\sqrt{2}$.', ko: 'Exposure time을 두 배로 하면 accumulated dark charge는 두 배, dark shot noise는 대략 $\\sqrt{2}$배 증가해야 합니다.' },
+    ],
+  },
+  'photon-transfer-curve': {
+    assumptions: [
+      { en: 'The PTC uses standard mean-variance relationships with shot noise, read noise, PRNU, and saturation regimes.', ko: 'PTC는 shot noise, read noise, PRNU, saturation regime을 갖는 표준 mean-variance 관계를 사용합니다.' },
+      { en: 'Gain is treated as a scalar conversion between electrons and digital numbers.', ko: 'Gain은 electron과 digital number 사이의 scalar conversion으로 취급합니다.' },
+      { en: 'Column effects, ADC quantization details, black-level instability, and temporal processing are not explicitly solved.', ko: 'Column effect, ADC quantization detail, black-level instability, temporal processing은 명시적으로 풀지 않습니다.' },
+    ],
+    outputs: [
+      { en: 'Mean-variance curve, read-noise floor, conversion gain, shot-noise slope, PRNU region, and saturation region.', ko: 'Mean-variance curve, read-noise floor, conversion gain, shot-noise slope, PRNU region, saturation region을 출력합니다.' },
+      { en: 'A regime map that separates read-noise limited, shot-noise limited, fixed-pattern limited, and saturated operation.', ko: 'Read-noise limited, shot-noise limited, fixed-pattern limited, saturated operation을 분리하는 regime map을 제공합니다.' },
+    ],
+    validationExamples: [
+      { en: 'In the shot-noise region, variance should grow approximately linearly with mean signal.', ko: 'Shot-noise region에서는 variance가 mean signal에 거의 선형으로 증가해야 합니다.' },
+      { en: 'At low signal, raising read noise should lift the variance floor without changing the high-signal shot slope much.', ko: 'Low signal에서 read noise를 올리면 high-signal shot slope는 크게 바꾸지 않고 variance floor를 올려야 합니다.' },
+    ],
+  },
+  'dynamic-range': {
+    assumptions: [
+      { en: 'Dynamic range is computed from saturation capacity and minimum detectable signal under a compact noise model.', ko: 'Dynamic range는 compact noise model 아래 saturation capacity와 minimum detectable signal로 계산합니다.' },
+      { en: 'HDR extension is represented by simplified short/long exposure or knee behavior, not by a full sensor readout architecture.', ko: 'HDR extension은 full sensor readout architecture가 아니라 단순화된 short/long exposure 또는 knee behavior로 표현됩니다.' },
+      { en: 'Tone mapping and perceptual rendering are outside the physical DR estimate.', ko: 'Tone mapping과 perceptual rendering은 physical DR estimate 밖입니다.' },
+    ],
+    outputs: [
+      { en: 'Linear dynamic range, dB/stops conversion, noise floor, saturation limit, HDR extension proxy, and bottleneck diagnosis.', ko: 'Linear dynamic range, dB/stops conversion, noise floor, saturation limit, HDR extension proxy, bottleneck diagnosis를 출력합니다.' },
+      { en: 'A comparison of whether FWC, read noise, dark noise, or HDR strategy is limiting usable range.', ko: 'FWC, read noise, dark noise, HDR strategy 중 무엇이 usable range를 제한하는지 비교합니다.' },
+    ],
+    validationExamples: [
+      { en: 'Increasing full well at fixed noise floor should increase DR by $20\\log_{10}$ of the ratio.', ko: 'Noise floor를 고정하고 full well을 키우면 DR은 비율의 $20\\log_{10}$만큼 증가해야 합니다.' },
+      { en: 'Increasing read noise should reduce DR even when full well is unchanged.', ko: 'Full well이 변하지 않아도 read noise가 증가하면 DR은 감소해야 합니다.' },
+    ],
+  },
+  'emva1288': {
+    assumptions: [
+      { en: 'The dashboard follows the EMVA 1288 measurement vocabulary with compact synthetic inputs.', ko: 'Dashboard는 compact synthetic input을 사용해 EMVA 1288 measurement vocabulary를 따릅니다.' },
+      { en: 'Sensor response is assumed stable, linear in the selected operating range, and characterized by scalar noise terms.', ko: 'Sensor response는 선택한 operating range에서 안정적이고 선형이며 scalar noise term으로 characterization된다고 가정합니다.' },
+      { en: 'The browser dashboard is not a replacement for controlled lab measurements with calibrated illumination.', ko: '브라우저 dashboard는 calibrated illumination을 사용한 controlled lab measurement를 대체하지 않습니다.' },
+    ],
+    outputs: [
+      { en: 'QE, saturation capacity, temporal noise, SNR, dynamic range, absolute sensitivity threshold, and EMVA-style summary metrics.', ko: 'QE, saturation capacity, temporal noise, SNR, dynamic range, absolute sensitivity threshold, EMVA-style summary metric을 출력합니다.' },
+      { en: 'A single operating-point dashboard for comparing how pixel design assumptions affect standard camera metrics.', ko: 'Pixel design 가정이 표준 camera metric에 미치는 영향을 비교하는 단일 operating-point dashboard를 제공합니다.' },
+    ],
+    validationExamples: [
+      { en: 'Reducing temporal noise should improve absolute sensitivity threshold and low-signal SNR.', ko: 'Temporal noise를 줄이면 absolute sensitivity threshold와 low-signal SNR이 개선되어야 합니다.' },
+      { en: 'Increasing saturation capacity should improve DR only if the noise floor is not increasing with it.', ko: 'Saturation capacity 증가는 noise floor가 함께 증가하지 않을 때만 DR을 개선해야 합니다.' },
+    ],
+  },
+  'lens-shading': {
+    assumptions: [
+      { en: 'Relative illumination combines chief-ray angle, cos-fourth falloff, and compact microlens-shift compensation.', ko: 'Relative illumination은 chief-ray angle, cos-fourth falloff, compact microlens-shift compensation을 결합합니다.' },
+      { en: 'The sensor map is radially simplified and does not include lens design ray files, pupil aberrations, or per-pixel measured correction tables.', ko: 'Sensor map은 radial 단순화이며 lens design ray file, pupil aberration, per-pixel measured correction table을 포함하지 않습니다.' },
+      { en: 'Color shading is represented by channel-dependent angular sensitivity, not a full spectral ISP correction.', ko: 'Color shading은 full spectral ISP correction이 아니라 channel-dependent angular sensitivity로 표현합니다.' },
+    ],
+    outputs: [
+      { en: '2D relative-illumination map, radial falloff, corner loss in stops, channel imbalance, and compensation trend.', ko: '2D relative-illumination map, radial falloff, corner loss in stops, channel imbalance, compensation trend를 출력합니다.' },
+      { en: 'A quick view of whether optical CRA, pixel pitch, or microlens shift is likely to drive corner shading.', ko: 'Optical CRA, pixel pitch, microlens shift 중 무엇이 corner shading을 지배할 가능성이 있는지 보여줍니다.' },
+    ],
+    validationExamples: [
+      { en: 'With zero CRA and no channel imbalance, the map should be nearly flat apart from any intentional falloff term.', ko: 'CRA가 0이고 channel imbalance가 없으면 intentional falloff term을 제외하고 map은 거의 평탄해야 합니다.' },
+      { en: 'Increasing maximum CRA should reduce corner relative illumination and can produce stronger color shading.', ko: 'Maximum CRA를 키우면 corner relative illumination이 감소하고 color shading이 더 강해질 수 있습니다.' },
+    ],
+  },
+  'prnu-visualizer': {
+    assumptions: [
+      { en: 'PRNU and DSNU fields are synthetic spatial patterns used to explain fixed-pattern noise behavior.', ko: 'PRNU와 DSNU field는 fixed-pattern noise behavior를 설명하기 위한 synthetic spatial pattern입니다.' },
+      { en: 'PRNU is multiplicative with signal; DSNU is additive and visible in dark or low-signal frames.', ko: 'PRNU는 signal에 곱해지는 항이고 DSNU는 dark 또는 low-signal frame에서 보이는 additive 항입니다.' },
+      { en: 'The model does not represent actual wafer maps, column circuits, hot pixels, or temperature-dependent drift.', ko: '모델은 실제 wafer map, column circuit, hot pixel, temperature-dependent drift를 나타내지 않습니다.' },
+    ],
+    outputs: [
+      { en: 'Synthetic flat-field and dark-field patterns, PRNU/DSNU amplitudes, corrected residuals, and visual artifact examples.', ko: 'Synthetic flat-field/dark-field pattern, PRNU/DSNU amplitude, corrected residual, visual artifact example을 출력합니다.' },
+      { en: 'A calibration intuition for separating multiplicative gain variation from additive dark offset.', ko: 'Multiplicative gain variation과 additive dark offset을 분리하는 calibration intuition을 제공합니다.' },
+    ],
+    validationExamples: [
+      { en: 'Increasing signal should make PRNU more visible while DSNU remains an additive baseline pattern.', ko: 'Signal을 키우면 PRNU는 더 잘 보이고 DSNU는 additive baseline pattern으로 남아야 합니다.' },
+      { en: 'Dark-frame subtraction should reduce DSNU-like offsets but should not remove multiplicative PRNU from bright flat fields.', ko: 'Dark-frame subtraction은 DSNU-like offset을 줄여야 하지만 bright flat field의 multiplicative PRNU를 제거하지는 않아야 합니다.' },
+    ],
+  },
+  'pixel-snr-vs-illuminance': {
+    assumptions: [
+      { en: 'Lux-to-photon conversion requires an assumed spectrum and optical throughput; lux is not a unique photon count.', ko: 'Lux-to-photon 변환에는 spectrum과 optical throughput 가정이 필요하며 lux는 유일한 photon count가 아닙니다.' },
+      { en: 'Signal is computed from photon count, pixel area, exposure time, and QE, then combined with shot, dark, and read noise.', ko: 'Signal은 photon count, pixel area, exposure time, QE에서 계산하고 shot/dark/read noise와 결합합니다.' },
+      { en: 'The model reports scalar SNR and omits denoise, tone mapping, demosaic, scene contrast, and color noise.', ko: '모델은 scalar SNR을 보고하며 denoise, tone mapping, demosaic, scene contrast, color noise는 생략합니다.' },
+    ],
+    outputs: [
+      { en: 'SNR versus illuminance, photon/electron counts, noise-regime transitions, and read-noise or shot-noise dominance.', ko: 'Illuminance에 따른 SNR, photon/electron count, noise-regime transition, read-noise 또는 shot-noise dominance를 출력합니다.' },
+      { en: 'A low-light design view showing how QE, pixel pitch, exposure, F-number, read noise, and dark current move the curve.', ko: 'QE, pixel pitch, exposure, F-number, read noise, dark current가 곡선을 어떻게 움직이는지 보여주는 low-light design view입니다.' },
+    ],
+    validationExamples: [
+      { en: 'At high illuminance before saturation, SNR should approach the shot-noise trend $\\sqrt{S}$.', ko: 'Saturation 전 높은 조도에서는 SNR이 shot-noise trend $\\sqrt{S}$에 접근해야 합니다.' },
+      { en: 'At low illuminance, lowering read noise should improve SNR more strongly than increasing full well.', ko: '낮은 조도에서는 full well을 키우는 것보다 read noise를 낮추는 쪽이 SNR을 더 강하게 개선해야 합니다.' },
+    ],
+  },
+  'responsivity-calculator': {
+    assumptions: [
+      { en: 'Responsivity converts photons-to-electrons efficiency into current per optical watt at a single wavelength.', ko: 'Responsivity는 단일 파장에서 photons-to-electrons efficiency를 optical watt당 current로 변환합니다.' },
+      { en: 'One collected electron is assumed per successful photon event; avalanche gain, multiplication, and circuit bandwidth are omitted.', ko: '성공한 photon event당 collected electron 하나를 가정하며 avalanche gain, multiplication, circuit bandwidth는 생략합니다.' },
+      { en: 'Broadband response requires spectral integration over source power, not a single wavelength point.', ko: 'Broadband response는 단일 파장점이 아니라 source power에 대한 spectral integration이 필요합니다.' },
+    ],
+    outputs: [
+      { en: 'Photon energy, QE-to-A/W conversion, photocurrent for optical power, and wavelength dependence of responsivity.', ko: 'Photon energy, QE-to-A/W conversion, optical power에 대한 photocurrent, responsivity의 wavelength dependence를 출력합니다.' },
+      { en: 'A bridge between optical QE simulations and electrical current or photodiode measurement units.', ko: 'Optical QE simulation과 electrical current 또는 photodiode measurement unit 사이의 연결을 제공합니다.' },
+    ],
+    validationExamples: [
+      { en: 'At fixed QE, responsivity should increase linearly with wavelength because each photon carries less energy.', ko: 'QE를 고정하면 photon 하나의 에너지가 낮아지므로 responsivity는 wavelength에 선형으로 증가해야 합니다.' },
+      { en: 'Setting optical power to zero should produce zero photocurrent regardless of QE.', ko: 'Optical power를 0으로 두면 QE와 무관하게 photocurrent는 0이어야 합니다.' },
+    ],
+  },
+  'linearity-analyzer': {
+    assumptions: [
+      { en: 'The transfer curve is compared against a fitted straight line over a selected valid exposure range.', ko: 'Transfer curve는 선택한 valid exposure range에서 fitting된 직선과 비교합니다.' },
+      { en: 'Residuals represent compact nonlinearity; ADC code transition details and column gain errors are not separately solved.', ko: 'Residual은 compact nonlinearity를 나타내며 ADC code transition detail과 column gain error는 별도로 풀지 않습니다.' },
+      { en: 'Illumination, temperature, and timing are assumed stable across the measurement sequence.', ko: 'Illumination, temperature, timing은 measurement sequence 동안 안정적이라고 가정합니다.' },
+    ],
+    outputs: [
+      { en: 'Measured/fitted transfer curve, residual plot, INL proxy, usable range, saturation or knee-compression warning.', ko: 'Measured/fitted transfer curve, residual plot, INL proxy, usable range, saturation 또는 knee-compression warning을 출력합니다.' },
+      { en: 'A calibration view of whether nonlinearity is small enough for photometry, color correction, or HDR merging.', ko: 'Nonlinearity가 photometry, color correction, HDR merging에 충분히 작은지 보는 calibration view를 제공합니다.' },
+    ],
+    validationExamples: [
+      { en: 'For an ideal linear response, residuals should stay near zero until saturation or intentional knee compression.', ko: '이상적 linear response에서는 saturation 또는 intentional knee compression 전까지 residual이 0 근처에 있어야 합니다.' },
+      { en: 'Including saturated samples in the fit should distort the fitted slope and make low-signal residuals misleading.', ko: 'Saturated sample을 fit에 포함하면 fitted slope가 왜곡되고 low-signal residual이 오해를 줄 수 있습니다.' },
+    ],
+  },
+}
+
+const entry = computed(() => {
+  const base = theoryEntries[props.slug]
+  if (!base) return undefined
+  const supplement = supplementalTheoryDetails[props.slug]
+  return supplement ? { ...base, ...supplement } : base
+})
 </script>
 
 <style scoped>

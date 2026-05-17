@@ -98,9 +98,29 @@ test.describe('simulator pages', () => {
 
       await expect(page.locator('.sim-theory .formula-row')).toHaveCount(formulas)
       await expect(page.locator('.sim-theory-detail-grid')).toBeVisible()
-      await expect(page.getByText(heading)).toBeVisible()
+      await expect(page.getByRole('heading', { name: heading })).toBeVisible()
       await expect(page.getByText('Known Missing Physics')).toBeVisible()
       await expect(page.locator('.sim-theory .formula-variables mjx-container').first()).toBeVisible()
+    })
+  }
+
+  const detailedTheoryPages = [
+    '/simulator/dynamic-range.html',
+    '/simulator/responsivity-calculator.html',
+    '/simulator/pixel-snr-vs-illuminance.html',
+    '/simulator/photon-transfer-curve.html',
+    '/simulator/mtf-analyzer.html',
+    '/simulator/pixel-scaling.html',
+  ]
+
+  for (const path of detailedTheoryPages) {
+    test(`renders standard detailed theory blocks on ${path}`, async ({ page }) => {
+      await gotoDocs(page, path)
+
+      await expect(page.locator('.sim-theory-standard-grid')).toBeVisible()
+      await expect(page.getByText('Assumptions', { exact: true })).toBeVisible()
+      await expect(page.getByText('Outputs', { exact: true })).toBeVisible()
+      await expect(page.getByText('Validation Example', { exact: true })).toBeVisible()
     })
   }
 })
