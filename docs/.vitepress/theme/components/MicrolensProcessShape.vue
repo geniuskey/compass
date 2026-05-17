@@ -80,6 +80,34 @@
       </div>
     </div>
 
+    <details class="calibration-panel">
+      <summary>{{ t('Calibration coefficients', '보정 계수') }}</summary>
+      <p>
+        {{ t(
+          'Use these multipliers when fitting the surrogate to AFM/SEM or DOE data. Keep them near 1.0 until measured profiles justify a process-specific correction.',
+          'AFM/SEM 또는 DOE 데이터에 surrogate를 맞출 때 쓰는 multiplier입니다. 실측 profile이 공정별 보정을 뒷받침하기 전에는 1.0 근처에서 사용하세요.'
+        ) }}
+      </p>
+      <div class="controls-row calibration-controls">
+        <div class="slider-group">
+          <label>{{ t('Reflow spread gain', 'Reflow spread gain') }}: <strong>{{ reflowSpreadGain.toFixed(2) }}x</strong></label>
+          <input type="range" min="0.60" max="1.60" step="0.02" v-model.number="reflowSpreadGain" class="ctrl-range" />
+        </div>
+        <div class="slider-group">
+          <label>{{ t('Volume retention gain', 'Volume retention gain') }}: <strong>{{ volumeRetentionGain.toFixed(2) }}x</strong></label>
+          <input type="range" min="0.80" max="1.08" step="0.01" v-model.number="volumeRetentionGain" class="ctrl-range" />
+        </div>
+        <div class="slider-group">
+          <label>{{ t('Lateral etch gain', 'Lateral etch gain') }}: <strong>{{ lateralEtchGain.toFixed(2) }}x</strong></label>
+          <input type="range" min="0.50" max="1.80" step="0.02" v-model.number="lateralEtchGain" class="ctrl-range" />
+        </div>
+        <div class="slider-group">
+          <label>{{ t('Vertical loss gain', 'Vertical loss gain') }}: <strong>{{ verticalLossGain.toFixed(2) }}x</strong></label>
+          <input type="range" min="0.40" max="1.80" step="0.02" v-model.number="verticalLossGain" class="ctrl-range" />
+        </div>
+      </div>
+    </details>
+
     <div class="metric-grid">
       <div class="metric-card">
         <span>{{ t('Initial gap', '초기 gap') }}</span>
@@ -112,6 +140,22 @@
       <div class="metric-card">
         <span>{{ t('Height retention', '높이 보존율') }}</span>
         <strong>{{ heightRetention.toFixed(0) }}%</strong>
+      </div>
+      <div class="metric-card">
+        <span>{{ t('Zero-gap etch', 'Zero-gap etch') }}</span>
+        <strong>{{ zeroGapEtchTimeLabel }}</strong>
+      </div>
+      <div class="metric-card">
+        <span>{{ t('Profile exponent', 'Profile exponent') }}</span>
+        <strong>{{ profilePower.toFixed(2) }}</strong>
+      </div>
+      <div class="metric-card">
+        <span>{{ t('Lateral rate', 'Lateral rate') }}</span>
+        <strong>{{ (lateralEtchRate * 1000).toFixed(2) }} nm/s</strong>
+      </div>
+      <div class="metric-card">
+        <span>{{ t('Height-loss rate', 'Height-loss rate') }}</span>
+        <strong>{{ (verticalLossRate * 100).toFixed(2) }}%/s</strong>
       </div>
     </div>
 
@@ -319,8 +363,8 @@
     <div class="formula-box">
       <strong>{{ t('Model note', '모델 메모') }}:</strong>
       {{ t(
-        'This is a calibrated-by-user surrogate, not a foundry recipe. It combines volume-conserving reflow, parabolic/superellipse caps, and DOE-inspired etch trends: more etch time closes gap; polymerization mainly preserves height; mask thickness changes transfer robustness.',
-        '이 모델은 foundry recipe가 아니라 사용자가 보정해 쓰는 surrogate입니다. Volume-conserving reflow, parabolic/superellipse cap, DOE식 etch 경향을 결합합니다. Etch time은 gap closure를 키우고, polymerization은 주로 height 보존에, mask thickness는 transfer robustness에 영향을 준다고 둡니다.'
+        'This is a calibrated-by-user surrogate, not a foundry recipe. It combines volume-conserving reflow, parabolic/superellipse caps, and DOE-inspired etch trends: more etch time closes gap; polymerization mainly preserves height; mask thickness changes transfer robustness. Fit the calibration gains to measured gap, height, and profile data before making quantitative decisions.',
+        '이 모델은 foundry recipe가 아니라 사용자가 보정해 쓰는 surrogate입니다. Volume-conserving reflow, parabolic/superellipse cap, DOE식 etch 경향을 결합합니다. Etch time은 gap closure를 키우고, polymerization은 주로 height 보존에, mask thickness는 transfer robustness에 영향을 준다고 둡니다. 정량 의사결정 전에는 calibration gain을 실측 gap, height, profile 데이터에 맞춰야 합니다.'
       ) }}
     </div>
   </div>
@@ -348,6 +392,10 @@ const maskThickness = ref(0.45)
 const polymerGas = ref(55)
 const etchTime = ref(55)
 const viewMode = ref<ViewMode>('section')
+const reflowSpreadGain = ref(1.00)
+const volumeRetentionGain = ref(1.00)
+const lateralEtchGain = ref(1.00)
+const verticalLossGain = ref(1.00)
 
 const tabs = [
   { key: 'section' as const, en: 'Cross-section', ko: '단면' },
@@ -387,7 +435,7 @@ const areaFactor = computed(() => {
 const reflowSpread = computed(() => {
   const thicknessTerm = 0.10 * resistThickness.value
   const gapPull = 0.20 * initialGap.value
-  return thermalDose.value * (0.018 + thicknessTerm + gapPull)
+  return reflowSpreadGain.value * thermalDose.value * (0.018 + thicknessTerm + gapPull)
 })
 
 const reflowWidth = computed(() => Math.min(pitch.value * 1.04, boundedMaskWidth.value + 2 * reflowSpread.value))
@@ -395,21 +443,27 @@ const reflowGap = computed(() => Math.max(0, pitch.value - reflowWidth.value))
 const reflowHeight = computed(() => {
   const r0 = boundedMaskWidth.value / 2
   const r1 = reflowWidth.value / 2
-  const volumeRetention = clamp(0.96 - 0.08 * thermalDose.value, 0.84, 0.98)
+  const volumeRetention = clamp((0.96 - 0.08 * thermalDose.value) * volumeRetentionGain.value, 0.74, 1.02)
   return clamp((2 * resistThickness.value * r0 * r0 * volumeRetention) / Math.max(r1 * r1, 0.01), 0.035, 2.0)
 })
 
 const polyNorm = computed(() => polymerGas.value / 100)
 const maskRobustness = computed(() => clamp(0.72 + maskThickness.value / 0.75, 0.72, 1.70))
-
-function etchTransferAt(timeSeconds: number) {
+const lateralEtchRate = computed(() => {
   const poly = polyNorm.value
   const mask = maskRobustness.value
-  const lateralRate = (0.0018 + 0.0012 * poly + 0.00045 * thermalDose.value) * (0.84 + 0.16 * mask)
-  const closure = timeSeconds * lateralRate
+  return lateralEtchGain.value * (0.0018 + 0.0012 * poly + 0.00045 * thermalDose.value) * (0.84 + 0.16 * mask)
+})
+const verticalLossRate = computed(() => {
+  const poly = polyNorm.value
+  const mask = maskRobustness.value
+  return verticalLossGain.value * 0.0030 * (1 - 0.62 * poly) * (1.12 - 0.16 * mask)
+})
+
+function etchTransferAt(timeSeconds: number) {
+  const closure = timeSeconds * lateralEtchRate.value
   const gap = Math.max(0, reflowGap.value - 2 * closure)
-  const flattenRate = 0.0030 * (1 - 0.62 * poly) * (1.12 - 0.16 * mask)
-  const lossFraction = clamp(timeSeconds * flattenRate, 0, 0.58)
+  const lossFraction = clamp(timeSeconds * verticalLossRate.value, 0, 0.58)
   const transferredHeight = Math.max(0.025, reflowHeight.value * (1 - lossFraction))
   return { gap, closure, lossFraction, height: transferredHeight }
 }
@@ -430,6 +484,16 @@ const roc = computed(() => {
 const focalLength = computed(() => roc.value / Math.max(lensIndex.value - 1, 0.05))
 const fNumber = computed(() => focalLength.value / Math.max(finalWidth.value, 0.05))
 const fillFactor = computed(() => clamp((areaFactor.value * finalWidth.value * finalWidth.value / (pitch.value * pitch.value)) * 100, 0, 100))
+const zeroGapEtchTime = computed(() => {
+  if (reflowGap.value <= 0.002) return 0
+  const seconds = reflowGap.value / Math.max(2 * lateralEtchRate.value, 1e-6)
+  return Math.min(seconds, 999)
+})
+const zeroGapEtchTimeLabel = computed(() => {
+  if (zeroGapEtchTime.value <= 0.1) return t('already closed', '이미 닫힘')
+  if (zeroGapEtchTime.value > 140) return t('>140 s', '>140 s')
+  return `${zeroGapEtchTime.value.toFixed(0)} s`
+})
 
 const processFlags = computed(() => {
   const flags: { text: string; tone: string }[] = []
@@ -439,6 +503,8 @@ const processFlags = computed(() => {
 
   if (reflowGap.value <= 0.002 && initialGap.value > 0.01) flags.push({ text: t('merger risk during reflow', 'reflow 중 merger 위험'), tone: 'risk' })
   if (etchState.value.lossFraction > 0.32) flags.push({ text: t('height loss risk', 'height loss 위험'), tone: 'risk' })
+  if (zeroGapEtchTime.value > 140 && finalGap.value > 0.06) flags.push({ text: t('etch window too short', 'etch window 부족'), tone: 'risk' })
+  if (zeroGapEtchTime.value > 0.1 && etchTime.value > zeroGapEtchTime.value + 30) flags.push({ text: t('over-etch margin', 'over-etch margin'), tone: 'warn' })
   if (fillFactor.value > 92) flags.push({ text: t('high fill factor', '높은 fill factor'), tone: 'good' })
   if (fNumber.value < 0.9 || fNumber.value > 3.8) flags.push({ text: t('check optical focus', 'optical focus 확인 필요'), tone: 'warn' })
   return flags
@@ -676,6 +742,32 @@ const currentProcessPoint = computed(() => ({
   color: var(--vp-c-text-1);
   text-transform: uppercase;
   letter-spacing: 0;
+}
+
+.calibration-panel {
+  margin: 10px 0 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 7px;
+  background: var(--vp-c-bg);
+}
+
+.calibration-panel summary {
+  cursor: pointer;
+  color: var(--vp-c-text-1);
+  font-size: 0.84em;
+  font-weight: 700;
+}
+
+.calibration-panel p {
+  margin: 8px 0 12px;
+  color: var(--vp-c-text-2);
+  font-size: 0.82em;
+  line-height: 1.5;
+}
+
+.calibration-controls {
+  margin-bottom: 0;
 }
 
 .controls-row {

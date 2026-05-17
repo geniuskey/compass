@@ -40,6 +40,18 @@ The simulators are **lightweight pedagogical tools**: TMM, geometric optics, ana
 - **[Color Accuracy Analyzer](./color-accuracy)** — Evaluate color reproduction with CCM computation and Delta E analysis on ColorChecker patches
 - **[Dark Current & Temperature](./dark-current)** — Simulate Arrhenius dark current model and visualize thermal noise impact on image quality
 
+## Quick Validation Examples
+
+Use these checks before trusting a simulator trend. They are intentionally simple: a good browser model should pass the limiting case before you interpret a complicated sweep.
+
+| Simulator | Sanity check | Expected behavior |
+|-----------|--------------|-------------------|
+| [TMM QE Calculator](./tmm-qe) | Remove coating layers and compare normal-incidence air/Si reflection with $R=|(1-n_{Si})/(1+n_{Si})|^2$. | Reflectance should be close to the Fresnel limit and energy should satisfy $R+T+\sum A_j\approx1$. |
+| [Microlens Process Shape](./microlens-process-shape) | Hold reflow fixed and increase etch time. | Final gap should decrease while height retention decreases; excessive etch should trigger a height-loss or over-etch warning. |
+| [Color Filter Designer](./color-filter) | Narrow RGB filter FWHM while keeping peaks fixed. | Channel crosstalk should drop, but total signal and low-light SNR margin should also shrink. |
+| [SNR Calculator](./snr-calculator) / [Photon Transfer Curve](./photon-transfer-curve) | Sweep illumination with read noise fixed. | Low signal should be read-noise limited; high signal should follow shot-noise behavior, $\sigma\approx\sqrt{S}$. |
+| [Si Absorption Depth](./si-absorption) | Increase silicon thickness at red/NIR wavelengths. | Red/NIR absorption should improve more strongly than blue absorption because long wavelengths penetrate deeper. |
+
 ## Model Scope
 
 | Tool family | Model type | Best for |

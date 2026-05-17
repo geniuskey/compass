@@ -19,7 +19,8 @@ Lithography layout, thermal reflow, etch-transfer 조건이 CIS 마이크로렌�
 - **Layout**: pixel pitch, lithographic island width, aperture footprint shape.
 - **Reflow**: 온도/시간을 normalized thermal budget으로 보고, lens spread와 volume conservation 기반 height 변화를 계산.
 - **Etch transfer**: etch time은 residual lens gap closure를 키우고, polymerization은 height 보존에, mask thickness는 transfer robustness에 영향을 준다고 모델링.
-- **Outputs**: final gap, height, vertex radius of curvature, f-number, fill factor, cross-section, 3D wireframe, etch response curve.
+- **Calibration**: reflow spread, volume retention, lateral etch, vertical height-loss gain을 AFM/SEM 또는 DOE 데이터에 맞춰 보정할 수 있습니다.
+- **Outputs**: final gap, height, vertex radius of curvature, f-number, fill factor, zero-gap etch-time estimate, profile exponent, cross-section, 3D wireframe, etch response curve.
 
 ## 문헌 기반
 

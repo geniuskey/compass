@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useLocale } from '../composables/useLocale'
 
 interface Reference {
   id: string
@@ -11,6 +12,7 @@ interface Reference {
   summary: string
   imageUrl?: string
   link?: string
+  usedIn?: { label: string; href: string }[]
 }
 
 const props = defineProps<{
@@ -19,6 +21,7 @@ const props = defineProps<{
 
 const selectedRef = ref<Reference | null>(null)
 const isModalOpen = ref(false)
+const { t } = useLocale()
 
 const setBodyScrollLocked = (locked: boolean) => {
   if (typeof document !== 'undefined') {
@@ -76,7 +79,7 @@ const groupedReferences = computed(() => {
           class="ref-card"
           role="button"
           tabindex="0"
-          :aria-label="`Open reference details for ${item.title}`"
+          :aria-label="`${t('Open reference details for', '레퍼런스 상세 보기')}: ${item.title}`"
           @click="openModal(item)"
           @keydown.enter.prevent="openModal(item)"
           @keydown.space.prevent="openModal(item)"
@@ -88,6 +91,9 @@ const groupedReferences = computed(() => {
             <div class="ref-title">{{ item.title }}</div>
             <div class="ref-authors">{{ item.authors }}</div>
             <div class="ref-journal">{{ item.journal }}, {{ item.year }}</div>
+            <div v-if="item.usedIn?.length" class="ref-used-count">
+              {{ t('Used in', '연결 문서') }} {{ item.usedIn.length }}
+            </div>
           </div>
         </div>
       </div>
@@ -105,7 +111,7 @@ const groupedReferences = computed(() => {
             <h3>{{ selectedRef?.title }}</h3>
             <p class="modal-authors">{{ selectedRef?.authors }}</p>
             <p class="modal-journal">{{ selectedRef?.journal }} ({{ selectedRef?.year }})</p>
-            <a v-if="selectedRef?.link" :href="selectedRef.link" target="_blank" class="doi-link">View Paper ↗</a>
+            <a v-if="selectedRef?.link" :href="selectedRef.link" target="_blank" class="doi-link">{{ t('View Paper', '논문 보기') }} ↗</a>
           </div>
 
           <div class="modal-body">
@@ -114,8 +120,21 @@ const groupedReferences = computed(() => {
             </div>
             
             <div class="modal-summary">
-              <h4>Abstract & Summary</h4>
+              <h4>{{ t('Abstract & Summary', '초록 및 요약') }}</h4>
               <div class="summary-content" v-html="selectedRef?.summary"></div>
+            </div>
+
+            <div v-if="selectedRef?.usedIn?.length" class="used-in-section">
+              <h4>{{ t('Used in COMPASS', 'COMPASS 연결 문서') }}</h4>
+              <div class="used-in-links">
+                <a
+                  v-for="link in selectedRef.usedIn"
+                  :key="link.href"
+                  :href="link.href"
+                >
+                  {{ link.label }}
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -195,6 +214,18 @@ const groupedReferences = computed(() => {
   font-size: 0.8rem;
   color: var(--vp-c-text-3);
   font-style: italic;
+}
+
+.ref-used-count {
+  display: inline-flex;
+  margin-top: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 999px;
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-bg);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 /* Modal Styles */
@@ -313,6 +344,43 @@ const groupedReferences = computed(() => {
   font-weight: 600;
   margin-bottom: 1rem;
   color: var(--vp-c-text-1);
+}
+
+.used-in-section {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.used-in-section h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--vp-c-text-1);
+}
+
+.used-in-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.used-in-links a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 999px;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-brand-1);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.used-in-links a:hover,
+.used-in-links a:focus-visible {
+  border-color: var(--vp-c-brand-1);
 }
 
 .summary-content {

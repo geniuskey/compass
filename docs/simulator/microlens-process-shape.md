@@ -19,7 +19,8 @@ Most existing COMPASS microlens tools start from an assumed lens geometry. This 
 - **Layout**: pixel pitch, lithographic island width, and aperture footprint shape.
 - **Reflow**: temperature/time as a normalized thermal budget that spreads the lens and changes height through volume conservation.
 - **Etch transfer**: etch time closes residual lens gap; polymerization preserves height; mask thickness changes transfer robustness.
-- **Outputs**: final gap, height, vertex radius of curvature, f-number, fill factor, cross-section, 3D wireframe, and etch response curves.
+- **Calibration**: reflow spread, volume retention, lateral etch, and vertical height-loss gains can be fitted to AFM/SEM or DOE data.
+- **Outputs**: final gap, height, vertex radius of curvature, f-number, fill factor, zero-gap etch-time estimate, profile exponent, cross-section, 3D wireframe, and etch response curves.
 
 ## Literature Basis
 

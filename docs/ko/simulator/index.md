@@ -40,6 +40,18 @@ title: 시뮬레이터
 - **[색 정확도 분석기](./color-accuracy)** — 분광 감도, CCM, ΔE*ab 기반 색 재현 정확도 평가
 - **[암전류 & 온도](./dark-current)** — 아레니우스 모델 기반 온도별 암전류와 SNR 영향 분석
 
+## 빠른 검증 예제
+
+시뮬레이터 trend를 믿기 전에 아래 한계 사례를 먼저 확인하세요. 복잡한 sweep을 해석하기 전에 단순 검증을 통과해야 합니다.
+
+| 시뮬레이터 | sanity check | 기대 동작 |
+|------------|--------------|-----------|
+| [TMM QE 계산기](./tmm-qe) | coating layer를 제거하고 normal-incidence air/Si 반사를 $R=|(1-n_{Si})/(1+n_{Si})|^2$와 비교합니다. | 반사율은 Fresnel limit에 가까워야 하고 에너지는 $R+T+\sum A_j\approx1$을 만족해야 합니다. |
+| [마이크로렌즈 공정 형상](./microlens-process-shape) | reflow 조건을 고정하고 etch time을 늘립니다. | Final gap은 줄고 height retention은 낮아져야 하며, 과도한 etch에서는 height-loss 또는 over-etch 경고가 떠야 합니다. |
+| [컬러 필터 설계](./color-filter) | RGB filter FWHM을 줄이고 peak는 유지합니다. | Channel crosstalk은 감소하지만 총 신호와 low-light SNR margin도 줄어야 합니다. |
+| [SNR 계산기](./snr-calculator) / [Photon Transfer Curve](./photon-transfer-curve) | read noise를 고정하고 illumination을 sweep합니다. | 낮은 신호에서는 read-noise limited, 높은 신호에서는 $\sigma\approx\sqrt{S}$ shot-noise behavior가 나타나야 합니다. |
+| [Si 흡수 깊이](./si-absorption) | red/NIR 파장에서 silicon thickness를 늘립니다. | 장파장은 더 깊이 침투하므로 blue보다 red/NIR absorption 개선이 크게 나타나야 합니다. |
+
 ## 모델 범위
 
 | 도구군 | 모델 유형 | 적합한 용도 |

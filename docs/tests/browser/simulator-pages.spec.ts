@@ -8,9 +8,15 @@ async function gotoDocs(page: Page, path: string) {
 test.describe('simulator pages', () => {
   const fullscreenPaths = [
     '/simulator/tmm-qe.html',
+    '/simulator/angular-response.html',
     '/simulator/barl-optimizer.html',
+    '/simulator/color-accuracy.html',
+    '/simulator/color-filter.html',
+    '/simulator/emva1288.html',
+    '/simulator/energy-budget.html',
     '/simulator/pixel-playground.html',
     '/simulator/fdti-pixel.html',
+    '/simulator/mla-array.html',
     '/simulator/microlens-process-shape.html',
   ]
 
@@ -21,10 +27,11 @@ test.describe('simulator pages', () => {
       const toggle = page.getByRole('button', { name: 'Toggle fullscreen' }).first()
       await expect(toggle).toBeVisible()
       await toggle.click()
-      await expect(page.locator('.sim-fullscreen')).toHaveCount(1)
+      const fullscreenRoot = page.locator('.sim-fullscreen, .cf-fullscreen')
+      await expect(fullscreenRoot).toHaveCount(1)
 
       await page.keyboard.press('Escape')
-      await expect(page.locator('.sim-fullscreen')).toHaveCount(0)
+      await expect(fullscreenRoot).toHaveCount(0)
     })
   }
 
@@ -53,8 +60,11 @@ test.describe('simulator pages', () => {
 
     await expect(page.locator('.sim-theory .formula-row')).toHaveCount(7)
     await expect(page.locator('.sim-theory-detail-grid')).toBeVisible()
+    await expect(page.getByText('Validation Example')).toBeVisible()
     await expect(page.getByText('How To Calibrate This Surrogate')).toBeVisible()
     await expect(page.getByText('Known Missing Physics')).toBeVisible()
+    await expect(page.getByText('Calibration coefficients')).toBeVisible()
+    await expect(page.locator('.metric-card span').getByText('Zero-gap etch', { exact: true })).toBeVisible()
     await expect(page.locator('.sim-theory .formula-variables mjx-container').first()).toBeVisible()
   })
 
@@ -63,6 +73,7 @@ test.describe('simulator pages', () => {
 
     await expect(page.locator('.sim-theory .formula-row')).toHaveCount(7)
     await expect(page.locator('.sim-theory-detail-grid')).toBeVisible()
+    await expect(page.getByText('Validation Example')).toBeVisible()
     await expect(page.getByText('Calibration Checklist')).toBeVisible()
     await expect(page.getByText('Known Missing Physics')).toBeVisible()
     await expect(page.locator('.sim-theory .formula-variables mjx-container').first()).toBeVisible()

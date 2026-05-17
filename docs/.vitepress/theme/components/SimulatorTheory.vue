@@ -10,6 +10,32 @@
 
     <p class="sim-theory-summary">{{ pick(entry.summary) }}</p>
 
+    <div
+      v-if="entry.assumptions?.length || entry.outputs?.length || entry.validationExamples?.length"
+      class="sim-theory-standard-grid"
+    >
+      <div v-if="entry.assumptions?.length" class="sim-theory-card">
+        <h3>{{ t('Assumptions', '모델 가정') }}</h3>
+        <ul>
+          <li v-for="item in entry.assumptions" :key="pick(item)">{{ pick(item) }}</li>
+        </ul>
+      </div>
+
+      <div v-if="entry.outputs?.length" class="sim-theory-card">
+        <h3>{{ t('Outputs', '출력값') }}</h3>
+        <ul>
+          <li v-for="item in entry.outputs" :key="pick(item)">{{ pick(item) }}</li>
+        </ul>
+      </div>
+
+      <div v-if="entry.validationExamples?.length" class="sim-theory-card validation-card">
+        <h3>{{ t('Validation Example', '검증 예제') }}</h3>
+        <ul>
+          <li v-for="item in entry.validationExamples" :key="pick(item)">{{ pick(item) }}</li>
+        </ul>
+      </div>
+    </div>
+
     <div class="sim-theory-grid">
       <div class="sim-theory-card">
         <h3>{{ t('Core Equations', '핵심 수식') }}</h3>
@@ -137,6 +163,9 @@ interface TheoryEntry {
   title: Localized
   summary: Localized
   intuition?: Localized
+  assumptions?: Localized[]
+  outputs?: Localized[]
+  validationExamples?: Localized[]
   formulas: Formula[]
   concepts: Localized[]
   sections?: TheorySection[]
@@ -229,6 +258,19 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'Think of the pixel stack as many transparent plates. Each interface reflects a small wave; each layer adds phase delay and absorption. The transfer matrix keeps the amplitude and phase of all forward and backward waves coherent, so a thin BARL layer can increase QE by canceling reflection at one wavelength while hurting another wavelength.',
       ko: '픽셀 스택을 여러 장의 투명한 판으로 생각하면 됩니다. 각 계면은 작은 반사파를 만들고, 각 레이어는 위상 지연과 흡수를 더합니다. 전달 행렬은 전진파와 후진파의 진폭 및 위상을 coherent하게 추적하므로, 얇은 BARL 레이어가 한 파장에서는 반사를 상쇄해 QE를 올리면서 다른 파장에서는 QE를 낮출 수도 있습니다.',
     },
+    assumptions: [
+      { en: 'Every layer is laterally infinite, planar, homogeneous inside the layer, and coherent over the simulated optical path.', ko: '모든 레이어는 횡방향으로 무한하고, 평탄하며, 레이어 내부가 균질하고, 시뮬레이션 광경로에서 coherent하다고 가정합니다.' },
+      { en: 'The plotted QE is silicon optical absorption, not collected charge after carrier transport.', ko: '표시 QE는 silicon optical absorption이며, carrier transport 후 수집된 전하가 아닙니다.' },
+      { en: 'Microlens, metal grid, DTI, and color-filter relief are collapsed into planar effective films.', ko: 'Microlens, metal grid, DTI, color-filter relief는 평면 effective film으로 축약됩니다.' },
+    ],
+    outputs: [
+      { en: 'Wavelength-dependent $R(\\lambda)$, $T(\\lambda)$, parasitic layer absorption, and silicon absorption by color channel.', ko: '파장별 $R(\\lambda)$, $T(\\lambda)$, 기생 레이어 흡수, 색 채널별 silicon absorption을 출력합니다.' },
+      { en: 'Angle and polarization trends for a flat stack, useful before switching to RCWA/FDTD for lateral geometry.', ko: '평탄 스택의 입사각/편광 경향을 보여주며, lateral geometry를 RCWA/FDTD로 계산하기 전 선별에 유용합니다.' },
+    ],
+    validationExamples: [
+      { en: 'With all coating layers removed, compare the normal-incidence air/Si reflection against $R=|(1-n_{Si})/(1+n_{Si})|^2$ at the selected wavelength.', ko: '코팅 레이어를 모두 제거한 조건에서는 선택 파장에서 normal-incidence air/Si 반사율을 $R=|(1-n_{Si})/(1+n_{Si})|^2$와 비교합니다.' },
+      { en: 'For a passive stack, verify $R+T+\\sum_j A_j\\approx1$ before interpreting QE peaks.', ko: '수동 스택에서는 QE peak를 해석하기 전에 $R+T+\\sum_j A_j\\approx1$인지 확인합니다.' },
+    ],
     formulas: [
       {
         label: { en: 'Complex refractive index', ko: '복소 굴절률' },
@@ -1083,6 +1125,19 @@ const theoryEntries: Record<string, TheoryEntry> = {
       en: 'Start with a printed resist island. Heating lets surface tension round it into a lens cap, so a wider cap usually means a lower cap if the same material volume is spread out. Plasma etch then transfers that cap into the target layer: longer etch can remove the valley between lenses, but it can also flatten the lens. The useful process window is therefore a compromise between zero gap, enough height, acceptable curvature, and no lens merger.',
       ko: '먼저 포토레지스트 island가 인쇄됩니다. 가열하면 표면장력이 이를 둥근 렌즈 cap으로 만들고, 같은 재료 체적이 더 넓게 퍼질수록 cap 높이는 낮아지는 경향이 있습니다. 그 다음 plasma etch가 이 cap을 목표층으로 전사합니다. Etch 시간이 길면 렌즈 사이 valley를 없앨 수 있지만 동시에 렌즈가 납작해질 수 있습니다. 따라서 유효 공정 창은 zero gap, 충분한 높이, 적절한 곡률, lens merger 회피 사이의 절충입니다.',
     },
+    assumptions: [
+      { en: 'The resist island is represented by pitch, mask width, thickness, and a footprint-shape exponent; local corner rounding and stochastic CD variation are not solved.', ko: 'Resist island는 pitch, mask width, thickness, footprint-shape exponent로 표현하며, local corner rounding과 stochastic CD variation은 직접 풀지 않습니다.' },
+      { en: 'Reflow is volume constrained and monotonic with a normalized temperature/time budget; the coefficients are user-calibrated surrogate parameters.', ko: 'Reflow는 체적 제약을 받으며 정규화된 온도/시간 budget에 대해 단조적으로 변한다고 두고, 계수는 사용자가 보정하는 surrogate parameter입니다.' },
+      { en: 'Etch transfer is split into lateral gap closure and vertical height loss, following the DOE variables exposed by the CIS plasma-etch literature.', ko: 'Etch transfer는 CIS plasma-etch 문헌의 DOE 변수에 맞춰 lateral gap closure와 vertical height loss로 분리합니다.' },
+    ],
+    outputs: [
+      { en: 'Initial gap, post-reflow gap, final gap, final height, fill factor, vertex radius, f-number proxy, profile exponent, and zero-gap etch-time estimate.', ko: '초기 gap, reflow 후 gap, 최종 gap, 최종 높이, fill factor, vertex radius, f-number 근사, profile exponent, zero-gap etch-time 추정값을 출력합니다.' },
+      { en: 'Cross-section, final 3D surface wireframe, and etch-time response curves for gap and height retention.', ko: '단면, 최종 3D surface wireframe, gap 및 height retention의 etch-time response curve를 보여줍니다.' },
+    ],
+    validationExamples: [
+      { en: 'At fixed reflow settings, increasing etch time should reduce $g_f$ while reducing height retention; if metrology shows the opposite, refit the lateral and vertical etch gains separately.', ko: 'Reflow 조건을 고정하면 etch time 증가에 따라 $g_f$는 감소하고 height retention은 낮아져야 합니다. 계측이 반대 경향이면 lateral/vertical etch gain을 따로 재피팅해야 합니다.' },
+      { en: 'At fixed etch settings, a larger reflow spread gain should reduce residual gap but also lower height through volume conservation.', ko: 'Etch 조건을 고정하면 reflow spread gain 증가는 residual gap을 줄이지만 체적 보존 때문에 height를 낮춰야 합니다.' },
+    ],
     formulas: [
       {
         label: { en: 'Lithographic starting gap', ko: 'Lithography 시작 gap' },
@@ -1107,9 +1162,10 @@ const theoryEntries: Record<string, TheoryEntry> = {
       },
       {
         label: { en: 'Reflow spread and residual gap', ko: 'Reflow spread 및 잔류 gap' },
-        equation: '\\Delta_r = B_r(k_0+k_h h_0+k_g g_0), \\quad w_r=\\min(1.04p, w_m+2\\Delta_r), \\quad g_r=\\max(0,p-w_r)',
+        equation: '\\Delta_r = G_r B_r(k_0+k_h h_0+k_g g_0), \\quad w_r=\\min(1.04p, w_m+2\\Delta_r), \\quad g_r=\\max(0,p-w_r)',
         variables: [
           { symbol: '\\Delta_r', description: { en: 'Lateral spread per side during reflow', ko: 'Reflow 중 한쪽 방향 lateral spread' } },
+          { symbol: 'G_r', description: { en: 'User calibration multiplier for reflow spread gain', ko: 'Reflow spread gain에 대한 사용자 보정 multiplier' } },
           { symbol: 'h_0', description: { en: 'Initial resist thickness', ko: '초기 resist 두께' } },
           { symbol: 'w_r', description: { en: 'Post-reflow lens footprint width', ko: 'Reflow 후 렌즈 footprint 폭' } },
           { symbol: 'g_r', description: { en: 'Gap after reflow but before etch transfer', ko: 'Reflow 후, etch transfer 전 gap' } },
@@ -1118,11 +1174,12 @@ const theoryEntries: Record<string, TheoryEntry> = {
       },
       {
         label: { en: 'Volume-constrained reflow height', ko: '체적 제약 기반 reflow 높이' },
-        equation: 'V_0 \\approx A_m h_0, \\quad V_r \\approx C_{\\text{cap}} A_r h_r, \\quad h_r \\approx \\frac{\\eta_v A_m h_0}{C_{\\text{cap}}A_r}',
+        equation: 'V_0 \\approx A_m h_0, \\quad V_r \\approx C_{\\text{cap}} A_r h_r, \\quad h_r \\approx \\frac{G_v\\eta_v A_m h_0}{C_{\\text{cap}}A_r}',
         variables: [
           { symbol: 'V_0, V_r', description: { en: 'Resist volume before and after reflow', ko: 'Reflow 전후 resist 체적' } },
           { symbol: 'A_m, A_r', description: { en: 'Mask island area and reflowed lens footprint area', ko: 'Mask island 면적 및 reflow 후 렌즈 footprint 면적' } },
           { symbol: 'C_{\\text{cap}}', description: { en: 'Shape factor for the cap profile; a parabolic cap has a different value from a spherical cap', ko: 'Cap profile의 형상 계수; 포물면 cap과 구면 cap은 다른 값을 가집니다.' } },
+          { symbol: 'G_v', description: { en: 'User calibration multiplier for effective volume retention', ko: '유효 체적 보존에 대한 사용자 보정 multiplier' } },
           { symbol: '\\eta_v', description: { en: 'Effective volume retention after reflow', ko: 'Reflow 후 유효 체적 보존율' } },
           { symbol: 'h_r', description: { en: 'Reflowed lens height before etch transfer', ko: 'Etch transfer 전 reflow 렌즈 높이' } },
         ],
@@ -1130,15 +1187,16 @@ const theoryEntries: Record<string, TheoryEntry> = {
       },
       {
         label: { en: 'Etch-transfer gap closure and height loss', ko: 'Etch-transfer gap closure 및 height loss' },
-        equation: 'g_f=\\max(0,g_r-2v_{\\ell}t_e), \\quad h_f=h_r(1-L_e), \\quad L_e=\\operatorname{clip}(v_z t_e,0,L_{\\max})',
+        equation: 'g_f=\\max(0,g_r-2G_{\\ell}v_{\\ell,0}t_e), \\quad h_f=h_r(1-L_e), \\quad L_e=\\operatorname{clip}(G_z v_{z,0} t_e,0,L_{\\max}), \\quad t_{zg}=\\frac{g_r}{2G_{\\ell}v_{\\ell,0}}',
         variables: [
           { symbol: 'g_f', description: { en: 'Final gap after etch transfer', ko: 'Etch transfer 후 최종 gap' } },
           { symbol: 'h_f', description: { en: 'Final transferred lens height', ko: '전사 후 최종 렌즈 높이' } },
-          { symbol: 'v_{\\ell}', description: { en: 'Effective lateral closure rate driven by etch chemistry and mask robustness', ko: '식각 chemistry 및 mask robustness에 의해 정해지는 유효 lateral closure rate' } },
-          { symbol: 'v_z', description: { en: 'Effective vertical flattening or height-loss rate', ko: '유효 vertical flattening 또는 height-loss rate' } },
+          { symbol: 'G_{\\ell},G_z', description: { en: 'User calibration multipliers for lateral etch closure and vertical height loss', ko: 'Lateral etch closure 및 vertical height loss에 대한 사용자 보정 multiplier' } },
+          { symbol: 'v_{\\ell,0},v_{z,0}', description: { en: 'Base lateral closure and vertical flattening rates from the normalized surrogate', ko: '정규화 surrogate의 기본 lateral closure 및 vertical flattening rate' } },
           { symbol: 't_e', description: { en: 'Etch time', ko: 'Etch 시간' } },
+          { symbol: 't_{zg}', description: { en: 'Estimated etch time needed to reach zero gap before clipping', ko: 'Clipping 전 zero gap 도달에 필요한 추정 etch 시간' } },
         ],
-        note: { en: 'In this surrogate, polymerizing gas increases lateral gap closure and reduces height loss; mask thickness changes transfer robustness.', ko: '이 surrogate에서 polymerizing gas는 lateral gap closure를 키우고 height loss를 줄이며, mask thickness는 transfer robustness를 바꿉니다.' },
+        note: { en: 'In this surrogate, polymerizing gas increases lateral gap closure and reduces height loss; mask thickness changes transfer robustness; the four gains expose the DOE fitting knobs.', ko: '이 surrogate에서 polymerizing gas는 lateral gap closure를 키우고 height loss를 줄이며, mask thickness는 transfer robustness를 바꿉니다. 네 개의 gain은 DOE fitting knob입니다.' },
       },
       {
         label: { en: 'Final 3D surface profile', ko: '최종 3D 표면 profile' },
@@ -2413,6 +2471,13 @@ const entry = computed(() => theoryEntries[props.slug])
   gap: 14px;
 }
 
+.sim-theory-standard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0;
+}
+
 .sim-theory-detail-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2508,6 +2573,10 @@ const entry = computed(() => theoryEntries[props.slug])
   }
 
   .sim-theory-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sim-theory-standard-grid {
     grid-template-columns: 1fr;
   }
 

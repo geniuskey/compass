@@ -8,6 +8,11 @@ export const referencesKo = [
     year: "1995",
     link: "https://doi.org/10.1364/JOSAA.12.001068",
     imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Diffraction_grating_principle_1.svg/512px-Diffraction_grating_principle_1.svg.png",
+    usedIn: [
+      { label: "RCWA 설명", href: "/compass/ko/theory/simulation/rcwa-explained" },
+      { label: "수치 안정성", href: "/compass/ko/theory/simulation/numerical-stability" },
+      { label: "핵심 논문", href: "/compass/ko/research/key-papers" }
+    ],
     summary: `
       <p>이 기념비적인 논문은 이진 회절 격자에 적용될 때 엄밀 결합파 해석(RCWA)의 수치적으로 안정적인 공식을 처음으로 소개했습니다. 이 연구 이전에는, 고유값 분해 과정에서 기하급수적으로 증가하는 근접장(evanescent wave) 성분 때문에 두꺼운 격자나 전도성이 높은 물질을 계산할 때 심각한 수치적 불안정성이 발생했습니다.</p>
       <ul>
@@ -26,6 +31,11 @@ export const referencesKo = [
     year: "1996",
     link: "https://doi.org/10.1364/JOSAA.13.001870",
     imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Fourier_transform_time_and_frequency_domains_%28small%29.gif/512px-Fourier_transform_time_and_frequency_domains_%28small%29.gif",
+    usedIn: [
+      { label: "RCWA 설명", href: "/compass/ko/theory/simulation/rcwa-explained" },
+      { label: "RCWA vs FDTD", href: "/compass/ko/theory/simulation/rcwa-vs-fdtd" },
+      { label: "핵심 논문", href: "/compass/ko/research/key-papers" }
+    ],
     summary: `
       <p>이 논문은 굴절률 차이가 큰 물질의 경계면에서 푸리에 급수가 매우 느리게 수렴하거나 아예 수렴하지 않는 전산 전자기학의 치명적이고 오래된 난제를 해결했습니다. Li는 불연속 함수들을 동시에 전개할 때 반드시 지켜야 할 특수한 수학적 규칙들을 증명했습니다.</p>
       <ul>
@@ -44,6 +54,11 @@ export const referencesKo = [
     year: "1996",
     link: "https://doi.org/10.1364/JOSAA.13.001024",
     imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Scattering_Matrix_Port_Definition.svg/512px-Scattering_Matrix_Port_Definition.svg.png",
+    usedIn: [
+      { label: "RCWA 설명", href: "/compass/ko/theory/simulation/rcwa-explained" },
+      { label: "솔버 벤치마크", href: "/compass/ko/cookbook/solver-benchmark" },
+      { label: "핵심 논문", href: "/compass/ko/research/key-papers" }
+    ],
     summary: `
       <p>Moharam의 연구가 단일 층의 안정성을 해결했다면, Li의 이 논문은 여러 층을 쌓아 올릴 때 발생하는 전달 행렬(T-Matrix)의 불안정성 문제를 완벽히 해결한 산란 행렬(S-Matrix) 기법을 정립했습니다.</p>
       <ul>
@@ -61,6 +76,11 @@ export const referencesKo = [
     journal: "IEEE Trans. Antennas Propag.",
     year: "1966",
     link: "https://doi.org/10.1109/TAP.1966.1138693",
+    usedIn: [
+      { label: "FDTD 설명", href: "/compass/ko/theory/simulation/fdtd-explained" },
+      { label: "RCWA vs FDTD", href: "/compass/ko/theory/simulation/rcwa-vs-fdtd" },
+      { label: "핵심 논문", href: "/compass/ko/research/key-papers" }
+    ],
     summary: `
       <p>전설적인 "Yee Cell" 그리드를 처음 소개하며 시간 영역 유한 차분법(FDTD)의 기초를 다진 기념비적인 논문입니다.</p>
       <ul>
@@ -79,6 +99,11 @@ export const referencesKo = [
     year: "2005",
     link: "https://doi.org/10.1109/MCD.2005.1438751",
     imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Active_Pixel_Sensor.svg/512px-Active_Pixel_Sensor.svg.png",
+    usedIn: [
+      { label: "Noise and SNR", href: "/compass/ko/theory/sensor/noise-and-snr" },
+      { label: "EMVA 1288 Dashboard", href: "/compass/ko/simulator/emva1288" },
+      { label: "SNR Calculator", href: "/compass/ko/simulator/snr-calculator" }
+    ],
     summary: `
       <p>CCD에서 CMOS 이미지 센서로의 기술적 전환기를 장식한, CMOS Active Pixel Sensor(APS) 기술에 대한 포괄적인 리뷰 및 튜토리얼 논문입니다.</p>
       <ul>
@@ -86,6 +111,114 @@ export const referencesKo = [
         <li><strong>노이즈 및 SNR:</strong> 리드 노이즈(Read noise), 암전류(Dark current), 광자 샷 노이즈(Photon shot noise) 등 CMOS 픽셀의 근본적인 노이즈 원인들을 분석하고, 이것이 어떻게 신호대잡음비(SNR)를 제한하는지 다룹니다.</li>
       </ul>
       <p>COMPASS는 광학 시뮬레이션에 집중하고 있지만, 양자 효율(QE)이 최종적인 디지털 신호(DN)로 변환되는 하류(downstream) 전자 회로 프로세스를 이해하는 것은 매우 중요합니다. COMPASS 내장 SNR 계산기 및 <code>SignalChainDiagram</code> 모델링은 이 논문의 이론적 토대 위에 구축되어 있습니다.</p>
+    `
+  },
+  {
+    id: "macleod_2017_thinfilm",
+    category: "박막 광학 (Thin-Film Optics)",
+    authors: "H.A. Macleod",
+    title: "Thin-Film Optical Filters",
+    journal: "CRC Press",
+    year: "2017",
+    link: "https://www.routledge.com/Thin-Film-Optical-Filters/Macleod/p/book/9781138198241",
+    usedIn: [
+      { label: "TMM QE 계산기", href: "/compass/ko/simulator/tmm-qe" },
+      { label: "BARL Optimizer", href: "/compass/ko/simulator/barl-optimizer" },
+      { label: "박막 광학", href: "/compass/ko/theory/optics/thin-film-optics" }
+    ],
+    summary: `
+      <p>다층 박막 코팅을 characteristic matrix 관점에서 해석하는 실무 기준 문헌입니다. Optical admittance, phase thickness, reflection minimum, 그리고 coating stack이 bandwidth, angle, polarization, manufacturability 사이에서 어떤 절충을 만드는지 설명합니다.</p>
+      <p>COMPASS에서는 TMM 및 BARL 브라우저 도구의 이론적 기준으로 사용됩니다. 해당 페이지들은 같은 coherent-film 논리로 layer thickness와 refractive index를 reflection, transmission, absorption trend로 변환합니다.</p>
+    `
+  },
+  {
+    id: "green_2008_silicon",
+    category: "재료 광학 데이터 (Material Optical Data)",
+    authors: "M.A. Green",
+    title: "Self-consistent optical parameters of intrinsic silicon at 300 K including temperature coefficients",
+    journal: "Solar Energy Materials and Solar Cells",
+    year: "2008",
+    link: "https://doi.org/10.1016/j.solmat.2008.06.009",
+    usedIn: [
+      { label: "Si Absorption", href: "/compass/ko/simulator/si-absorption" },
+      { label: "TMM QE 계산기", href: "/compass/ko/simulator/tmm-qe" },
+      { label: "Quantum Efficiency", href: "/compass/ko/theory/sensor/quantum-efficiency" }
+    ],
+    summary: `
+      <p>Green은 intrinsic silicon의 wavelength-dependent optical constants와 temperature coefficient를 self-consistent하게 정리합니다. Silicon에서 wavelength를 absorption depth로 변환할 때 가장 유용한 공개 문헌 중 하나입니다.</p>
+      <p>COMPASS에서는 단순 브라우저 모델이 임의 감쇠 대신 물리적으로 근거 있는 silicon absorption trend를 가져야 할 때 이 레퍼런스를 기준으로 둡니다.</p>
+    `
+  },
+  {
+    id: "catrysse_2002_pixels",
+    category: "이미지 센서 광학 (Image Sensor Optics)",
+    authors: "P.B. Catrysse and B.A. Wandell",
+    title: "Optical efficiency of image sensor pixels",
+    journal: "J. Opt. Soc. Am. A",
+    year: "2002",
+    link: "https://doi.org/10.1364/JOSAA.19.001610",
+    usedIn: [
+      { label: "Quantum Efficiency", href: "/compass/ko/theory/sensor/quantum-efficiency" },
+      { label: "Pixel Optical Effects", href: "/compass/ko/theory/sensor/pixel-optical-effects" },
+      { label: "TMM QE 계산기", href: "/compass/ko/simulator/tmm-qe" }
+    ],
+    summary: `
+      <p>이 논문은 optical simulation을 image-sensor pixel efficiency와 연결합니다. 입사 optical power를 의도한 photosensitive volume 안의 absorbed power로 매핑해야 하며, 그 매핑은 stack geometry와 material loss에 의존합니다.</p>
+      <p>COMPASS의 여러 simulator 페이지에서 사용하는 optical QE proxy가 전자기 스택 계산과 어떻게 연결되는지 설명하는 개념적 다리 역할을 합니다.</p>
+    `
+  },
+  {
+    id: "ristoiu_2020_microlens_doe",
+    category: "마이크로렌즈 공정 (Microlens Process)",
+    authors: "Ristoiu et al.",
+    title: "A DOE study of plasma etched microlens shape for CMOS image sensors",
+    journal: "SPIE",
+    year: "2020",
+    link: "https://doi.org/10.1117/12.2551857",
+    usedIn: [
+      { label: "마이크로렌즈 공정 형상", href: "/compass/ko/simulator/microlens-process-shape" },
+      { label: "마이크로렌즈 광선 추적", href: "/compass/ko/simulator/microlens-raytrace" },
+      { label: "마이크로렌즈 최적화", href: "/compass/ko/cookbook/microlens-optimization" }
+    ],
+    summary: `
+      <p>Layout에서 final microlens shape로 이어지는 질문에 가장 가까운 공개 CIS 공정 문헌입니다. Reflowed microlens를 plasma etch로 transfer하고, 공정 변수에 따른 final gap 및 height evolution을 모델링합니다.</p>
+      <p>COMPASS는 이 논문을 근거로 mask thickness, polymerizing gas, etch time을 microlens process-shape surrogate의 핵심 제어 변수로 노출합니다.</p>
+    `
+  },
+  {
+    id: "baillie_2004_zero_space",
+    category: "마이크로렌즈 공정 (Microlens Process)",
+    authors: "Baillie and Gendler",
+    title: "Zero-space microlenses for CMOS image sensors: optical modeling and lithographic process development",
+    journal: "SPIE",
+    year: "2004",
+    link: "https://doi.org/10.1117/12.533453",
+    usedIn: [
+      { label: "마이크로렌즈 공정 형상", href: "/compass/ko/simulator/microlens-process-shape" },
+      { label: "MLA 어레이 시각화", href: "/compass/ko/simulator/mla-array" },
+      { label: "이미지 센서 광학", href: "/compass/ko/theory/sensor/image-sensor-optics" }
+    ],
+    summary: `
+      <p>이 논문은 zero-space microlens fabrication 문제를 정리합니다. Residual lens spacing은 optical fill factor를 낮추지만, lithographic spacing이 너무 작으면 reflow 중 lens merger가 발생할 수 있습니다.</p>
+      <p>그래서 COMPASS process-shape 도구는 zero gap을 무조건 좋은 것으로 보지 않고 final gap과 merger/over-etch warning을 함께 표시합니다.</p>
+    `
+  },
+  {
+    id: "hwang_2023_stack_alignment",
+    category: "마이크로렌즈와 CRA (Microlens and CRA)",
+    authors: "Hwang and Kim",
+    title: "A Numerical Method of Aligning the Optical Stacks for All Pixels",
+    journal: "Sensors",
+    year: "2023",
+    link: "https://doi.org/10.3390/s23020702",
+    usedIn: [
+      { label: "마이크로렌즈 광선 추적", href: "/compass/ko/simulator/microlens-raytrace" },
+      { label: "렌즈 쉐이딩", href: "/compass/ko/simulator/lens-shading" },
+      { label: "Cone Illumination", href: "/compass/ko/guide/cone-illumination" }
+    ],
+    summary: `
+      <p>이 연구는 optical stack 전체에서 chief ray alignment를 수치적으로 맞추는 문제를 다룹니다. 센서 가장자리 픽셀에서는 microlens 위치와 stack geometry가 chief ray에 맞아야 focused spot이 의도한 photodiode에 도달합니다.</p>
+      <p>COMPASS에서는 CRA shift 설명, microlens ray tracing, lens shading 논의에서 이 관점을 사용합니다.</p>
     `
   }
 ];

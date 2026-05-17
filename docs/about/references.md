@@ -10,7 +10,7 @@ This page is not the authoritative citation list for every topic. Topic-specific
 Start with the cards for foundational method papers. For implementation-specific or simulator-specific claims, follow the references on the page where the claim appears.
 :::
 
-The separate map is useful only for cross-cutting sources. It should stay compact instead of duplicating every local citation.
+The separate map is useful only for cross-cutting sources. It should stay compact instead of duplicating every local citation. Each card now also links back to the COMPASS pages where that source is used.
 
 <ReferenceInteractiveList :references="referencesEn" />
 
