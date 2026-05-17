@@ -220,5 +220,75 @@ export const referencesKo = [
       <p>이 연구는 optical stack 전체에서 chief ray alignment를 수치적으로 맞추는 문제를 다룹니다. 센서 가장자리 픽셀에서는 microlens 위치와 stack geometry가 chief ray에 맞아야 focused spot이 의도한 photodiode에 도달합니다.</p>
       <p>COMPASS에서는 CRA shift 설명, microlens ray tracing, lens shading 논의에서 이 관점을 사용합니다.</p>
     `
+  },
+  {
+    id: "cie_2018_colorimetry",
+    category: "색과학 (Color Science)",
+    authors: "Commission Internationale de l'Eclairage",
+    title: "Colorimetry, 4th Edition",
+    journal: "CIE 015:2018",
+    year: "2018",
+    link: "https://www.cie.co.at/publications/colorimetry-4th-edition",
+    usedIn: [
+      { label: "색 재현과 색공간", href: "/compass/ko/theory/sensor/color-reproduction" },
+      { label: "컬러 필터 설계", href: "/compass/ko/simulator/color-filter" },
+      { label: "색 정확도 분석기", href: "/compass/ko/simulator/color-accuracy" }
+    ],
+    summary: `
+      <p>이 CIE 기술 보고서는 COMPASS 색 관련 페이지에서 쓰는 XYZ, chromaticity, Lab, standard observer, illuminant, color-difference 정의의 기준입니다.</p>
+      <p>Sensor-dependent camera RGB와 standard colorimetric coordinate의 차이를 설명하는 기준 문헌으로 사용됩니다.</p>
+    `
+  },
+  {
+    id: "iec_61966_2_1_srgb",
+    category: "색과학 (Color Science)",
+    authors: "IEC",
+    title: "Multimedia systems and equipment - Colour measurement and management - Part 2-1: Default RGB colour space - sRGB",
+    journal: "IEC 61966-2-1:1999",
+    year: "1999",
+    link: "https://webstore.iec.ch/en/publication/6169",
+    usedIn: [
+      { label: "색 재현과 색공간", href: "/compass/ko/theory/sensor/color-reproduction" },
+      { label: "색 정확도 분석기", href: "/compass/ko/simulator/color-accuracy" }
+    ],
+    summary: `
+      <p>sRGB 표준은 웹과 일반 이미지 교환에서 쓰는 display-referred RGB 공간과 nonlinear encoding을 정의합니다.</p>
+      <p>COMPASS에서는 raw camera RGB의 대체물이 아니라, sensor RGB가 XYZ를 거친 뒤 도달하는 표시 endpoint로 다룹니다.</p>
+    `
+  },
+  {
+    id: "sharma_2005_ciede2000",
+    category: "색과학 (Color Science)",
+    authors: "G. Sharma, W. Wu, and E.N. Dalal",
+    title: "The CIEDE2000 Color-Difference Formula: Implementation Notes, Supplementary Test Data, and Mathematical Observations",
+    journal: "Color Research & Application",
+    year: "2005",
+    link: "https://doi.org/10.1002/col.20070",
+    usedIn: [
+      { label: "색 재현과 색공간", href: "/compass/ko/theory/sensor/color-reproduction" },
+      { label: "색 정확도 분석기", href: "/compass/ko/simulator/color-accuracy" },
+      { label: "신호 체인 색 정확도", href: "/compass/ko/cookbook/signal-chain-color-accuracy" }
+    ],
+    summary: `
+      <p>이 논문은 CIEDE2000 색차 계산의 실무 구현 기준으로 널리 쓰입니다.</p>
+      <p>센서 분광 응답을 표준 색공간으로 매핑한 뒤 perceptual error metric으로 평가해야 하는 COMPASS 색 최적화 흐름과 직접 연결됩니다.</p>
+    `
+  },
+  {
+    id: "nist_2002_color_by_numbers",
+    category: "색과학 (Color Science)",
+    authors: "S.W. Brown and Y. Ohno",
+    title: "Color By Numbers: Using a Calibration Source Spectrally Matched To Your Test Source Is Key To Measurement Accuracy",
+    journal: "NIST",
+    year: "2002",
+    link: "https://www.nist.gov/publications/color-numbers-using-calibration-source-spectrally-matched-your-test-source-key",
+    usedIn: [
+      { label: "색 재현과 색공간", href: "/compass/ko/theory/sensor/color-reproduction" },
+      { label: "컬러 필터 설계", href: "/compass/ko/simulator/color-filter" }
+    ],
+    summary: `
+      <p>이 NIST 문서는 측정 대상 스펙트럼이 calibration source와 달라질 때 spectral responsivity mismatch가 색 측정 오차를 어떻게 바꾸는지 설명합니다.</p>
+      <p>CIS 색 설계에서도 같은 원리가 적용됩니다. Camera channel response는 이상적인 RGB endpoint가 아니라 실제 illuminant와 object spectrum으로 평가해야 합니다.</p>
+    `
   }
 ];

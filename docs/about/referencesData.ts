@@ -220,5 +220,75 @@ export const referencesEn = [
       <p>This work motivates numerical chief-ray alignment across the optical stack. For sensor-edge pixels, the microlens position and stack geometry must be matched to the chief ray so the focused spot lands on the intended photodiode.</p>
       <p>COMPASS uses this idea in CRA-shift explanations, microlens ray tracing, and lens-shading discussions.</p>
     `
+  },
+  {
+    id: "cie_2018_colorimetry",
+    category: "Color Science",
+    authors: "Commission Internationale de l'Eclairage",
+    title: "Colorimetry, 4th Edition",
+    journal: "CIE 015:2018",
+    year: "2018",
+    link: "https://www.cie.co.at/publications/colorimetry-4th-edition",
+    usedIn: [
+      { label: "Color Reproduction", href: "/compass/theory/sensor/color-reproduction" },
+      { label: "Color Filter Designer", href: "/compass/simulator/color-filter" },
+      { label: "Color Accuracy Analyzer", href: "/compass/simulator/color-accuracy" }
+    ],
+    summary: `
+      <p>This CIE technical report is the reference behind the XYZ, chromaticity, Lab, standard observer, illuminant, and color-difference definitions used by the COMPASS color pages.</p>
+      <p>It anchors the distinction between sensor-dependent camera RGB and standard colorimetric coordinates.</p>
+    `
+  },
+  {
+    id: "iec_61966_2_1_srgb",
+    category: "Color Science",
+    authors: "IEC",
+    title: "Multimedia systems and equipment - Colour measurement and management - Part 2-1: Default RGB colour space - sRGB",
+    journal: "IEC 61966-2-1:1999",
+    year: "1999",
+    link: "https://webstore.iec.ch/en/publication/6169",
+    usedIn: [
+      { label: "Color Reproduction", href: "/compass/theory/sensor/color-reproduction" },
+      { label: "Color Accuracy Analyzer", href: "/compass/simulator/color-accuracy" }
+    ],
+    summary: `
+      <p>The sRGB standard defines the display-referred RGB space and nonlinear encoding used for web and common image interchange.</p>
+      <p>COMPASS uses it as the endpoint after sensor RGB has been mapped through XYZ, not as a substitute for raw camera RGB.</p>
+    `
+  },
+  {
+    id: "sharma_2005_ciede2000",
+    category: "Color Science",
+    authors: "G. Sharma, W. Wu, and E.N. Dalal",
+    title: "The CIEDE2000 Color-Difference Formula: Implementation Notes, Supplementary Test Data, and Mathematical Observations",
+    journal: "Color Research & Application",
+    year: "2005",
+    link: "https://doi.org/10.1002/col.20070",
+    usedIn: [
+      { label: "Color Reproduction", href: "/compass/theory/sensor/color-reproduction" },
+      { label: "Color Accuracy Analyzer", href: "/compass/simulator/color-accuracy" },
+      { label: "Signal Chain Color Accuracy", href: "/compass/cookbook/signal-chain-color-accuracy" }
+    ],
+    summary: `
+      <p>This paper is the practical implementation reference for CIEDE2000 color difference calculations.</p>
+      <p>It is relevant to COMPASS because camera color optimization needs a perceptual error metric after the spectral response is mapped into a standard color space.</p>
+    `
+  },
+  {
+    id: "nist_2002_color_by_numbers",
+    category: "Color Science",
+    authors: "S.W. Brown and Y. Ohno",
+    title: "Color By Numbers: Using a Calibration Source Spectrally Matched To Your Test Source Is Key To Measurement Accuracy",
+    journal: "NIST",
+    year: "2002",
+    link: "https://www.nist.gov/publications/color-numbers-using-calibration-source-spectrally-matched-your-test-source-key",
+    usedIn: [
+      { label: "Color Reproduction", href: "/compass/theory/sensor/color-reproduction" },
+      { label: "Color Filter Designer", href: "/compass/simulator/color-filter" }
+    ],
+    summary: `
+      <p>This NIST note explains why spectral responsivity mismatch changes color measurement error when the measured spectra differ from the calibration source.</p>
+      <p>That principle is directly analogous to CIS color design: the camera channel responses must be evaluated against realistic illuminants and object spectra, not only against ideal RGB endpoints.</p>
+    `
   }
 ];

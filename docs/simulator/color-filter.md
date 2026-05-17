@@ -13,7 +13,7 @@ Use this browser tool for intuition, relative trends, and design-space explorati
 :::
 
 ::: tip Learn more
-[Pixel Optical Effects](/theory/sensor/pixel-optical-effects) · [Signal Chain](/theory/sensor/signal-chain)
+[Pixel Optical Effects](/theory/sensor/pixel-optical-effects) · [Signal Chain](/theory/sensor/signal-chain) · [Color Reproduction](/theory/sensor/color-reproduction)
 :::
 
 <SimulatorTheory slug="color-filter" />

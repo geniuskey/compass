@@ -13,7 +13,7 @@ RGB 컬러 필터 스펙트럼 응답을 설계하고 CIE 1931 색도 다이어�
 :::
 
 ::: tip 더 알아보기
-[픽셀 광학 효과](/ko/theory/sensor/pixel-optical-effects) · [신호 체인](/ko/theory/sensor/signal-chain)
+[픽셀 광학 효과](/ko/theory/sensor/pixel-optical-effects) · [신호 체인](/ko/theory/sensor/signal-chain) · [색 재현과 색공간](/ko/theory/sensor/color-reproduction)
 :::
 
 <SimulatorTheory slug="color-filter" />

@@ -226,6 +226,10 @@ $$g_R = \frac{S_G}{S_R}, \quad g_B = \frac{S_G}{S_B}$$
 **회색 세계 가정**은 전체 장면의 평균 반사율이 중립 회색(무채색)이라고 가정하여 장면 광원을 추정합니다. 화이트 밸런스 게인은 영상 전체의 평균 R, G, B 채널 값으로부터 계산됩니다. 이는 전형적인 야외 장면에서 잘 작동하지만 단일 색상이 지배하는 장면에서는 실패합니다.
 :::
 
+::: tip 색공간으로 이어서 보기
+Camera RGB, CIE XYZ, CCM fitting, Lab, sRGB 변환, 색차 지표는 [색 재현과 색공간](/ko/theory/sensor/color-reproduction)에서 이어서 다룹니다.
+:::
+
 ## 신호대잡음비(Signal-to-Noise Ratio)
 
 신호대잡음비(SNR, Signal-to-Noise Ratio)는 이미지 품질을 결정합니다. CMOS 이미지 센서 픽셀의 주요 잡음 원인:
@@ -294,7 +298,7 @@ print(f"B/G:   {signals['B']/signals['G']:.3f}")
 2. **QE 시뮬레이션 실행** -- RCWA 또는 FDTD를 실행하여 각 채널의 $\text{QE}_i(\lambda)$ 획득
 3. **광원과 장면 선택** -- 기준선으로 D65 주광과 18% 회색 선택
 4. **신호 수준 계산** -- `SignalCalculator`를 사용하여 QE를 전자 수로 변환
-5. **색 성능 평가** -- R/G 및 B/G 비율 확인, SNR 계산
+5. **색 성능 평가** -- R/G 및 B/G 비율 확인, CCM fitting, color error와 SNR 계산
 6. **조건 변경** -- 광원, 반사율, 노출 설정을 스윕하여 강건성 평가
 
 ::: tip

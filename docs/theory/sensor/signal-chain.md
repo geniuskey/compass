@@ -226,6 +226,10 @@ The **R/G** and **B/G** ratios under different illuminants characterize the colo
 The **grey world assumption** estimates the scene illuminant by assuming that the average reflectance of the entire scene is neutral grey (achromatic). The white balance gains are then computed from the average R, G, B channel values across the image. This works well for typical outdoor scenes but fails for scenes dominated by a single color.
 :::
 
+::: tip Color-space continuation
+For camera RGB, CIE XYZ, CCM fitting, Lab, sRGB conversion, and color-difference metrics, continue to [Color Reproduction and Color Spaces](/theory/sensor/color-reproduction).
+:::
+
 ## Signal-to-Noise Ratio
 
 The signal-to-noise ratio (SNR) determines the image quality. For a CMOS image sensor pixel, the main noise sources are:
@@ -294,7 +298,7 @@ A typical end-to-end workflow:
 2. **Run QE simulation** -- Execute RCWA or FDTD to obtain $\text{QE}_i(\lambda)$ for each channel
 3. **Choose illuminant and scene** -- Select D65 daylight and 18% grey as baseline
 4. **Compute signal levels** -- Use `SignalCalculator` to convert QE to electron counts
-5. **Evaluate color performance** -- Check R/G and B/G ratios, compute SNR
+5. **Evaluate color performance** -- Check R/G and B/G ratios, fit a CCM, compute color error and SNR
 6. **Vary conditions** -- Sweep illuminants, reflectances, and exposure settings to evaluate robustness
 
 ::: tip
