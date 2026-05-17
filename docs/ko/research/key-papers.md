@@ -298,4 +298,4 @@ COMPASS에서 사용하는 미분 가능 EM 시뮬레이터 라이브러리의 �
 
 - DOI 링크는 2024년 시점 기준으로 확인되었다. 일부 DOI는 출판사 변경 등으로 리디렉션될 수 있다.
 - arXiv 프리프린트의 경우 추후 학술지 게재 시 DOI가 변경될 수 있다.
-- COMPASS 코드 내 인용은 `compass/solvers/rcwa/stability.py` 모듈 독스트링과 `docs/about/references.md`에서도 확인할 수 있다.
+- COMPASS 코드 내 인용은 `compass/solvers/rcwa/stability.py` 모듈 독스트링과 `docs/about/references.md`의 레퍼런스 맵에서도 확인할 수 있다.

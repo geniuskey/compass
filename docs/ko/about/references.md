@@ -2,13 +2,19 @@
 import { referencesKo } from './referencesData'
 </script>
 
-# 참고 문헌
+# 레퍼런스 맵
 
-COMPASS의 물리학과 알고리즘을 뒷받침하는 주요 논문 및 자료입니다. 기초가 되는 핵심 논문들의 요약과 관련 시각 자료를 보려면 아래 카드를 클릭하세요.
+이 페이지는 모든 주제별 참고문헌을 대체하는 목록이 아닙니다. theory, guide, simulator 문서의 구체적인 주장과 모델 설명은 각 문서 하단의 레퍼런스 섹션을 기준으로 봐야 합니다. 이 페이지는 COMPASS 전반에서 반복적으로 등장하는 기초 논문, 솔버 방법론, 광학 데이터 출처, 소프트웨어 도구를 한곳에 묶은 읽기 지도입니다.
+
+::: tip 이 페이지를 보는 법
+먼저 카드에 정리된 기초 방법론 논문을 보고, 특정 시뮬레이터나 구현 세부사항은 해당 문서 하단의 레퍼런스를 따라가면 됩니다.
+:::
+
+별도 맵은 여러 문서에 걸쳐 반복되는 출처를 묶을 때만 의미가 있습니다. 모든 로컬 인용을 다시 나열하는 중복 목록으로 키우지는 않습니다.
 
 <ReferenceInteractiveList :references="referencesKo" />
 
-## 추가 참고 문헌
+## 방법론 및 데이터 레퍼런스
 
 ### RCWA 이론 및 개선
 - M.G. Moharam, D.A. Pommet, E.B. Grann, and T.K. Gaylord, "Stable implementation of the rigorous coupled-wave analysis for surface-relief gratings: enhanced transmittance matrix approach," *J. Opt. Soc. Am. A*, vol. 12, no. 5, pp. 1077-1086, 1995.

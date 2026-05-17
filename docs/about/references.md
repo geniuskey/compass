@@ -2,13 +2,19 @@
 import { referencesEn } from './referencesData'
 </script>
 
-# References
+# Reference Map
 
-Key publications and resources that underpin the physics and algorithms in COMPASS. Click on the cards below to view a detailed summary and diagrams for each fundamental paper.
+This page is not the authoritative citation list for every topic. Topic-specific references live at the bottom of the relevant theory, guide, and simulator pages. Use this page as a cross-document reading map for the foundational papers, solver methods, optical data sources, and software tools that appear repeatedly across COMPASS.
+
+::: tip How to use this page
+Start with the cards for foundational method papers. For implementation-specific or simulator-specific claims, follow the references on the page where the claim appears.
+:::
+
+The separate map is useful only for cross-cutting sources. It should stay compact instead of duplicating every local citation.
 
 <ReferenceInteractiveList :references="referencesEn" />
 
-## Additional References
+## Method and Data References
 
 ### RCWA Theory & Enhancements
 - M.G. Moharam, D.A. Pommet, E.B. Grann, and T.K. Gaylord, "Stable implementation of the rigorous coupled-wave analysis for surface-relief gratings: enhanced transmittance matrix approach," *J. Opt. Soc. Am. A*, vol. 12, no. 5, pp. 1077-1086, 1995.

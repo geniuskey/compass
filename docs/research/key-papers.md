@@ -305,4 +305,4 @@ Original papers for the differentiable EM simulator libraries used in COMPASS.
 
 - DOI links have been verified as of 2024. Some DOIs may redirect due to publisher changes.
 - For arXiv preprints, DOIs may change upon journal publication.
-- In-code citations in COMPASS can also be found in the `compass/solvers/rcwa/stability.py` module docstrings and in `docs/about/references.md`.
+- In-code citations in COMPASS can also be found in the `compass/solvers/rcwa/stability.py` module docstrings and in the reference map at `docs/about/references.md`.
