@@ -155,6 +155,14 @@
           <label>{{ t('Vertical loss gain', 'Vertical loss gain') }}: <strong>{{ verticalLossGain.toFixed(2) }}x</strong></label>
           <input type="range" min="0.40" max="1.80" step="0.02" v-model.number="verticalLossGain" class="ctrl-range" />
         </div>
+        <div class="slider-group">
+          <label>{{ t('Proximity coupling gain', '인접 결합 gain') }}: <strong>{{ proximityCouplingGain.toFixed(2) }}x</strong></label>
+          <input type="range" min="0.00" max="2.00" step="0.05" v-model.number="proximityCouplingGain" class="ctrl-range" />
+        </div>
+        <div class="slider-group">
+          <label>{{ t('Microloading gain', 'Microloading gain') }}: <strong>{{ microloadingGain.toFixed(2) }}x</strong></label>
+          <input type="range" min="0.00" max="2.00" step="0.05" v-model.number="microloadingGain" class="ctrl-range" />
+        </div>
       </div>
     </details>
     </div>
@@ -589,6 +597,8 @@ const reflowSpreadGain = ref(1.00)
 const volumeRetentionGain = ref(1.00)
 const lateralEtchGain = ref(1.00)
 const verticalLossGain = ref(1.00)
+const proximityCouplingGain = ref(1.00)
+const microloadingGain = ref(1.00)
 const layoutPreset = ref<LayoutPreset>('all-1x1')
 const cellGrid = ref<number[]>(buildGridFromRects([]))
 const selectedCell = ref<number | null>(null)
@@ -918,6 +928,126 @@ function computeGroupProcessAt(group: LensGroup, etchSeconds: number) {
   return computeProcessAt(pitchX, pitchY, maskWX, maskWY, etchSeconds)
 }
 
+// --- Per-side proximity coupling -----------------------------------------
+// Mass-flow asymmetry (Choi et al., reflow toward isotropy; Stanford E241
+// survey) drives the lens SHAPE to bulge toward larger neighbors.
+// Microloading + ARDE (Mogab 1977; Gottscho 1992) reduces lateral etch
+// closure near dense pattern, leaving a larger GAP next to bigger lens
+// groups. Both effects vanish for uniform-size layouts.
+
+interface GroupNeighbors {
+  left: LensGroup | null
+  right: LensGroup | null
+  top: LensGroup | null
+  bottom: LensGroup | null
+}
+
+function buildCellIndex(groups: LensGroup[]): Map<string, LensGroup> {
+  const m = new Map<string, LensGroup>()
+  for (const g of groups) {
+    for (const cell of g.cells) m.set(`${cell.r},${cell.c}`, g)
+  }
+  return m
+}
+
+function getGroupNeighbors(group: LensGroup, cellIndex: Map<string, LensGroup>): GroupNeighbors {
+  const rMid = group.r0 + Math.floor(group.h / 2)
+  const cMid = group.c0 + Math.floor(group.w / 2)
+  const pick = (r: number, c: number): LensGroup | null => {
+    if (r < 0 || r >= GRID_N || c < 0 || c >= GRID_N) return null
+    const n = cellIndex.get(`${r},${c}`)
+    return n && n.id !== group.id ? n : null
+  }
+  return {
+    left: pick(rMid, group.c0 - 1),
+    right: pick(rMid, group.c0 + group.w),
+    top: pick(group.r0 - 1, cMid),
+    bottom: pick(group.r0 + group.h, cMid),
+  }
+}
+
+interface SideOffsets {
+  edgeLeft: number
+  edgeRight: number
+  edgeTop: number
+  edgeBottom: number
+  gapLeft: number
+  gapRight: number
+  gapTop: number
+  gapBottom: number
+  sigmaLeft: number
+  sigmaRight: number
+  sigmaTop: number
+  sigmaBottom: number
+  maxSigmaAbs: number
+  asymmetry: number
+}
+
+// Empirical baseline constants; the user-facing gains scale these.
+const K_MASS_BASE_UM = 0.045
+const K_LOAD_BASE = 0.55
+
+function computeGroupSideOffsets(
+  group: LensGroup,
+  baseState: ProcessState,
+  neighbors: GroupNeighbors,
+  etchSeconds: number,
+): SideOffsets {
+  const A_G = group.h * group.w
+  const td = thermalDose.value
+  const ler = lateralEtchRate.value
+  const kMass = proximityCouplingGain.value * K_MASS_BASE_UM
+  const kLoad = microloadingGain.value * K_LOAD_BASE
+
+  function sigmaShape(N: LensGroup | null) {
+    if (!N || !N.isValidShape) return 0
+    const A_N = N.h * N.w
+    return (A_N - A_G) / (A_N + A_G)
+  }
+  function densityFactor(N: LensGroup | null) {
+    // grid-edge neighbor: treat as 1x1-equivalent sparse padding
+    const A_N = N && N.isValidShape ? N.h * N.w : 1
+    const baseline = 2 // two 1x1 cells = sparsest dense baseline
+    return Math.max(0, ((A_G + A_N) - baseline) / 6) // normalize to 1 when both are 2x2 (sum=8)
+  }
+
+  const sL = sigmaShape(neighbors.left)
+  const sR = sigmaShape(neighbors.right)
+  const sT = sigmaShape(neighbors.top)
+  const sB = sigmaShape(neighbors.bottom)
+  // mass-flow: my lens extends MORE on larger-neighbor side
+  const dSpL = kMass * td * sL
+  const dSpR = kMass * td * sR
+  const dSpT = kMass * td * sT
+  const dSpB = kMass * td * sB
+  // microloading: gap stays LARGER (less closure) near denser pattern
+  const dGapL = kLoad * ler * etchSeconds * densityFactor(neighbors.left)
+  const dGapR = kLoad * ler * etchSeconds * densityFactor(neighbors.right)
+  const dGapT = kLoad * ler * etchSeconds * densityFactor(neighbors.top)
+  const dGapB = kLoad * ler * etchSeconds * densityFactor(neighbors.bottom)
+
+  const halfX = baseState.finalWX / 2
+  const halfY = baseState.finalWY / 2
+  const edgeLeft = Math.max(0.02, halfX + dSpL)
+  const edgeRight = Math.max(0.02, halfX + dSpR)
+  const edgeTop = Math.max(0.02, halfY + dSpT)
+  const edgeBottom = Math.max(0.02, halfY + dSpB)
+  const gapLeft = Math.max(0, baseState.finalGapX + 2 * dGapL)
+  const gapRight = Math.max(0, baseState.finalGapX + 2 * dGapR)
+  const gapTop = Math.max(0, baseState.finalGapY + 2 * dGapT)
+  const gapBottom = Math.max(0, baseState.finalGapY + 2 * dGapB)
+  const sigmas = [sL, sR, sT, sB]
+  const maxSigmaAbs = Math.max(...sigmas.map(Math.abs))
+  const asymmetry = Math.max(...sigmas) - Math.min(...sigmas)
+
+  return {
+    edgeLeft, edgeRight, edgeTop, edgeBottom,
+    gapLeft, gapRight, gapTop, gapBottom,
+    sigmaLeft: sL, sigmaRight: sR, sigmaTop: sT, sigmaBottom: sB,
+    maxSigmaAbs, asymmetry,
+  }
+}
+
 const groupProcessStates = computed(() =>
   lensGroups.value.map(g => ({ group: g, state: computeGroupProcessAt(g, etchTime.value) })),
 )
@@ -991,6 +1121,17 @@ const processFlags = computed(() => {
   if (fNumber.value < 0.9 || fNumber.value > 3.8) flags.push({ text: t('check optical focus', 'optical focus 확인 필요'), tone: 'warn' })
   if (representativeGroup.value.kind !== '1x1' && aspectRatio.value > 1.08) {
     flags.push({ text: t('asymmetric reflow profile', '비대칭 reflow profile'), tone: 'warn' })
+  }
+  // Heterogeneous-neighbor coupling flag: any valid group with asymmetric sigma > 0.6
+  for (const g of lensGroups.value) {
+    if (!g.isValidShape) continue
+    const baseState = computeGroupProcessAt(g, etchTime.value)
+    const neighbors = groupNeighborsFor(g)
+    const sides = computeGroupSideOffsets(g, baseState, neighbors, etchTime.value)
+    if (sides.asymmetry > 0.6) {
+      flags.push({ text: t('proximity asymmetry', '인접 비대칭 결합'), tone: 'warn' })
+      break
+    }
   }
   if (!isLayoutValid.value) flags.push({ text: t('invalid lens layout', '유효하지 않은 lens 배치'), tone: 'risk' })
   return flags
@@ -1266,6 +1407,30 @@ function buildSuperellipsePath(cxUm: number, cyUm: number, halfXUm: number, half
   return pts.join(' ')
 }
 
+function buildAsymmetricSuperellipsePath(
+  cxUm: number, cyUm: number,
+  edgeLeft: number, edgeRight: number, edgeTop: number, edgeBottom: number,
+  n: number, samples = 128,
+) {
+  const pts: string[] = []
+  for (let i = 0; i <= samples; i += 1) {
+    const theta = (2 * Math.PI * i) / samples
+    const c = Math.cos(theta)
+    const s = Math.sin(theta)
+    const denom = Math.pow(Math.pow(Math.abs(c), n) + Math.pow(Math.abs(s), n), 1 / n)
+    const cNorm = c / Math.max(denom, 1e-6)
+    const sNorm = s / Math.max(denom, 1e-6)
+    const rx = cNorm >= 0 ? edgeRight : edgeLeft
+    // y+ is down in our SVG; "top" is y- direction, "bottom" is y+
+    const ry = sNorm >= 0 ? edgeBottom : edgeTop
+    const xLocal = rx * cNorm
+    const yLocal = ry * sNorm
+    pts.push(`${i === 0 ? 'M' : 'L'} ${topXScale(cxUm + xLocal).toFixed(2)} ${topYScale(cyUm + yLocal).toFixed(2)}`)
+  }
+  pts.push('Z')
+  return pts.join(' ')
+}
+
 function groupCenterUm(group: LensGroup) {
   return {
     x: (group.c0 + group.w / 2 - GRID_N / 2) * pitch.value,
@@ -1283,6 +1448,13 @@ interface TopGroupRender {
   centerPx: { x: number; y: number }
   labelText: string
   finalHeightUm: number
+  sides: SideOffsets
+}
+
+const groupCellIndex = computed(() => buildCellIndex(lensGroups.value))
+
+function groupNeighborsFor(group: LensGroup) {
+  return getGroupNeighbors(group, groupCellIndex.value)
 }
 
 const topGroupsRender = computed<TopGroupRender[]>(() => {
@@ -1290,9 +1462,15 @@ const topGroupsRender = computed<TopGroupRender[]>(() => {
   return lensGroups.value.map((group) => {
     const center = groupCenterUm(group)
     const state = computeGroupProcessAt(group, etchTime.value)
+    const neighbors = groupNeighborsFor(group)
+    const sides = computeGroupSideOffsets(group, state, neighbors, etchTime.value)
     const maskPath = buildSuperellipsePath(center.x, center.y, state.maskWX / 2, state.maskWY / 2, exponent)
     const reflowPath = buildSuperellipsePath(center.x, center.y, state.reflowWX / 2, state.reflowWY / 2, exponent)
-    const finalPath = buildSuperellipsePath(center.x, center.y, state.finalWX / 2, state.finalWY / 2, exponent)
+    const finalPath = buildAsymmetricSuperellipsePath(
+      center.x, center.y,
+      sides.edgeLeft, sides.edgeRight, sides.edgeTop, sides.edgeBottom,
+      exponent,
+    )
     return {
       id: group.id,
       kind: group.kind,
@@ -1303,6 +1481,7 @@ const topGroupsRender = computed<TopGroupRender[]>(() => {
       centerPx: { x: topXScale(center.x), y: topYScale(center.y) },
       labelText: group.kind,
       finalHeightUm: state.finalHeight,
+      sides,
     }
   })
 })
@@ -1358,47 +1537,39 @@ const topGapMarkers = computed<TopGapMarker[]>(() => {
   // For each group, look at right and bottom neighbors only (avoid duplicates).
   for (const g of groups) {
     const state = computeGroupProcessAt(g, etchTime.value)
+    const neighbors = groupNeighborsFor(g)
+    const sides = computeGroupSideOffsets(g, state, neighbors, etchTime.value)
     // Right neighbor (along positive X)
-    const rightR = g.r0 + Math.floor(g.h / 2)
-    const rightCellC = g.c0 + g.w
-    if (rightCellC < GRID_N) {
-      const neighbor = cellIndex.get(`${rightR},${rightCellC}`)
-      if (neighbor && neighbor.id !== g.id) {
-        const gapX = state.finalGapX
-        const tone: TopGapMarker['tone'] = gapX <= 0.015 ? 'good' : gapX <= 0.06 ? 'good' : 'warn'
-        const center = groupCenterUm(g)
-        const y = (center.y) * topScale.value + topOriginY.value
-        markers.push({
-          key: `gx-${g.id}-${neighbor.id}`,
-          x1: topXScale(center.x + state.finalWX / 2),
-          y1: y,
-          x2: topXScale(center.x + state.finalWX / 2 + gapX),
-          y2: y,
-          gap: gapX,
-          tone,
-        })
-      }
+    if (neighbors.right) {
+      const gapX = sides.gapRight
+      const tone: TopGapMarker['tone'] = gapX <= 0.015 ? 'good' : gapX <= 0.08 ? 'good' : 'warn'
+      const center = groupCenterUm(g)
+      const y = topYScale(center.y)
+      markers.push({
+        key: `gx-${g.id}-${neighbors.right.id}`,
+        x1: topXScale(center.x + sides.edgeRight),
+        y1: y,
+        x2: topXScale(center.x + sides.edgeRight + gapX),
+        y2: y,
+        gap: gapX,
+        tone,
+      })
     }
     // Bottom neighbor (along positive Y)
-    const bottomC = g.c0 + Math.floor(g.w / 2)
-    const bottomR = g.r0 + g.h
-    if (bottomR < GRID_N) {
-      const neighbor = cellIndex.get(`${bottomR},${bottomC}`)
-      if (neighbor && neighbor.id !== g.id) {
-        const gapY = state.finalGapY
-        const tone: TopGapMarker['tone'] = gapY <= 0.015 ? 'good' : gapY <= 0.06 ? 'good' : 'warn'
-        const center = groupCenterUm(g)
-        const x = topXScale(center.x)
-        markers.push({
-          key: `gy-${g.id}-${neighbor.id}`,
-          x1: x,
-          y1: topYScale(center.y + state.finalWY / 2),
-          x2: x,
-          y2: topYScale(center.y + state.finalWY / 2 + gapY),
-          gap: gapY,
-          tone,
-        })
-      }
+    if (neighbors.bottom) {
+      const gapY = sides.gapBottom
+      const tone: TopGapMarker['tone'] = gapY <= 0.015 ? 'good' : gapY <= 0.08 ? 'good' : 'warn'
+      const center = groupCenterUm(g)
+      const x = topXScale(center.x)
+      markers.push({
+        key: `gy-${g.id}-${neighbors.bottom.id}`,
+        x1: x,
+        y1: topYScale(center.y + sides.edgeBottom),
+        x2: x,
+        y2: topYScale(center.y + sides.edgeBottom + gapY),
+        gap: gapY,
+        tone,
+      })
     }
   }
   return markers

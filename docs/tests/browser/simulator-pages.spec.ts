@@ -58,7 +58,7 @@ test.describe('simulator pages', () => {
   test('renders expanded theory notes on the microlens process simulator', async ({ page }) => {
     await gotoDocs(page, '/simulator/microlens-process-shape.html')
 
-    await expect(page.locator('.sim-theory .formula-row')).toHaveCount(8)
+    await expect(page.locator('.sim-theory .formula-row')).toHaveCount(9)
     await expect(page.locator('.sim-theory-detail-grid')).toBeVisible()
     await expect(page.getByText('Validation Example')).toBeVisible()
     await expect(page.getByText('How To Calibrate This Surrogate')).toBeVisible()
