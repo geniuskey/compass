@@ -41,6 +41,55 @@
             <option value="square">{{ t('Square-like', '사각형 근사') }}</option>
           </select>
         </div>
+        <div class="slider-group compact">
+          <label>{{ t('Lens unit layout', '렌즈 unit 배치') }}</label>
+          <select v-model="layoutPreset" class="ctrl-select">
+            <option value="all-1x1">{{ t('All 1x1', '전체 1x1') }}</option>
+            <option value="all-2x1">{{ t('All 2x1 (Sony 2PD)', '전체 2x1 (Sony 2PD)') }}</option>
+            <option value="all-1x2">{{ t('All 1x2', '전체 1x2') }}</option>
+            <option value="all-2x2">{{ t('All 2x2 (Tetracell OCL)', '전체 2x2 (Tetracell OCL)') }}</option>
+            <option value="mixed-2x2-pdaf">{{ t('Mixed 2x2 OCL + 1x1', '혼합 2x2 OCL + 1x1') }}</option>
+            <option value="sparse-2x1-pdaf">{{ t('Sparse 2x1 PDAF', 'Sparse 2x1 PDAF') }}</option>
+            <option value="custom">{{ t('Custom 4x4', 'Custom 4x4') }}</option>
+          </select>
+        </div>
+      </div>
+      <div v-if="layoutPreset === 'custom'" class="custom-grid-row">
+        <div class="custom-grid-help">
+          <strong>{{ t('Custom 4x4 editor', 'Custom 4x4 편집기') }}</strong>
+          <span>{{ t('Click two adjacent cells to merge into a 2x1, 1x2, or 2x2 lens. Double-click to split back to 1x1.', '인접 셀 두 개를 차례로 클릭하면 2x1/1x2/2x2 렌즈로 병합, 더블클릭하면 1x1로 분리됩니다.') }}</span>
+        </div>
+        <svg
+          :viewBox="`0 0 ${customGridSize} ${customGridSize}`"
+          class="custom-grid-svg"
+          role="img"
+          :aria-label="t('4x4 lens unit editor', '4x4 렌즈 unit 편집기')"
+        >
+          <g v-for="(gid, idx) in cellGrid" :key="'gcell-' + idx">
+            <rect
+              :x="(idx % GRID_N) * customCellSize + 1"
+              :y="Math.floor(idx / GRID_N) * customCellSize + 1"
+              :width="customCellSize - 2"
+              :height="customCellSize - 2"
+              rx="3"
+              :fill="customCellFill(gid, idx)"
+              :stroke="selectedCell === idx ? 'var(--vp-c-brand-1)' : 'var(--vp-c-divider)'"
+              :stroke-width="selectedCell === idx ? 2.5 : 1"
+              class="custom-cell"
+              @click="onCellClick(idx)"
+              @dblclick="onCellDoubleClick(idx)"
+            />
+            <text
+              :x="(idx % GRID_N) * customCellSize + customCellSize / 2"
+              :y="Math.floor(idx / GRID_N) * customCellSize + customCellSize / 2 + 5"
+              text-anchor="middle"
+              class="custom-cell-label"
+            >{{ groupKindForCell(idx) }}</text>
+          </g>
+        </svg>
+        <span v-if="!isLayoutValid" class="custom-invalid">
+          {{ t('Only 1x1, 2x1, 1x2, 2x2 rectangles are allowed.', '1x1, 2x1, 1x2, 2x2 사각형만 허용됩니다.') }}
+        </span>
       </div>
     </div>
 
@@ -150,6 +199,18 @@
         <strong>{{ profilePower.toFixed(2) }}</strong>
       </div>
       <div class="metric-card">
+        <span>{{ t('Aspect ratio (WX:WY)', '장단축비 (WX:WY)') }}</span>
+        <strong>{{ aspectRatio.toFixed(2) }}</strong>
+      </div>
+      <div class="metric-card">
+        <span>{{ t('Worst reflow gap', '최악 reflow gap') }}</span>
+        <strong>{{ worstReflowGap.toFixed(3) }} um</strong>
+      </div>
+      <div class="metric-card">
+        <span>{{ t('Lens unit', '렌즈 unit') }}</span>
+        <strong>{{ representativeGroup.kind }}</strong>
+      </div>
+      <div class="metric-card">
         <span>{{ t('Lateral rate', 'Lateral rate') }}</span>
         <strong>{{ (lateralEtchRate * 1000).toFixed(2) }} nm/s</strong>
       </div>
@@ -212,9 +273,9 @@
 
         <template v-for="center in lensCenters" :key="'rect-' + center">
           <rect
-            :x="sectionXScale(center - maskWidth / 2)"
+            :x="sectionXScale(center - sectionMaskW / 2)"
             :y="sectionYScale(resistThickness)"
-            :width="Math.max(1, sectionXScale(center + maskWidth / 2) - sectionXScale(center - maskWidth / 2))"
+            :width="Math.max(1, sectionXScale(center + sectionMaskW / 2) - sectionXScale(center - sectionMaskW / 2))"
             :height="sectionYScale(0) - sectionYScale(resistThickness)"
             fill="#9b59b6"
             fill-opacity="0.08"
@@ -280,6 +341,90 @@
       </svg>
 
       <svg
+        v-if="viewMode === 'topview'"
+        :viewBox="`0 0 ${topW} ${topH}`"
+        class="main-svg"
+        role="img"
+        :aria-label="t('Microlens footprint top view', '마이크로렌즈 footprint 위에서 본 모양')"
+      >
+        <rect x="0" y="0" :width="topW" :height="topH" fill="var(--vp-c-bg)" />
+        <line
+          v-for="line in topGridLines"
+          :key="line.key"
+          :x1="line.x1"
+          :y1="line.y1"
+          :x2="line.x2"
+          :y2="line.y2"
+          stroke="var(--vp-c-divider)"
+          stroke-width="0.7"
+        />
+
+        <template v-for="grp in topGroupsRender" :key="'tgrp-' + grp.id">
+          <path
+            :d="grp.maskPath"
+            fill="none"
+            stroke="#9b59b6"
+            stroke-width="1.1"
+            stroke-dasharray="4,3"
+            opacity="0.7"
+          />
+          <path
+            :d="grp.reflowPath"
+            fill="none"
+            stroke="#e67e22"
+            stroke-width="1.3"
+            stroke-dasharray="5,4"
+            opacity="0.85"
+          />
+          <path
+            :d="grp.finalPath"
+            :fill="grp.isValid ? heatColor(grp.finalHeightUm) : 'rgba(192, 57, 43, 0.25)'"
+            fill-opacity="0.78"
+            :stroke="grp.isValid ? '#1f4e79' : '#a93226'"
+            stroke-width="1.5"
+          />
+          <text
+            :x="grp.centerPx.x"
+            :y="grp.centerPx.y + 4"
+            text-anchor="middle"
+            class="top-group-label"
+          >{{ grp.labelText }}</text>
+        </template>
+
+        <line
+          v-for="m in topGapMarkers"
+          :key="m.key"
+          :x1="m.x1"
+          :y1="m.y1"
+          :x2="m.x2"
+          :y2="m.y2"
+          :stroke="m.tone === 'good' ? '#27ae60' : m.tone === 'risk' ? '#c0392b' : '#d35400'"
+          stroke-width="2"
+        />
+
+        <g transform="translate(20, 20)">
+          <line x1="0" y1="6" x2="22" y2="6" stroke="#9b59b6" stroke-width="1.1" stroke-dasharray="4,3" />
+          <text x="28" y="10" class="legend-label">{{ t('Mask footprint', '마스크 footprint') }}</text>
+          <line x1="0" y1="24" x2="22" y2="24" stroke="#e67e22" stroke-width="1.3" stroke-dasharray="5,4" />
+          <text x="28" y="28" class="legend-label">{{ t('Reflow footprint', 'Reflow footprint') }}</text>
+          <line x1="0" y1="42" x2="22" y2="42" stroke="#1f4e79" stroke-width="1.5" />
+          <text x="28" y="46" class="legend-label">{{ t('Final footprint', '최종 footprint') }}</text>
+        </g>
+
+        <g :transform="`translate(${topW - 130}, 28)`">
+          <text x="0" y="0" class="legend-label">{{ t('Final height (um)', '최종 높이 (um)') }}</text>
+          <g v-for="(stop, i) in topLegendStops" :key="'hstop-' + i">
+            <rect :x="0" :y="8 + i * 16" width="22" height="12" :fill="stop.color" stroke="var(--vp-c-divider)" stroke-width="0.5" />
+            <text :x="28" :y="18 + i * 16" class="legend-label">{{ stop.value.toFixed(2) }}</text>
+          </g>
+        </g>
+
+        <text :x="topW / 2" :y="topH - 8" text-anchor="middle" class="axis-label">
+          {{ t('4×4 cell grid · 1 cell = pitch', '4×4 셀 그리드 · 1 셀 = pitch') }}
+        </text>
+      </svg>
+
+      <svg
         v-if="viewMode === 'surface'"
         :viewBox="`0 0 ${surfaceW} ${surfaceH}`"
         class="main-svg"
@@ -303,9 +448,10 @@
           {{ t('Superellipse footprint; height field uses the predicted final height and profile exponent.', 'Superellipse footprint와 예측 height/profile exponent를 사용합니다.') }}
         </text>
         <g transform="translate(24, 298)">
-          <rect x="0" y="0" width="155" height="34" rx="5" fill="var(--vp-c-bg-soft)" stroke="var(--vp-c-divider)" />
-          <text x="10" y="14" class="legend-label">{{ t('width', '폭') }} {{ finalWidth.toFixed(3) }} um</text>
-          <text x="10" y="28" class="legend-label">{{ t('profile exponent', 'profile exponent') }} {{ profilePower.toFixed(2) }}</text>
+          <rect x="0" y="0" width="200" height="48" rx="5" fill="var(--vp-c-bg-soft)" stroke="var(--vp-c-divider)" />
+          <text x="10" y="14" class="legend-label">{{ representativeGroup.kind }} · {{ t('lens unit', '렌즈 unit') }}</text>
+          <text x="10" y="28" class="legend-label">{{ t('width', '폭') }} {{ representativeProcess.finalWX.toFixed(3) }} × {{ representativeProcess.finalWY.toFixed(3) }} um</text>
+          <text x="10" y="42" class="legend-label">{{ t('profile exponent', 'profile exponent') }} {{ profilePower.toFixed(2) }}</text>
         </g>
       </svg>
 
@@ -379,7 +525,29 @@ const { t } = useLocale()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 type ApertureShape = 'circular' | 'rounded-square' | 'square'
-type ViewMode = 'section' | 'surface' | 'process'
+type ViewMode = 'section' | 'topview' | 'surface' | 'process'
+type LensUnitShape = '1x1' | '2x1' | '1x2' | '2x2'
+type LayoutPreset =
+  | 'all-1x1'
+  | 'all-2x1'
+  | 'all-1x2'
+  | 'all-2x2'
+  | 'mixed-2x2-pdaf'
+  | 'sparse-2x1-pdaf'
+  | 'custom'
+
+interface LensGroup {
+  id: number
+  cells: { r: number; c: number }[]
+  r0: number
+  c0: number
+  h: number
+  w: number
+  kind: LensUnitShape
+  isValidShape: boolean
+}
+
+const GRID_N = 4
 
 const pitch = ref(1.10)
 const maskWidth = ref(0.88)
@@ -396,12 +564,205 @@ const reflowSpreadGain = ref(1.00)
 const volumeRetentionGain = ref(1.00)
 const lateralEtchGain = ref(1.00)
 const verticalLossGain = ref(1.00)
+const layoutPreset = ref<LayoutPreset>('all-1x1')
+const cellGrid = ref<number[]>(buildGridFromRects([]))
+const selectedCell = ref<number | null>(null)
 
 const tabs = [
   { key: 'section' as const, en: 'Cross-section', ko: '단면' },
+  { key: 'topview' as const, en: 'Top view (XY)', ko: '위에서 본 모양' },
   { key: 'surface' as const, en: '3D surface', ko: '3D 표면' },
   { key: 'process' as const, en: 'Etch response', ko: 'Etch 응답' },
 ]
+
+function buildGridFromRects(rects: [number, number, number, number][]) {
+  const g = new Array(GRID_N * GRID_N).fill(-1)
+  let id = 0
+  for (const [r0, c0, h, w] of rects) {
+    for (let dr = 0; dr < h; dr += 1) {
+      for (let dc = 0; dc < w; dc += 1) {
+        g[(r0 + dr) * GRID_N + (c0 + dc)] = id
+      }
+    }
+    id += 1
+  }
+  for (let i = 0; i < g.length; i += 1) {
+    if (g[i] < 0) {
+      g[i] = id
+      id += 1
+    }
+  }
+  return g
+}
+
+const LAYOUT_PRESETS: Record<Exclude<LayoutPreset, 'custom'>, () => number[]> = {
+  'all-1x1': () => buildGridFromRects([]),
+  'all-2x1': () => buildGridFromRects([
+    [0, 0, 1, 2], [0, 2, 1, 2],
+    [1, 0, 1, 2], [1, 2, 1, 2],
+    [2, 0, 1, 2], [2, 2, 1, 2],
+    [3, 0, 1, 2], [3, 2, 1, 2],
+  ]),
+  'all-1x2': () => buildGridFromRects([
+    [0, 0, 2, 1], [0, 1, 2, 1], [0, 2, 2, 1], [0, 3, 2, 1],
+    [2, 0, 2, 1], [2, 1, 2, 1], [2, 2, 2, 1], [2, 3, 2, 1],
+  ]),
+  'all-2x2': () => buildGridFromRects([
+    [0, 0, 2, 2], [0, 2, 2, 2], [2, 0, 2, 2], [2, 2, 2, 2],
+  ]),
+  'mixed-2x2-pdaf': () => buildGridFromRects([[1, 1, 2, 2]]),
+  'sparse-2x1-pdaf': () => buildGridFromRects([[1, 1, 1, 2], [2, 1, 1, 2]]),
+}
+
+function applyPreset(preset: LayoutPreset) {
+  if (preset !== 'custom') {
+    cellGrid.value = LAYOUT_PRESETS[preset]()
+  }
+  selectedCell.value = null
+}
+
+watch(layoutPreset, (preset) => applyPreset(preset))
+
+function deriveGroups(grid: number[]): LensGroup[] {
+  const map = new Map<number, { r: number; c: number }[]>()
+  for (let i = 0; i < grid.length; i += 1) {
+    const id = grid[i]
+    const r = Math.floor(i / GRID_N)
+    const c = i % GRID_N
+    if (!map.has(id)) map.set(id, [])
+    map.get(id)!.push({ r, c })
+  }
+  const groups: LensGroup[] = []
+  for (const [id, cells] of map) {
+    const rs = cells.map(p => p.r)
+    const cs = cells.map(p => p.c)
+    const r0 = Math.min(...rs)
+    const r1 = Math.max(...rs)
+    const c0 = Math.min(...cs)
+    const c1 = Math.max(...cs)
+    const h = r1 - r0 + 1
+    const w = c1 - c0 + 1
+    const expected = h * w
+    const rectangular = cells.length === expected
+    const allowed = (h === 1 || h === 2) && (w === 1 || w === 2)
+    const isValidShape = rectangular && allowed
+    let kind: LensUnitShape = '1x1'
+    if (h === 1 && w === 1) kind = '1x1'
+    else if (h === 1 && w === 2) kind = '2x1'
+    else if (h === 2 && w === 1) kind = '1x2'
+    else if (h === 2 && w === 2) kind = '2x2'
+    groups.push({ id, cells, r0, c0, h, w, kind, isValidShape })
+  }
+  groups.sort((a, b) => (a.r0 - b.r0) || (a.c0 - b.c0))
+  return groups
+}
+
+const customGridSize = 220
+const customCellSize = customGridSize / GRID_N
+
+function renumberGrid(grid: number[]) {
+  const remap = new Map<number, number>()
+  let next = 0
+  return grid.map((id) => {
+    if (!remap.has(id)) {
+      remap.set(id, next)
+      next += 1
+    }
+    return remap.get(id)!
+  })
+}
+
+function tryMergeCells(idxA: number, idxB: number): boolean {
+  if (idxA === idxB) return false
+  const rA = Math.floor(idxA / GRID_N)
+  const cA = idxA % GRID_N
+  const rB = Math.floor(idxB / GRID_N)
+  const cB = idxB % GRID_N
+  const groups = lensGroups.value
+  const groupA = groups.find(g => g.cells.some(p => p.r === rA && p.c === cA))!
+  const groupB = groups.find(g => g.cells.some(p => p.r === rB && p.c === cB))!
+  if (groupA.id === groupB.id) return false
+  const combined = [...groupA.cells, ...groupB.cells]
+  const rs = combined.map(p => p.r)
+  const cs = combined.map(p => p.c)
+  const h = Math.max(...rs) - Math.min(...rs) + 1
+  const w = Math.max(...cs) - Math.min(...cs) + 1
+  if ((h !== 1 && h !== 2) || (w !== 1 && w !== 2)) return false
+  if (combined.length !== h * w) return false
+  const newGrid = cellGrid.value.slice()
+  const newId = Math.min(groupA.id, groupB.id)
+  for (const p of combined) newGrid[p.r * GRID_N + p.c] = newId
+  cellGrid.value = renumberGrid(newGrid)
+  return true
+}
+
+function splitGroupAtCell(idx: number) {
+  const r = Math.floor(idx / GRID_N)
+  const c = idx % GRID_N
+  const group = lensGroups.value.find(g => g.cells.some(p => p.r === r && p.c === c))
+  if (!group || group.cells.length === 1) return
+  const newGrid = cellGrid.value.slice()
+  const maxId = Math.max(...newGrid)
+  let nextId = maxId + 1
+  for (const cell of group.cells) {
+    newGrid[cell.r * GRID_N + cell.c] = nextId
+    nextId += 1
+  }
+  cellGrid.value = renumberGrid(newGrid)
+}
+
+function onCellClick(idx: number) {
+  if (layoutPreset.value !== 'custom') return
+  if (selectedCell.value === null) {
+    selectedCell.value = idx
+    return
+  }
+  if (selectedCell.value === idx) {
+    selectedCell.value = null
+    return
+  }
+  tryMergeCells(selectedCell.value, idx)
+  selectedCell.value = null
+}
+
+function onCellDoubleClick(idx: number) {
+  if (layoutPreset.value !== 'custom') return
+  splitGroupAtCell(idx)
+  selectedCell.value = null
+}
+
+function groupKindForCell(idx: number): string {
+  const r = Math.floor(idx / GRID_N)
+  const c = idx % GRID_N
+  const group = lensGroups.value.find(g => g.cells.some(p => p.r === r && p.c === c))
+  if (!group) return ''
+  if (!group.isValidShape) return '!'
+  if (r !== group.r0 || c !== group.c0) return ''
+  return group.kind
+}
+
+function customCellFill(gid: number, idx: number) {
+  const r = Math.floor(idx / GRID_N)
+  const c = idx % GRID_N
+  const group = lensGroups.value.find(g => g.cells.some(p => p.r === r && p.c === c))
+  if (!group) return 'var(--vp-c-bg)'
+  if (!group.isValidShape) return 'rgba(192, 57, 43, 0.18)'
+  const palette: Record<LensUnitShape, string> = {
+    '1x1': 'rgba(52, 152, 219, 0.18)',
+    '2x1': 'rgba(155, 89, 182, 0.22)',
+    '1x2': 'rgba(230, 126, 34, 0.22)',
+    '2x2': 'rgba(39, 174, 96, 0.22)',
+  }
+  return palette[group.kind]
+}
+
+const lensGroups = computed(() => deriveGroups(cellGrid.value))
+const isLayoutValid = computed(() => lensGroups.value.every(g => g.isValidShape))
+const representativeGroup = computed<LensGroup>(() => {
+  const groups = lensGroups.value
+  const nonUnit = groups.find(g => g.kind !== '1x1' && g.isValidShape)
+  return nonUnit ?? groups[0]
+})
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
@@ -413,7 +774,7 @@ watch([minMaskWidth, maxMaskWidth], () => {
 }, { immediate: true })
 
 const boundedMaskWidth = computed(() => clamp(maskWidth.value, minMaskWidth.value, maxMaskWidth.value))
-const initialGap = computed(() => Math.max(0, pitch.value - boundedMaskWidth.value))
+const boundaryGap = computed(() => Math.max(0, pitch.value - boundedMaskWidth.value))
 const thermalDose = computed(() => {
   const tempNorm = clamp((reflowTemp.value - 125) / 80, 0, 1.35)
   const timeNorm = clamp(Math.log1p(reflowTime.value / 30) / Math.log1p(300 / 30), 0, 1.1)
@@ -432,21 +793,6 @@ const areaFactor = computed(() => {
   return 0.98
 })
 
-const reflowSpread = computed(() => {
-  const thicknessTerm = 0.10 * resistThickness.value
-  const gapPull = 0.20 * initialGap.value
-  return reflowSpreadGain.value * thermalDose.value * (0.018 + thicknessTerm + gapPull)
-})
-
-const reflowWidth = computed(() => Math.min(pitch.value * 1.04, boundedMaskWidth.value + 2 * reflowSpread.value))
-const reflowGap = computed(() => Math.max(0, pitch.value - reflowWidth.value))
-const reflowHeight = computed(() => {
-  const r0 = boundedMaskWidth.value / 2
-  const r1 = reflowWidth.value / 2
-  const volumeRetention = clamp((0.96 - 0.08 * thermalDose.value) * volumeRetentionGain.value, 0.74, 1.02)
-  return clamp((2 * resistThickness.value * r0 * r0 * volumeRetention) / Math.max(r1 * r1, 0.01), 0.035, 2.0)
-})
-
 const polyNorm = computed(() => polymerGas.value / 100)
 const maskRobustness = computed(() => clamp(0.72 + maskThickness.value / 0.75, 0.72, 1.70))
 const lateralEtchRate = computed(() => {
@@ -460,33 +806,142 @@ const verticalLossRate = computed(() => {
   return verticalLossGain.value * 0.0030 * (1 - 0.62 * poly) * (1.12 - 0.16 * mask)
 })
 
+interface ProcessState {
+  pitchX: number
+  pitchY: number
+  maskWX: number
+  maskWY: number
+  initialGapX: number
+  initialGapY: number
+  reflowSpreadX: number
+  reflowSpreadY: number
+  reflowWX: number
+  reflowWY: number
+  reflowGapX: number
+  reflowGapY: number
+  reflowHeight: number
+  closure: number
+  lossFraction: number
+  finalGapX: number
+  finalGapY: number
+  finalWX: number
+  finalWY: number
+  finalHeight: number
+  profilePower: number
+  retention: number
+  aspectRatio: number
+}
+
+function computeProcessAt(pitchX: number, pitchY: number, maskWX: number, maskWY: number, etchSeconds: number): ProcessState {
+  const initialGapX = Math.max(0, pitchX - maskWX)
+  const initialGapY = Math.max(0, pitchY - maskWY)
+  const thicknessTerm = 0.10 * resistThickness.value
+  const spreadBase = reflowSpreadGain.value * thermalDose.value
+  const spreadX0 = spreadBase * (0.018 + thicknessTerm + 0.20 * initialGapX)
+  const spreadY0 = spreadBase * (0.018 + thicknessTerm + 0.20 * initialGapY)
+  // Surface-tension correction (Choi et al.): asymmetric masks reflow toward isotropy;
+  // the long axis grows less and the short axis grows more.
+  const maskAsym = (maskWX - maskWY) / Math.max(maskWX + maskWY, 1e-6)
+  const tensionPull = 0.35 * thermalDose.value * maskAsym * ((spreadX0 + spreadY0) / 2)
+  const reflowSpreadX = Math.max(0, spreadX0 - tensionPull)
+  const reflowSpreadY = Math.max(0, spreadY0 + tensionPull)
+  const reflowWX = Math.min(pitchX * 1.04, maskWX + 2 * reflowSpreadX)
+  const reflowWY = Math.min(pitchY * 1.04, maskWY + 2 * reflowSpreadY)
+  const reflowGapX = Math.max(0, pitchX - reflowWX)
+  const reflowGapY = Math.max(0, pitchY - reflowWY)
+  const r0x = maskWX / 2
+  const r0y = maskWY / 2
+  const r1x = reflowWX / 2
+  const r1y = reflowWY / 2
+  const retention = clamp((0.96 - 0.08 * thermalDose.value) * volumeRetentionGain.value, 0.74, 1.02)
+  const reflowHeight = clamp((2 * resistThickness.value * r0x * r0y * retention) / Math.max(r1x * r1y, 0.01), 0.035, 2.0)
+  const closure = etchSeconds * lateralEtchRate.value
+  const lossFraction = clamp(etchSeconds * verticalLossRate.value, 0, 0.58)
+  const finalGapX = Math.max(0, reflowGapX - 2 * closure)
+  const finalGapY = Math.max(0, reflowGapY - 2 * closure)
+  const finalWX = Math.max(0.05, pitchX - finalGapX)
+  const finalWY = Math.max(0.05, pitchY - finalGapY)
+  const finalHeight = Math.max(0.025, reflowHeight * (1 - lossFraction))
+  const profilePower = clamp(2.0 + 0.42 * thermalDose.value + 1.2 * lossFraction - 0.22 * polyNorm.value, 1.7, 4.2)
+  const aspectRatio = Math.max(finalWX, finalWY) / Math.max(Math.min(finalWX, finalWY), 1e-6)
+  return {
+    pitchX, pitchY, maskWX, maskWY,
+    initialGapX, initialGapY,
+    reflowSpreadX, reflowSpreadY,
+    reflowWX, reflowWY,
+    reflowGapX, reflowGapY,
+    reflowHeight,
+    closure, lossFraction,
+    finalGapX, finalGapY,
+    finalWX, finalWY,
+    finalHeight,
+    profilePower,
+    retention,
+    aspectRatio,
+  }
+}
+
+function groupMaskDims(group: LensGroup) {
+  const bGap = boundaryGap.value
+  const maskWX = Math.max(0.02, group.w * pitch.value - bGap)
+  const maskWY = Math.max(0.02, group.h * pitch.value - bGap)
+  return { maskWX, maskWY, pitchX: group.w * pitch.value, pitchY: group.h * pitch.value }
+}
+
+function computeGroupProcessAt(group: LensGroup, etchSeconds: number) {
+  const { maskWX, maskWY, pitchX, pitchY } = groupMaskDims(group)
+  return computeProcessAt(pitchX, pitchY, maskWX, maskWY, etchSeconds)
+}
+
+const groupProcessStates = computed(() =>
+  lensGroups.value.map(g => ({ group: g, state: computeGroupProcessAt(g, etchTime.value) })),
+)
+
+const representativeProcess = computed<ProcessState>(() => computeGroupProcessAt(representativeGroup.value, etchTime.value))
+
+// Backward-compatible scalar computeds (drive cross-section, surface, metrics, flags)
+const initialGap = computed(() => representativeProcess.value.initialGapX)
+const reflowSpread = computed(() => representativeProcess.value.reflowSpreadX)
+const reflowWidth = computed(() => representativeProcess.value.reflowWX)
+const reflowGap = computed(() => representativeProcess.value.reflowGapX)
+const reflowHeight = computed(() => representativeProcess.value.reflowHeight)
+
 function etchTransferAt(timeSeconds: number) {
-  const closure = timeSeconds * lateralEtchRate.value
-  const gap = Math.max(0, reflowGap.value - 2 * closure)
-  const lossFraction = clamp(timeSeconds * verticalLossRate.value, 0, 0.58)
-  const transferredHeight = Math.max(0.025, reflowHeight.value * (1 - lossFraction))
-  return { gap, closure, lossFraction, height: transferredHeight }
+  const state = computeGroupProcessAt(representativeGroup.value, timeSeconds)
+  return {
+    gap: Math.max(state.finalGapX, state.finalGapY),
+    closure: state.closure,
+    lossFraction: state.lossFraction,
+    height: state.finalHeight,
+  }
 }
 
 const etchState = computed(() => etchTransferAt(etchTime.value))
-const finalGap = computed(() => etchState.value.gap)
-const finalWidth = computed(() => Math.max(0.05, pitch.value - finalGap.value))
-const finalHeight = computed(() => etchState.value.height)
+const finalGap = computed(() => Math.max(representativeProcess.value.finalGapX, representativeProcess.value.finalGapY))
+const finalWidth = computed(() => representativeProcess.value.finalWX)
+const finalHeight = computed(() => representativeProcess.value.finalHeight)
 const heightRetention = computed(() => clamp((finalHeight.value / Math.max(reflowHeight.value, 0.001)) * 100, 0, 120))
-const profilePower = computed(() => clamp(2.0 + 0.42 * thermalDose.value + 1.2 * etchState.value.lossFraction - 0.22 * polyNorm.value, 1.7, 4.2))
-const halfFinalWidth = computed(() => finalWidth.value / 2)
+const profilePower = computed(() => representativeProcess.value.profilePower)
+const halfFinalWidth = computed(() => representativeProcess.value.finalWX / 2)
+const halfFinalHeight = computed(() => representativeProcess.value.finalWY / 2)
 const halfReflowWidth = computed(() => reflowWidth.value / 2)
 const roc = computed(() => {
-  const a = halfFinalWidth.value
+  const a = (halfFinalWidth.value + halfFinalHeight.value) / 2
   const h = finalHeight.value
   return (a * a + h * h) / Math.max(2 * h, 0.001)
 })
 const focalLength = computed(() => roc.value / Math.max(lensIndex.value - 1, 0.05))
 const fNumber = computed(() => focalLength.value / Math.max(finalWidth.value, 0.05))
-const fillFactor = computed(() => clamp((areaFactor.value * finalWidth.value * finalWidth.value / (pitch.value * pitch.value)) * 100, 0, 100))
+const fillFactor = computed(() => {
+  const rep = representativeProcess.value
+  return clamp((areaFactor.value * rep.finalWX * rep.finalWY / Math.max(rep.pitchX * rep.pitchY, 1e-6)) * 100, 0, 100)
+})
+const aspectRatio = computed(() => representativeProcess.value.aspectRatio)
+const worstReflowGap = computed(() => Math.min(representativeProcess.value.reflowGapX, representativeProcess.value.reflowGapY))
+const worstInitialGap = computed(() => Math.min(representativeProcess.value.initialGapX, representativeProcess.value.initialGapY))
 const zeroGapEtchTime = computed(() => {
-  if (reflowGap.value <= 0.002) return 0
-  const seconds = reflowGap.value / Math.max(2 * lateralEtchRate.value, 1e-6)
+  if (worstReflowGap.value <= 0.002) return 0
+  const seconds = worstReflowGap.value / Math.max(2 * lateralEtchRate.value, 1e-6)
   return Math.min(seconds, 999)
 })
 const zeroGapEtchTimeLabel = computed(() => {
@@ -497,16 +952,22 @@ const zeroGapEtchTimeLabel = computed(() => {
 
 const processFlags = computed(() => {
   const flags: { text: string; tone: string }[] = []
+  const rep = representativeProcess.value
   if (finalGap.value <= 0.015) flags.push({ text: t('zero-gap candidate', 'zero-gap 후보'), tone: 'good' })
   else if (finalGap.value <= 0.06) flags.push({ text: t('near zero-space', 'zero-space 근접'), tone: 'good' })
   else flags.push({ text: t('visible lens gap', '렌즈 gap 잔존'), tone: 'warn' })
 
-  if (reflowGap.value <= 0.002 && initialGap.value > 0.01) flags.push({ text: t('merger risk during reflow', 'reflow 중 merger 위험'), tone: 'risk' })
+  if (rep.reflowGapX <= 0.002 && rep.initialGapX > 0.01) flags.push({ text: t('X-direction merger risk', 'X 방향 merger 위험'), tone: 'risk' })
+  if (rep.reflowGapY <= 0.002 && rep.initialGapY > 0.01) flags.push({ text: t('Y-direction merger risk', 'Y 방향 merger 위험'), tone: 'risk' })
   if (etchState.value.lossFraction > 0.32) flags.push({ text: t('height loss risk', 'height loss 위험'), tone: 'risk' })
   if (zeroGapEtchTime.value > 140 && finalGap.value > 0.06) flags.push({ text: t('etch window too short', 'etch window 부족'), tone: 'risk' })
   if (zeroGapEtchTime.value > 0.1 && etchTime.value > zeroGapEtchTime.value + 30) flags.push({ text: t('over-etch margin', 'over-etch margin'), tone: 'warn' })
   if (fillFactor.value > 92) flags.push({ text: t('high fill factor', '높은 fill factor'), tone: 'good' })
   if (fNumber.value < 0.9 || fNumber.value > 3.8) flags.push({ text: t('check optical focus', 'optical focus 확인 필요'), tone: 'warn' })
+  if (representativeGroup.value.kind !== '1x1' && aspectRatio.value > 1.08) {
+    flags.push({ text: t('asymmetric reflow profile', '비대칭 reflow profile'), tone: 'warn' })
+  }
+  if (!isLayoutValid.value) flags.push({ text: t('invalid lens layout', '유효하지 않은 lens 배치'), tone: 'risk' })
   return flags
 })
 
@@ -516,11 +977,11 @@ function lensZ1D(x: number, halfWidth: number, height: number, power: number) {
   return height * Math.pow(1 - Math.pow(u, power), 1.0)
 }
 
-function lensZ2D(x: number, y: number, halfWidth: number, height: number, profile: number) {
+function lensZ2D(x: number, y: number, halfWX: number, halfWY: number, height: number, profile: number) {
   const n = shapeExponent.value
   const r = Math.pow(
-    Math.pow(Math.abs(x) / Math.max(halfWidth, 0.001), n) +
-      Math.pow(Math.abs(y) / Math.max(halfWidth, 0.001), n),
+    Math.pow(Math.abs(x) / Math.max(halfWX, 0.001), n) +
+      Math.pow(Math.abs(y) / Math.max(halfWY, 0.001), n),
     1 / n,
   )
   if (r >= 1) return 0
@@ -531,13 +992,15 @@ function lensZ2D(x: number, y: number, halfWidth: number, height: number, profil
 const sectionW = 640
 const sectionH = 330
 const sectionPad = { left: 52, right: 22, top: 22, bottom: 42 }
-const lensCenters = computed(() => [-pitch.value, 0, pitch.value])
-const sectionXMin = computed(() => -1.55 * pitch.value)
-const sectionXMax = computed(() => 1.55 * pitch.value)
+const sectionPitch = computed(() => representativeProcess.value.pitchX)
+const sectionMaskW = computed(() => representativeProcess.value.maskWX)
+const lensCenters = computed(() => [-sectionPitch.value, 0, sectionPitch.value])
+const sectionXMin = computed(() => -1.55 * sectionPitch.value)
+const sectionXMax = computed(() => 1.55 * sectionPitch.value)
 const sectionYMax = computed(() => Math.max(reflowHeight.value, finalHeight.value, resistThickness.value) * 1.22 + 0.08)
 const sectionYMin = computed(() => -0.12)
 const sectionXTicks = computed(() => {
-  return [-1.5, -1, -0.5, 0, 0.5, 1, 1.5].map(v => v * pitch.value).filter(v => v >= sectionXMin.value && v <= sectionXMax.value)
+  return [-1.5, -1, -0.5, 0, 0.5, 1, 1.5].map(v => v * sectionPitch.value).filter(v => v >= sectionXMin.value && v <= sectionXMax.value)
 })
 const sectionYTicks = computed(() => {
   const max = sectionYMax.value
@@ -569,15 +1032,15 @@ function buildSectionProfile(center: number, width: number, height: number, powe
   return points.join(' ')
 }
 
-const reflowProfiles = computed(() => lensCenters.value.map(center => buildSectionProfile(center, reflowWidth.value, reflowHeight.value, 2.0, false)))
-const finalProfiles = computed(() => lensCenters.value.map(center => buildSectionProfile(center, finalWidth.value, finalHeight.value, profilePower.value, true)))
+const reflowProfiles = computed(() => lensCenters.value.map(center => buildSectionProfile(center, representativeProcess.value.reflowWX, reflowHeight.value, 2.0, false)))
+const finalProfiles = computed(() => lensCenters.value.map(center => buildSectionProfile(center, representativeProcess.value.finalWX, finalHeight.value, profilePower.value, true)))
 
 // 3D wireframe
 const surfaceW = 640
 const surfaceH = 360
 const surfaceCx = 322
 const surfaceCy = 214
-const surfaceScale = computed(() => 170 / Math.max(pitch.value, 0.4))
+const surfaceScale = computed(() => 170 / Math.max(Math.max(representativeProcess.value.pitchX, representativeProcess.value.pitchY), 0.4))
 const surfaceZScale = computed(() => 120 / Math.max(finalHeight.value, 0.08))
 
 function projectSurface(x: number, y: number, z: number) {
@@ -597,16 +1060,17 @@ function buildSurfaceLine(points: { x: number; y: number; z: number }[]) {
 
 const surfaceLines = computed(() => {
   const lines: { key: string; d: string; stroke: string; major: boolean }[] = []
-  const a = halfFinalWidth.value
+  const ax = halfFinalWidth.value
+  const ay = halfFinalHeight.value
   const steps = 16
   const samples = 42
   for (let row = 0; row <= steps; row += 1) {
-    const y = -a + (2 * a * row) / steps
+    const y = -ay + (2 * ay * row) / steps
     const pts: { x: number; y: number; z: number }[] = []
     for (let i = 0; i <= samples; i += 1) {
-      const x = -a + (2 * a * i) / samples
-      const z = lensZ2D(x, y, a, finalHeight.value, profilePower.value)
-      if (z > 0 || Math.abs(Math.abs(x) - a) < 1e-6) pts.push({ x, y, z })
+      const x = -ax + (2 * ax * i) / samples
+      const z = lensZ2D(x, y, ax, ay, finalHeight.value, profilePower.value)
+      if (z > 0 || Math.abs(Math.abs(x) - ax) < 1e-6) pts.push({ x, y, z })
     }
     if (pts.length > 1) {
       const major = row === 0 || row === steps || row === steps / 2
@@ -614,12 +1078,12 @@ const surfaceLines = computed(() => {
     }
   }
   for (let col = 0; col <= steps; col += 1) {
-    const x = -a + (2 * a * col) / steps
+    const x = -ax + (2 * ax * col) / steps
     const pts: { x: number; y: number; z: number }[] = []
     for (let i = 0; i <= samples; i += 1) {
-      const y = -a + (2 * a * i) / samples
-      const z = lensZ2D(x, y, a, finalHeight.value, profilePower.value)
-      if (z > 0 || Math.abs(Math.abs(y) - a) < 1e-6) pts.push({ x, y, z })
+      const y = -ay + (2 * ay * i) / samples
+      const z = lensZ2D(x, y, ax, ay, finalHeight.value, profilePower.value)
+      if (z > 0 || Math.abs(Math.abs(y) - ay) < 1e-6) pts.push({ x, y, z })
     }
     if (pts.length > 1) {
       const major = col === 0 || col === steps || col === steps / 2
@@ -630,7 +1094,8 @@ const surfaceLines = computed(() => {
 })
 
 const surfaceFootprintEdges = computed(() => {
-  const a = halfFinalWidth.value
+  const ax = halfFinalWidth.value
+  const ay = halfFinalHeight.value
   const edgePts: { x: number; y: number; z: number }[] = []
   const n = shapeExponent.value
   for (let i = 0; i <= 96; i += 1) {
@@ -638,19 +1103,219 @@ const surfaceFootprintEdges = computed(() => {
     const c = Math.cos(theta)
     const s = Math.sin(theta)
     const denom = Math.pow(Math.pow(Math.abs(c), n) + Math.pow(Math.abs(s), n), 1 / n)
-    edgePts.push({ x: (a * c) / denom, y: (a * s) / denom, z: 0 })
+    edgePts.push({ x: (ax * c) / denom, y: (ay * s) / denom, z: 0 })
   }
   return [buildSurfaceLine(edgePts)]
 })
 
 const cellBasePolygon = computed(() => {
-  const a = pitch.value / 2
+  const ax = representativeProcess.value.pitchX / 2
+  const ay = representativeProcess.value.pitchY / 2
   return [
-    projectSurface(-a, -a, 0),
-    projectSurface(a, -a, 0),
-    projectSurface(a, a, 0),
-    projectSurface(-a, a, 0),
+    projectSurface(-ax, -ay, 0),
+    projectSurface(ax, -ay, 0),
+    projectSurface(ax, ay, 0),
+    projectSurface(-ax, ay, 0),
   ].map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')
+})
+
+// Top view (XY) plot
+const topW = 640
+const topH = 400
+const topPad = { left: 70, right: 70, top: 30, bottom: 30 }
+const topPlotW = computed(() => topW - topPad.left - topPad.right)
+const topPlotH = computed(() => topH - topPad.top - topPad.bottom)
+const topScale = computed(() => Math.min(topPlotW.value, topPlotH.value) / Math.max(GRID_N * pitch.value, 0.4))
+const topOriginX = computed(() => topPad.left + topPlotW.value / 2)
+const topOriginY = computed(() => topPad.top + topPlotH.value / 2)
+
+function topXScale(xUm: number) {
+  return topOriginX.value + xUm * topScale.value
+}
+
+function topYScale(yUm: number) {
+  return topOriginY.value + yUm * topScale.value
+}
+
+function buildSuperellipsePath(cxUm: number, cyUm: number, halfXUm: number, halfYUm: number, n: number, samples = 96) {
+  const pts: string[] = []
+  for (let i = 0; i <= samples; i += 1) {
+    const theta = (2 * Math.PI * i) / samples
+    const c = Math.cos(theta)
+    const s = Math.sin(theta)
+    const denom = Math.pow(Math.pow(Math.abs(c), n) + Math.pow(Math.abs(s), n), 1 / n)
+    const xLocal = (halfXUm * c) / Math.max(denom, 1e-6)
+    const yLocal = (halfYUm * s) / Math.max(denom, 1e-6)
+    pts.push(`${i === 0 ? 'M' : 'L'} ${topXScale(cxUm + xLocal).toFixed(2)} ${topYScale(cyUm + yLocal).toFixed(2)}`)
+  }
+  pts.push('Z')
+  return pts.join(' ')
+}
+
+function groupCenterUm(group: LensGroup) {
+  return {
+    x: (group.c0 + group.w / 2 - GRID_N / 2) * pitch.value,
+    y: (group.r0 + group.h / 2 - GRID_N / 2) * pitch.value,
+  }
+}
+
+interface TopGroupRender {
+  id: number
+  kind: LensUnitShape
+  isValid: boolean
+  maskPath: string
+  reflowPath: string
+  finalPath: string
+  centerPx: { x: number; y: number }
+  labelText: string
+  finalHeightUm: number
+}
+
+const topGroupsRender = computed<TopGroupRender[]>(() => {
+  const exponent = shapeExponent.value
+  return lensGroups.value.map((group) => {
+    const center = groupCenterUm(group)
+    const state = computeGroupProcessAt(group, etchTime.value)
+    const maskPath = buildSuperellipsePath(center.x, center.y, state.maskWX / 2, state.maskWY / 2, exponent)
+    const reflowPath = buildSuperellipsePath(center.x, center.y, state.reflowWX / 2, state.reflowWY / 2, exponent)
+    const finalPath = buildSuperellipsePath(center.x, center.y, state.finalWX / 2, state.finalWY / 2, exponent)
+    return {
+      id: group.id,
+      kind: group.kind,
+      isValid: group.isValidShape,
+      maskPath,
+      reflowPath,
+      finalPath,
+      centerPx: { x: topXScale(center.x), y: topYScale(center.y) },
+      labelText: group.kind,
+      finalHeightUm: state.finalHeight,
+    }
+  })
+})
+
+const topMaxHeight = computed(() => {
+  const heights = topGroupsRender.value.map(g => g.finalHeightUm)
+  return heights.length ? Math.max(...heights, 0.05) : 0.05
+})
+
+function heatColor(heightUm: number) {
+  const t01 = clamp(heightUm / Math.max(topMaxHeight.value, 1e-6), 0, 1)
+  // viridis-ish 5-stop interpolation
+  const stops: [number, [number, number, number]][] = [
+    [0.00, [68, 1, 84]],
+    [0.25, [59, 82, 139]],
+    [0.50, [33, 145, 140]],
+    [0.75, [94, 201, 98]],
+    [1.00, [253, 231, 37]],
+  ]
+  for (let i = 0; i < stops.length - 1; i += 1) {
+    const [a, ca] = stops[i]
+    const [b, cb] = stops[i + 1]
+    if (t01 <= b) {
+      const u = (t01 - a) / Math.max(b - a, 1e-6)
+      const r = Math.round(ca[0] + (cb[0] - ca[0]) * u)
+      const g = Math.round(ca[1] + (cb[1] - ca[1]) * u)
+      const bl = Math.round(ca[2] + (cb[2] - ca[2]) * u)
+      return `rgb(${r}, ${g}, ${bl})`
+    }
+  }
+  return 'rgb(253, 231, 37)'
+}
+
+interface TopGapMarker {
+  key: string
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+  gap: number
+  tone: 'good' | 'warn' | 'risk'
+}
+
+const topGapMarkers = computed<TopGapMarker[]>(() => {
+  const markers: TopGapMarker[] = []
+  const groups = lensGroups.value
+  const cellIndex = new Map<string, LensGroup>()
+  for (const g of groups) {
+    for (const cell of g.cells) {
+      cellIndex.set(`${cell.r},${cell.c}`, g)
+    }
+  }
+  // For each group, look at right and bottom neighbors only (avoid duplicates).
+  for (const g of groups) {
+    const state = computeGroupProcessAt(g, etchTime.value)
+    // Right neighbor (along positive X)
+    const rightR = g.r0 + Math.floor(g.h / 2)
+    const rightCellC = g.c0 + g.w
+    if (rightCellC < GRID_N) {
+      const neighbor = cellIndex.get(`${rightR},${rightCellC}`)
+      if (neighbor && neighbor.id !== g.id) {
+        const gapX = state.finalGapX
+        const tone: TopGapMarker['tone'] = gapX <= 0.015 ? 'good' : gapX <= 0.06 ? 'good' : 'warn'
+        const center = groupCenterUm(g)
+        const y = (center.y) * topScale.value + topOriginY.value
+        markers.push({
+          key: `gx-${g.id}-${neighbor.id}`,
+          x1: topXScale(center.x + state.finalWX / 2),
+          y1: y,
+          x2: topXScale(center.x + state.finalWX / 2 + gapX),
+          y2: y,
+          gap: gapX,
+          tone,
+        })
+      }
+    }
+    // Bottom neighbor (along positive Y)
+    const bottomC = g.c0 + Math.floor(g.w / 2)
+    const bottomR = g.r0 + g.h
+    if (bottomR < GRID_N) {
+      const neighbor = cellIndex.get(`${bottomR},${bottomC}`)
+      if (neighbor && neighbor.id !== g.id) {
+        const gapY = state.finalGapY
+        const tone: TopGapMarker['tone'] = gapY <= 0.015 ? 'good' : gapY <= 0.06 ? 'good' : 'warn'
+        const center = groupCenterUm(g)
+        const x = topXScale(center.x)
+        markers.push({
+          key: `gy-${g.id}-${neighbor.id}`,
+          x1: x,
+          y1: topYScale(center.y + state.finalWY / 2),
+          x2: x,
+          y2: topYScale(center.y + state.finalWY / 2 + gapY),
+          gap: gapY,
+          tone,
+        })
+      }
+    }
+  }
+  return markers
+})
+
+const topGridLines = computed(() => {
+  const lines: { key: string; x1: number; y1: number; x2: number; y2: number }[] = []
+  for (let i = 0; i <= GRID_N; i += 1) {
+    const v = (i - GRID_N / 2) * pitch.value
+    lines.push({
+      key: `gv-${i}`,
+      x1: topXScale(v),
+      y1: topYScale(-GRID_N / 2 * pitch.value),
+      x2: topXScale(v),
+      y2: topYScale(GRID_N / 2 * pitch.value),
+    })
+    lines.push({
+      key: `gh-${i}`,
+      x1: topXScale(-GRID_N / 2 * pitch.value),
+      y1: topYScale(v),
+      x2: topXScale(GRID_N / 2 * pitch.value),
+      y2: topYScale(v),
+    })
+  }
+  return lines
+})
+
+const topLegendStops = computed(() => {
+  const max = topMaxHeight.value
+  const vals = [0, max * 0.25, max * 0.5, max * 0.75, max]
+  return vals.map(v => ({ value: v, color: heatColor(v) }))
 })
 
 // Etch response plot
@@ -966,6 +1631,73 @@ const currentProcessPoint = computed(() => ({
 
 .surface-note {
   font-size: 10px;
+}
+
+.top-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--vp-c-bg);
+  paint-order: stroke fill;
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 2.2px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.custom-grid-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  margin: 8px 0 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 7px;
+  background: var(--vp-c-bg);
+}
+
+.custom-grid-help {
+  flex: 1;
+  min-width: 200px;
+  font-size: 0.82em;
+  line-height: 1.55;
+  color: var(--vp-c-text-2);
+}
+
+.custom-grid-help strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--vp-c-text-1);
+  font-size: 0.95em;
+}
+
+.custom-grid-svg {
+  width: 220px;
+  height: 220px;
+  flex-shrink: 0;
+}
+
+.custom-cell {
+  cursor: pointer;
+  transition: stroke-width 0.15s;
+}
+
+.custom-cell:hover {
+  stroke: var(--vp-c-brand-1);
+}
+
+.custom-cell-label {
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--vp-c-text-1);
+  pointer-events: none;
+}
+
+.custom-invalid {
+  flex-basis: 100%;
+  color: #a93226;
+  font-size: 0.82em;
+  font-weight: 600;
 }
 
 .formula-box {
