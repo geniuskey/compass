@@ -16,6 +16,7 @@
       ) }}
     </p>
 
+    <div class="sim-fs-controls">
     <div class="controls-row">
       <div class="toggle-group">
         <button type="button"
@@ -53,7 +54,9 @@
         <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="ctrl-range" />
       </div>
     </div>
+    </div>
 
+    <div class="sim-fs-view">
     <!-- Single Wavelength Mode -->
     <template v-if="mode === 'single'">
       <div class="stacked-bar-wrapper">
@@ -225,6 +228,7 @@
         <span class="legend-item"><span class="legend-swatch" :style="{ background: colors.transmission }"></span>{{ t('Transmission', '\uD22C\uACFC') }}</span>
       </div>
     </template>
+    </div>
   </div>
 </template>
 

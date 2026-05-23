@@ -228,3 +228,55 @@ html {
 .sim-fullscreen .structure-svg {
   max-width: none !important;
 }
+
+/* Side-by-side fullscreen layout: controls on the left, view on the right.
+   Wrappers are transparent (display: contents) by default so non-fullscreen
+   and narrow-screen layouts are unchanged. */
+.sim-fs-controls,
+.sim-fs-view {
+  display: contents;
+}
+
+@media (min-width: 960px) {
+  .sim-fullscreen {
+    display: grid !important;
+    grid-template-columns: minmax(340px, 460px) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    column-gap: 20px;
+    row-gap: 8px;
+    overflow: hidden !important;
+    align-items: stretch;
+  }
+  .sim-fullscreen > h4,
+  .sim-fullscreen > .component-description {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+  }
+  .sim-fullscreen .sim-fs-controls {
+    display: block;
+    grid-column: 1;
+    grid-row: 2;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    padding-right: 8px;
+  }
+  .sim-fullscreen .sim-fs-view {
+    display: block;
+    grid-column: 2;
+    grid-row: 2;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    padding-right: 8px;
+  }
+  .sim-fullscreen .sim-fs-controls::-webkit-scrollbar,
+  .sim-fullscreen .sim-fs-view::-webkit-scrollbar {
+    width: 8px;
+  }
+  .sim-fullscreen .sim-fs-controls::-webkit-scrollbar-thumb,
+  .sim-fullscreen .sim-fs-view::-webkit-scrollbar-thumb {
+    background: var(--vp-c-divider);
+    border-radius: 4px;
+  }
+}

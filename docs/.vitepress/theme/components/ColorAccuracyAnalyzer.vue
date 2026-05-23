@@ -16,6 +16,7 @@
       ) }}
     </p>
 
+    <div class="sim-fs-controls">
     <!-- Controls -->
     <div class="controls-row">
       <div class="slider-group">
@@ -106,7 +107,9 @@
         ({{ avgDeltaE - snapshot.avgDE > 0 ? '+' : '' }}{{ (avgDeltaE - snapshot.avgDE).toFixed(2) }})
       </span>
     </div>
+    </div>
 
+    <div class="sim-fs-view">
     <!-- Summary bar -->
     <div class="results-grid">
       <div class="result-card">
@@ -450,6 +453,7 @@
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   </div>
 </template>

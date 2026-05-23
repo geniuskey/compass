@@ -16,6 +16,7 @@
       ) }}
     </p>
 
+    <div class="sim-fs-controls">
     <!-- Controls -->
     <div class="controls-row">
       <div class="select-group">
@@ -55,7 +56,9 @@
         </label>
       </div>
     </div>
+    </div>
 
+    <div class="sim-fs-view">
     <!-- Info cards -->
     <div class="info-row">
       <div class="info-card" style="border-left: 3px solid #3498db;">
@@ -265,6 +268,7 @@
           <text :x="pad.left + plotW - 58" :y="pad.top + 44" class="legend-label">A</text>
         </template>
       </svg>
+    </div>
     </div>
   </div>
 </template>

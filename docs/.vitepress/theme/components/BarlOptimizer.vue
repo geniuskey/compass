@@ -16,6 +16,7 @@
       ) }}
     </p>
 
+    <div class="sim-fs-controls">
     <!-- Incident / Substrate media -->
     <div class="media-row">
       <div class="media-group">
@@ -101,7 +102,9 @@
         </div>
       </div>
     </div>
+    </div>
 
+    <div class="sim-fs-view">
     <!-- Info cards -->
     <div class="info-row">
       <div class="info-card">
@@ -226,6 +229,7 @@
           <text :x="tooltipX+8" :y="pad.top+43" class="tooltip-text" fill="#e67e22">T: {{ hoverT.toFixed(2) }}%</text>
         </template>
       </svg>
+    </div>
     </div>
   </div>
 </template>
