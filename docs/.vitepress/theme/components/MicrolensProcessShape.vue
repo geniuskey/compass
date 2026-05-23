@@ -434,24 +434,45 @@
         <rect x="0" y="0" :width="surfaceW" :height="surfaceH" fill="var(--vp-c-bg)" />
         <polygon :points="cellBasePolygon" fill="#7f8c8d" opacity="0.08" stroke="var(--vp-c-divider)" stroke-width="1" />
         <path
+          v-for="g in surfaceGridLines"
+          :key="g.key"
+          :d="g.d"
+          fill="none"
+          stroke="var(--vp-c-divider)"
+          stroke-width="0.6"
+          opacity="0.7"
+        />
+        <path
           v-for="line in surfaceLines"
           :key="line.key"
           :d="line.d"
           fill="none"
           :stroke="line.stroke"
-          :stroke-width="line.major ? 1.5 : 0.8"
-          :opacity="line.major ? 0.95 : 0.65"
+          :stroke-width="line.major ? 1.4 : 0.7"
+          :opacity="line.major ? 0.95 : 0.6"
         />
-        <path v-for="edge in surfaceFootprintEdges" :key="'edge-' + edge" :d="edge" fill="none" stroke="#34495e" stroke-width="1.2" opacity="0.8" />
-        <text x="24" y="28" class="surface-title">{{ t('Final 3D footprint and profile', '최종 3D footprint/profile') }}</text>
+        <path
+          v-for="edge in surfaceFootprintEdges"
+          :key="edge.key"
+          :d="edge.d"
+          fill="none"
+          :stroke="edge.stroke"
+          stroke-width="1.2"
+          opacity="0.85"
+        />
+        <text x="24" y="28" class="surface-title">{{ t('Final 3D footprints (all lens units)', '최종 3D footprint (모든 lens unit)') }}</text>
         <text x="24" y="48" class="surface-note">
-          {{ t('Superellipse footprint; height field uses the predicted final height and profile exponent.', 'Superellipse footprint와 예측 height/profile exponent를 사용합니다.') }}
+          {{ t('Each lens group is rendered at its grid location with its own anisotropic radii and height.', '각 lens group을 grid 위치에 자체 anisotropic 반경과 height로 렌더링합니다.') }}
         </text>
-        <g transform="translate(24, 298)">
-          <rect x="0" y="0" width="200" height="48" rx="5" fill="var(--vp-c-bg-soft)" stroke="var(--vp-c-divider)" />
-          <text x="10" y="14" class="legend-label">{{ representativeGroup.kind }} · {{ t('lens unit', '렌즈 unit') }}</text>
-          <text x="10" y="28" class="legend-label">{{ t('width', '폭') }} {{ representativeProcess.finalWX.toFixed(3) }} × {{ representativeProcess.finalWY.toFixed(3) }} um</text>
-          <text x="10" y="42" class="legend-label">{{ t('profile exponent', 'profile exponent') }} {{ profilePower.toFixed(2) }}</text>
+        <g transform="translate(24, 268)">
+          <rect x="0" y="0" width="240" height="78" rx="5" fill="var(--vp-c-bg-soft)" stroke="var(--vp-c-divider)" />
+          <text x="10" y="14" class="legend-label">{{ t('Lens unit counts', 'Lens unit 개수') }}</text>
+          <g v-for="(kind, ki) in (['1x1','2x1','1x2','2x2'] as const)" :key="'su-' + kind">
+            <rect :x="10 + ki * 56" y="22" width="14" height="10" :fill="SURFACE_PALETTE[kind].rowMajor" stroke="var(--vp-c-divider)" stroke-width="0.5" />
+            <text :x="28 + ki * 56" y="31" class="legend-label">{{ kind }} × {{ surfaceKindCounts[kind] }}</text>
+          </g>
+          <text x="10" y="50" class="legend-label">{{ t('Max height', '최대 높이') }} {{ globalMaxHeight.toFixed(3) }} um</text>
+          <text x="10" y="64" class="legend-label">{{ t('Profile exponent (rep.)', 'Profile exponent (대표)') }} {{ profilePower.toFixed(2) }}</text>
         </g>
       </svg>
 
@@ -1040,8 +1061,20 @@ const surfaceW = 640
 const surfaceH = 360
 const surfaceCx = 322
 const surfaceCy = 214
-const surfaceScale = computed(() => 170 / Math.max(Math.max(representativeProcess.value.pitchX, representativeProcess.value.pitchY), 0.4))
-const surfaceZScale = computed(() => 120 / Math.max(finalHeight.value, 0.08))
+const surfaceScale = computed(() => {
+  const fitGrid = 230 / Math.max(GRID_N * pitch.value, 0.4)
+  return Math.max(20, fitGrid)
+})
+const globalMaxHeight = computed(() => {
+  let max = 0.08
+  for (const g of lensGroups.value) {
+    if (!g.isValidShape) continue
+    const state = computeGroupProcessAt(g, etchTime.value)
+    if (state.finalHeight > max) max = state.finalHeight
+  }
+  return max
+})
+const surfaceZScale = computed(() => 80 / Math.max(globalMaxHeight.value, 0.08))
 
 function projectSurface(x: number, y: number, z: number) {
   const sx = surfaceScale.value
@@ -1058,65 +1091,142 @@ function buildSurfaceLine(points: { x: number; y: number; z: number }[]) {
   }).join(' ')
 }
 
+interface SurfacePalette {
+  rowMajor: string
+  rowMinor: string
+  colMajor: string
+  colMinor: string
+  edge: string
+}
+
+const SURFACE_PALETTE: Record<LensUnitShape, SurfacePalette> = {
+  '1x1': { rowMajor: '#1f78b4', rowMinor: '#3498db', colMajor: '#8e44ad', colMinor: '#9b59b6', edge: '#34495e' },
+  '2x1': { rowMajor: '#7d3c98', rowMinor: '#bb8fce', colMajor: '#6c3483', colMinor: '#a569bd', edge: '#5b2c6f' },
+  '1x2': { rowMajor: '#c0392b', rowMinor: '#ec7063', colMajor: '#a04000', colMinor: '#dc7633', edge: '#922b21' },
+  '2x2': { rowMajor: '#1e8449', rowMinor: '#52be80', colMajor: '#117a65', colMinor: '#48c9b0', edge: '#0e6251' },
+}
+
 const surfaceLines = computed(() => {
-  const lines: { key: string; d: string; stroke: string; major: boolean }[] = []
-  const ax = halfFinalWidth.value
-  const ay = halfFinalHeight.value
-  const steps = 16
-  const samples = 42
-  for (let row = 0; row <= steps; row += 1) {
-    const y = -ay + (2 * ay * row) / steps
-    const pts: { x: number; y: number; z: number }[] = []
-    for (let i = 0; i <= samples; i += 1) {
-      const x = -ax + (2 * ax * i) / samples
-      const z = lensZ2D(x, y, ax, ay, finalHeight.value, profilePower.value)
-      if (z > 0 || Math.abs(Math.abs(x) - ax) < 1e-6) pts.push({ x, y, z })
+  const lines: { key: string; d: string; stroke: string; major: boolean; depth: number }[] = []
+  const steps = 12
+  const samples = 32
+  for (const g of lensGroups.value) {
+    if (!g.isValidShape) continue
+    const state = computeGroupProcessAt(g, etchTime.value)
+    const center = groupCenterUm(g)
+    const ax = state.finalWX / 2
+    const ay = state.finalWY / 2
+    const h = state.finalHeight
+    const p = state.profilePower
+    const palette = SURFACE_PALETTE[g.kind]
+    const depth = center.x + center.y
+    for (let row = 0; row <= steps; row += 1) {
+      const yLocal = -ay + (2 * ay * row) / steps
+      const pts: { x: number; y: number; z: number }[] = []
+      for (let i = 0; i <= samples; i += 1) {
+        const xLocal = -ax + (2 * ax * i) / samples
+        const z = lensZ2D(xLocal, yLocal, ax, ay, h, p)
+        if (z > 0 || Math.abs(Math.abs(xLocal) - ax) < 1e-6) {
+          pts.push({ x: center.x + xLocal, y: center.y + yLocal, z })
+        }
+      }
+      if (pts.length > 1) {
+        const major = row === 0 || row === steps || row === steps / 2
+        lines.push({
+          key: `g${g.id}-x-${row}`,
+          d: buildSurfaceLine(pts),
+          stroke: major ? palette.rowMajor : palette.rowMinor,
+          major,
+          depth,
+        })
+      }
     }
-    if (pts.length > 1) {
-      const major = row === 0 || row === steps || row === steps / 2
-      lines.push({ key: `x-${row}`, d: buildSurfaceLine(pts), stroke: major ? '#1f78b4' : '#3498db', major })
+    for (let col = 0; col <= steps; col += 1) {
+      const xLocal = -ax + (2 * ax * col) / steps
+      const pts: { x: number; y: number; z: number }[] = []
+      for (let i = 0; i <= samples; i += 1) {
+        const yLocal = -ay + (2 * ay * i) / samples
+        const z = lensZ2D(xLocal, yLocal, ax, ay, h, p)
+        if (z > 0 || Math.abs(Math.abs(yLocal) - ay) < 1e-6) {
+          pts.push({ x: center.x + xLocal, y: center.y + yLocal, z })
+        }
+      }
+      if (pts.length > 1) {
+        const major = col === 0 || col === steps || col === steps / 2
+        lines.push({
+          key: `g${g.id}-y-${col}`,
+          d: buildSurfaceLine(pts),
+          stroke: major ? palette.colMajor : palette.colMinor,
+          major,
+          depth,
+        })
+      }
     }
   }
-  for (let col = 0; col <= steps; col += 1) {
-    const x = -ax + (2 * ax * col) / steps
-    const pts: { x: number; y: number; z: number }[] = []
-    for (let i = 0; i <= samples; i += 1) {
-      const y = -ay + (2 * ay * i) / samples
-      const z = lensZ2D(x, y, ax, ay, finalHeight.value, profilePower.value)
-      if (z > 0 || Math.abs(Math.abs(y) - ay) < 1e-6) pts.push({ x, y, z })
-    }
-    if (pts.length > 1) {
-      const major = col === 0 || col === steps || col === steps / 2
-      lines.push({ key: `y-${col}`, d: buildSurfaceLine(pts), stroke: major ? '#8e44ad' : '#9b59b6', major })
-    }
-  }
+  // Painter's order: back-to-front (smaller depth first)
+  lines.sort((a, b) => a.depth - b.depth)
   return lines
 })
 
 const surfaceFootprintEdges = computed(() => {
-  const ax = halfFinalWidth.value
-  const ay = halfFinalHeight.value
-  const edgePts: { x: number; y: number; z: number }[] = []
+  const edges: { key: string; d: string; stroke: string }[] = []
   const n = shapeExponent.value
-  for (let i = 0; i <= 96; i += 1) {
-    const theta = (2 * Math.PI * i) / 96
-    const c = Math.cos(theta)
-    const s = Math.sin(theta)
-    const denom = Math.pow(Math.pow(Math.abs(c), n) + Math.pow(Math.abs(s), n), 1 / n)
-    edgePts.push({ x: (ax * c) / denom, y: (ay * s) / denom, z: 0 })
+  for (const g of lensGroups.value) {
+    if (!g.isValidShape) continue
+    const state = computeGroupProcessAt(g, etchTime.value)
+    const center = groupCenterUm(g)
+    const ax = state.finalWX / 2
+    const ay = state.finalWY / 2
+    const pts: { x: number; y: number; z: number }[] = []
+    for (let i = 0; i <= 80; i += 1) {
+      const theta = (2 * Math.PI * i) / 80
+      const c = Math.cos(theta)
+      const s = Math.sin(theta)
+      const denom = Math.pow(Math.pow(Math.abs(c), n) + Math.pow(Math.abs(s), n), 1 / n)
+      pts.push({
+        x: center.x + (ax * c) / Math.max(denom, 1e-6),
+        y: center.y + (ay * s) / Math.max(denom, 1e-6),
+        z: 0,
+      })
+    }
+    edges.push({ key: `edge-${g.id}`, d: buildSurfaceLine(pts), stroke: SURFACE_PALETTE[g.kind].edge })
   }
-  return [buildSurfaceLine(edgePts)]
+  return edges
+})
+
+const surfaceGridLines = computed(() => {
+  const half = (GRID_N * pitch.value) / 2
+  const items: { key: string; d: string }[] = []
+  for (let i = 0; i <= GRID_N; i += 1) {
+    const v = -half + i * pitch.value
+    items.push({
+      key: `sgv-${i}`,
+      d: buildSurfaceLine([{ x: v, y: -half, z: 0 }, { x: v, y: half, z: 0 }]),
+    })
+    items.push({
+      key: `sgh-${i}`,
+      d: buildSurfaceLine([{ x: -half, y: v, z: 0 }, { x: half, y: v, z: 0 }]),
+    })
+  }
+  return items
 })
 
 const cellBasePolygon = computed(() => {
-  const ax = representativeProcess.value.pitchX / 2
-  const ay = representativeProcess.value.pitchY / 2
+  const half = (GRID_N * pitch.value) / 2
   return [
-    projectSurface(-ax, -ay, 0),
-    projectSurface(ax, -ay, 0),
-    projectSurface(ax, ay, 0),
-    projectSurface(-ax, ay, 0),
+    projectSurface(-half, -half, 0),
+    projectSurface(half, -half, 0),
+    projectSurface(half, half, 0),
+    projectSurface(-half, half, 0),
   ].map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')
+})
+
+const surfaceKindCounts = computed(() => {
+  const counts: Record<LensUnitShape, number> = { '1x1': 0, '2x1': 0, '1x2': 0, '2x2': 0 }
+  for (const g of lensGroups.value) {
+    if (g.isValidShape) counts[g.kind] += 1
+  }
+  return counts
 })
 
 // Top view (XY) plot
