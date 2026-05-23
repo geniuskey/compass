@@ -1,6 +1,14 @@
 <template>
-  <div class="psf-container">
+  <div :class="['psf-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Diffraction PSF Viewer', '회절 PSF 뷰어') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Interactive Airy pattern viewer with pixel grid overlay. Explore how f-number, wavelength, and pixel pitch affect the diffraction-limited PSF.',
@@ -293,8 +301,10 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect, onMounted } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 // Controls
 const fNumber = ref(2.8)

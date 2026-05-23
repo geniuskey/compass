@@ -1,6 +1,14 @@
 <template>
-  <div class="raytrace-container">
+  <div :class="['raytrace-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Microlens Ray Tracing Simulator', '마이크로렌즈 광선 추적 시뮬레이터') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Trace rays through a superellipse microlens onto a pixel photodiode. Adjust lens geometry and CRA to observe focusing and crosstalk.',
@@ -244,8 +252,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 // Controls
 const pitch = ref(1.0)

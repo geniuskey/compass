@@ -281,10 +281,26 @@ html {
   }
 
   /* Components that already provide their own side-by-side layout
-     (controls + view) opt out of the generic grid and become a single
-     full-width scrollable block in fullscreen mode. */
+     (controls + view), or that don't use the sim-fs-controls/sim-fs-view
+     wrappers, opt out of the generic grid and become a single full-width
+     scrollable block in fullscreen mode. */
   .fdti-simulator.sim-fullscreen,
-  .pixel-playground.sim-fullscreen {
+  .pixel-playground.sim-fullscreen,
+  .dc-container.sim-fullscreen,
+  .psf-container.sim-fullscreen,
+  .dr-container.sim-fullscreen,
+  .fabry-perot-container.sim-fullscreen,
+  .ls-container.sim-fullscreen,
+  .lin-container.sim-fullscreen,
+  .raytrace-container.sim-fullscreen,
+  .mtf-container.sim-fullscreen,
+  .ptc-container.sim-fullscreen,
+  .scaling-container.sim-fullscreen,
+  .snri-container.sim-fullscreen,
+  .prnu-container.sim-fullscreen,
+  .resp-container.sim-fullscreen,
+  .si-absorption-container.sim-fullscreen,
+  .snr-container.sim-fullscreen {
     display: block !important;
     overflow: auto !important;
   }
