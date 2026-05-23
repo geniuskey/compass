@@ -16,6 +16,7 @@
       ) }}
     </p>
 
+    <div class="sim-fs-controls">
     <div class="controls-row">
       <div class="toggle-group">
         <button type="button"
@@ -70,7 +71,9 @@
         <input type="range" min="30" max="80" step="5" v-model.number="maxAngle" class="ctrl-range" />
       </div>
     </div>
+    </div>
 
+    <div class="sim-fs-view">
     <!-- Info cards -->
     <div class="info-row">
       <template v-if="displayMode === 'single'">
@@ -255,6 +258,7 @@
           <text :x="pad.left + plotW - 44" :y="pad.top + 44" class="legend-label">{{ t('Blue', '파랑') }}</text>
         </template>
       </svg>
+    </div>
     </div>
   </div>
 </template>

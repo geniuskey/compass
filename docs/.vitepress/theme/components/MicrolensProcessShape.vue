@@ -16,6 +16,7 @@
       ) }}
     </p>
 
+    <div class="sim-fs-controls">
     <div class="control-section">
       <div class="control-heading">{{ t('Layout and resist', '레이아웃 및 resist') }}</div>
       <div class="controls-row">
@@ -156,7 +157,9 @@
         </div>
       </div>
     </details>
+    </div>
 
+    <div class="sim-fs-view">
     <div class="metric-grid">
       <div class="metric-card">
         <span>{{ t('Initial gap', '초기 gap') }}</span>
@@ -533,6 +536,7 @@
         'This is a calibrated-by-user surrogate, not a foundry recipe. It combines volume-conserving reflow, parabolic/superellipse caps, and DOE-inspired etch trends: more etch time closes gap; polymerization mainly preserves height; mask thickness changes transfer robustness. Fit the calibration gains to measured gap, height, and profile data before making quantitative decisions.',
         '이 모델은 foundry recipe가 아니라 사용자가 보정해 쓰는 surrogate입니다. Volume-conserving reflow, parabolic/superellipse cap, DOE식 etch 경향을 결합합니다. Etch time은 gap closure를 키우고, polymerization은 주로 height 보존에, mask thickness는 transfer robustness에 영향을 준다고 둡니다. 정량 의사결정 전에는 calibration gain을 실측 gap, height, profile 데이터에 맞춰야 합니다.'
       ) }}
+    </div>
     </div>
   </div>
 </template>

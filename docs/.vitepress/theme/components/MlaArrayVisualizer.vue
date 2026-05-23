@@ -16,6 +16,7 @@
       ) }}
     </p>
 
+    <div class="sim-fs-controls">
     <div class="controls-row">
       <div class="slider-group">
         <label>{{ t('Array', '배열') }}:
@@ -97,7 +98,9 @@
         </label>
       </div>
     </div>
+    </div>
 
+    <div class="sim-fs-view">
     <div class="tab-row">
       <button type="button"
         v-for="tab in tabs" :key="tab.key"
@@ -290,6 +293,7 @@
       <strong>{{ t('Superellipse', '초타원') }}:</strong> |x/Rx|<sup>n</sup> + |y/Ry|<sup>n</sup> = 1 &nbsp;|&nbsp;
       <strong>{{ t('Height', '높이') }}:</strong> z(r) = h(1 - r<sup>2</sup>)<sup>1/(2α)</sup> &nbsp;|&nbsp;
       <strong>{{ t('Snell', '스넬') }}:</strong> n<sub>1</sub>sin&theta;<sub>1</sub> = n<sub>2</sub>sin&theta;<sub>2</sub>
+    </div>
     </div>
   </div>
 </template>

@@ -16,6 +16,7 @@
       ) }}
     </p>
 
+    <div class="sim-fs-controls">
     <div class="controls-grid">
       <div class="slider-group">
         <label>{{ t('Si Thickness', '실리콘 두께') }}: <strong>{{ siThick.toFixed(1) }} &mu;m</strong></label>
@@ -42,7 +43,9 @@
         <input type="range" min="8" max="16" step="1" v-model.number="bitDepth" class="ctrl-range" />
       </div>
     </div>
+    </div>
 
+    <div class="sim-fs-view">
     <div class="param-grid">
       <div v-for="param in emvaParams" :key="param.key" class="param-card">
         <div class="param-label">{{ param.label }}</div>
@@ -80,6 +83,7 @@
         <text :x="8" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title"
           :transform="`rotate(-90, 8, ${pad.top + plotH / 2})`">SNR (dB)</text>
       </svg>
+    </div>
     </div>
   </div>
 </template>
