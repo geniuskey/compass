@@ -249,6 +249,18 @@ const refs = {
     label: 'Tan, Goh & Kim, "Microfabrication of Microlens by Timed-Development-and-Thermal-Reflow (TDTR) Process for Projection Lithography", Micromachines, 2020',
     href: 'https://doi.org/10.3390/mi11030277',
   },
+  choi2014: {
+    label: 'Choi et al., "Profile control of asymmetric reflowed microlens for CMOS image sensors", Microelectronic Engineering, 2014',
+    href: 'https://scholar.google.com/scholar?q=Choi+asymmetric+reflowed+microlens+CMOS+image+sensor',
+  },
+  sony2x1ocl: {
+    label: 'Y. Oike et al. (Sony Semiconductor Solutions), "All-pixel phase-detection autofocus with 2x1 on-chip lens (Dual Pixel CMOS Image Sensor)", ISSCC / IEEE JSSC',
+    href: 'https://scholar.google.com/scholar?q=Sony+2x1+on-chip+lens+all-pixel+phase+detection+autofocus',
+  },
+  samsungTetracell: {
+    label: 'J. Park et al. (Samsung), "A 1/2.55-inch 1.0 um-pixel 64-Mpixel CMOS image sensor with Tetracell color filter array", ISSCC',
+    href: 'https://scholar.google.com/scholar?q=Samsung+Tetracell+2x2+OCL+CMOS+image+sensor+64+megapixel',
+  },
   emva: {
     label: 'EMVA 1288 Standard, Release 4.0',
     href: 'https://www.emva.org/standards-technology/emva-1288/',
@@ -1153,10 +1165,12 @@ const theoryEntries: Record<string, TheoryEntry> = {
       { en: 'The resist island is represented by pitch, mask width, thickness, and a footprint-shape exponent; local corner rounding and stochastic CD variation are not solved.', ko: 'Resist island는 pitch, mask width, thickness, footprint-shape exponent로 표현하며, local corner rounding과 stochastic CD variation은 직접 풀지 않습니다.' },
       { en: 'Reflow is volume constrained and monotonic with a normalized temperature/time budget; the coefficients are user-calibrated surrogate parameters.', ko: 'Reflow는 체적 제약을 받으며 정규화된 온도/시간 budget에 대해 단조적으로 변한다고 두고, 계수는 사용자가 보정하는 surrogate parameter입니다.' },
       { en: 'Etch transfer is split into lateral gap closure and vertical height loss, following the DOE variables exposed by the CIS plasma-etch literature.', ko: 'Etch transfer는 CIS plasma-etch 문헌의 DOE 변수에 맞춰 lateral gap closure와 vertical height loss로 분리합니다.' },
+      { en: 'Lens units can be 1x1, 2x1, 1x2, or 2x2 cells with a constant boundary-gap convention (the boundary gap from the slider applies between adjacent lens units regardless of unit size). Heterogeneous mixtures within a die are supported through a 4x4 grid editor; only rectangular 1x1/2x1/1x2/2x2 groupings are physically meaningful.', ko: 'Lens unit은 1x1, 2x1, 1x2, 2x2 셀이며 boundary gap이 일정하다는 규약을 씁니다 (슬라이더의 boundary gap은 unit 크기와 무관하게 인접 lens 사이에 동일하게 적용). Die 안에서의 이종 혼합은 4x4 grid 편집기로 다루며, 물리적으로는 1x1/2x1/1x2/2x2 사각형 그룹만 의미가 있습니다.' },
+      { en: 'For 2x1 and 1x2 lens units the reflow model adds a surface-tension correction so the long axis spreads less and the short axis spreads more, mirroring the equilibrium-shape behavior reported for asymmetric reflowed photoresist.', ko: '2x1, 1x2 lens unit에는 표면장력 보정이 적용되어 장축은 덜, 단축은 더 퍼집니다. 비대칭 reflowed photoresist의 평형 형상 거동과 일치하는 방향입니다.' },
     ],
     outputs: [
-      { en: 'Initial gap, post-reflow gap, final gap, final height, fill factor, vertex radius, f-number proxy, profile exponent, and zero-gap etch-time estimate.', ko: '초기 gap, reflow 후 gap, 최종 gap, 최종 높이, fill factor, vertex radius, f-number 근사, profile exponent, zero-gap etch-time 추정값을 출력합니다.' },
-      { en: 'Cross-section, final 3D surface wireframe, and etch-time response curves for gap and height retention.', ko: '단면, 최종 3D surface wireframe, gap 및 height retention의 etch-time response curve를 보여줍니다.' },
+      { en: 'Initial gap, post-reflow gap, final gap (worst of X/Y), final height, aspect ratio (WX:WY), fill factor, vertex radius, f-number proxy, profile exponent, and zero-gap etch-time estimate, all computed for the representative lens unit (e.g., 2x2 OCL when present).', ko: '대표 lens unit (예: 2x2 OCL이 있으면 그것) 기준의 초기 gap, reflow 후 gap, 최종 gap (X/Y 중 worst), 최종 높이, 장단축비(WX:WY), fill factor, vertex radius, f-number 근사, profile exponent, zero-gap etch-time 추정값을 출력합니다.' },
+      { en: 'Cross-section view through one row of lens units, top-down (XY) view with per-group mask/reflow/final footprints rendered as superellipses and a viridis height heat-map, 3D surface wireframe, and etch-time response curves for gap and height retention.', ko: 'Lens unit 한 행을 가로지른 단면, lens group마다 mask/reflow/final footprint를 superellipse로 그리고 height를 viridis로 색칠한 top-down (XY) view, 3D surface wireframe, gap 및 height retention의 etch-time response curve를 보여줍니다.' },
     ],
     validationExamples: [
       { en: 'At fixed reflow settings, increasing etch time should reduce $g_f$ while reducing height retention; if metrology shows the opposite, refit the lateral and vertical etch gains separately.', ko: 'Reflow 조건을 고정하면 etch time 증가에 따라 $g_f$는 감소하고 height retention은 낮아져야 합니다. 계측이 반대 경향이면 lateral/vertical etch gain을 따로 재피팅해야 합니다.' },
@@ -1195,6 +1209,17 @@ const theoryEntries: Record<string, TheoryEntry> = {
           { symbol: 'g_r', description: { en: 'Gap after reflow but before etch transfer', ko: 'Reflow 후, etch transfer 전 gap' } },
         ],
         note: { en: 'The constants are intentionally exposed as surrogate coefficients: a real process should replace them with DOE-fitted values.', ko: '상수들은 의도적으로 surrogate coefficient로 둔 것입니다. 실제 공정에서는 DOE fitting 값으로 치환해야 합니다.' },
+      },
+      {
+        label: { en: 'Anisotropic spread for 2x1 / 1x2 lens units', ko: '2x1 / 1x2 lens unit의 비등방 spread' },
+        equation: '\\Delta_{r,x}=\\Delta_{r,x}^{0}-\\tau, \\quad \\Delta_{r,y}=\\Delta_{r,y}^{0}+\\tau, \\quad \\tau=k_{\\sigma}B_r\\,\\frac{w_{m,x}-w_{m,y}}{w_{m,x}+w_{m,y}}\\,\\overline{\\Delta_r^{0}}',
+        variables: [
+          { symbol: '\\Delta_{r,x},\\Delta_{r,y}', description: { en: 'Per-axis reflow spreads after the surface-tension correction', ko: '표면장력 보정 적용 후 축별 reflow spread' } },
+          { symbol: '\\Delta_{r,x}^{0},\\Delta_{r,y}^{0}', description: { en: 'Gap-driven base spreads computed independently in X and Y from the same surrogate as the 1x1 case', ko: '1x1 케이스와 동일한 surrogate로 X·Y에서 독립 계산한 gap 기반 기본 spread' } },
+          { symbol: 'w_{m,x},w_{m,y}', description: { en: 'Mask island width in X and Y for the lens unit (constant boundary gap: w_{m,x}=W_x\\cdot p-g_b, w_{m,y}=W_y\\cdot p-g_b for a W_x \\times W_y unit)', ko: 'Lens unit의 X·Y 마스크 폭 (boundary gap 일정 규약: W_x \\times W_y unit에 대해 w_{m,x}=W_x\\cdot p-g_b, w_{m,y}=W_y\\cdot p-g_b)' } },
+          { symbol: 'k_{\\sigma}', description: { en: 'Surface-tension correction strength (0 for 1x1 and 2x2; non-zero only when mask is asymmetric)', ko: '표면장력 보정 강도 (1x1, 2x2에서는 0; 마스크가 비대칭일 때만 0이 아님)' } },
+        ],
+        note: { en: 'Asymmetric reflowed photoresist relaxes toward an isotropic equilibrium shape, so the long axis grows less and the short axis grows more than the isotropic prediction. For symmetric units (1x1, 2x2) the correction vanishes and the model reduces to the previous formula.', ko: '비대칭 reflowed photoresist는 isotropy 평형 형상으로 이완하므로, 장축은 등방 예측보다 덜 퍼지고 단축은 더 퍼집니다. 대칭 unit (1x1, 2x2)에서는 보정 항이 0이 되어 이전 수식과 같아집니다.' },
       },
       {
         label: { en: 'Volume-constrained reflow height', ko: '체적 제약 기반 reflow 높이' },
@@ -1266,6 +1291,9 @@ const theoryEntries: Record<string, TheoryEntry> = {
           { en: 'Baillie and Gendler frame the zero-space problem: residual space reduces optical fill factor, but insufficient lithographic space can cause reflow merger.', ko: 'Baillie and Gendler는 zero-space 문제를 정의합니다. Residual space는 optical fill factor를 낮추지만, lithographic space가 너무 작으면 reflow merger가 발생할 수 있습니다.' },
           { en: 'Jin, Liu, and Yang connect zero-space microlens geometry to AFM characterization and sensor-level sensitivity/crosstalk tests.', ko: 'Jin, Liu, Yang은 zero-space microlens geometry를 AFM characterization 및 sensor-level sensitivity/crosstalk test와 연결합니다.' },
           { en: 'Tan, Goh, and Kim support the aperture-geometry and regression view of thermal-reflow microlens fabrication.', ko: 'Tan, Goh, Kim은 thermal-reflow microlens fabrication에서 aperture geometry와 regression 기반 모델링 관점을 뒷받침합니다.' },
+          { en: 'Choi et al. ground the surface-tension correction applied to 2x1 and 1x2 lens units: asymmetric reflowed resist evolves toward an isotropic equilibrium, so X and Y spread differently even when the as-printed boundary gap is identical.', ko: 'Choi et al.은 2x1, 1x2 lens unit에 적용한 표면장력 보정의 근거를 제공합니다. 비대칭 reflowed resist는 isotropy 평형으로 진화하므로, as-printed boundary gap이 같아도 X와 Y spread가 달라집니다.' },
+          { en: 'Sony 2x1 on-chip-lens (Dual Pixel) work motivates the All 2x1 (Sony 2PD) preset: one elongated lens shared across two adjacent photodiodes for all-pixel phase-detection autofocus.', ko: 'Sony의 2x1 on-chip-lens (Dual Pixel) 연구는 All 2x1 (Sony 2PD) preset의 동기입니다. 모든 픽셀의 phase-detection autofocus를 위해 인접 두 photodiode가 가로로 긴 하나의 lens를 공유합니다.' },
+          { en: 'Samsung Tetracell ISSCC work motivates the All 2x2 (Tetracell OCL) preset: same-color 2x2 sub-pixels share one 2x2 OCL for low-light binning, and the boundary against the adjacent (different-color) 2x2 cell is the merger-risk surface.', ko: 'Samsung Tetracell ISSCC 연구는 All 2x2 (Tetracell OCL) preset의 동기입니다. 같은 색 2x2 sub-pixel이 하나의 2x2 OCL을 공유해 저조도 binning에 쓰며, 인접한 다른 색 2x2 cell과의 boundary가 merger-risk 면이 됩니다.' },
         ],
       },
       {
@@ -1293,6 +1321,18 @@ const theoryEntries: Record<string, TheoryEntry> = {
       {
         ...refs.tan2020,
         note: { en: 'Useful for aperture-geometry and regression-based thermal-reflow profile thinking.', ko: 'Aperture geometry 및 regression 기반 thermal-reflow profile 사고에 유용합니다.' },
+      },
+      {
+        ...refs.choi2014,
+        note: { en: 'Direct evidence that asymmetric reflowed photoresist relaxes toward isotropy; basis for the surface-tension correction applied to 2x1 and 1x2 units.', ko: '비대칭 reflowed photoresist가 isotropy로 이완한다는 직접 근거이며, 2x1/1x2 unit에 적용한 표면장력 보정의 출발점입니다.' },
+      },
+      {
+        ...refs.sony2x1ocl,
+        note: { en: 'Motivates the All 2x1 (Sony 2PD) layout preset and the PDAF interpretation of the long lens axis.', ko: 'All 2x1 (Sony 2PD) layout preset과, lens 장축의 PDAF 해석을 뒷받침합니다.' },
+      },
+      {
+        ...refs.samsungTetracell,
+        note: { en: 'Motivates the All 2x2 (Tetracell OCL) layout preset and the diagonal-neighbor merger-risk framing for binned color groups.', ko: 'All 2x2 (Tetracell OCL) layout preset과, binning된 색 그룹의 대각 이웃 merger-risk 해석을 뒷받침합니다.' },
       },
     ],
   },
