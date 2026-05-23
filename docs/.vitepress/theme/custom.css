@@ -279,4 +279,13 @@ html {
     background: var(--vp-c-divider);
     border-radius: 4px;
   }
+
+  /* Components that already provide their own side-by-side layout
+     (controls + view) opt out of the generic grid and become a single
+     full-width scrollable block in fullscreen mode. */
+  .fdti-simulator.sim-fullscreen,
+  .pixel-playground.sim-fullscreen {
+    display: block !important;
+    overflow: auto !important;
+  }
 }
