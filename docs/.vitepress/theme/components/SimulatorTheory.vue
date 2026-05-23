@@ -261,6 +261,22 @@ const refs = {
     label: 'J. Park et al. (Samsung), "A 1/2.55-inch 1.0 um-pixel 64-Mpixel CMOS image sensor with Tetracell color filter array", ISSCC',
     href: 'https://scholar.google.com/scholar?q=Samsung+Tetracell+2x2+OCL+CMOS+image+sensor+64+megapixel',
   },
+  coveredML2023: {
+    label: 'Lee et al., "Covered Microlens Structure for Quad Color Filter Array of CMOS Image Sensor", Current Optics and Photonics, 2023',
+    href: 'https://opg.optica.org/copp/abstract.cfm?uri=copp-7-5-485',
+  },
+  mogab1977: {
+    label: 'Mogab, "The Loading Effect in Plasma Etching", Journal of the Electrochemical Society, 1977',
+    href: 'https://doi.org/10.1149/1.2133486',
+  },
+  gottscho1992: {
+    label: 'Gottscho, Jurgensen & Vitkavage, "Microscopic uniformity in plasma etching", Journal of Vacuum Science & Technology B, 1992',
+    href: 'https://doi.org/10.1116/1.586300',
+  },
+  ocl_designrule_sony: {
+    label: 'Sony / Samsung / OmniVision on-chip-lens design-rule patents for mixed PDAF and binned OCL layouts (e.g., US8941766, US11765476, US12022217, US12069384)',
+    href: 'https://patents.google.com/?q=on-chip+lens+adjacent+pitch+microlens+phase+detection+autofocus',
+  },
   emva: {
     label: 'EMVA 1288 Standard, Release 4.0',
     href: 'https://www.emva.org/standards-technology/emva-1288/',
@@ -1222,6 +1238,19 @@ const theoryEntries: Record<string, TheoryEntry> = {
         note: { en: 'Asymmetric reflowed photoresist relaxes toward an isotropic equilibrium shape, so the long axis grows less and the short axis grows more than the isotropic prediction. For symmetric units (1x1, 2x2) the correction vanishes and the model reduces to the previous formula.', ko: '비대칭 reflowed photoresist는 isotropy 평형 형상으로 이완하므로, 장축은 등방 예측보다 덜 퍼지고 단축은 더 퍼집니다. 대칭 unit (1x1, 2x2)에서는 보정 항이 0이 되어 이전 수식과 같아집니다.' },
       },
       {
+        label: { en: 'Per-side neighbor coupling for mixed lens-unit layouts', ko: '혼합 lens-unit 레이아웃에서의 면별 인접 결합' },
+        equation: '\\sigma_s = \\frac{A_N - A_G}{A_N + A_G}, \\quad \\delta\\Delta_{r,s} = k_m\\,B_r\\,\\sigma_s, \\quad \\delta g_s = k_\\ell\\,v_{\\ell,0}\\,t_e\\,\\rho_s, \\quad \\rho_s = \\max\\!\\Big(0,\\tfrac{A_G + A_N - 2}{6}\\Big)',
+        variables: [
+          { symbol: '\\sigma_s', description: { en: 'Per-side shape-asymmetry parameter: positive when the neighbor on side s is larger than this group, zero for same-size or grid edge', ko: '면별 형상 비대칭 파라미터. 면 s 의 이웃이 더 크면 양수, 같은 크기 또는 grid 가장자리면 0' } },
+          { symbol: 'A_G, A_N', description: { en: 'Cell areas (1, 2 or 4) of this group and its neighbor on side s; grid-edge neighbor is treated as A=1', ko: '이 그룹과 면 s 이웃의 셀 면적 (1, 2, 4 중 하나). Grid 가장자리는 A=1로 처리' } },
+          { symbol: '\\delta\\Delta_{r,s}', description: { en: 'Extra lateral reflow spread on side s, scaled by mass-flow coefficient k_m and thermal budget B_r; bulges the lens edge toward larger neighbors', ko: '면 s 방향의 추가 lateral reflow spread. mass-flow 계수 k_m과 thermal budget B_r에 비례하고, 큰 이웃 쪽으로 lens edge가 부풀어 오름' } },
+          { symbol: '\\delta g_s', description: { en: 'Extra residual gap on side s from plasma microloading: dense neighborhoods deplete etchant locally and reduce lateral closure', ko: '면 s 의 추가 잔류 gap. dense neighborhood가 국소 etchant를 소모해 lateral closure를 둔화시킴' } },
+          { symbol: '\\rho_s', description: { en: 'Local pattern-density score for side s, normalized so two 1x1 cells give 0 and two 2x2 OCLs give 1', ko: '면 s의 국소 pattern-density 점수. 두 개의 1x1 cell이면 0, 두 개의 2x2 OCL이면 1로 정규화' } },
+          { symbol: 'k_m, k_\\ell', description: { en: 'User-tunable proximity-coupling and microloading gains; setting either to 0 recovers the independent-lens model', ko: '사용자가 조정 가능한 proximity-coupling, microloading gain. 어느 한쪽을 0으로 두면 독립 lens 모델로 환원' } },
+        ],
+        note: { en: 'Both effects vanish for uniform-size layouts (all 1x1 or all 2x2). For mixed layouts (e.g., 1x1 next to 2x2 OCL), the smaller lens bulges toward the larger neighbor (Choi et al.; Stanford E241 survey), while the gap on that boundary stays slightly larger than the gap on a 1x1–1x1 boundary because of microloading (Mogab 1977; Gottscho 1992). Sony, Samsung, and OmniVision OCL design-rule patents document this empirically.', ko: '두 효과 모두 동일 크기 레이아웃(모두 1x1, 모두 2x2)에서는 0이 됩니다. 혼합 레이아웃 (예: 1x1 옆에 2x2 OCL)에서는 작은 lens가 큰 이웃 쪽으로 부풀고 (Choi et al.; Stanford E241 survey), microloading 때문에 그 boundary의 gap은 1x1–1x1 boundary보다 살짝 큽니다 (Mogab 1977; Gottscho 1992). Sony, Samsung, OmniVision의 OCL 설계 규칙 특허들이 이를 경험적으로 반영합니다.' },
+      },
+      {
         label: { en: 'Volume-constrained reflow height', ko: '체적 제약 기반 reflow 높이' },
         equation: 'V_0 \\approx A_m h_0, \\quad V_r \\approx C_{\\text{cap}} A_r h_r, \\quad h_r \\approx \\frac{G_v\\eta_v A_m h_0}{C_{\\text{cap}}A_r}',
         variables: [
@@ -1294,13 +1323,16 @@ const theoryEntries: Record<string, TheoryEntry> = {
           { en: 'Choi et al. ground the surface-tension correction applied to 2x1 and 1x2 lens units: asymmetric reflowed resist evolves toward an isotropic equilibrium, so X and Y spread differently even when the as-printed boundary gap is identical.', ko: 'Choi et al.은 2x1, 1x2 lens unit에 적용한 표면장력 보정의 근거를 제공합니다. 비대칭 reflowed resist는 isotropy 평형으로 진화하므로, as-printed boundary gap이 같아도 X와 Y spread가 달라집니다.' },
           { en: 'Sony 2x1 on-chip-lens (Dual Pixel) work motivates the All 2x1 (Sony 2PD) preset: one elongated lens shared across two adjacent photodiodes for all-pixel phase-detection autofocus.', ko: 'Sony의 2x1 on-chip-lens (Dual Pixel) 연구는 All 2x1 (Sony 2PD) preset의 동기입니다. 모든 픽셀의 phase-detection autofocus를 위해 인접 두 photodiode가 가로로 긴 하나의 lens를 공유합니다.' },
           { en: 'Samsung Tetracell ISSCC work motivates the All 2x2 (Tetracell OCL) preset: same-color 2x2 sub-pixels share one 2x2 OCL for low-light binning, and the boundary against the adjacent (different-color) 2x2 cell is the merger-risk surface.', ko: 'Samsung Tetracell ISSCC 연구는 All 2x2 (Tetracell OCL) preset의 동기입니다. 같은 색 2x2 sub-pixel이 하나의 2x2 OCL을 공유해 저조도 binning에 쓰며, 인접한 다른 색 2x2 cell과의 boundary가 merger-risk 면이 됩니다.' },
+          { en: 'Lee et al. (Covered Microlens) directly study how a single large microlens sits over multiple smaller pixels in a Quad-CFA layout and how the surrounding lens geometry changes optical efficiency, supporting the per-side coupling and asymmetric footprint visualisation in the Top view.', ko: 'Lee et al. (Covered Microlens)은 Quad-CFA에서 큰 microlens 한 개가 작은 픽셀 여러 개 위에 놓이는 구조를 직접 다루며, 주변 lens geometry가 광학 효율을 어떻게 바꾸는지 보입니다. Top view의 면별 결합과 비대칭 footprint 시각화의 근거입니다.' },
+          { en: 'Mogab (loading effect) and Gottscho et al. (microscopic uniformity in plasma etching) ground the microloading term: dense neighborhoods deplete etchant and slow lateral closure, so boundaries adjacent to larger OCLs end up with slightly larger residual gap than boundaries between two 1x1 cells.', ko: 'Mogab(loading effect)과 Gottscho et al.(plasma etching의 microscopic uniformity)은 microloading 항의 근거입니다. dense neighborhood가 etchant를 소모해 lateral closure를 둔화시키므로, 큰 OCL과 맞닿은 boundary는 두 1x1 사이 boundary보다 잔류 gap이 살짝 큽니다.' },
+          { en: 'Sony/Samsung/OmniVision OCL design-rule patents (US8941766, US11765476, US12022217, US12069384, …) explicitly widen the bottom of OCLs adjacent to smaller neighbors and shift them per local CRA, empirically confirming the per-side coupling our surrogate models.', ko: 'Sony/Samsung/OmniVision OCL 설계 규칙 특허(US8941766, US11765476, US12022217, US12069384 등)는 작은 이웃을 마주보는 OCL의 bottom을 명시적으로 넓히고 국소 CRA에 맞춰 shift합니다. surrogate의 면별 결합을 경험적으로 검증해 줍니다.' },
         ],
       },
       {
         title: { en: 'Known Missing Physics', ko: '아직 빠진 물리' },
         items: [
-          { en: 'The model does not solve surface-tension fluid dynamics, resist viscosity, contact-angle pinning, or plasma sheath chemistry.', ko: '이 모델은 표면장력 유체역학, resist viscosity, contact-angle pinning, plasma sheath chemistry를 직접 풀지 않습니다.' },
-          { en: 'It does not include color-filter topography, neighboring-lens wetting asymmetry, wafer-edge non-uniformity, or lens shift for CRA compensation.', ko: 'Color-filter topography, 인접 lens wetting asymmetry, wafer-edge non-uniformity, CRA 보정용 lens shift는 포함하지 않습니다.' },
+          { en: 'The model does not solve surface-tension fluid dynamics, resist viscosity, contact-angle pinning, or plasma sheath chemistry. Inter-lens coupling is captured only as an effective surrogate (sigma + density), not by solving Young–Laplace flow between adjacent islands.', ko: '이 모델은 표면장력 유체역학, resist viscosity, contact-angle pinning, plasma sheath chemistry를 직접 풀지 않습니다. 인접 lens 간 결합은 (sigma + density) 형태의 effective surrogate로만 다루며 인접 island 간 Young–Laplace 흐름을 풀지는 않습니다.' },
+          { en: 'It does not include color-filter topography, wafer-edge non-uniformity, or lens shift for CRA compensation.', ko: 'Color-filter topography, wafer-edge non-uniformity, CRA 보정용 lens shift는 포함하지 않습니다.' },
           { en: 'Use this page to choose DOE regions; use measured profiles plus optical simulation before making device-performance claims.', ko: '이 페이지는 DOE 영역 선택에 사용하고, device-performance 주장은 실측 profile과 optical simulation을 함께 사용해야 합니다.' },
         ],
       },
@@ -1333,6 +1365,22 @@ const theoryEntries: Record<string, TheoryEntry> = {
       {
         ...refs.samsungTetracell,
         note: { en: 'Motivates the All 2x2 (Tetracell OCL) layout preset and the diagonal-neighbor merger-risk framing for binned color groups.', ko: 'All 2x2 (Tetracell OCL) layout preset과, binning된 색 그룹의 대각 이웃 merger-risk 해석을 뒷받침합니다.' },
+      },
+      {
+        ...refs.coveredML2023,
+        note: { en: 'Direct CIS study of mixed-size lens layouts (one covered microlens over four sub-pixels) showing that neighboring lens geometry materially changes optical efficiency; supports per-side asymmetric footprint rendering.', ko: 'Mixed-size lens 배치(서브픽셀 4개 위 covered microlens 1개)를 CIS에서 직접 다룬 연구. 이웃 lens geometry가 광학 효율을 실질적으로 바꿈을 보여주며, 면별 비대칭 footprint 렌더링을 뒷받침합니다.' },
+      },
+      {
+        ...refs.mogab1977,
+        note: { en: 'Classical plasma loading-effect reference: lateral etch rate drops in dense-pattern regions. Drives the microloading term used to widen residual gap next to larger OCLs.', ko: 'Plasma loading-effect의 고전 레퍼런스. dense-pattern 영역에서 lateral etch rate가 감소한다는 것이 큰 OCL 옆 잔류 gap을 넓히는 microloading 항의 근거.' },
+      },
+      {
+        ...refs.gottscho1992,
+        note: { en: 'Microscopic uniformity / ARDE foundation: feature-to-feature etch-rate variation depends on local pattern density and aspect ratio, justifying the per-edge density score used in the surrogate.', ko: 'Microscopic uniformity / ARDE 기초 문헌. feature 간 etch rate 차이가 국소 pattern density와 aspect ratio에 의존한다는 점이 surrogate의 면별 density 점수의 근거입니다.' },
+      },
+      {
+        ...refs.ocl_designrule_sony,
+        note: { en: 'OCL design-rule patents empirically encode the per-side coupling we approximate: bottom-widening of OCLs adjacent to smaller neighbors, asymmetric shifts for PDAF compensation, and local CRA correction.', ko: 'OCL 설계 규칙 특허들이 surrogate에서 근사한 면별 결합을 경험적으로 인코딩합니다. 작은 이웃을 마주보는 OCL의 bottom 확장, PDAF 보정용 비대칭 shift, 국소 CRA 보정.' },
       },
     ],
   },
