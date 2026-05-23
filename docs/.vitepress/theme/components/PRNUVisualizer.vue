@@ -1,6 +1,14 @@
 <template>
-  <div class="prnu-container">
+  <div :class="['prnu-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('PRNU / DSNU Visualizer', 'PRNU / DSNU 시각화') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Visualize Photo Response Non-Uniformity (PRNU) and Dark Signal Non-Uniformity (DSNU) as fixed pattern noise on a 2D pixel array.',
@@ -83,8 +91,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 const prnu = ref(1.0)
 const dsnu = ref(5)

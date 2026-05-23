@@ -1,6 +1,14 @@
 <template>
-  <div class="ptc-container">
+  <div :class="['ptc-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Photon Transfer Curve (PTC)', '광자 전달 곡선 (PTC)') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Visualize the relationship between signal and noise to extract read noise, conversion gain, FWC, and PRNU in a single log-log plot.',
@@ -109,8 +117,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 const readNoise = ref(5.0)
 const fwc = ref(10000)

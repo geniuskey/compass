@@ -1,6 +1,14 @@
 <template>
-  <div class="dr-container">
+  <div :class="['dr-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Dynamic Range Calculator', '다이나믹 레인지 계산기') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Calculate sensor dynamic range from FWC, read noise, dark current, and exposure time. Compare single vs HDR modes.',
@@ -98,8 +106,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 const fwc = ref(10000)
 const readNoise = ref(5.0)

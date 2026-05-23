@@ -1,6 +1,14 @@
 <template>
-  <div class="resp-container">
+  <div :class="['resp-container', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
     <h4>{{ t('Spectral Responsivity Calculator', '분광 응답도 계산기') }}</h4>
+    <button
+      type="button"
+      class="sim-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
         'Convert QE spectrum to spectral responsivity R(λ) = QE × qλ/(hc). Compare R/G/B channels with ideal Si photodiode.',
@@ -72,9 +80,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 import { tmmCalc, defaultBsiStack, SI_LAYER_IDX } from '../composables/tmm'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 const siThick = ref(3.0)
 const cfBw = ref(100)
