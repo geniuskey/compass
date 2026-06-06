@@ -1258,20 +1258,30 @@ const surfaceLines = computed(() => {
   for (const g of lensGroups.value) {
     if (!g.isValidShape) continue
     const state = computeGroupProcessAt(g, etchTime.value)
+    const neighbors = groupNeighborsFor(g)
+    const sides = computeGroupSideOffsets(g, state, neighbors, etchTime.value)
     const center = groupCenterUm(g)
-    const ax = state.finalWX / 2
-    const ay = state.finalWY / 2
     const h = state.finalHeight
     const p = state.profilePower
     const palette = SURFACE_PALETTE[g.kind]
     const depth = center.x + center.y
+    const xMin = -sides.edgeLeft
+    const xMax = sides.edgeRight
+    const yMin = -sides.edgeTop
+    const yMax = sides.edgeBottom
+    // Helper: per-quadrant half-axes
+    const halfFor = (x: number, y: number) => ({
+      hx: x >= 0 ? sides.edgeRight : sides.edgeLeft,
+      hy: y >= 0 ? sides.edgeBottom : sides.edgeTop,
+    })
     for (let row = 0; row <= steps; row += 1) {
-      const yLocal = -ay + (2 * ay * row) / steps
+      const yLocal = yMin + (yMax - yMin) * (row / steps)
       const pts: { x: number; y: number; z: number }[] = []
       for (let i = 0; i <= samples; i += 1) {
-        const xLocal = -ax + (2 * ax * i) / samples
-        const z = lensZ2D(xLocal, yLocal, ax, ay, h, p)
-        if (z > 0 || Math.abs(Math.abs(xLocal) - ax) < 1e-6) {
+        const xLocal = xMin + (xMax - xMin) * (i / samples)
+        const { hx, hy } = halfFor(xLocal, yLocal)
+        const z = lensZ2D(xLocal, yLocal, hx, hy, h, p)
+        if (z > 0 || i === 0 || i === samples) {
           pts.push({ x: center.x + xLocal, y: center.y + yLocal, z })
         }
       }
@@ -1287,12 +1297,13 @@ const surfaceLines = computed(() => {
       }
     }
     for (let col = 0; col <= steps; col += 1) {
-      const xLocal = -ax + (2 * ax * col) / steps
+      const xLocal = xMin + (xMax - xMin) * (col / steps)
       const pts: { x: number; y: number; z: number }[] = []
       for (let i = 0; i <= samples; i += 1) {
-        const yLocal = -ay + (2 * ay * i) / samples
-        const z = lensZ2D(xLocal, yLocal, ax, ay, h, p)
-        if (z > 0 || Math.abs(Math.abs(yLocal) - ay) < 1e-6) {
+        const yLocal = yMin + (yMax - yMin) * (i / samples)
+        const { hx, hy } = halfFor(xLocal, yLocal)
+        const z = lensZ2D(xLocal, yLocal, hx, hy, h, p)
+        if (z > 0 || i === 0 || i === samples) {
           pts.push({ x: center.x + xLocal, y: center.y + yLocal, z })
         }
       }
@@ -1319,18 +1330,22 @@ const surfaceFootprintEdges = computed(() => {
   for (const g of lensGroups.value) {
     if (!g.isValidShape) continue
     const state = computeGroupProcessAt(g, etchTime.value)
+    const neighbors = groupNeighborsFor(g)
+    const sides = computeGroupSideOffsets(g, state, neighbors, etchTime.value)
     const center = groupCenterUm(g)
-    const ax = state.finalWX / 2
-    const ay = state.finalWY / 2
     const pts: { x: number; y: number; z: number }[] = []
     for (let i = 0; i <= 80; i += 1) {
       const theta = (2 * Math.PI * i) / 80
       const c = Math.cos(theta)
       const s = Math.sin(theta)
       const denom = Math.pow(Math.pow(Math.abs(c), n) + Math.pow(Math.abs(s), n), 1 / n)
+      const cNorm = c / Math.max(denom, 1e-6)
+      const sNorm = s / Math.max(denom, 1e-6)
+      const rx = cNorm >= 0 ? sides.edgeRight : sides.edgeLeft
+      const ry = sNorm >= 0 ? sides.edgeBottom : sides.edgeTop
       pts.push({
-        x: center.x + (ax * c) / Math.max(denom, 1e-6),
-        y: center.y + (ay * s) / Math.max(denom, 1e-6),
+        x: center.x + rx * cNorm,
+        y: center.y + ry * sNorm,
         z: 0,
       })
     }
