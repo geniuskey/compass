@@ -16,7 +16,7 @@ page.on('console', (msg) => {
 })
 page.on('pageerror', (err) => console.log('PAGE EXC:', err.message))
 
-const BASE = 'http://localhost:4194/compass'
+const BASE = 'http://localhost:4173/compass'
 await page.goto(`${BASE}/simulator/microlens-process-shape.html`, { waitUntil: 'networkidle' })
 await page.waitForSelector('.mlp-container', { timeout: 5000 })
 
