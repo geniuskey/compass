@@ -630,28 +630,27 @@ function buildGridFromRects(rects: [number, number, number, number][]) {
   return g
 }
 
-const LAYOUT_PRESETS: Record<Exclude<LayoutPreset, 'custom'>, () => number[]> = {
-  'all-1x1': () => buildGridFromRects([]),
-  'all-2x1': () => buildGridFromRects([
+type Rect = [number, number, number, number]
+const LAYOUT_PRESETS: Record<Exclude<LayoutPreset, 'custom'>, Rect[]> = {
+  'all-1x1': [],
+  'all-2x1': [
     [0, 0, 1, 2], [0, 2, 1, 2],
     [1, 0, 1, 2], [1, 2, 1, 2],
     [2, 0, 1, 2], [2, 2, 1, 2],
     [3, 0, 1, 2], [3, 2, 1, 2],
-  ]),
-  'all-1x2': () => buildGridFromRects([
+  ],
+  'all-1x2': [
     [0, 0, 2, 1], [0, 1, 2, 1], [0, 2, 2, 1], [0, 3, 2, 1],
     [2, 0, 2, 1], [2, 1, 2, 1], [2, 2, 2, 1], [2, 3, 2, 1],
-  ]),
-  'all-2x2': () => buildGridFromRects([
-    [0, 0, 2, 2], [0, 2, 2, 2], [2, 0, 2, 2], [2, 2, 2, 2],
-  ]),
-  'mixed-2x2-pdaf': () => buildGridFromRects([[1, 1, 2, 2]]),
-  'sparse-2x1-pdaf': () => buildGridFromRects([[1, 1, 1, 2], [2, 1, 1, 2]]),
+  ],
+  'all-2x2': [[0, 0, 2, 2], [0, 2, 2, 2], [2, 0, 2, 2], [2, 2, 2, 2]],
+  'mixed-2x2-pdaf': [[1, 1, 2, 2]],
+  'sparse-2x1-pdaf': [[1, 1, 1, 2], [2, 1, 1, 2]],
 }
 
 function applyPreset(preset: LayoutPreset) {
   if (preset !== 'custom') {
-    cellGrid.value = LAYOUT_PRESETS[preset]()
+    cellGrid.value = buildGridFromRects(LAYOUT_PRESETS[preset])
   }
   selectedCell.value = null
 }
@@ -979,7 +978,6 @@ interface SideOffsets {
   sigmaRight: number
   sigmaTop: number
   sigmaBottom: number
-  maxSigmaAbs: number
   asymmetry: number
 }
 
@@ -1036,28 +1034,47 @@ function computeGroupSideOffsets(
   const gapRight = Math.max(0, baseState.finalGapX + 2 * dGapR)
   const gapTop = Math.max(0, baseState.finalGapY + 2 * dGapT)
   const gapBottom = Math.max(0, baseState.finalGapY + 2 * dGapB)
-  const sigmas = [sL, sR, sT, sB]
-  const maxSigmaAbs = Math.max(...sigmas.map(Math.abs))
-  const asymmetry = Math.max(...sigmas) - Math.min(...sigmas)
+  const asymmetry = Math.max(sL, sR, sT, sB) - Math.min(sL, sR, sT, sB)
 
   return {
     edgeLeft, edgeRight, edgeTop, edgeBottom,
     gapLeft, gapRight, gapTop, gapBottom,
     sigmaLeft: sL, sigmaRight: sR, sigmaTop: sT, sigmaBottom: sB,
-    maxSigmaAbs, asymmetry,
+    asymmetry,
   }
 }
 
-const groupProcessStates = computed(() =>
-  lensGroups.value.map(g => ({ group: g, state: computeGroupProcessAt(g, etchTime.value) })),
+const groupCellIndex = computed(() => buildCellIndex(lensGroups.value))
+
+function groupNeighborsFor(group: LensGroup) {
+  return getGroupNeighbors(group, groupCellIndex.value)
+}
+
+interface GroupRenderRow {
+  group: LensGroup
+  state: ProcessState
+  neighbors: GroupNeighbors
+  sides: SideOffsets
+  center: { x: number; y: number }
+}
+
+// Single per-group derivation reused by every consumer (top view, gap markers,
+// surface wireframe, footprint edges, status flags).
+const groupRenderData = computed<GroupRenderRow[]>(() =>
+  lensGroups.value.map((group) => {
+    const state = computeGroupProcessAt(group, etchTime.value)
+    const neighbors = groupNeighborsFor(group)
+    const sides = computeGroupSideOffsets(group, state, neighbors, etchTime.value)
+    return { group, state, neighbors, sides, center: groupCenterUm(group) }
+  }),
 )
 
 const representativeProcess = computed<ProcessState>(() => computeGroupProcessAt(representativeGroup.value, etchTime.value))
 
-// Backward-compatible scalar computeds (drive cross-section, surface, metrics, flags)
+// Scalar computeds for the metric cards and the cross-section overlay
+// (representative-group view; mixed-layout aggregates are intentionally not
+// derived here — the Top view and 3D surface visualise per-group state).
 const initialGap = computed(() => representativeProcess.value.initialGapX)
-const reflowSpread = computed(() => representativeProcess.value.reflowSpreadX)
-const reflowWidth = computed(() => representativeProcess.value.reflowWX)
 const reflowGap = computed(() => representativeProcess.value.reflowGapX)
 const reflowHeight = computed(() => representativeProcess.value.reflowHeight)
 
@@ -1071,18 +1088,16 @@ function etchTransferAt(timeSeconds: number) {
   }
 }
 
-const etchState = computed(() => etchTransferAt(etchTime.value))
 const finalGap = computed(() => Math.max(representativeProcess.value.finalGapX, representativeProcess.value.finalGapY))
 const finalWidth = computed(() => representativeProcess.value.finalWX)
 const finalHeight = computed(() => representativeProcess.value.finalHeight)
 const heightRetention = computed(() => clamp((finalHeight.value / Math.max(reflowHeight.value, 0.001)) * 100, 0, 120))
 const profilePower = computed(() => representativeProcess.value.profilePower)
 const halfFinalWidth = computed(() => representativeProcess.value.finalWX / 2)
-const halfFinalHeight = computed(() => representativeProcess.value.finalWY / 2)
-const halfReflowWidth = computed(() => reflowWidth.value / 2)
 const roc = computed(() => {
-  const a = (halfFinalWidth.value + halfFinalHeight.value) / 2
-  const h = finalHeight.value
+  const rep = representativeProcess.value
+  const a = (rep.finalWX + rep.finalWY) / 4
+  const h = rep.finalHeight
   return (a * a + h * h) / Math.max(2 * h, 0.001)
 })
 const focalLength = computed(() => roc.value / Math.max(lensIndex.value - 1, 0.05))
@@ -1093,7 +1108,6 @@ const fillFactor = computed(() => {
 })
 const aspectRatio = computed(() => representativeProcess.value.aspectRatio)
 const worstReflowGap = computed(() => Math.min(representativeProcess.value.reflowGapX, representativeProcess.value.reflowGapY))
-const worstInitialGap = computed(() => Math.min(representativeProcess.value.initialGapX, representativeProcess.value.initialGapY))
 const zeroGapEtchTime = computed(() => {
   if (worstReflowGap.value <= 0.002) return 0
   const seconds = worstReflowGap.value / Math.max(2 * lateralEtchRate.value, 1e-6)
@@ -1114,7 +1128,7 @@ const processFlags = computed(() => {
 
   if (rep.reflowGapX <= 0.002 && rep.initialGapX > 0.01) flags.push({ text: t('X-direction merger risk', 'X 방향 merger 위험'), tone: 'risk' })
   if (rep.reflowGapY <= 0.002 && rep.initialGapY > 0.01) flags.push({ text: t('Y-direction merger risk', 'Y 방향 merger 위험'), tone: 'risk' })
-  if (etchState.value.lossFraction > 0.32) flags.push({ text: t('height loss risk', 'height loss 위험'), tone: 'risk' })
+  if (rep.lossFraction > 0.32) flags.push({ text: t('height loss risk', 'height loss 위험'), tone: 'risk' })
   if (zeroGapEtchTime.value > 140 && finalGap.value > 0.06) flags.push({ text: t('etch window too short', 'etch window 부족'), tone: 'risk' })
   if (zeroGapEtchTime.value > 0.1 && etchTime.value > zeroGapEtchTime.value + 30) flags.push({ text: t('over-etch margin', 'over-etch margin'), tone: 'warn' })
   if (fillFactor.value > 92) flags.push({ text: t('high fill factor', '높은 fill factor'), tone: 'good' })
@@ -1123,12 +1137,8 @@ const processFlags = computed(() => {
     flags.push({ text: t('asymmetric reflow profile', '비대칭 reflow profile'), tone: 'warn' })
   }
   // Heterogeneous-neighbor coupling flag: any valid group with asymmetric sigma > 0.6
-  for (const g of lensGroups.value) {
-    if (!g.isValidShape) continue
-    const baseState = computeGroupProcessAt(g, etchTime.value)
-    const neighbors = groupNeighborsFor(g)
-    const sides = computeGroupSideOffsets(g, baseState, neighbors, etchTime.value)
-    if (sides.asymmetry > 0.6) {
+  for (const row of groupRenderData.value) {
+    if (row.group.isValidShape && row.sides.asymmetry > 0.6) {
       flags.push({ text: t('proximity asymmetry', '인접 비대칭 결합'), tone: 'warn' })
       break
     }
@@ -1212,10 +1222,8 @@ const surfaceScale = computed(() => {
 })
 const globalMaxHeight = computed(() => {
   let max = 0.08
-  for (const g of lensGroups.value) {
-    if (!g.isValidShape) continue
-    const state = computeGroupProcessAt(g, etchTime.value)
-    if (state.finalHeight > max) max = state.finalHeight
+  for (const { group, state } of groupRenderData.value) {
+    if (group.isValidShape && state.finalHeight > max) max = state.finalHeight
   }
   return max
 })
@@ -1255,67 +1263,45 @@ const surfaceLines = computed(() => {
   const lines: { key: string; d: string; stroke: string; major: boolean; depth: number }[] = []
   const steps = 12
   const samples = 32
-  for (const g of lensGroups.value) {
-    if (!g.isValidShape) continue
-    const state = computeGroupProcessAt(g, etchTime.value)
-    const neighbors = groupNeighborsFor(g)
-    const sides = computeGroupSideOffsets(g, state, neighbors, etchTime.value)
-    const center = groupCenterUm(g)
+  // Sample wireframe along one axis with the other axis fixed.
+  for (const { group, state, sides, center } of groupRenderData.value) {
+    if (!group.isValidShape) continue
     const h = state.finalHeight
     const p = state.profilePower
-    const palette = SURFACE_PALETTE[g.kind]
+    const palette = SURFACE_PALETTE[group.kind]
     const depth = center.x + center.y
     const xMin = -sides.edgeLeft
     const xMax = sides.edgeRight
     const yMin = -sides.edgeTop
     const yMax = sides.edgeBottom
-    // Helper: per-quadrant half-axes
-    const halfFor = (x: number, y: number) => ({
-      hx: x >= 0 ? sides.edgeRight : sides.edgeLeft,
-      hy: y >= 0 ? sides.edgeBottom : sides.edgeTop,
-    })
-    for (let row = 0; row <= steps; row += 1) {
-      const yLocal = yMin + (yMax - yMin) * (row / steps)
-      const pts: { x: number; y: number; z: number }[] = []
-      for (let i = 0; i <= samples; i += 1) {
-        const xLocal = xMin + (xMax - xMin) * (i / samples)
-        const { hx, hy } = halfFor(xLocal, yLocal)
-        const z = lensZ2D(xLocal, yLocal, hx, hy, h, p)
-        if (z > 0 || i === 0 || i === samples) {
-          pts.push({ x: center.x + xLocal, y: center.y + yLocal, z })
+    const hxFor = (x: number) => (x >= 0 ? sides.edgeRight : sides.edgeLeft)
+    const hyFor = (y: number) => (y >= 0 ? sides.edgeBottom : sides.edgeTop)
+    const axes = [
+      { tag: 'x', major: palette.rowMajor, minor: palette.rowMinor, fixedLo: yMin, fixedHi: yMax, varLo: xMin, varHi: xMax, build: (fixed: number, vary: number) => ({ x: vary, y: fixed }) },
+      { tag: 'y', major: palette.colMajor, minor: palette.colMinor, fixedLo: xMin, fixedHi: xMax, varLo: yMin, varHi: yMax, build: (fixed: number, vary: number) => ({ x: fixed, y: vary }) },
+    ]
+    for (const axis of axes) {
+      for (let k = 0; k <= steps; k += 1) {
+        const fixed = axis.fixedLo + (axis.fixedHi - axis.fixedLo) * (k / steps)
+        const pts: { x: number; y: number; z: number }[] = []
+        for (let i = 0; i <= samples; i += 1) {
+          const vary = axis.varLo + (axis.varHi - axis.varLo) * (i / samples)
+          const local = axis.build(fixed, vary)
+          const z = lensZ2D(local.x, local.y, hxFor(local.x), hyFor(local.y), h, p)
+          if (z > 0 || i === 0 || i === samples) {
+            pts.push({ x: center.x + local.x, y: center.y + local.y, z })
+          }
         }
-      }
-      if (pts.length > 1) {
-        const major = row === 0 || row === steps || row === steps / 2
-        lines.push({
-          key: `g${g.id}-x-${row}`,
-          d: buildSurfaceLine(pts),
-          stroke: major ? palette.rowMajor : palette.rowMinor,
-          major,
-          depth,
-        })
-      }
-    }
-    for (let col = 0; col <= steps; col += 1) {
-      const xLocal = xMin + (xMax - xMin) * (col / steps)
-      const pts: { x: number; y: number; z: number }[] = []
-      for (let i = 0; i <= samples; i += 1) {
-        const yLocal = yMin + (yMax - yMin) * (i / samples)
-        const { hx, hy } = halfFor(xLocal, yLocal)
-        const z = lensZ2D(xLocal, yLocal, hx, hy, h, p)
-        if (z > 0 || i === 0 || i === samples) {
-          pts.push({ x: center.x + xLocal, y: center.y + yLocal, z })
+        if (pts.length > 1) {
+          const major = k === 0 || k === steps || k === steps / 2
+          lines.push({
+            key: `g${group.id}-${axis.tag}-${k}`,
+            d: buildSurfaceLine(pts),
+            stroke: major ? axis.major : axis.minor,
+            major,
+            depth,
+          })
         }
-      }
-      if (pts.length > 1) {
-        const major = col === 0 || col === steps || col === steps / 2
-        lines.push({
-          key: `g${g.id}-y-${col}`,
-          d: buildSurfaceLine(pts),
-          stroke: major ? palette.colMajor : palette.colMinor,
-          major,
-          depth,
-        })
       }
     }
   }
@@ -1327,12 +1313,8 @@ const surfaceLines = computed(() => {
 const surfaceFootprintEdges = computed(() => {
   const edges: { key: string; d: string; stroke: string }[] = []
   const n = shapeExponent.value
-  for (const g of lensGroups.value) {
-    if (!g.isValidShape) continue
-    const state = computeGroupProcessAt(g, etchTime.value)
-    const neighbors = groupNeighborsFor(g)
-    const sides = computeGroupSideOffsets(g, state, neighbors, etchTime.value)
-    const center = groupCenterUm(g)
+  for (const { group, sides, center } of groupRenderData.value) {
+    if (!group.isValidShape) continue
     const pts: { x: number; y: number; z: number }[] = []
     for (let i = 0; i <= 80; i += 1) {
       const theta = (2 * Math.PI * i) / 80
@@ -1343,13 +1325,9 @@ const surfaceFootprintEdges = computed(() => {
       const sNorm = s / Math.max(denom, 1e-6)
       const rx = cNorm >= 0 ? sides.edgeRight : sides.edgeLeft
       const ry = sNorm >= 0 ? sides.edgeBottom : sides.edgeTop
-      pts.push({
-        x: center.x + rx * cNorm,
-        y: center.y + ry * sNorm,
-        z: 0,
-      })
+      pts.push({ x: center.x + rx * cNorm, y: center.y + ry * sNorm, z: 0 })
     }
-    edges.push({ key: `edge-${g.id}`, d: buildSurfaceLine(pts), stroke: SURFACE_PALETTE[g.kind].edge })
+    edges.push({ key: `edge-${group.id}`, d: buildSurfaceLine(pts), stroke: SURFACE_PALETTE[group.kind].edge })
   }
   return edges
 })
@@ -1466,19 +1444,9 @@ interface TopGroupRender {
   sides: SideOffsets
 }
 
-const groupCellIndex = computed(() => buildCellIndex(lensGroups.value))
-
-function groupNeighborsFor(group: LensGroup) {
-  return getGroupNeighbors(group, groupCellIndex.value)
-}
-
 const topGroupsRender = computed<TopGroupRender[]>(() => {
   const exponent = shapeExponent.value
-  return lensGroups.value.map((group) => {
-    const center = groupCenterUm(group)
-    const state = computeGroupProcessAt(group, etchTime.value)
-    const neighbors = groupNeighborsFor(group)
-    const sides = computeGroupSideOffsets(group, state, neighbors, etchTime.value)
+  return groupRenderData.value.map(({ group, state, sides, center }) => {
     const maskPath = buildSuperellipsePath(center.x, center.y, state.maskWX / 2, state.maskWY / 2, exponent)
     const reflowPath = buildSuperellipsePath(center.x, center.y, state.reflowWX / 2, state.reflowWY / 2, exponent)
     const finalPath = buildAsymmetricSuperellipsePath(
@@ -1540,50 +1508,36 @@ interface TopGapMarker {
   tone: 'good' | 'warn' | 'risk'
 }
 
+function gapTone(gap: number): TopGapMarker['tone'] {
+  return gap <= 0.08 ? 'good' : 'warn'
+}
+
 const topGapMarkers = computed<TopGapMarker[]>(() => {
   const markers: TopGapMarker[] = []
-  const groups = lensGroups.value
-  const cellIndex = new Map<string, LensGroup>()
-  for (const g of groups) {
-    for (const cell of g.cells) {
-      cellIndex.set(`${cell.r},${cell.c}`, g)
-    }
-  }
   // For each group, look at right and bottom neighbors only (avoid duplicates).
-  for (const g of groups) {
-    const state = computeGroupProcessAt(g, etchTime.value)
-    const neighbors = groupNeighborsFor(g)
-    const sides = computeGroupSideOffsets(g, state, neighbors, etchTime.value)
-    // Right neighbor (along positive X)
+  for (const { group, neighbors, sides, center } of groupRenderData.value) {
     if (neighbors.right) {
-      const gapX = sides.gapRight
-      const tone: TopGapMarker['tone'] = gapX <= 0.015 ? 'good' : gapX <= 0.08 ? 'good' : 'warn'
-      const center = groupCenterUm(g)
       const y = topYScale(center.y)
       markers.push({
-        key: `gx-${g.id}-${neighbors.right.id}`,
+        key: `gx-${group.id}-${neighbors.right.id}`,
         x1: topXScale(center.x + sides.edgeRight),
         y1: y,
-        x2: topXScale(center.x + sides.edgeRight + gapX),
+        x2: topXScale(center.x + sides.edgeRight + sides.gapRight),
         y2: y,
-        gap: gapX,
-        tone,
+        gap: sides.gapRight,
+        tone: gapTone(sides.gapRight),
       })
     }
-    // Bottom neighbor (along positive Y)
     if (neighbors.bottom) {
-      const gapY = sides.gapBottom
-      const tone: TopGapMarker['tone'] = gapY <= 0.015 ? 'good' : gapY <= 0.08 ? 'good' : 'warn'
-      const center = groupCenterUm(g)
       const x = topXScale(center.x)
       markers.push({
-        key: `gy-${g.id}-${neighbors.bottom.id}`,
+        key: `gy-${group.id}-${neighbors.bottom.id}`,
         x1: x,
         y1: topYScale(center.y + sides.edgeBottom),
         x2: x,
-        y2: topYScale(center.y + sides.edgeBottom + gapY),
-        gap: gapY,
-        tone,
+        y2: topYScale(center.y + sides.edgeBottom + sides.gapBottom),
+        gap: sides.gapBottom,
+        tone: gapTone(sides.gapBottom),
       })
     }
   }
