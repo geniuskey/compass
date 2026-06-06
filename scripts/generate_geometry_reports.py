@@ -41,6 +41,7 @@ SAMPLE_KEYS = [
     "sample_p1p22um_2x2ocl",
     "sample_p1p6um_split_pd",
     "sample_p1p2um_lofic",
+    "sample_p1p12um_nir",
 ]
 
 SAMPLE_LABELS = {
@@ -50,6 +51,7 @@ SAMPLE_LABELS = {
     "sample_p1p22um_2x2ocl": "1.22 um 2x2 OCL",
     "sample_p1p6um_split_pd": "1.6 um split PD",
     "sample_p1p2um_lofic": "1.2 um LOFIC",
+    "sample_p1p12um_nir": "1.12 um NIR (IPA + lined DTI)",
 }
 
 
@@ -221,8 +223,9 @@ def make_angle_config(angle: float) -> dict[str, Any]:
 
 
 def plot_sample_overview(outpath: Path) -> None:
-    fig, axes = plt.subplots(2, 3, figsize=(16, 8.5), constrained_layout=True)
-    for ax, sample_key in zip(axes.ravel(), SAMPLE_KEYS):
+    fig, axes = plt.subplots(2, 4, figsize=(20, 8.5), constrained_layout=True)
+    flat_axes = axes.ravel()
+    for ax, sample_key in zip(flat_axes, SAMPLE_KEYS):
         cfg = derive_parameters(sample_key)
         stack = stack_from_pixel_cfg(cfg)
         plot_pixel_cross_section(
@@ -235,6 +238,8 @@ def plot_sample_overview(outpath: Path) -> None:
         for text in list(ax.texts):
             text.remove()
         ax.set_title(f"{SAMPLE_LABELS.get(sample_key, sample_key)}\npitch {stack.pitch:.3f} um")
+    for ax in flat_axes[len(SAMPLE_KEYS):]:
+        ax.axis("off")
     fig.suptitle("PixelStack geometry audit: representative sample pixels", fontsize=16)
     fig.savefig(outpath, dpi=170)
     plt.close(fig)
@@ -729,6 +734,7 @@ def write_index_pages(docs_root: Path, generated_on: str) -> None:
             f"- [RCWA/FDTD Convergence Analysis](./convergence-analysis.md) (generated 2026-05-07)",
             f"- [Pixel Stack Geometry Audit](./pixel-stack-geometry-audit.md) (generated {generated_on})",
             f"- [Color Filter Relief Sensitivity](./color-filter-relief-sensitivity.md) (generated {generated_on})",
+            f"- [Pixel Structure Realism](./pixel-structure-realism.md) (generated {generated_on})",
             "",
             "## Report queue",
             "",
@@ -770,6 +776,7 @@ def write_index_pages(docs_root: Path, generated_on: str) -> None:
             "- [RCWA/FDTD 수렴 분석](./convergence-analysis.md) (생성일 2026-05-07)",
             f"- [픽셀 스택 Geometry 감사](./pixel-stack-geometry-audit.md) (생성일 {generated_on})",
             f"- [컬러 필터 Relief 민감도](./color-filter-relief-sensitivity.md) (생성일 {generated_on})",
+            f"- [픽셀 구조 현실성](./pixel-structure-realism.md) (생성일 {generated_on})",
             "",
             "## 리포트 대기열",
             "",

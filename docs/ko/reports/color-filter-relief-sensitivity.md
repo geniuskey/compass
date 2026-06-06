@@ -4,7 +4,7 @@ outline: deep
 
 # 컬러 필터 Relief 민감도 리포트
 
-_생성일: 2026-05-08. generic 1.0 um BSI `PixelStack`에서 생성._
+_생성일: 2026-06-06. generic 1.0 um BSI `PixelStack`에서 생성._
 
 이 리포트는 색별 컬러 필터 모델의 geometry 민감도 리포트다. `grid.thickness`, `red/green/blue.thickness`, `red/green/blue.contact_angle`이 z-sliced solver geometry를 어떻게 바꾸는지 보여준다.
 

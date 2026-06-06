@@ -4,7 +4,7 @@ outline: deep
 
 # Color Filter Relief Sensitivity Report
 
-_Generated on 2026-05-08 from the generic 1.0 um BSI `PixelStack`._
+_Generated on 2026-06-06 from the generic 1.0 um BSI `PixelStack`._
 
 This is a geometry-sensitivity report for the per-channel color-filter model. It shows how `grid.thickness`, `red/green/blue.thickness`, and `red/green/blue.contact_angle` change the z-sliced solver geometry.
 

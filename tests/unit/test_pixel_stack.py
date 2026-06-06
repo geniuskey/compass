@@ -151,17 +151,19 @@ class TestPixelStack:
         """Per-color CF thickness should create z-aware slices."""
         cfg = copy.deepcopy(default_config)
         cf_cfg = cfg["pixel"]["layers"]["color_filter"]
-        cf_cfg.update({
-            "red": {"material": "cf_red", "thickness": 0.70, "contact_angle": 80.0},
-            "green": {"material": "cf_green", "thickness": 0.50, "contact_angle": 90.0},
-            "blue": {"material": "cf_blue", "thickness": 0.80, "contact_angle": 70.0},
-            "grid": {
-                "enabled": True,
-                "width": 0.10,
-                "thickness": 0.40,
-                "material": "tungsten",
-            },
-        })
+        cf_cfg.update(
+            {
+                "red": {"material": "cf_red", "thickness": 0.70, "contact_angle": 80.0},
+                "green": {"material": "cf_green", "thickness": 0.50, "contact_angle": 90.0},
+                "blue": {"material": "cf_blue", "thickness": 0.80, "contact_angle": 70.0},
+                "grid": {
+                    "enabled": True,
+                    "width": 0.10,
+                    "thickness": 0.40,
+                    "material": "tungsten",
+                },
+            }
+        )
 
         stack = PixelStack(cfg)
         cf_layer = next(layer for layer in stack.layers if layer.name == "color_filter")
@@ -172,8 +174,7 @@ class TestPixelStack:
         assert len(cf_slices) > 1
 
         above_green = next(
-            s for s in cf_slices
-            if 0.50 < ((s.z_start + s.z_end) / 2.0 - cf_layer.z_start) < 0.70
+            s for s in cf_slices if 0.50 < ((s.z_start + s.z_end) / 2.0 - cf_layer.z_start) < 0.70
         )
         eps_air = stack.material_db.get_epsilon("air", 0.55)
         eps_blue = stack.material_db.get_epsilon("cf_blue", 0.55)
@@ -186,28 +187,28 @@ class TestPixelStack:
         """A contact angle below 90 degrees should taper the protruding CF."""
         cfg = copy.deepcopy(default_config)
         cf_cfg = cfg["pixel"]["layers"]["color_filter"]
-        cf_cfg.update({
-            "red": {"material": "cf_red", "thickness": 0.80, "contact_angle": 60.0},
-            "green": {"material": "cf_green", "thickness": 0.80, "contact_angle": 60.0},
-            "blue": {"material": "cf_blue", "thickness": 0.80, "contact_angle": 60.0},
-            "grid": {
-                "enabled": True,
-                "width": 0.08,
-                "thickness": 0.35,
-                "material": "tungsten",
-            },
-        })
+        cf_cfg.update(
+            {
+                "red": {"material": "cf_red", "thickness": 0.80, "contact_angle": 60.0},
+                "green": {"material": "cf_green", "thickness": 0.80, "contact_angle": 60.0},
+                "blue": {"material": "cf_blue", "thickness": 0.80, "contact_angle": 60.0},
+                "grid": {
+                    "enabled": True,
+                    "width": 0.08,
+                    "thickness": 0.35,
+                    "material": "tungsten",
+                },
+            }
+        )
         stack = PixelStack(cfg)
         eps_blue = stack.material_db.get_epsilon("cf_blue", 0.55)
         cf_slices = [
-            s for s in stack.get_layer_slices(wavelength=0.55, nx=96, ny=96)
+            s
+            for s in stack.get_layer_slices(wavelength=0.55, nx=96, ny=96)
             if s.name.startswith("color_filter")
         ]
 
-        blue_area = [
-            int(np.count_nonzero(np.isclose(s.eps_grid, eps_blue)))
-            for s in cf_slices
-        ]
+        blue_area = [int(np.count_nonzero(np.isclose(s.eps_grid, eps_blue))) for s in cf_slices]
         assert blue_area[0] > blue_area[-1]
 
     def test_silicon_dti_pattern(self, pixel_stack):
@@ -255,6 +256,98 @@ class TestPixelStack:
         bdti_unique = len(np.unique(np.round(np.real(bdti.eps_grid), 2)))
         assert bulk_unique == 1
         assert bdti_unique >= 2
+
+
+class TestStructureRealism:
+    """Tests for realistic-structure features: DTI liner/taper, backside
+    inverted-pyramid texture, and the microlens residual base layer."""
+
+    def test_plain_dti_unchanged_by_new_path(self, default_config):
+        """Plain vertical SiO2 DTI must still produce a single FDTI slice."""
+        stack = PixelStack(default_config)
+        slices = stack.get_layer_slices(wavelength=0.55, nx=64, ny=64)
+        si_slices = [s for s in slices if s.name.startswith("silicon")]
+        assert len(si_slices) == 1
+        assert si_slices[0].name == "silicon"
+
+    def test_dti_liner_adds_high_k_ring(self, default_config):
+        """A conformal liner introduces a third permittivity around the core."""
+        dti = default_config["pixel"]["layers"]["silicon"]["dti"]
+        dti.update(
+            {
+                "material": "sio2",
+                "liner": {"enabled": True, "material": "al2o3", "thickness": 0.03},
+            }
+        )
+        stack = PixelStack(default_config)
+        slices = stack.get_layer_slices(wavelength=0.55, nx=192, ny=192)
+        si_slices = [s for s in slices if s.name.startswith("silicon")]
+
+        eps_si = stack.material_db.get_epsilon("silicon", 0.55)
+        eps_ox = stack.material_db.get_epsilon("sio2", 0.55)
+        eps_liner = stack.material_db.get_epsilon("al2o3", 0.55)
+
+        combined = np.concatenate([s.eps_grid.ravel() for s in si_slices])
+        assert np.any(np.isclose(combined, eps_si))
+        assert np.any(np.isclose(combined, eps_ox))
+        assert np.any(np.isclose(combined, eps_liner)), "liner ring missing"
+
+    def test_tapered_dti_narrows_with_depth(self, default_config):
+        """A tapered trench occupies less area in deeper slices."""
+        dti = default_config["pixel"]["layers"]["silicon"]["dti"]
+        dti.update({"taper_angle": 75.0, "n_slices": 6, "width": 0.15})
+        stack = PixelStack(default_config)
+        slices = stack.get_layer_slices(wavelength=0.55, nx=192, ny=192)
+        si_slices = [s for s in slices if s.name.startswith("silicon")]
+        assert len(si_slices) > 1
+
+        eps_ox = stack.material_db.get_epsilon("sio2", 0.55)
+        # Slices are bottom -> top; the topmost (trench opening) has the most
+        # trench area, the deepest the least.
+        top_frac = float(np.mean(np.isclose(si_slices[-1].eps_grid, eps_ox)))
+        bottom_frac = float(np.mean(np.isclose(si_slices[0].eps_grid, eps_ox)))
+        assert top_frac > bottom_frac
+
+    def test_inverted_pyramid_texture_grades_silicon(self, default_config):
+        """Backside texture should grade from mostly fill (surface) to full Si."""
+        si = default_config["pixel"]["layers"]["silicon"]
+        si["dti"]["enabled"] = False
+        si["surface_texture"] = {
+            "enabled": True,
+            "type": "inverted_pyramid",
+            "height": 0.4,
+            "fill_material": "sio2",
+            "n_slices": 8,
+        }
+        stack = PixelStack(default_config)
+        slices = stack.get_layer_slices(wavelength=0.70, nx=160, ny=160)
+        si_slices = [s for s in slices if s.name.startswith("silicon")]
+        assert len(si_slices) > 1
+
+        eps_si = stack.material_db.get_epsilon("silicon", 0.70)
+        # Topmost slice (surface) should be mostly fill; deepest pure silicon.
+        top_si = float(np.mean(np.isclose(si_slices[-1].eps_grid, eps_si)))
+        bottom_si = float(np.mean(np.isclose(si_slices[0].eps_grid, eps_si)))
+        assert bottom_si == pytest.approx(1.0)
+        assert top_si < 0.3
+
+    def test_microlens_residual_base_increases_thickness(self, default_config):
+        """base_thickness adds a flat polymer slab under the curved cap."""
+        ml = default_config["pixel"]["layers"]["microlens"]
+        ml["height"] = 0.6
+        ml["base_thickness"] = 0.2
+        stack = PixelStack(default_config)
+        ml_layer = next(layer for layer in stack.layers if layer.name == "microlens")
+        assert ml_layer.thickness == pytest.approx(0.8)
+
+        # The lowest microlens slice should be entirely lens material (the
+        # residual base fully fills the cell), unlike a zero-base lens whose
+        # lowest slice is mostly polymer but with air at the corners.
+        slices = stack.get_layer_slices(wavelength=0.55, nx=96, ny=96, n_lens_slices=20)
+        ml_slices = [s for s in slices if s.name.startswith("microlens")]
+        eps_lens = stack.material_db.get_epsilon(ml["material"], 0.55)
+        base_slice = ml_slices[0]
+        assert np.all(np.isclose(base_slice.eps_grid, eps_lens))
 
 
 class TestSnellCRAShift:
@@ -358,8 +451,8 @@ class TestSnellCRAShift:
 
         for i in range(1, len(shifts)):
             assert shifts[i] >= shifts[i - 1], (
-                f"Shift not monotonic: {shifts[i]} < {shifts[i-1]} "
-                f"at CRA={[0,5,10,15,20,25,30][i]} deg"
+                f"Shift not monotonic: {shifts[i]} < {shifts[i - 1]} "
+                f"at CRA={[0, 5, 10, 15, 20, 25, 30][i]} deg"
             )
 
     def test_ref_wavelength_effect(self, cra_config):
@@ -394,8 +487,10 @@ class TestSnellCRAShiftEdgeCases:
                 "layers": {
                     "air": {"thickness": 1.0, "material": "air"},
                     "microlens": {
-                        "enabled": True, "height": 0.6,
-                        "radius_x": 0.48, "radius_y": 0.48,
+                        "enabled": True,
+                        "height": 0.6,
+                        "radius_x": 0.48,
+                        "radius_y": 0.48,
                         "material": "polymer_n1p56",
                         "shift": {"mode": "auto_cra", "cra_deg": 20.0},
                     },
@@ -406,7 +501,8 @@ class TestSnellCRAShiftEdgeCases:
                     },
                     "barl": {"layers": []},
                     "silicon": {
-                        "thickness": 3.0, "material": "silicon",
+                        "thickness": 3.0,
+                        "material": "silicon",
                         "photodiode": {"position": [0.0, 0.0, 0.5]},
                     },
                 },
@@ -420,12 +516,15 @@ class TestSnellCRAShiftEdgeCases:
         # Compare with config that has BARL
         config_with_barl = {
             "pixel": {
-                "pitch": 1.0, "unit_cell": [2, 2],
+                "pitch": 1.0,
+                "unit_cell": [2, 2],
                 "layers": {
                     "air": {"thickness": 1.0, "material": "air"},
                     "microlens": {
-                        "enabled": True, "height": 0.6,
-                        "radius_x": 0.48, "radius_y": 0.48,
+                        "enabled": True,
+                        "height": 0.6,
+                        "radius_x": 0.48,
+                        "radius_y": 0.48,
                         "material": "polymer_n1p56",
                         "shift": {"mode": "auto_cra", "cra_deg": 20.0},
                     },
@@ -434,12 +533,15 @@ class TestSnellCRAShiftEdgeCases:
                         "thickness": 0.6,
                         "materials": {"R": "cf_red", "G": "cf_green", "B": "cf_blue"},
                     },
-                    "barl": {"layers": [
-                        {"thickness": 0.010, "material": "sio2"},
-                        {"thickness": 0.025, "material": "hfo2"},
-                    ]},
+                    "barl": {
+                        "layers": [
+                            {"thickness": 0.010, "material": "sio2"},
+                            {"thickness": 0.025, "material": "hfo2"},
+                        ]
+                    },
                     "silicon": {
-                        "thickness": 3.0, "material": "silicon",
+                        "thickness": 3.0,
+                        "material": "silicon",
                         "photodiode": {"position": [0.0, 0.0, 0.5]},
                     },
                 },
@@ -455,7 +557,8 @@ class TestSnellCRAShiftEdgeCases:
         """When microlens is disabled, no microlenses should be created."""
         config = {
             "pixel": {
-                "pitch": 1.0, "unit_cell": [2, 2],
+                "pitch": 1.0,
+                "unit_cell": [2, 2],
                 "layers": {
                     "air": {"thickness": 1.0, "material": "air"},
                     "microlens": {"enabled": False},
@@ -476,12 +579,15 @@ class TestSnellCRAShiftEdgeCases:
         """Extreme CRA (85 deg) should not crash due to sin clamping."""
         config = {
             "pixel": {
-                "pitch": 1.0, "unit_cell": [2, 2],
+                "pitch": 1.0,
+                "unit_cell": [2, 2],
                 "layers": {
                     "air": {"thickness": 1.0, "material": "air"},
                     "microlens": {
-                        "enabled": True, "height": 0.6,
-                        "radius_x": 0.48, "radius_y": 0.48,
+                        "enabled": True,
+                        "height": 0.6,
+                        "radius_x": 0.48,
+                        "radius_y": 0.48,
                         "material": "polymer_n1p56",
                         "shift": {"mode": "auto_cra", "cra_deg": 85.0},
                     },
@@ -491,7 +597,8 @@ class TestSnellCRAShiftEdgeCases:
                         "materials": {"R": "cf_red", "G": "cf_green", "B": "cf_blue"},
                     },
                     "silicon": {
-                        "thickness": 3.0, "material": "silicon",
+                        "thickness": 3.0,
+                        "material": "silicon",
                         "photodiode": {"position": [0.0, 0.0, 0.5]},
                     },
                 },
@@ -507,12 +614,15 @@ class TestSnellCRAShiftEdgeCases:
         """Should handle config with no 'barl' key at all."""
         config = {
             "pixel": {
-                "pitch": 1.0, "unit_cell": [2, 2],
+                "pitch": 1.0,
+                "unit_cell": [2, 2],
                 "layers": {
                     "air": {"thickness": 1.0, "material": "air"},
                     "microlens": {
-                        "enabled": True, "height": 0.6,
-                        "radius_x": 0.48, "radius_y": 0.48,
+                        "enabled": True,
+                        "height": 0.6,
+                        "radius_x": 0.48,
+                        "radius_y": 0.48,
                         "material": "polymer_n1p56",
                         "shift": {"mode": "auto_cra", "cra_deg": 15.0},
                     },
@@ -522,7 +632,8 @@ class TestSnellCRAShiftEdgeCases:
                         "materials": {"R": "cf_red", "G": "cf_green", "B": "cf_blue"},
                     },
                     "silicon": {
-                        "thickness": 3.0, "material": "silicon",
+                        "thickness": 3.0,
+                        "material": "silicon",
                         "photodiode": {"position": [0.0, 0.0, 0.5]},
                     },
                 },
@@ -537,12 +648,15 @@ class TestSnellCRAShiftEdgeCases:
         """Config without ref_wavelength should use default 0.55 um."""
         config = {
             "pixel": {
-                "pitch": 1.0, "unit_cell": [2, 2],
+                "pitch": 1.0,
+                "unit_cell": [2, 2],
                 "layers": {
                     "air": {"thickness": 1.0, "material": "air"},
                     "microlens": {
-                        "enabled": True, "height": 0.6,
-                        "radius_x": 0.48, "radius_y": 0.48,
+                        "enabled": True,
+                        "height": 0.6,
+                        "radius_x": 0.48,
+                        "radius_y": 0.48,
                         "material": "polymer_n1p56",
                         "shift": {"mode": "auto_cra", "cra_deg": 20.0},
                         # No ref_wavelength key — should default to 0.55
@@ -553,7 +667,8 @@ class TestSnellCRAShiftEdgeCases:
                         "materials": {"R": "cf_red", "G": "cf_green", "B": "cf_blue"},
                     },
                     "silicon": {
-                        "thickness": 3.0, "material": "silicon",
+                        "thickness": 3.0,
+                        "material": "silicon",
                         "photodiode": {"position": [0.0, 0.0, 0.5]},
                     },
                 },
@@ -595,24 +710,31 @@ class TestSnellCRAShiftAnalytical:
 
         config = {
             "pixel": {
-                "pitch": 1.0, "unit_cell": [2, 2],
+                "pitch": 1.0,
+                "unit_cell": [2, 2],
                 "layers": {
                     "air": {"thickness": 1.0, "material": "air"},
                     "microlens": {
-                        "enabled": True, "height": 0.6,
-                        "radius_x": 0.48, "radius_y": 0.48,
+                        "enabled": True,
+                        "height": 0.6,
+                        "radius_x": 0.48,
+                        "radius_y": 0.48,
                         "material": "polymer_n1p56",
                         "shift": {
-                            "mode": "auto_cra", "cra_deg": cra_deg,
+                            "mode": "auto_cra",
+                            "cra_deg": cra_deg,
                             "ref_wavelength": ref_wl,
                         },
                     },
                     "planarization": {"thickness": plan_t, "material": "sio2"},
-                    "color_filter": {"thickness": 0.6,
-                                     "materials": {"R": "cf_red", "G": "cf_green", "B": "cf_blue"}},
+                    "color_filter": {
+                        "thickness": 0.6,
+                        "materials": {"R": "cf_red", "G": "cf_green", "B": "cf_blue"},
+                    },
                     "barl": {"layers": []},
                     "silicon": {
-                        "thickness": si_t, "material": "silicon",
+                        "thickness": si_t,
+                        "material": "silicon",
                         "photodiode": {"position": [0.0, 0.0, pd_z]},
                     },
                 },
@@ -723,12 +845,15 @@ class TestSnellCRAShiftAnalytical:
         """
         config_shifted = {
             "pixel": {
-                "pitch": 1.0, "unit_cell": [2, 2],
+                "pitch": 1.0,
+                "unit_cell": [2, 2],
                 "layers": {
                     "air": {"thickness": 1.0, "material": "air"},
                     "microlens": {
-                        "enabled": True, "height": 0.6,
-                        "radius_x": 0.48, "radius_y": 0.48,
+                        "enabled": True,
+                        "height": 0.6,
+                        "radius_x": 0.48,
+                        "radius_y": 0.48,
                         "material": "polymer_n1p56",
                         "profile": {"type": "superellipse", "n": 2.5, "alpha": 1.0},
                         "shift": {"mode": "auto_cra", "cra_deg": 25.0},
@@ -739,7 +864,8 @@ class TestSnellCRAShiftAnalytical:
                         "materials": {"R": "cf_red", "G": "cf_green", "B": "cf_blue"},
                     },
                     "silicon": {
-                        "thickness": 3.0, "material": "silicon",
+                        "thickness": 3.0,
+                        "material": "silicon",
                         "photodiode": {"position": [0.0, 0.0, 0.5]},
                     },
                 },
@@ -748,12 +874,15 @@ class TestSnellCRAShiftAnalytical:
         }
         config_centered = {
             "pixel": {
-                "pitch": 1.0, "unit_cell": [2, 2],
+                "pitch": 1.0,
+                "unit_cell": [2, 2],
                 "layers": {
                     "air": {"thickness": 1.0, "material": "air"},
                     "microlens": {
-                        "enabled": True, "height": 0.6,
-                        "radius_x": 0.48, "radius_y": 0.48,
+                        "enabled": True,
+                        "height": 0.6,
+                        "radius_x": 0.48,
+                        "radius_y": 0.48,
                         "material": "polymer_n1p56",
                         "profile": {"type": "superellipse", "n": 2.5, "alpha": 1.0},
                         "shift": {"mode": "none"},
@@ -764,7 +893,8 @@ class TestSnellCRAShiftAnalytical:
                         "materials": {"R": "cf_red", "G": "cf_green", "B": "cf_blue"},
                     },
                     "silicon": {
-                        "thickness": 3.0, "material": "silicon",
+                        "thickness": 3.0,
+                        "material": "silicon",
                         "photodiode": {"position": [0.0, 0.0, 0.5]},
                     },
                 },

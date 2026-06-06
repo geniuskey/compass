@@ -27,6 +27,7 @@ COMPASS 는 이 부분을 경험식 기반 스케일링 룰로 채워 넣습니�
 | `sample_p1p6um_split_pd`   | `sample_p1p6um_split_pd.yaml`       | 1.6 µm  | 표준 Bayer          | 1        | 분리형 트랜지스터 기판 → PD 부피 약 2배 확대             |
 | `sample_p1p22um_2x2ocl`    | `sample_p1p22um_2x2ocl.yaml`        | 1.22 µm | Quad Bayer          | 2        | 같은 색 2×2 그룹마다 큰 마이크로렌즈 1개 (전 픽셀 PDAF)  |
 | `sample_p1p2um_lofic`      | `sample_p1p2um_lofic.yaml`          | 1.2 µm  | Quad Bayer          | 2        | LOFIC HDR — 캐패시터가 PD footprint 잠식, 2×2 OCL         |
+| `sample_p1p12um_nir`       | `sample_p1p12um_nir.yaml`           | 1.12 µm | Standard Bayer      | 1        | NIR 강화: 후면 역피라미드 텍스처, 라이너+테이퍼 DTI, ML 잔류층 |
 
 Hydra 로 실행:
 
@@ -34,6 +35,7 @@ Hydra 로 실행:
 python scripts/run_simulation.py pixel=sample_p0p56um_4x4ocl source=wavelength_sweep
 python scripts/run_simulation.py pixel=sample_p1p6um_split_pd solver=torcwa
 python scripts/run_simulation.py pixel=sample_p1p2um_lofic source=cone_illumination
+python scripts/run_simulation.py pixel=sample_p1p12um_nir source=wavelength_sweep
 ```
 
 ### `sample_p0p56um_4x4ocl` — 4×4 비닝의 sub-µm 픽셀
@@ -63,6 +65,15 @@ python scripts/run_simulation.py pixel=sample_p1p2um_lofic source=cone_illuminat
 ### `sample_p1p2um_lofic` — LOFIC HDR
 
 50 MP 급, 1.2 µm. **LOFIC** (Lateral Overflow Integration Capacitor) 캐패시터가 픽셀 내 실리콘 면적의 일부를 차지하므로 PD footprint 가 약간 작아집니다. 그 위로 Quad PD 가 2×2 OCL 을 추가합니다.
+
+### `sample_p1p12um_nir` — NIR 강화 BSI 픽셀
+
+[픽셀 구조 현실성](/ko/theory/sensor/pixel-structure-realism)에서 설명하는
+구조적 현실성 기능을 보여주는 1.12 µm 픽셀입니다. 장파장 광 트래핑을 위한
+**후면 역피라미드 배열**, **컨포멀 high-k(Al₂O₃) 라이너와 테이퍼 측벽을 가진
+DTI**, **마이크로렌즈 잔류층**, NIR 포집을 위한 깊은(4 µm) 실리콘 포토다이오드를
+활성화합니다. 실제 solver 유전율로 렌더링한 단면은
+[픽셀 구조 현실성 리포트](/ko/reports/pixel-structure-realism)를 참조하세요.
 
 ## 파라미터 결정 방법 {#parameter-determination}
 

@@ -53,6 +53,7 @@ SamplePixelKey = Literal[
     "sample_p1p6um_split_pd",
     "sample_p1p22um_2x2ocl",
     "sample_p1p2um_lofic",
+    "sample_p1p12um_nir",
     "generic_bsi",
 ]
 
@@ -65,10 +66,10 @@ SAMPLE_HEADLINES: dict[str, dict[str, Any]] = {
     "sample_p0p56um_4x4ocl": {
         "pitch": 0.56,
         "megapixels": 200,
-        "cf_pattern": "tetra2cell",     # 4x4 same-color super-cell (16-cell binning)
+        "cf_pattern": "tetra2cell",  # 4x4 same-color super-cell (16-cell binning)
         "ocl_sharing": 1,
         "microlens_material": "polymer_hri_n1p70",  # high-refractive-index ML
-        "dti_fill": "sio2",                          # F-DTI oxide fill
+        "dti_fill": "sio2",  # F-DTI oxide fill
         "year": 2024,
     },
     "sample_p1p0um_quadbayer": {
@@ -87,14 +88,14 @@ SAMPLE_HEADLINES: dict[str, dict[str, Any]] = {
         "ocl_sharing": 1,
         "microlens_material": "polymer_n1p56",
         "dti_fill": "sio2",
-        "split_pd": True,                # split-substrate transistors -> larger PD
+        "split_pd": True,  # split-substrate transistors -> larger PD
         "year": 2024,
     },
     "sample_p1p22um_2x2ocl": {
         "pitch": 1.22,
         "megapixels": 48,
         "cf_pattern": "tetracell",
-        "ocl_sharing": 2,                # 2x2 OCL
+        "ocl_sharing": 2,  # 2x2 OCL
         "microlens_material": "polymer_n1p56",
         "dti_fill": "sio2",
         "year": 2023,
@@ -103,11 +104,25 @@ SAMPLE_HEADLINES: dict[str, dict[str, Any]] = {
         "pitch": 1.2,
         "megapixels": 50,
         "cf_pattern": "tetracell",
-        "ocl_sharing": 2,                # Quad PD = 2x2 OCL
+        "ocl_sharing": 2,  # Quad PD = 2x2 OCL
         "microlens_material": "polymer_n1p56",
         "dti_fill": "sio2",
-        "lofic": True,                   # LOFIC capacitor shrinks PD lateral footprint
+        "lofic": True,  # LOFIC capacitor shrinks PD lateral footprint
         "year": 2024,
+    },
+    "sample_p1p12um_nir": {
+        "pitch": 1.12,
+        "megapixels": 64,
+        "cf_pattern": "bayer_rggb",
+        "ocl_sharing": 1,
+        "microlens_material": "polymer_n1p56",
+        "dti_fill": "sio2",
+        "year": 2024,
+        # NIR-enhanced backside-illuminated pixel: an inverted-pyramid array is
+        # etched into the silicon backside for long-wavelength light trapping,
+        # the DTI carries a conformal high-k passivation liner with a tapered
+        # sidewall, and the photodiode silicon is deep to capture 850/940 nm.
+        "nir_enhanced": True,
     },
     "generic_bsi": {
         "pitch": 1.0,
@@ -134,6 +149,7 @@ SAMPLE_HEADLINES: dict[str, dict[str, Any]] = {
 #   to capture longer wavelengths in the photodiode.
 # - BARL (bottom anti-reflective layers) is largely pitch-independent — the
 #   stack is tuned for visible λ, not for pixel geometry.
+
 
 def _ml_height(pitch: float) -> float:
     """Empirical microlens sag for typical BSI pixels."""
@@ -179,6 +195,10 @@ def derive_parameters(
     microlens_material: str | None = None,
     dti_fill: str | None = None,
     cra_deg: float = 0.0,
+    dti_liner: dict[str, Any] | None = None,
+    dti_taper_angle: float | None = None,
+    surface_texture: dict[str, Any] | None = None,
+    ml_base_thickness: float | None = None,
     overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a full pixel config dict for a given sample / pitch.
@@ -198,6 +218,12 @@ def derive_parameters(
         microlens_material: Material name registered in MaterialDB.
         dti_fill: Material name for DTI trench fill.
         cra_deg: Chief ray angle in degrees for auto microlens shift.
+        dti_liner: Optional DTI conformal liner dict, e.g.
+            ``{"enabled": True, "material": "al2o3", "thickness": 0.015}``.
+        dti_taper_angle: Optional DTI sidewall angle in degrees (90 = vertical).
+        surface_texture: Optional backside texture dict, e.g.
+            ``{"enabled": True, "type": "inverted_pyramid", "height": 0.35}``.
+        ml_base_thickness: Optional microlens residual base thickness in um.
         overrides: Dotted-key overrides, e.g.
             ``{"layers.silicon.thickness": 2.5}``.
 
@@ -224,12 +250,36 @@ def derive_parameters(
     ml_mat = headline.get("microlens_material", "polymer_n1p56")
     dti_mat = headline.get("dti_fill", "sio2")
 
+    # Realistic-structure options. They default to off so that the legacy
+    # presets expand to exactly the same stacks as before; the NIR-enhanced
+    # preset (and explicit keyword arguments) turn them on.
+    nir = bool(headline.get("nir_enhanced", False))
+    if dti_liner is None and nir:
+        dti_liner = {"enabled": True, "material": "al2o3", "thickness": 0.015}
+    if dti_taper_angle is None and nir:
+        dti_taper_angle = 82.0
+    if surface_texture is None and nir:
+        surface_texture = {
+            "enabled": True,
+            "type": "inverted_pyramid",
+            "height": 0.35,
+            "fill_material": "sio2",
+            "n_slices": 8,
+        }
+    if ml_base_thickness is None and nir:
+        ml_base_thickness = 0.10
+
     # Unit-cell size derived from the binning pattern.
     group_size = {
-        "bayer_rggb": 1, "bayer_grbg": 1, "bayer_gbrg": 1, "bayer_bggr": 1,
-        "tetracell": 2, "quad_bayer": 2,
+        "bayer_rggb": 1,
+        "bayer_grbg": 1,
+        "bayer_gbrg": 1,
+        "bayer_bggr": 1,
+        "tetracell": 2,
+        "quad_bayer": 2,
         "nonacell": 3,
-        "tetra2cell": 4, "hexadeca": 4,
+        "tetra2cell": 4,
+        "hexadeca": 4,
     }.get(pattern, 1)
     unit_dim = 2 * group_size
     unit_cell = [unit_dim, unit_dim]
@@ -289,6 +339,7 @@ def derive_parameters(
                 "profile": {"type": "superellipse", "n": 2.5, "alpha": 1.0},
                 "shift": {"mode": "auto_cra", "cra_deg": float(cra_deg)},
                 "gap": gap,
+                "base_thickness": float(ml_base_thickness or 0.0),
             },
             "planarization": {"thickness": plan_t, "material": "sio2"},
             "color_filter": {
@@ -335,7 +386,13 @@ def derive_parameters(
                     "width": dti_w,
                     "depth": si_t,
                     "material": dti_mat,
+                    "liner": dict(dti_liner) if dti_liner else {"enabled": False},
+                    "taper_angle": float(dti_taper_angle) if dti_taper_angle else 90.0,
+                    "n_slices": 6,
                 },
+                "surface_texture": (
+                    dict(surface_texture) if surface_texture else {"enabled": False}
+                ),
             },
         },
     }

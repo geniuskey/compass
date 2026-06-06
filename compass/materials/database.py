@@ -57,12 +57,16 @@ class MaterialData:
             self._k_interp = CubicSpline(self.wavelengths, self.k_data, extrapolate=True)
         else:
             self._n_interp = interp1d(
-                self.wavelengths, self.n_data,
-                kind="linear", fill_value="extrapolate",
+                self.wavelengths,
+                self.n_data,
+                kind="linear",
+                fill_value="extrapolate",
             )
             self._k_interp = interp1d(
-                self.wavelengths, self.k_data,
-                kind="linear", fill_value="extrapolate",
+                self.wavelengths,
+                self.k_data,
+                kind="linear",
+                fill_value="extrapolate",
             )
 
     def get_nk(self, wavelength: float) -> tuple[float, float]:
@@ -102,12 +106,12 @@ class MaterialData:
             result = (n, max(k, 0.0))
 
         elif self.mat_type == "cauchy":
-            lam2 = wavelength ** 2
-            n = self.cauchy_A + self.cauchy_B / lam2 + self.cauchy_C / (lam2 ** 2)
+            lam2 = wavelength**2
+            n = self.cauchy_A + self.cauchy_B / lam2 + self.cauchy_C / (lam2**2)
             result = (n, 0.0)
 
         elif self.mat_type == "sellmeier":
-            lam2 = wavelength ** 2
+            lam2 = wavelength**2
             n2 = 1.0
             assert self.sellmeier_B is not None
             assert self.sellmeier_C is not None
@@ -156,7 +160,7 @@ class MaterialDB:
         self.register_sellmeier(
             "sio2",
             B=[0.6961663, 0.4079426, 0.8974794],
-            C=[0.0684043 ** 2, 0.1162414 ** 2, 9.896161 ** 2],
+            C=[0.0684043**2, 0.1162414**2, 9.896161**2],
         )
 
         # HfO2 (approximate Cauchy)
@@ -166,7 +170,7 @@ class MaterialDB:
         self.register_sellmeier(
             "si3n4",
             B=[2.8939, 0.0],
-            C=[0.13967 ** 2, 1.0],
+            C=[0.13967**2, 1.0],
         )
 
         # TiO2 (approximate Cauchy for anatase)
@@ -174,6 +178,28 @@ class MaterialDB:
 
         # Load tabulated materials from CSV files if available
         self._load_csv_materials()
+
+        # Chemical-formula aliases so configs can use short names (e.g. DTI
+        # liners spelled "al2o3"/"ta2o5") interchangeably with the descriptive
+        # registered names.
+        self._register_aliases()
+
+    def _register_aliases(self) -> None:
+        """Point common chemical-formula names at registered materials."""
+        aliases = {
+            "al2o3": "aluminum_oxide",
+            "alumina": "aluminum_oxide",
+            "ta2o5": "tantalum_pentoxide",
+            "tantalum_oxide": "tantalum_pentoxide",
+            "w": "tungsten",
+            "si": "silicon",
+            "mgf2": "magnesium_fluoride",
+            "ito": "indium_tin_oxide",
+            "sion": "silicon_oxynitride",
+        }
+        for alias, target in aliases.items():
+            if target in self._materials and alias not in self._materials:
+                self._materials[alias] = self._materials[target]
 
     def _load_csv_materials(self) -> None:
         """Load tabulated materials from CSV files."""
@@ -260,38 +286,155 @@ class MaterialDB:
                 self.load_csv(name, str(csv_path))
                 logger.debug(f"Loaded extended material '{name}' from {rel_path}")
             else:
-                logger.debug(
-                    f"Extended material CSV not found for '{name}': {csv_path}"
-                )
+                logger.debug(f"Extended material CSV not found for '{name}': {csv_path}")
 
     def _register_silicon_fallback(self) -> None:
         """Register silicon with approximate tabulated data (Green 2008)."""
         # Subset of Green 2008 data for visible range
-        wl = np.array([
-            0.350, 0.360, 0.370, 0.380, 0.390, 0.400, 0.410, 0.420, 0.430,
-            0.440, 0.450, 0.460, 0.470, 0.480, 0.490, 0.500, 0.510, 0.520,
-            0.530, 0.540, 0.550, 0.560, 0.570, 0.580, 0.590, 0.600, 0.620,
-            0.640, 0.660, 0.680, 0.700, 0.720, 0.740, 0.760, 0.780, 0.800,
-            0.850, 0.900, 0.950, 1.000, 1.050, 1.100,
-        ])
-        n = np.array([
-            5.565, 5.827, 6.044, 5.976, 5.587, 5.381, 5.253, 5.103, 4.930,
-            4.774, 4.641, 4.528, 4.432, 4.350, 4.279, 4.215, 4.159, 4.109,
-            4.064, 4.024, 4.082, 3.979, 3.948, 3.921, 3.897, 3.876, 3.840,
-            3.810, 3.785, 3.764, 3.746, 3.731, 3.718, 3.707, 3.697, 3.688,
-            3.670, 3.655, 3.642, 3.632, 3.623, 3.616,
-        ])
-        k = np.array([
-            3.004, 2.989, 2.823, 2.459, 2.025, 0.340, 0.296, 0.267, 0.244,
-            0.224, 0.206, 0.189, 0.173, 0.158, 0.143, 0.130, 0.118, 0.107,
-            0.098, 0.089, 0.028, 0.075, 0.069, 0.063, 0.058, 0.054, 0.047,
-            0.041, 0.037, 0.033, 0.030, 0.027, 0.024, 0.022, 0.020, 0.018,
-            0.014, 0.011, 0.008, 0.006, 0.004, 0.003,
-        ])
+        wl = np.array(
+            [
+                0.350,
+                0.360,
+                0.370,
+                0.380,
+                0.390,
+                0.400,
+                0.410,
+                0.420,
+                0.430,
+                0.440,
+                0.450,
+                0.460,
+                0.470,
+                0.480,
+                0.490,
+                0.500,
+                0.510,
+                0.520,
+                0.530,
+                0.540,
+                0.550,
+                0.560,
+                0.570,
+                0.580,
+                0.590,
+                0.600,
+                0.620,
+                0.640,
+                0.660,
+                0.680,
+                0.700,
+                0.720,
+                0.740,
+                0.760,
+                0.780,
+                0.800,
+                0.850,
+                0.900,
+                0.950,
+                1.000,
+                1.050,
+                1.100,
+            ]
+        )
+        n = np.array(
+            [
+                5.565,
+                5.827,
+                6.044,
+                5.976,
+                5.587,
+                5.381,
+                5.253,
+                5.103,
+                4.930,
+                4.774,
+                4.641,
+                4.528,
+                4.432,
+                4.350,
+                4.279,
+                4.215,
+                4.159,
+                4.109,
+                4.064,
+                4.024,
+                4.082,
+                3.979,
+                3.948,
+                3.921,
+                3.897,
+                3.876,
+                3.840,
+                3.810,
+                3.785,
+                3.764,
+                3.746,
+                3.731,
+                3.718,
+                3.707,
+                3.697,
+                3.688,
+                3.670,
+                3.655,
+                3.642,
+                3.632,
+                3.623,
+                3.616,
+            ]
+        )
+        k = np.array(
+            [
+                3.004,
+                2.989,
+                2.823,
+                2.459,
+                2.025,
+                0.340,
+                0.296,
+                0.267,
+                0.244,
+                0.224,
+                0.206,
+                0.189,
+                0.173,
+                0.158,
+                0.143,
+                0.130,
+                0.118,
+                0.107,
+                0.098,
+                0.089,
+                0.028,
+                0.075,
+                0.069,
+                0.063,
+                0.058,
+                0.054,
+                0.047,
+                0.041,
+                0.037,
+                0.033,
+                0.030,
+                0.027,
+                0.024,
+                0.022,
+                0.020,
+                0.018,
+                0.014,
+                0.011,
+                0.008,
+                0.006,
+                0.004,
+                0.003,
+            ]
+        )
         mat = MaterialData(
             name="silicon",
             mat_type="tabulated",
-            wavelengths=wl, n_data=n, k_data=k,
+            wavelengths=wl,
+            n_data=n,
+            k_data=k,
         )
         mat._build_interpolators()
         self._materials["silicon"] = mat
@@ -304,7 +447,9 @@ class MaterialDB:
         mat = MaterialData(
             name="tungsten",
             mat_type="tabulated",
-            wavelengths=wl, n_data=n, k_data=k,
+            wavelengths=wl,
+            n_data=n,
+            k_data=k,
         )
         mat._build_interpolators()
         self._materials["tungsten"] = mat
@@ -327,13 +472,15 @@ class MaterialDB:
             n_base, k_max, peak_wl, width = 1.55, 0.1, 0.55, 0.05
 
         # Absorption: high k outside passband, low k in passband
-        k = k_max * (1.0 - np.exp(-((wl - peak_wl) / width) ** 2))
+        k = k_max * (1.0 - np.exp(-(((wl - peak_wl) / width) ** 2)))
         n = np.full_like(wl, n_base)
 
         mat = MaterialData(
             name=name,
             mat_type="tabulated",
-            wavelengths=wl, n_data=n, k_data=k,
+            wavelengths=wl,
+            n_data=n,
+            k_data=k,
         )
         mat._build_interpolators()
         self._materials[name] = mat
@@ -341,21 +488,29 @@ class MaterialDB:
     def register_constant(self, name: str, n: float, k: float = 0.0) -> None:
         """Register a material with constant n, k."""
         self._materials[name] = MaterialData(
-            name=name, mat_type="constant", n_const=n, k_const=k,
+            name=name,
+            mat_type="constant",
+            n_const=n,
+            k_const=k,
         )
 
     def register_cauchy(self, name: str, A: float, B: float = 0.0, C: float = 0.0) -> None:
         """Register a material with Cauchy dispersion model: n(λ) = A + B/λ² + C/λ⁴."""
         self._materials[name] = MaterialData(
-            name=name, mat_type="cauchy",
-            cauchy_A=A, cauchy_B=B, cauchy_C=C,
+            name=name,
+            mat_type="cauchy",
+            cauchy_A=A,
+            cauchy_B=B,
+            cauchy_C=C,
         )
 
     def register_sellmeier(self, name: str, B: list[float], C: list[float]) -> None:
         """Register a material with Sellmeier dispersion model."""
         self._materials[name] = MaterialData(
-            name=name, mat_type="sellmeier",
-            sellmeier_B=B, sellmeier_C=C,
+            name=name,
+            mat_type="sellmeier",
+            sellmeier_B=B,
+            sellmeier_C=C,
         )
 
     def load_csv(self, name: str, filepath: str, interpolation: str = "cubic_spline") -> None:

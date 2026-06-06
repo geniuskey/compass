@@ -4,7 +4,7 @@ outline: deep
 
 # 픽셀 스택 Geometry 감사
 
-_생성일: 2026-05-08. `compass.geometry.sample_pixels`와 `PixelStack`에서 생성._
+_생성일: 2026-06-06. `compass.geometry.sample_pixels`와 `PixelStack`에서 생성._
 
 이 리포트는 광학 성능이 아니라 geometry evidence를 게시한다. 대표 sample pixel preset이 color-filter relief, metal-grid thickness, DTI, microlens, photodiode window를 포함한 solver 입력 stack으로 실제 확장되는지 확인한다.
 
@@ -29,6 +29,7 @@ _생성일: 2026-05-08. `compass.geometry.sample_pixels`와 `PixelStack`에서 �
 | 1.22 um 2x2 OCL | 1.22 | 4x4 | 0.756 | 0.546 | 0.728/0.7/0.756 | 62 | 11 | 0.49 |
 | 1.6 um split PD | 1.6 | 2x2 | 0.94 | 0.679 | 0.905/0.87/0.94 | 62 | 11 | 0.774 |
 | 1.2 um LOFIC | 1.2 | 4x4 | 0.745 | 0.538 | 0.718/0.69/0.745 | 62 | 11 | 0.423 |
+| 1.12 um NIR (IPA + lined DTI) | 1.12 | 2x2 | 0.702 | 0.507 | 0.676/0.65/0.702 | 62 | 11 | 0.49 |
 
 ## Checks
 
@@ -40,6 +41,7 @@ _생성일: 2026-05-08. `compass.geometry.sample_pixels`와 `PixelStack`에서 �
 | 1.22 um 2x2 OCL | yes | yes | yes | yes |
 | 1.6 um split PD | yes | yes | yes | yes |
 | 1.2 um LOFIC | yes | yes | yes | yes |
+| 1.12 um NIR (IPA + lined DTI) | yes | yes | yes | yes |
 
 ## 재생성
 
