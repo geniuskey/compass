@@ -70,6 +70,7 @@ class GeometryBuilder:
         Returns:
             2D list of color strings.
         """
+
         def _binned(group: int) -> list[list[str]]:
             tile_rggb = [["R", "G"], ["G", "B"]]
             size = 2 * group
@@ -103,7 +104,9 @@ class GeometryBuilder:
             pattern_key = f"bayer_{pattern_key}"
 
         if pattern_key not in base_patterns:
-            raise ValueError(f"Unknown Bayer pattern: {pattern}. Available: {list(base_patterns.keys())}")
+            raise ValueError(
+                f"Unknown Bayer pattern: {pattern}. Available: {list(base_patterns.keys())}"
+            )
 
         tile = base_patterns[pattern_key]
         tile_rows = len(tile)
@@ -169,6 +172,74 @@ class GeometryBuilder:
         return mask.astype(np.float64)
 
     @staticmethod
+    def trench_grid(
+        nx: int,
+        ny: int,
+        pitch: float,
+        unit_cell: tuple[int, int],
+        half_width: float,
+    ) -> np.ndarray:
+        """Generate a pixel-boundary trench grid for an explicit half-width.
+
+        Like :meth:`dti_grid` but parametrised by the trench *half-width* so
+        that tapered (depth-dependent) and lined trenches can be built slice by
+        slice. A non-positive ``half_width`` returns an all-zero mask.
+
+        Args:
+            nx: Grid resolution in x.
+            ny: Grid resolution in y.
+            pitch: Pixel pitch in um.
+            unit_cell: (rows, cols) number of pixels.
+            half_width: Half of the trench width in um at this z-slice.
+
+        Returns:
+            2D binary mask (1 = trench, 0 = silicon).
+        """
+        if half_width <= 0.0:
+            return np.zeros((ny, nx), dtype=np.float64)
+        return GeometryBuilder.dti_grid(nx, ny, pitch, unit_cell, 2.0 * half_width)
+
+    @staticmethod
+    def inverted_pyramid_mask(
+        nx: int,
+        ny: int,
+        lx: float,
+        ly: float,
+        period: float,
+        half_width: float,
+    ) -> np.ndarray:
+        """Generate an inverted-pyramid (pit) array mask at one z-slice.
+
+        Models a tessellated array of square pyramidal pits with the given
+        ``period``. ``half_width`` is the pit half-width at the current depth;
+        it shrinks linearly from ``period/2`` at the surface to 0 at the apex,
+        producing the graded silicon fill fraction of a light-trapping texture.
+
+        Args:
+            nx: Grid resolution in x.
+            ny: Grid resolution in y.
+            lx: Domain size in x (um).
+            ly: Domain size in y (um).
+            period: Pyramid array period in um.
+            half_width: Pit half-width at this z-slice in um.
+
+        Returns:
+            2D binary mask (1 = pit/fill, 0 = silicon).
+        """
+        if half_width <= 0.0 or period <= 0.0:
+            return np.zeros((ny, nx), dtype=np.float64)
+
+        x = np.linspace(0, lx, nx, endpoint=False)
+        y = np.linspace(0, ly, ny, endpoint=False)
+        xx, yy = np.meshgrid(x, y, indexing="xy")
+
+        # Distance to the nearest pyramid centre on the periodic lattice.
+        dx = np.abs((xx % period) - period / 2.0)
+        dy = np.abs((yy % period) - period / 2.0)
+        mask = (dx <= half_width) & (dy <= half_width)
+        return mask.astype(np.float64)
+
+    @staticmethod
     def metal_grid(
         nx: int,
         ny: int,
@@ -220,9 +291,7 @@ class GeometryBuilder:
                 dy = np.abs(yy - cy)
                 ex = np.maximum(dx - (inner_half - r), 0.0)
                 ey = np.maximum(dy - (inner_half - r), 0.0)
-                inside_any |= (
-                    (dx <= inner_half) & (dy <= inner_half) & (ex * ex + ey * ey <= r * r)
-                )
+                inside_any |= (dx <= inner_half) & (dy <= inner_half) & (ex * ex + ey * ey <= r * r)
 
         return (~inside_any).astype(np.float64)
 

@@ -1,0 +1,85 @@
+{
+  "generated_on": "2026-06-06",
+  "compare": {
+    "Baseline 1.12 um BSI": {
+      "total_height_um": 5.792,
+      "n_silicon_slices": 1
+    },
+    "NIR-enhanced (IPA + lined DTI)": {
+      "total_height_um": 5.8919999999999995,
+      "n_silicon_slices": 14
+    }
+  },
+  "silicon_zoom": {
+    "texture_height_um": 0.35,
+    "n_eff_surface": 1.4606449984270704,
+    "n_eff_apex": 3.669973296905579
+  },
+  "coverage": [
+    {
+      "feature": "Microlens superellipse profile + CRA shift",
+      "status": "modelled",
+      "config": "microlens.profile, microlens.shift"
+    },
+    {
+      "feature": "Multi-pixel shared lens (2x2 / 4x4 OCL)",
+      "status": "modelled",
+      "config": "microlens.sharing"
+    },
+    {
+      "feature": "Microlens residual base layer",
+      "status": "modelled (new)",
+      "config": "microlens.base_thickness"
+    },
+    {
+      "feature": "Per-color CF thickness + contact-angle relief",
+      "status": "modelled",
+      "config": "color_filter.<color>.thickness/contact_angle"
+    },
+    {
+      "feature": "Metal grid (W) with rounded corners",
+      "status": "modelled",
+      "config": "color_filter.grid"
+    },
+    {
+      "feature": "BARL anti-reflection multilayer",
+      "status": "modelled",
+      "config": "barl.layers"
+    },
+    {
+      "feature": "FDTI / BDTI deep trench isolation",
+      "status": "modelled",
+      "config": "silicon.dti.mode/depth/width"
+    },
+    {
+      "feature": "DTI conformal high-k passivation liner",
+      "status": "modelled (new)",
+      "config": "silicon.dti.liner"
+    },
+    {
+      "feature": "Tapered DTI sidewall (etch profile)",
+      "status": "modelled (new)",
+      "config": "silicon.dti.taper_angle"
+    },
+    {
+      "feature": "Backside inverted-pyramid light-trapping texture",
+      "status": "modelled (new)",
+      "config": "silicon.surface_texture"
+    },
+    {
+      "feature": "Photodiode collection window",
+      "status": "modelled",
+      "config": "silicon.photodiode"
+    },
+    {
+      "feature": "Composite / air-gap metal grid liner",
+      "status": "roadmap",
+      "config": "-"
+    },
+    {
+      "feature": "In-pixel light pipe / inner lens",
+      "status": "roadmap",
+      "config": "-"
+    }
+  ]
+}

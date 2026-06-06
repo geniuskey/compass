@@ -16,8 +16,15 @@ class TestSuperellipseLens:
         xx, yy = np.meshgrid(x, y, indexing="xy")
 
         h = GeometryBuilder.superellipse_lens(
-            xx, yy, center_x=0.0, center_y=0.0,
-            rx=0.4, ry=0.4, height=0.6, n=2.5, alpha=1.0,
+            xx,
+            yy,
+            center_x=0.0,
+            center_y=0.0,
+            rx=0.4,
+            ry=0.4,
+            height=0.6,
+            n=2.5,
+            alpha=1.0,
         )
 
         # Center should be maximum
@@ -34,8 +41,15 @@ class TestSuperellipseLens:
         xx, yy = np.meshgrid(x, y, indexing="xy")
 
         h = GeometryBuilder.superellipse_lens(
-            xx, yy, center_x=0.0, center_y=0.0,
-            rx=0.4, ry=0.4, height=0.6, n=2.5, alpha=1.0,
+            xx,
+            yy,
+            center_x=0.0,
+            center_y=0.0,
+            rx=0.4,
+            ry=0.4,
+            height=0.6,
+            n=2.5,
+            alpha=1.0,
         )
 
         # Should be symmetric in x and y
@@ -49,12 +63,26 @@ class TestSuperellipseLens:
         xx, yy = np.meshgrid(x, y, indexing="xy")
 
         h_centered = GeometryBuilder.superellipse_lens(
-            xx, yy, center_x=0.0, center_y=0.0,
-            rx=0.3, ry=0.3, height=0.5, n=2.0, alpha=1.0,
+            xx,
+            yy,
+            center_x=0.0,
+            center_y=0.0,
+            rx=0.3,
+            ry=0.3,
+            height=0.5,
+            n=2.0,
+            alpha=1.0,
         )
         h_shifted = GeometryBuilder.superellipse_lens(
-            xx, yy, center_x=0.0, center_y=0.0,
-            rx=0.3, ry=0.3, height=0.5, n=2.0, alpha=1.0,
+            xx,
+            yy,
+            center_x=0.0,
+            center_y=0.0,
+            rx=0.3,
+            ry=0.3,
+            height=0.5,
+            n=2.0,
+            alpha=1.0,
             shift_x=0.1,
         )
 
@@ -70,8 +98,15 @@ class TestSuperellipseLens:
         xx, yy = np.meshgrid(x, y, indexing="xy")
 
         h = GeometryBuilder.superellipse_lens(
-            xx, yy, center_x=0.0, center_y=0.0,
-            rx=0.4, ry=0.4, height=0.6, n=2.5, alpha=1.0,
+            xx,
+            yy,
+            center_x=0.0,
+            center_y=0.0,
+            rx=0.4,
+            ry=0.4,
+            height=0.6,
+            n=2.5,
+            alpha=1.0,
         )
         assert np.all(h >= 0)
 
@@ -82,10 +117,26 @@ class TestSuperellipseLens:
         xx, yy = np.meshgrid(x, y, indexing="xy")
 
         h_round = GeometryBuilder.superellipse_lens(
-            xx, yy, 0.0, 0.0, 0.4, 0.4, 0.6, n=2.0, alpha=1.0,
+            xx,
+            yy,
+            0.0,
+            0.0,
+            0.4,
+            0.4,
+            0.6,
+            n=2.0,
+            alpha=1.0,
         )
         h_square = GeometryBuilder.superellipse_lens(
-            xx, yy, 0.0, 0.0, 0.4, 0.4, 0.6, n=10.0, alpha=1.0,
+            xx,
+            yy,
+            0.0,
+            0.0,
+            0.4,
+            0.4,
+            0.6,
+            n=10.0,
+            alpha=1.0,
         )
 
         # Squarer lens should have more total volume
@@ -170,7 +221,11 @@ class TestDtiGrid:
     def test_basic_grid(self):
         """DTI grid should create lines at pixel boundaries."""
         mask = GeometryBuilder.dti_grid(
-            nx=100, ny=100, pitch=1.0, unit_cell=(2, 2), dti_width=0.1,
+            nx=100,
+            ny=100,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            dti_width=0.1,
         )
         assert mask.shape == (100, 100)
         assert mask.dtype == np.float64
@@ -181,7 +236,11 @@ class TestDtiGrid:
     def test_grid_fraction(self):
         """DTI should cover a reasonable fraction of the area."""
         mask = GeometryBuilder.dti_grid(
-            nx=200, ny=200, pitch=1.0, unit_cell=(2, 2), dti_width=0.1,
+            nx=200,
+            ny=200,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            dti_width=0.1,
         )
         fraction = np.mean(mask)
         # Grid lines cover about 2*2*0.1/(2*1) ≈ 20% minus overlaps
@@ -190,7 +249,108 @@ class TestDtiGrid:
     def test_zero_width(self):
         """Zero-width DTI should have no lines."""
         mask = GeometryBuilder.dti_grid(
-            nx=100, ny=100, pitch=1.0, unit_cell=(2, 2), dti_width=0.0,
+            nx=100,
+            ny=100,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            dti_width=0.0,
+        )
+        assert np.sum(mask) == 0
+
+
+class TestTrenchGrid:
+    """Tests for the explicit-half-width trench grid (tapered DTI)."""
+
+    def test_matches_dti_grid(self):
+        """trench_grid(half) must equal dti_grid(width=2*half)."""
+        a = GeometryBuilder.trench_grid(
+            nx=120,
+            ny=120,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            half_width=0.05,
+        )
+        b = GeometryBuilder.dti_grid(
+            nx=120,
+            ny=120,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            dti_width=0.10,
+        )
+        assert np.array_equal(a, b)
+
+    def test_narrower_halfwidth_covers_less(self):
+        """A smaller half-width (deeper in a tapered trench) covers less area."""
+        wide = GeometryBuilder.trench_grid(
+            nx=200,
+            ny=200,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            half_width=0.06,
+        )
+        narrow = GeometryBuilder.trench_grid(
+            nx=200,
+            ny=200,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            half_width=0.02,
+        )
+        assert np.mean(narrow) < np.mean(wide)
+
+    def test_nonpositive_halfwidth_empty(self):
+        mask = GeometryBuilder.trench_grid(
+            nx=64,
+            ny=64,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            half_width=0.0,
+        )
+        assert np.sum(mask) == 0
+
+
+class TestInvertedPyramidMask:
+    """Tests for the inverted-pyramid (light-trapping texture) mask."""
+
+    def test_full_width_at_surface(self):
+        """At the surface (half_width = period/2) pits tessellate the plane."""
+        mask = GeometryBuilder.inverted_pyramid_mask(
+            nx=200,
+            ny=200,
+            lx=2.0,
+            ly=2.0,
+            period=1.0,
+            half_width=0.5,
+        )
+        assert np.mean(mask) > 0.95
+
+    def test_shrinks_toward_apex(self):
+        """A smaller half-width (closer to the apex) covers less area."""
+        wide = GeometryBuilder.inverted_pyramid_mask(
+            nx=200,
+            ny=200,
+            lx=2.0,
+            ly=2.0,
+            period=1.0,
+            half_width=0.4,
+        )
+        narrow = GeometryBuilder.inverted_pyramid_mask(
+            nx=200,
+            ny=200,
+            lx=2.0,
+            ly=2.0,
+            period=1.0,
+            half_width=0.1,
+        )
+        assert np.mean(narrow) < np.mean(wide)
+
+    def test_apex_empty(self):
+        mask = GeometryBuilder.inverted_pyramid_mask(
+            nx=64,
+            ny=64,
+            lx=2.0,
+            ly=2.0,
+            period=1.0,
+            half_width=0.0,
         )
         assert np.sum(mask) == 0
 
@@ -201,21 +361,37 @@ class TestMetalGridRounded:
     def test_sharp_fallback_matches_dti(self):
         """corner_radius=0 must be identical to dti_grid."""
         sharp = GeometryBuilder.metal_grid(
-            nx=64, ny=64, pitch=1.0, unit_cell=(2, 2), grid_width=0.05,
+            nx=64,
+            ny=64,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            grid_width=0.05,
         )
         dti = GeometryBuilder.dti_grid(
-            nx=64, ny=64, pitch=1.0, unit_cell=(2, 2), dti_width=0.05,
+            nx=64,
+            ny=64,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            dti_width=0.05,
         )
         assert np.array_equal(sharp, dti)
 
     def test_rounded_has_more_metal_than_sharp(self):
         """Rounding the CF corners must increase the metal area."""
         sharp = GeometryBuilder.metal_grid(
-            nx=128, ny=128, pitch=1.0, unit_cell=(2, 2), grid_width=0.05,
+            nx=128,
+            ny=128,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            grid_width=0.05,
         )
         rounded = GeometryBuilder.metal_grid(
-            nx=128, ny=128, pitch=1.0, unit_cell=(2, 2),
-            grid_width=0.05, corner_radius=0.1,
+            nx=128,
+            ny=128,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            grid_width=0.05,
+            corner_radius=0.1,
         )
         assert rounded.mean() > sharp.mean()
 
@@ -224,8 +400,12 @@ class TestMetalGridRounded:
         fractions = []
         for r in [0.0, 0.05, 0.1, 0.2, 0.3]:
             mask = GeometryBuilder.metal_grid(
-                nx=128, ny=128, pitch=1.0, unit_cell=(2, 2),
-                grid_width=0.05, corner_radius=r,
+                nx=128,
+                ny=128,
+                pitch=1.0,
+                unit_cell=(2, 2),
+                grid_width=0.05,
+                corner_radius=r,
             )
             fractions.append(mask.mean())
         for a, b in zip(fractions, fractions[1:]):
@@ -234,8 +414,12 @@ class TestMetalGridRounded:
     def test_per_pixel_symmetry(self):
         """Each pixel's CF should be symmetric in x and y about its center."""
         mask = GeometryBuilder.metal_grid(
-            nx=64, ny=64, pitch=1.0, unit_cell=(1, 1),
-            grid_width=0.05, corner_radius=0.15,
+            nx=64,
+            ny=64,
+            pitch=1.0,
+            unit_cell=(1, 1),
+            grid_width=0.05,
+            corner_radius=0.15,
         )
         assert np.array_equal(mask, mask[::-1, :])
         assert np.array_equal(mask, mask[:, ::-1])
@@ -247,8 +431,12 @@ class TestMetalGridRounded:
         gw = 0.05
         inner_half = (pitch - gw) / 2.0
         mask = GeometryBuilder.metal_grid(
-            nx=nx, ny=ny, pitch=pitch, unit_cell=(1, 1),
-            grid_width=gw, corner_radius=10.0,
+            nx=nx,
+            ny=ny,
+            pitch=pitch,
+            unit_cell=(1, 1),
+            grid_width=gw,
+            corner_radius=10.0,
         )
         # CF area ≈ π r²; metal area ≈ pitch² - π r²
         cf_fraction = 1.0 - mask.mean()
@@ -258,8 +446,12 @@ class TestMetalGridRounded:
     def test_mask_dtype_and_range(self):
         """Mask must be float64 with values in {0, 1}."""
         mask = GeometryBuilder.metal_grid(
-            nx=32, ny=32, pitch=1.0, unit_cell=(2, 2),
-            grid_width=0.05, corner_radius=0.1,
+            nx=32,
+            ny=32,
+            pitch=1.0,
+            unit_cell=(2, 2),
+            grid_width=0.05,
+            corner_radius=0.1,
         )
         assert mask.dtype == np.float64
         unique = np.unique(mask)

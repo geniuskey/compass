@@ -4,7 +4,7 @@ outline: deep
 
 # Pixel Stack Geometry Audit
 
-_Generated on 2026-05-08 from `compass.geometry.sample_pixels` and `PixelStack`._
+_Generated on 2026-06-06 from `compass.geometry.sample_pixels` and `PixelStack`._
 
 This report publishes geometry evidence, not optical performance. It verifies that representative sample-pixel presets expand into plausible solver input stacks with color-filter relief, metal-grid thickness, DTI, microlens, and photodiode windows present in the generated `PixelStack`.
 
@@ -29,6 +29,7 @@ This report publishes geometry evidence, not optical performance. It verifies th
 | 1.22 um 2x2 OCL | 1.22 | 4x4 | 0.756 | 0.546 | 0.728/0.7/0.756 | 62 | 11 | 0.49 |
 | 1.6 um split PD | 1.6 | 2x2 | 0.94 | 0.679 | 0.905/0.87/0.94 | 62 | 11 | 0.774 |
 | 1.2 um LOFIC | 1.2 | 4x4 | 0.745 | 0.538 | 0.718/0.69/0.745 | 62 | 11 | 0.423 |
+| 1.12 um NIR (IPA + lined DTI) | 1.12 | 2x2 | 0.702 | 0.507 | 0.676/0.65/0.702 | 62 | 11 | 0.49 |
 
 ## Checks
 
@@ -40,6 +41,7 @@ This report publishes geometry evidence, not optical performance. It verifies th
 | 1.22 um 2x2 OCL | yes | yes | yes | yes |
 | 1.6 um split PD | yes | yes | yes | yes |
 | 1.2 um LOFIC | yes | yes | yes | yes |
+| 1.12 um NIR (IPA + lined DTI) | yes | yes | yes | yes |
 
 ## Regeneration
 

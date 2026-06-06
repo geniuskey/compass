@@ -87,22 +87,24 @@ class PixelStack:
         # 1. Silicon layer (bottom)
         si_cfg = layers_cfg.get("silicon", {})
         si_thickness = si_cfg.get("thickness", 3.0)
-        self.layers.append(Layer(
-            name="silicon",
-            z_start=z_cursor,
-            z_end=z_cursor + si_thickness,
-            thickness=si_thickness,
-            base_material=si_cfg.get("material", "silicon"),
-            is_patterned=si_cfg.get("dti", {}).get("enabled", False),
-        ))
+        self.layers.append(
+            Layer(
+                name="silicon",
+                z_start=z_cursor,
+                z_end=z_cursor + si_thickness,
+                thickness=si_thickness,
+                base_material=si_cfg.get("material", "silicon"),
+                is_patterned=si_cfg.get("dti", {}).get("enabled", False),
+            )
+        )
         z_cursor += si_thickness
 
         # Build photodiode specs
         pd_cfg = si_cfg.get("photodiode", {})
         bayer_cfg = pixel_cfg.get("bayer_map", [["R", "G"], ["G", "B"]])
         pattern_type = layers_cfg.get("color_filter", {}).get("pattern", "bayer_rggb")
-        self.bayer_map = bayer_cfg if bayer_cfg else GeometryBuilder.bayer_pattern(
-            self.unit_cell, pattern_type
+        self.bayer_map = (
+            bayer_cfg if bayer_cfg else GeometryBuilder.bayer_pattern(self.unit_cell, pattern_type)
         )
 
         pd_pos = tuple(pd_cfg.get("position", [0.0, 0.0, 0.5]))
@@ -110,56 +112,66 @@ class PixelStack:
         for r in range(self.unit_cell[0]):
             for c in range(self.unit_cell[1]):
                 color = self.bayer_map[r % len(self.bayer_map)][c % len(self.bayer_map[0])]
-                self.photodiodes.append(PhotodiodeSpec(
-                    position=pd_pos,
-                    size=pd_size,
-                    pixel_index=(r, c),
-                    color=color,
-                ))
+                self.photodiodes.append(
+                    PhotodiodeSpec(
+                        position=pd_pos,
+                        size=pd_size,
+                        pixel_index=(r, c),
+                        color=color,
+                    )
+                )
 
         # 2. BARL layers
         barl_cfg = layers_cfg.get("barl", {})
         barl_layers = barl_cfg.get("layers", [])
         for i, bl in enumerate(barl_layers):
             t = bl.get("thickness", 0.01)
-            self.layers.append(Layer(
-                name=f"barl_{i}",
-                z_start=z_cursor,
-                z_end=z_cursor + t,
-                thickness=t,
-                base_material=bl.get("material", "sio2"),
-            ))
+            self.layers.append(
+                Layer(
+                    name=f"barl_{i}",
+                    z_start=z_cursor,
+                    z_end=z_cursor + t,
+                    thickness=t,
+                    base_material=bl.get("material", "sio2"),
+                )
+            )
             z_cursor += t
 
         # 3. Color filter layer
         cf_cfg = layers_cfg.get("color_filter", {})
         cf_thickness = self._color_filter_stack_thickness(cf_cfg)
-        self.layers.append(Layer(
-            name="color_filter",
-            z_start=z_cursor,
-            z_end=z_cursor + cf_thickness,
-            thickness=cf_thickness,
-            base_material="cf_green",  # base, actual is patterned
-            is_patterned=True,
-        ))
+        self.layers.append(
+            Layer(
+                name="color_filter",
+                z_start=z_cursor,
+                z_end=z_cursor + cf_thickness,
+                thickness=cf_thickness,
+                base_material="cf_green",  # base, actual is patterned
+                is_patterned=True,
+            )
+        )
         z_cursor += cf_thickness
 
         # 4. Planarization (over-coat) layer
         plan_cfg = layers_cfg.get("planarization", {})
         plan_thickness = plan_cfg.get("thickness", 0.3)
-        self.layers.append(Layer(
-            name="planarization",
-            z_start=z_cursor,
-            z_end=z_cursor + plan_thickness,
-            thickness=plan_thickness,
-            base_material=plan_cfg.get("material", "sio2"),
-        ))
+        self.layers.append(
+            Layer(
+                name="planarization",
+                z_start=z_cursor,
+                z_end=z_cursor + plan_thickness,
+                thickness=plan_thickness,
+                base_material=plan_cfg.get("material", "sio2"),
+            )
+        )
         z_cursor += plan_thickness
 
         # 5. Microlens layer
         ml_cfg = layers_cfg.get("microlens", {})
         if ml_cfg.get("enabled", True):
             ml_height = ml_cfg.get("height", 0.6)
+            ml_base = max(0.0, float(ml_cfg.get("base_thickness", 0.0)))
+            self._ml_base_thickness = ml_base
             profile = ml_cfg.get("profile", {})
             shift_cfg = ml_cfg.get("shift", {})
 
@@ -175,14 +187,17 @@ class PixelStack:
                 )
                 shift_y = 0.0
 
-            self.layers.append(Layer(
-                name="microlens",
-                z_start=z_cursor,
-                z_end=z_cursor + ml_height,
-                thickness=ml_height,
-                base_material=ml_cfg.get("material", "polymer_n1p56"),
-                is_patterned=True,
-            ))
+            ml_layer_thickness = ml_height + ml_base
+            self.layers.append(
+                Layer(
+                    name="microlens",
+                    z_start=z_cursor,
+                    z_end=z_cursor + ml_layer_thickness,
+                    thickness=ml_layer_thickness,
+                    base_material=ml_cfg.get("material", "polymer_n1p56"),
+                    is_patterned=True,
+                )
+            )
 
             # Multi-pixel lens sharing (Sony 2x2 OCL, Samsung Hexadeca 4x4 OCL).
             # One microlens covers an N x N group of pixels; default radius
@@ -197,32 +212,37 @@ class PixelStack:
             rows, cols = self.unit_cell
             for _r0 in range(0, rows, sharing):
                 for _c0 in range(0, cols, sharing):
-                    self.microlenses.append(MicrolensSpec(
-                        height=ml_height,
-                        radius_x=radius_x,
-                        radius_y=radius_y,
-                        material=ml_material,
-                        profile_type=profile.get("type", "superellipse"),
-                        n_param=profile.get("n", 2.5),
-                        alpha_param=profile.get("alpha", 1.0),
-                        shift_x=shift_x,
-                        shift_y=shift_y,
-                    ))
+                    self.microlenses.append(
+                        MicrolensSpec(
+                            height=ml_height,
+                            radius_x=radius_x,
+                            radius_y=radius_y,
+                            material=ml_material,
+                            profile_type=profile.get("type", "superellipse"),
+                            n_param=profile.get("n", 2.5),
+                            alpha_param=profile.get("alpha", 1.0),
+                            shift_x=shift_x,
+                            shift_y=shift_y,
+                        )
+                    )
             self._lens_sharing = sharing
-            z_cursor += ml_height
+            z_cursor += ml_layer_thickness
         else:
             self._lens_sharing = 1
+            self._ml_base_thickness = 0.0
 
         # 6. Air layer (top)
         air_cfg = layers_cfg.get("air", {})
         air_thickness = air_cfg.get("thickness", 1.0)
-        self.layers.append(Layer(
-            name="air",
-            z_start=z_cursor,
-            z_end=z_cursor + air_thickness,
-            thickness=air_thickness,
-            base_material="air",
-        ))
+        self.layers.append(
+            Layer(
+                name="air",
+                z_start=z_cursor,
+                z_end=z_cursor + air_thickness,
+                thickness=air_thickness,
+                base_material="air",
+            )
+        )
 
     def _compute_snell_shift(
         self,
@@ -336,16 +356,12 @@ class PixelStack:
         for layer in self.layers:
             if layer.name == "microlens":
                 # Staircase approximation for microlens
-                ml_slices = self._microlens_staircase(
-                    layer, wavelength, nx, ny, n_lens_slices
-                )
+                ml_slices = self._microlens_staircase(layer, wavelength, nx, ny, n_lens_slices)
                 slices.extend(ml_slices)
 
             elif layer.name == "color_filter":
                 # Patterned layer with Bayer color filter + optional metal grid
-                slices.extend(self._build_color_filter_slices(
-                    layer, wavelength, nx, ny, cf_cfg
-                ))
+                slices.extend(self._build_color_filter_slices(layer, wavelength, nx, ny, cf_cfg))
 
             elif layer.name == "silicon":
                 # Silicon with optional DTI
@@ -355,14 +371,16 @@ class PixelStack:
                 # Uniform layer
                 eps = self.material_db.get_epsilon(layer.base_material, wavelength)
                 eps_grid = np.full((ny, nx), eps, dtype=complex)
-                slices.append(LayerSlice(
-                    z_start=layer.z_start,
-                    z_end=layer.z_end,
-                    thickness=layer.thickness,
-                    eps_grid=eps_grid,
-                    name=layer.name,
-                    material=layer.base_material,
-                ))
+                slices.append(
+                    LayerSlice(
+                        z_start=layer.z_start,
+                        z_end=layer.z_end,
+                        thickness=layer.thickness,
+                        eps_grid=eps_grid,
+                        name=layer.name,
+                        material=layer.base_material,
+                    )
+                )
 
         return slices
 
@@ -400,12 +418,17 @@ class PixelStack:
                 cy = (gr + 0.5) * sharing * self.pitch
 
                 h = GeometryBuilder.superellipse_lens(
-                    xx, yy,
-                    center_x=cx, center_y=cy,
-                    rx=ml.radius_x, ry=ml.radius_y,
+                    xx,
+                    yy,
+                    center_x=cx,
+                    center_y=cy,
+                    rx=ml.radius_x,
+                    ry=ml.radius_y,
                     height=ml.height,
-                    n=ml.n_param, alpha=ml.alpha_param,
-                    shift_x=ml.shift_x, shift_y=ml.shift_y,
+                    n=ml.n_param,
+                    alpha=ml.alpha_param,
+                    shift_x=ml.shift_x,
+                    shift_y=ml.shift_y,
                 )
                 height_map = np.maximum(height_map, h)
             self._height_map_cache[cache_key] = height_map
@@ -429,6 +452,8 @@ class PixelStack:
 
         slices = []
         slice_thickness = layer.thickness / n_slices
+        # A flat residual slab of lens polymer sits under the curved cap.
+        base_t = getattr(self, "_ml_base_thickness", 0.0)
 
         for i in range(n_slices):
             z_lo = layer.z_start + i * slice_thickness
@@ -436,21 +461,24 @@ class PixelStack:
             z_mid = (z_lo + z_hi) / 2.0
             rel_z = z_mid - layer.z_start  # height within lens layer
 
-            # Filling fraction: lens material where height_map > rel_z
+            # Lens material in the residual base, plus the superellipse cap on
+            # top of it: lens where (base + cap_height_map) > rel_z.
             eps_grid = np.where(
-                height_map > rel_z,
+                (base_t + height_map) > rel_z,
                 eps_lens,
                 eps_air,
             )
 
-            slices.append(LayerSlice(
-                z_start=z_lo,
-                z_end=z_hi,
-                thickness=slice_thickness,
-                eps_grid=eps_grid,
-                name=f"microlens_slice_{i}",
-                material=layer.base_material,
-            ))
+            slices.append(
+                LayerSlice(
+                    z_start=z_lo,
+                    z_end=z_hi,
+                    thickness=slice_thickness,
+                    eps_grid=eps_grid,
+                    name=f"microlens_slice_{i}",
+                    material=layer.base_material,
+                )
+            )
 
         return slices
 
@@ -496,17 +524,12 @@ class PixelStack:
                 0.0,
                 float(channel_cfg.get("thickness", default_thickness)),
             ),
-            "contact_angle": float(
-                channel_cfg.get("contact_angle", default_contact_angle)
-            ),
+            "contact_angle": float(channel_cfg.get("contact_angle", default_contact_angle)),
         }
 
     def _color_filter_specs(self, cf_cfg: dict) -> dict[str, dict]:
         """Resolve the standard RGB color filter channel specifications."""
-        return {
-            color: self._color_filter_spec(cf_cfg, color)
-            for color in _CF_CHANNEL_NAMES
-        }
+        return {color: self._color_filter_spec(cf_cfg, color) for color in _CF_CHANNEL_NAMES}
 
     def _grid_thickness(self, cf_cfg: dict) -> float:
         """Resolve metal grid thickness, accepting legacy grid.height."""
@@ -524,10 +547,7 @@ class PixelStack:
         """Return the z-span needed by color filters and their metal grid."""
         grid_t = self._grid_thickness(cf_cfg)
         if self._has_cf_channel_overrides(cf_cfg):
-            cf_t = max(
-                spec["thickness"]
-                for spec in self._color_filter_specs(cf_cfg).values()
-            )
+            cf_t = max(spec["thickness"] for spec in self._color_filter_specs(cf_cfg).values())
         else:
             cf_t = max(0.0, float(cf_cfg.get("thickness", 0.6)))
         return max(cf_t, grid_t)
@@ -587,14 +607,16 @@ class PixelStack:
         """Build flat or z-aware color filter slices."""
         if not self._uses_color_filter_relief(cf_cfg, layer):
             eps_grid = self._build_cf_layer(wavelength, nx, ny, cf_cfg)
-            return [LayerSlice(
-                z_start=layer.z_start,
-                z_end=layer.z_end,
-                thickness=layer.thickness,
-                eps_grid=eps_grid,
-                name="color_filter",
-                material="bayer_pattern",
-            )]
+            return [
+                LayerSlice(
+                    z_start=layer.z_start,
+                    z_end=layer.z_end,
+                    thickness=layer.thickness,
+                    eps_grid=eps_grid,
+                    name="color_filter",
+                    material="bayer_pattern",
+                )
+            ]
 
         slices = []
         breaks = self._color_filter_slice_breaks(layer, cf_cfg)
@@ -603,17 +625,17 @@ class PixelStack:
             if thickness <= 0.0:
                 continue
             z_mid_rel = 0.5 * (z0_rel + z1_rel)
-            eps_grid = self._build_cf_layer_at_z(
-                wavelength, nx, ny, cf_cfg, z_mid_rel
+            eps_grid = self._build_cf_layer_at_z(wavelength, nx, ny, cf_cfg, z_mid_rel)
+            slices.append(
+                LayerSlice(
+                    z_start=layer.z_start + z0_rel,
+                    z_end=layer.z_start + z1_rel,
+                    thickness=thickness,
+                    eps_grid=eps_grid,
+                    name=f"color_filter_slice_{i}",
+                    material="bayer_pattern",
+                )
             )
-            slices.append(LayerSlice(
-                z_start=layer.z_start + z0_rel,
-                z_end=layer.z_start + z1_rel,
-                thickness=thickness,
-                eps_grid=eps_grid,
-                name=f"color_filter_slice_{i}",
-                material="bayer_pattern",
-            ))
         return slices
 
     def _build_cf_layer(
@@ -624,9 +646,7 @@ class PixelStack:
         cf_cfg: dict,
     ) -> np.ndarray:
         """Build color filter layer with Bayer pattern and optional metal grid."""
-        return self._build_cf_layer_at_z(
-            wavelength, nx, ny, cf_cfg, z_rel=0.0, flat=True
-        )
+        return self._build_cf_layer_at_z(wavelength, nx, ny, cf_cfg, z_rel=0.0, flat=True)
 
     def _build_cf_layer_at_z(
         self,
@@ -656,8 +676,8 @@ class PixelStack:
                 mat_name = spec["material"]
                 eps = self.material_db.get_epsilon(mat_name, wavelength)
 
-                inset = 0.0 if flat else self._cf_lateral_inset(
-                    z_rel, grid_t, spec["contact_angle"]
+                inset = (
+                    0.0 if flat else self._cf_lateral_inset(z_rel, grid_t, spec["contact_angle"])
                 )
                 mask_2d = self._color_filter_pixel_mask(
                     nx,
@@ -730,11 +750,7 @@ class PixelStack:
         radius = min(corner_radius, inner_half)
         ex = np.maximum(dx - (inner_half - radius), 0.0)
         ey = np.maximum(dy - (inner_half - radius), 0.0)
-        return (
-            (dx <= inner_half)
-            & (dy <= inner_half)
-            & (ex * ex + ey * ey <= radius * radius)
-        )
+        return (dx <= inner_half) & (dy <= inner_half) & (ex * ex + ey * ey <= radius * radius)
 
     def _build_silicon_slices(
         self,
@@ -744,20 +760,191 @@ class PixelStack:
         ny: int,
         si_cfg: dict,
     ) -> list[LayerSlice]:
-        """Build z-aware silicon slices for FDTI and BDTI layouts."""
+        """Build z-aware silicon slices.
+
+        Dispatches to a fast single/two-slice path for plain vertical-wall DTI
+        and switches to a z-resolved staircase when any realistic feature is
+        enabled: a conformal DTI liner, a tapered DTI sidewall, or a backside
+        inverted-pyramid surface texture.
+        """
+        dti_cfg = si_cfg.get("dti", {}) or {}
+        tex_cfg = si_cfg.get("surface_texture", {}) or {}
+        liner_cfg = dti_cfg.get("liner", {}) or {}
+
+        dti_enabled = bool(dti_cfg.get("enabled", False))
+        tex_enabled = (
+            bool(tex_cfg.get("enabled", False)) and float(tex_cfg.get("height", 0.0)) > 0.0
+        )
+        liner_enabled = (
+            dti_enabled
+            and bool(liner_cfg.get("enabled", False))
+            and float(liner_cfg.get("thickness", 0.0)) > 0.0
+        )
+        tapered = dti_enabled and float(dti_cfg.get("taper_angle", 90.0)) < 89.999
+
+        if not (tex_enabled or liner_enabled or tapered):
+            return self._legacy_silicon_slices(layer, wavelength, nx, ny, si_cfg)
+
+        material = si_cfg.get("material", "silicon")
+        breaks = self._silicon_slice_breaks(layer, si_cfg)
+        slices: list[LayerSlice] = []
+        for i, (z0_rel, z1_rel) in enumerate(zip(breaks[:-1], breaks[1:])):
+            thickness = z1_rel - z0_rel
+            if thickness <= 0.0:
+                continue
+            z_mid_rel = 0.5 * (z0_rel + z1_rel)
+            depth_from_top = layer.thickness - z_mid_rel
+            eps_grid = self._build_si_grid_at_depth(wavelength, nx, ny, si_cfg, depth_from_top)
+            slices.append(
+                LayerSlice(
+                    z_start=layer.z_start + z0_rel,
+                    z_end=layer.z_start + z1_rel,
+                    thickness=thickness,
+                    eps_grid=eps_grid,
+                    name=f"silicon_slice_{i}",
+                    material=material,
+                )
+            )
+        return slices
+
+    def _silicon_slice_breaks(self, layer: Layer, si_cfg: dict) -> list[float]:
+        """Local z breakpoints (from Si bottom) for DTI taper and texture."""
+        thickness = layer.thickness
+        points = {0.0, thickness}
+
+        dti_cfg = si_cfg.get("dti", {}) or {}
+        if dti_cfg.get("enabled", False):
+            depth = float(np.clip(dti_cfg.get("depth", thickness), 0.0, thickness))
+            dti_start = thickness - depth
+            if 0.0 < dti_start < thickness:
+                points.add(dti_start)
+            if depth > 0.0 and float(dti_cfg.get("taper_angle", 90.0)) < 89.999:
+                n = max(1, int(dti_cfg.get("n_slices", 6)))
+                points.update(np.linspace(dti_start, thickness, n + 1))
+
+        tex_cfg = si_cfg.get("surface_texture", {}) or {}
+        if tex_cfg.get("enabled", False):
+            th = float(np.clip(tex_cfg.get("height", 0.0), 0.0, thickness))
+            if th > 0.0:
+                tex_start = thickness - th
+                if 0.0 < tex_start < thickness:
+                    points.add(tex_start)
+                n = max(1, int(tex_cfg.get("n_slices", 8)))
+                points.update(np.linspace(tex_start, thickness, n + 1))
+
+        return sorted(float(p) for p in points)
+
+    @staticmethod
+    def _taper_inset(depth_from_top: float, taper_angle: float) -> float:
+        """Lateral inset of a tapered sidewall at a depth below the opening."""
+        if depth_from_top <= 0.0 or taper_angle >= 89.999:
+            return 0.0
+        theta = np.deg2rad(np.clip(taper_angle, 1.0, 89.999))
+        return float(depth_from_top / np.tan(theta))
+
+    def _build_si_grid_at_depth(
+        self,
+        wavelength: float,
+        nx: int,
+        ny: int,
+        si_cfg: dict,
+        depth_from_top: float,
+    ) -> np.ndarray:
+        """Build the silicon permittivity grid at a depth below the Si top.
+
+        Composes bulk silicon, a (tapered, lined) DTI trench, and a backside
+        inverted-pyramid texture, in that order.
+        """
+        eps_si = self.material_db.get_epsilon(si_cfg.get("material", "silicon"), wavelength)
+        eps_grid = np.full((ny, nx), eps_si, dtype=complex)
+
+        dti_cfg = si_cfg.get("dti", {}) or {}
+        if dti_cfg.get("enabled", False):
+            si_thickness = si_cfg.get("thickness", 3.0)
+            depth = float(np.clip(dti_cfg.get("depth", si_thickness), 0.0, si_thickness))
+            if 0.0 <= depth_from_top <= depth:
+                self._apply_dti_at_depth(eps_grid, wavelength, nx, ny, dti_cfg, depth_from_top)
+
+        tex_cfg = si_cfg.get("surface_texture", {}) or {}
+        if tex_cfg.get("enabled", False):
+            self._apply_texture_at_depth(eps_grid, wavelength, nx, ny, tex_cfg, depth_from_top)
+
+        return eps_grid
+
+    def _apply_dti_at_depth(
+        self,
+        eps_grid: np.ndarray,
+        wavelength: float,
+        nx: int,
+        ny: int,
+        dti_cfg: dict,
+        depth_from_top: float,
+    ) -> None:
+        """Stamp a tapered, optionally lined DTI trench into ``eps_grid``."""
+        width = float(dti_cfg.get("width", 0.1))
+        taper = float(dti_cfg.get("taper_angle", 90.0))
+        outer_half = width / 2.0 - self._taper_inset(depth_from_top, taper)
+        if outer_half <= 0.0:
+            return
+
+        liner_cfg = dti_cfg.get("liner", {}) or {}
+        liner_t = float(liner_cfg.get("thickness", 0.0)) if liner_cfg.get("enabled", False) else 0.0
+
+        eps_core = self.material_db.get_epsilon(dti_cfg.get("material", "sio2"), wavelength)
+        outer_mask = GeometryBuilder.trench_grid(nx, ny, self.pitch, self.unit_cell, outer_half)
+        if liner_t > 0.0:
+            eps_liner = self.material_db.get_epsilon(liner_cfg.get("material", "al2o3"), wavelength)
+            eps_grid[outer_mask > 0.5] = eps_liner
+            core_half = max(0.0, outer_half - liner_t)
+            core_mask = GeometryBuilder.trench_grid(nx, ny, self.pitch, self.unit_cell, core_half)
+            eps_grid[core_mask > 0.5] = eps_core
+        else:
+            eps_grid[outer_mask > 0.5] = eps_core
+
+    def _apply_texture_at_depth(
+        self,
+        eps_grid: np.ndarray,
+        wavelength: float,
+        nx: int,
+        ny: int,
+        tex_cfg: dict,
+        depth_from_top: float,
+    ) -> None:
+        """Carve inverted-pyramid pits into ``eps_grid`` at a given depth."""
+        tex_h = float(tex_cfg.get("height", 0.0))
+        if tex_h <= 0.0 or depth_from_top < 0.0 or depth_from_top > tex_h:
+            return
+        period = tex_cfg.get("period") or self.pitch
+        half = (period / 2.0) * (1.0 - depth_from_top / tex_h)
+        lx, ly = self.domain_size
+        mask = GeometryBuilder.inverted_pyramid_mask(nx, ny, lx, ly, period, half)
+        eps_fill = self.material_db.get_epsilon(tex_cfg.get("fill_material", "sio2"), wavelength)
+        eps_grid[mask > 0.5] = eps_fill
+
+    def _legacy_silicon_slices(
+        self,
+        layer: Layer,
+        wavelength: float,
+        nx: int,
+        ny: int,
+        si_cfg: dict,
+    ) -> list[LayerSlice]:
+        """Build z-aware silicon slices for plain FDTI and BDTI layouts."""
 
         material = si_cfg.get("material", "silicon")
         dti_cfg = si_cfg.get("dti", {})
         if not dti_cfg.get("enabled", False):
             eps_grid = self._build_si_layer(wavelength, nx, ny, si_cfg, include_dti=False)
-            return [LayerSlice(
-                z_start=layer.z_start,
-                z_end=layer.z_end,
-                thickness=layer.thickness,
-                eps_grid=eps_grid,
-                name="silicon",
-                material=material,
-            )]
+            return [
+                LayerSlice(
+                    z_start=layer.z_start,
+                    z_end=layer.z_end,
+                    thickness=layer.thickness,
+                    eps_grid=eps_grid,
+                    name="silicon",
+                    material=material,
+                )
+            ]
 
         mode = str(dti_cfg.get("mode", "fdti")).lower()
         if mode not in {"fdti", "bdti"}:
@@ -765,36 +952,42 @@ class PixelStack:
 
         eps_dti_grid = self._build_si_layer(wavelength, nx, ny, si_cfg, include_dti=True)
         if mode == "fdti":
-            return [LayerSlice(
-                z_start=layer.z_start,
-                z_end=layer.z_end,
-                thickness=layer.thickness,
-                eps_grid=eps_dti_grid,
-                name="silicon",
-                material=material,
-            )]
+            return [
+                LayerSlice(
+                    z_start=layer.z_start,
+                    z_end=layer.z_end,
+                    thickness=layer.thickness,
+                    eps_grid=eps_dti_grid,
+                    name="silicon",
+                    material=material,
+                )
+            ]
 
         depth = float(dti_cfg.get("depth", layer.thickness))
         depth = float(np.clip(depth, 0.0, layer.thickness))
         if depth <= 0.0:
             eps_grid = self._build_si_layer(wavelength, nx, ny, si_cfg, include_dti=False)
-            return [LayerSlice(
-                z_start=layer.z_start,
-                z_end=layer.z_end,
-                thickness=layer.thickness,
-                eps_grid=eps_grid,
-                name="silicon",
-                material=material,
-            )]
+            return [
+                LayerSlice(
+                    z_start=layer.z_start,
+                    z_end=layer.z_end,
+                    thickness=layer.thickness,
+                    eps_grid=eps_grid,
+                    name="silicon",
+                    material=material,
+                )
+            ]
         if depth >= layer.thickness:
-            return [LayerSlice(
-                z_start=layer.z_start,
-                z_end=layer.z_end,
-                thickness=layer.thickness,
-                eps_grid=eps_dti_grid,
-                name="silicon",
-                material=material,
-            )]
+            return [
+                LayerSlice(
+                    z_start=layer.z_start,
+                    z_end=layer.z_end,
+                    thickness=layer.thickness,
+                    eps_grid=eps_dti_grid,
+                    name="silicon",
+                    material=material,
+                )
+            ]
 
         eps_bulk_grid = self._build_si_layer(wavelength, nx, ny, si_cfg, include_dti=False)
         dti_start = layer.z_end - depth
@@ -826,9 +1019,7 @@ class PixelStack:
         include_dti: bool = True,
     ) -> np.ndarray:
         """Build silicon layer with optional DTI."""
-        eps_si = self.material_db.get_epsilon(
-            si_cfg.get("material", "silicon"), wavelength
-        )
+        eps_si = self.material_db.get_epsilon(si_cfg.get("material", "silicon"), wavelength)
         eps_grid = np.full((ny, nx), eps_si, dtype=complex)
 
         dti_cfg = si_cfg.get("dti", {})
@@ -904,10 +1095,14 @@ class PixelStack:
         pd_cfg = si_cfg.get("photodiode", {})
 
         return GeometryBuilder.photodiode_mask_3d(
-            nx, ny, nz,
-            self.pitch, self.unit_cell,
+            nx,
+            ny,
+            nz,
+            self.pitch,
+            self.unit_cell,
             tuple(pd_cfg.get("position", [0.0, 0.0, 0.5])),
             tuple(pd_cfg.get("size", [0.7, 0.7, 2.0])),
-            si_layer.z_start, si_layer.z_end,
+            si_layer.z_start,
+            si_layer.z_end,
             self.bayer_map,
         )

@@ -23,6 +23,7 @@ const theorySidebar = [
     { text: 'Image Sensor Overview', link: '/theory/sensor/' },
     { text: 'Image Sensor Optics', link: '/theory/sensor/image-sensor-optics' },
     { text: 'Pixel Optical Effects', link: '/theory/sensor/pixel-optical-effects' },
+    { text: 'Pixel Structure Realism', link: '/theory/sensor/pixel-structure-realism' },
     { text: 'Quantum Efficiency', link: '/theory/sensor/quantum-efficiency' },
     { text: 'Signal Chain', link: '/theory/sensor/signal-chain' },
     { text: 'Color Reproduction', link: '/theory/sensor/color-reproduction' },
@@ -136,6 +137,7 @@ const reportsSidebar = [
   { text: 'Geometry Validation', collapsed: false, items: [
     { text: 'Pixel Stack Geometry Audit', link: '/reports/pixel-stack-geometry-audit' },
     { text: 'Color Filter Relief Sensitivity', link: '/reports/color-filter-relief-sensitivity' },
+    { text: 'Pixel Structure Realism', link: '/reports/pixel-structure-realism' },
   ]},
   { text: 'Documentation Validation', collapsed: false, items: [
     { text: 'Guide Interactive Audit', link: '/reports/guide-interactive-audit' },
@@ -175,6 +177,7 @@ const theorySidebarKo = [
     { text: '이미지 센서 개요', link: '/ko/theory/sensor/' },
     { text: '이미지 센서 광학', link: '/ko/theory/sensor/image-sensor-optics' },
     { text: '픽셀 광학 효과', link: '/ko/theory/sensor/pixel-optical-effects' },
+    { text: '픽셀 구조 현실성', link: '/ko/theory/sensor/pixel-structure-realism' },
     { text: '양자 효율', link: '/ko/theory/sensor/quantum-efficiency' },
     { text: '신호 체인', link: '/ko/theory/sensor/signal-chain' },
     { text: '색 재현과 색공간', link: '/ko/theory/sensor/color-reproduction' },
@@ -288,6 +291,7 @@ const reportsSidebarKo = [
   { text: 'Geometry 검증', collapsed: false, items: [
     { text: '픽셀 스택 Geometry 감사', link: '/ko/reports/pixel-stack-geometry-audit' },
     { text: '컬러 필터 Relief 민감도', link: '/ko/reports/color-filter-relief-sensitivity' },
+    { text: '픽셀 구조 현실성', link: '/ko/reports/pixel-structure-realism' },
   ]},
   { text: '문서 검증', collapsed: false, items: [
     { text: '가이드 인터랙티브 감사', link: '/ko/reports/guide-interactive-audit' },

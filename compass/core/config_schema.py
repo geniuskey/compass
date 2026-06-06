@@ -30,6 +30,11 @@ class MicrolensConfig(BaseModel):
     profile: MicrolensProfileConfig = Field(default_factory=MicrolensProfileConfig)
     shift: MicrolensShiftConfig = Field(default_factory=MicrolensShiftConfig)
     gap: float = 0.0
+    # Flat residual layer of lens material left under the curved cap by the
+    # reflow / etch-back process. Real microlenses are never zero-thickness at
+    # their edges; a thin planar slab of the same polymer remains. Modelled as a
+    # uniform slab of `base_thickness` below the superellipse cap.
+    base_thickness: float = 0.0
     # Multi-pixel lens sharing (e.g. Sony 2x2 OCL Quad Bayer, Samsung Hexadeca 4x4 OCL).
     # `sharing` = N means one microlens covers an N x N group of pixels (which
     # typically share the same color in Quad/Nona/Tetra2 Bayer arrangements).
@@ -56,7 +61,9 @@ class ColorFilterChannelConfig(BaseModel):
 class ColorFilterConfig(BaseModel):
     thickness: float = 0.6
     pattern: str = "bayer_rggb"
-    materials: dict[str, str] = Field(default_factory=lambda: {"R": "cf_red", "G": "cf_green", "B": "cf_blue"})
+    materials: dict[str, str] = Field(
+        default_factory=lambda: {"R": "cf_red", "G": "cf_green", "B": "cf_blue"}
+    )
     red: ColorFilterChannelConfig | None = None
     green: ColorFilterChannelConfig | None = None
     blue: ColorFilterChannelConfig | None = None
@@ -78,12 +85,57 @@ class PhotodiodeConfig(BaseModel):
     size: tuple[float, float, float] = (0.7, 0.7, 2.0)
 
 
+class DtiLinerConfig(BaseModel):
+    """Conformal high-k passivation liner on the DTI trench sidewalls.
+
+    Real BSI DTI trenches are lined with a thin high-k film (Al2O3, HfO2,
+    Ta2O5, ...) that both passivates the etched silicon surface and carries a
+    negative fixed charge. Optically it is a thin high-index ring between the
+    silicon and the lower-index trench fill. The liner is modelled as a
+    conformal ring of `thickness` (um) inside the trench outline, surrounding
+    the core fill material.
+    """
+
+    enabled: bool = False
+    material: str = "al2o3"
+    thickness: float = 0.0
+
+
 class DtiConfig(BaseModel):
     enabled: bool = True
     mode: Literal["fdti", "bdti"] = "fdti"
     width: float = 0.1
     depth: float = 3.0
     material: str = "sio2"
+    # Conformal high-k passivation liner on the trench sidewalls.
+    liner: DtiLinerConfig = Field(default_factory=DtiLinerConfig)
+    # Sidewall angle in degrees measured from the substrate plane (90 = vertical
+    # walls, no taper). DTI is etched from the backside, so the trench is widest
+    # at the opening (`width`) and narrows with depth when taper_angle < 90.
+    taper_angle: float = 90.0
+    # Number of staircase z-slices used when the trench is tapered. Ignored for
+    # purely vertical trenches.
+    n_slices: int = 6
+
+
+class SurfaceTextureConfig(BaseModel):
+    """Backside silicon nanostructure for light trapping / NIR enhancement.
+
+    Modern NIR-enhanced BSI sensors etch an inverted-pyramid array (IPA) into
+    the silicon backside facing the incoming light. The graded silicon fill
+    fraction acts as a moth-eye anti-reflection / light-trapping layer that
+    significantly boosts long-wavelength (700-1000 nm) quantum efficiency.
+    Modelled as a staircase of pyramidal pits carved from the top of the
+    silicon layer and back-filled with `fill_material`.
+    """
+
+    enabled: bool = False
+    type: Literal["inverted_pyramid"] = "inverted_pyramid"
+    height: float = 0.3
+    # Pyramid array period in um. Defaults to the pixel pitch when None.
+    period: float | None = None
+    fill_material: str = "sio2"
+    n_slices: int = 8
 
 
 class SiliconConfig(BaseModel):
@@ -91,6 +143,7 @@ class SiliconConfig(BaseModel):
     material: str = "silicon"
     photodiode: PhotodiodeConfig = Field(default_factory=PhotodiodeConfig)
     dti: DtiConfig = Field(default_factory=DtiConfig)
+    surface_texture: SurfaceTextureConfig = Field(default_factory=SurfaceTextureConfig)
 
 
 class SimpleLayerConfig(BaseModel):
@@ -99,9 +152,13 @@ class SimpleLayerConfig(BaseModel):
 
 
 class LayersConfig(BaseModel):
-    air: SimpleLayerConfig = Field(default_factory=lambda: SimpleLayerConfig(thickness=1.0, material="air"))
+    air: SimpleLayerConfig = Field(
+        default_factory=lambda: SimpleLayerConfig(thickness=1.0, material="air")
+    )
     microlens: MicrolensConfig = Field(default_factory=MicrolensConfig)
-    planarization: SimpleLayerConfig = Field(default_factory=lambda: SimpleLayerConfig(thickness=0.3, material="sio2"))
+    planarization: SimpleLayerConfig = Field(
+        default_factory=lambda: SimpleLayerConfig(thickness=0.3, material="sio2")
+    )
     color_filter: ColorFilterConfig = Field(default_factory=ColorFilterConfig)
     barl: BarlConfig = Field(default_factory=BarlConfig)
     silicon: SiliconConfig = Field(default_factory=SiliconConfig)

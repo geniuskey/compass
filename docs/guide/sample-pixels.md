@@ -27,6 +27,7 @@ COMPASS supplies physically reasonable defaults for these via empirical scaling 
 | `sample_p1p6um_split_pd`   | `sample_p1p6um_split_pd.yaml`       | 1.6 µm  | Standard Bayer     | 1           | Split-substrate transistors → enlarged photodiode (~2× volume) |
 | `sample_p1p22um_2x2ocl`    | `sample_p1p22um_2x2ocl.yaml`        | 1.22 µm | Quad Bayer         | 2           | One large microlens per 2×2 same-color group (all-pixel PDAF)   |
 | `sample_p1p2um_lofic`      | `sample_p1p2um_lofic.yaml`          | 1.2 µm  | Quad Bayer         | 2           | LOFIC HDR — capacitor reduces PD footprint, 2×2 OCL              |
+| `sample_p1p12um_nir`       | `sample_p1p12um_nir.yaml`           | 1.12 µm | Standard Bayer     | 1           | NIR-enhanced: backside inverted-pyramid texture, lined+tapered DTI, ML residual base |
 
 Run any of them with Hydra:
 
@@ -34,6 +35,7 @@ Run any of them with Hydra:
 python scripts/run_simulation.py pixel=sample_p0p56um_4x4ocl source=wavelength_sweep
 python scripts/run_simulation.py pixel=sample_p1p6um_split_pd solver=torcwa
 python scripts/run_simulation.py pixel=sample_p1p2um_lofic source=cone_illumination
+python scripts/run_simulation.py pixel=sample_p1p12um_nir source=wavelength_sweep
 ```
 
 ### `sample_p0p56um_4x4ocl` — sub-µm pixel with 4×4 binning
@@ -63,6 +65,16 @@ Phone main-camera-class pixel with **2×2 on-chip lens** sharing: a single micro
 ### `sample_p1p2um_lofic` — LOFIC HDR
 
 50-MP-class, 1.2 µm. **LOFIC** (Lateral Overflow Integration Capacitor) consumes part of the in-pixel silicon real-estate for HDR, which we model as a slightly smaller photodiode footprint. Quad PD adds 2×2 OCL on top.
+
+### `sample_p1p12um_nir` — NIR-enhanced BSI pixel
+
+1.12 µm pixel that showcases the structural-realism features described in
+[Pixel Structure Realism](/theory/sensor/pixel-structure-realism). It enables a
+**backside inverted-pyramid array** for long-wavelength light trapping, a
+**DTI trench with a conformal high-k (Al₂O₃) liner and a tapered sidewall**, a
+**microlens residual base layer**, and a deep (4 µm) silicon photodiode for NIR
+capture. See the [Pixel Structure Realism report](/reports/pixel-structure-realism)
+for cross-sections rendered from the actual solver permittivity.
 
 ## Parameter determination
 

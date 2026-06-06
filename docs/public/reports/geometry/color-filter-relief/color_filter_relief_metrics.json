@@ -1,5 +1,5 @@
 {
-  "generated_on": "2026-05-08",
+  "generated_on": "2026-06-06",
   "pitch_um": 1.0,
   "grid_width_um": 0.08,
   "grid_thickness_um": 0.468,
@@ -18,7 +18,7 @@
       "thickness_um": 0.6,
       "protrusion_above_grid_um": 0.13199999999999995,
       "contact_angle_deg": 72.0,
-      "top_area_fraction_of_pitch": 0.6959250108539733
+      "top_area_fraction_of_pitch": 0.6959250108539735
     },
     {
       "color": "B",

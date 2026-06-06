@@ -1,5 +1,5 @@
 {
-  "generated_on": "2026-05-08",
+  "generated_on": "2026-06-06",
   "samples": [
     {
       "key": "generic_bsi",
@@ -156,6 +156,33 @@
       "color_filter_slice_count": 11,
       "photodiode_xy_fill": 0.42250000000000004,
       "dti_width_um": 0.08,
+      "checks": {
+        "cf_stack_covers_all_channels": true,
+        "grid_not_taller_than_stack": true,
+        "relief_uses_multiple_slices": true,
+        "photodiode_inside_pixel": true
+      }
+    },
+    {
+      "key": "sample_p1p12um_nir",
+      "label": "1.12 um NIR (IPA + lined DTI)",
+      "pitch_um": 1.12,
+      "unit_cell": "2x2",
+      "domain_um": [
+        2.24,
+        2.24
+      ],
+      "total_height_um": 5.8919999999999995,
+      "color_filter_stack_um": 0.702,
+      "grid_thickness_um": 0.507,
+      "grid_width_um": 0.084,
+      "red_thickness_um": 0.676,
+      "green_thickness_um": 0.65,
+      "blue_thickness_um": 0.702,
+      "min_contact_angle_deg": 62.0,
+      "color_filter_slice_count": 11,
+      "photodiode_xy_fill": 0.48999999999999994,
+      "dti_width_um": 0.078,
       "checks": {
         "cf_stack_covers_all_channels": true,
         "grid_not_taller_than_stack": true,
