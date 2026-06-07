@@ -250,6 +250,19 @@
       </button>
     </div>
 
+    <div v-if="viewMode === 'section'" class="row-selector">
+      <span class="row-selector-label">{{ t('Section row', '단면 행') }}:</span>
+      <button
+        v-for="r in GRID_N"
+        :key="'srow-' + (r - 1)"
+        type="button"
+        :class="['row-btn', { active: sectionRow === r - 1 }]"
+        :aria-pressed="sectionRow === r - 1"
+        @click="sectionRow = r - 1"
+      >{{ r - 1 }}</button>
+      <span class="row-selector-hint">{{ t('left-to-right cross-section through the 4x4 grid', '4x4 grid를 좌→우로 가로지른 단면') }}</span>
+    </div>
+
     <div class="plot-panel">
       <svg
         v-if="viewMode === 'section'"
@@ -282,23 +295,23 @@
         <line :x1="sectionPad.left" :y1="sectionYScale(0)" :x2="sectionW - sectionPad.right" :y2="sectionYScale(0)" stroke="var(--vp-c-text-2)" stroke-width="1" />
         <line :x1="sectionPad.left" :y1="sectionPad.top" :x2="sectionPad.left" :y2="sectionH - sectionPad.bottom" stroke="var(--vp-c-text-2)" stroke-width="1" />
 
-        <template v-for="center in lensCenters" :key="'rect-' + center">
-          <rect
-            :x="sectionXScale(center - sectionMaskW / 2)"
-            :y="sectionYScale(resistThickness)"
-            :width="Math.max(1, sectionXScale(center + sectionMaskW / 2) - sectionXScale(center - sectionMaskW / 2))"
-            :height="sectionYScale(0) - sectionYScale(resistThickness)"
-            fill="#9b59b6"
-            fill-opacity="0.08"
-            stroke="#9b59b6"
-            stroke-width="1"
-            stroke-dasharray="4,3"
-          />
-        </template>
+        <rect
+          v-for="m in sectionMaskRects"
+          :key="m.key"
+          :x="m.x"
+          :y="m.y"
+          :width="m.width"
+          :height="m.height"
+          fill="#9b59b6"
+          fill-opacity="0.08"
+          stroke="#9b59b6"
+          stroke-width="1"
+          stroke-dasharray="4,3"
+        />
 
         <path
-          v-for="profile in reflowProfiles"
-          :key="'reflow-' + profile"
+          v-for="(profile, i) in reflowProfiles"
+          :key="'reflow-' + i"
           :d="profile"
           fill="none"
           stroke="#e67e22"
@@ -307,8 +320,8 @@
           opacity="0.9"
         />
         <path
-          v-for="profile in finalProfiles"
-          :key="'final-' + profile"
+          v-for="(profile, i) in finalProfiles"
+          :key="'final-' + i"
           :d="profile"
           fill="#3498db"
           fill-opacity="0.20"
@@ -316,23 +329,15 @@
           stroke-width="2"
         />
 
-        <line
-          :x1="sectionXScale(-finalGap / 2)"
-          :y1="sectionYScale(-0.035)"
-          :x2="sectionXScale(finalGap / 2)"
-          :y2="sectionYScale(-0.035)"
-          stroke="#c0392b"
-          stroke-width="2"
-          :stroke-dasharray="finalGap <= 0.002 ? '2,2' : 'none'"
-        />
-        <text :x="sectionXScale(0)" :y="sectionYScale(-0.08)" text-anchor="middle" class="plot-label" fill="#c0392b">
-          {{ t('final gap', '최종 gap') }}
-        </text>
-
-        <line :x1="sectionXScale(0)" :y1="sectionYScale(0)" :x2="sectionXScale(0)" :y2="sectionYScale(finalHeight)" stroke="#27ae60" stroke-width="1.4" stroke-dasharray="4,3" />
-        <text :x="sectionXScale(0) + 6" :y="sectionYScale(finalHeight / 2)" class="plot-label" fill="#27ae60">
-          h={{ finalHeight.toFixed(2) }} um
-        </text>
+        <text
+          v-for="lab in sectionGroupLabels"
+          :key="lab.key"
+          :x="lab.x"
+          :y="lab.y"
+          text-anchor="middle"
+          class="plot-label"
+          fill="var(--vp-c-text-2)"
+        >{{ lab.text }}</text>
 
         <line x1="438" y1="22" x2="462" y2="22" stroke="#9b59b6" stroke-width="1.5" stroke-dasharray="4,3" />
         <text x="468" y="26" class="legend-label">{{ t('litho resist island', 'litho resist island') }}</text>
@@ -378,6 +383,7 @@
             stroke-width="1.1"
             stroke-dasharray="4,3"
             opacity="0.7"
+            pointer-events="none"
           />
           <path
             :d="grp.reflowPath"
@@ -386,19 +392,25 @@
             stroke-width="1.3"
             stroke-dasharray="5,4"
             opacity="0.85"
+            pointer-events="none"
           />
           <path
             :d="grp.finalPath"
             :fill="grp.isValid ? heatColor(grp.finalHeightUm) : 'rgba(192, 57, 43, 0.25)'"
-            fill-opacity="0.78"
-            :stroke="grp.isValid ? '#1f4e79' : '#a93226'"
-            stroke-width="1.5"
+            :fill-opacity="selectedGroupId === grp.id ? 0.95 : 0.78"
+            :stroke="selectedGroupId === grp.id ? 'var(--vp-c-brand-1)' : (grp.isValid ? '#1f4e79' : '#a93226')"
+            :stroke-width="selectedGroupId === grp.id ? 3 : 1.5"
+            class="top-clickable"
+            role="button"
+            :aria-label="t(`Inspect ${grp.labelText} lens unit`, `${grp.labelText} lens unit 자세히 보기`)"
+            @click="toggleSelectedGroup(grp.id)"
           />
           <text
             :x="grp.centerPx.x"
             :y="grp.centerPx.y + 4"
             text-anchor="middle"
             class="top-group-label"
+            pointer-events="none"
           >{{ grp.labelText }}</text>
         </template>
 
@@ -538,6 +550,52 @@
       </svg>
     </div>
 
+    <div v-if="viewMode === 'topview'" class="group-inspector">
+      <template v-if="selectedGroupRow">
+        <div class="group-inspector-head">
+          <strong>{{ selectedGroupRow.group.kind }}</strong>
+          <span class="group-inspector-coord">
+            {{ t('cell', '셀') }} ({{ selectedGroupRow.group.r0 }}, {{ selectedGroupRow.group.c0 }})
+            <template v-if="selectedGroupRow.group.h * selectedGroupRow.group.w > 1">
+              –({{ selectedGroupRow.group.r0 + selectedGroupRow.group.h - 1 }}, {{ selectedGroupRow.group.c0 + selectedGroupRow.group.w - 1 }})
+            </template>
+          </span>
+          <button type="button" class="inspector-close" :aria-label="t('Close inspector', '닫기')" @click="selectedGroupId = null">×</button>
+        </div>
+        <div class="group-inspector-grid">
+          <span>{{ t('Initial gap (X / Y)', '초기 gap (X / Y)') }}</span>
+          <strong>{{ selectedGroupRow.state.initialGapX.toFixed(3) }} / {{ selectedGroupRow.state.initialGapY.toFixed(3) }} um</strong>
+          <span>{{ t('Reflow gap (X / Y)', 'Reflow gap (X / Y)') }}</span>
+          <strong>{{ selectedGroupRow.state.reflowGapX.toFixed(3) }} / {{ selectedGroupRow.state.reflowGapY.toFixed(3) }} um</strong>
+          <span>{{ t('Final gap L / R / T / B', '최종 gap 좌/우/상/하') }}</span>
+          <strong>
+            {{ selectedGroupRow.sides.gapLeft.toFixed(3) }} /
+            {{ selectedGroupRow.sides.gapRight.toFixed(3) }} /
+            {{ selectedGroupRow.sides.gapTop.toFixed(3) }} /
+            {{ selectedGroupRow.sides.gapBottom.toFixed(3) }} um
+          </strong>
+          <span>{{ t('Neighbor σ L / R / T / B', '이웃 σ 좌/우/상/하') }}</span>
+          <strong>
+            {{ selectedGroupRow.sides.sigmaLeft.toFixed(2) }} /
+            {{ selectedGroupRow.sides.sigmaRight.toFixed(2) }} /
+            {{ selectedGroupRow.sides.sigmaTop.toFixed(2) }} /
+            {{ selectedGroupRow.sides.sigmaBottom.toFixed(2) }}
+          </strong>
+          <span>{{ t('Final WX × WY', '최종 WX × WY') }}</span>
+          <strong>{{ selectedGroupRow.state.finalWX.toFixed(3) }} × {{ selectedGroupRow.state.finalWY.toFixed(3) }} um</strong>
+          <span>{{ t('Final height', '최종 높이') }}</span>
+          <strong>{{ selectedGroupRow.state.finalHeight.toFixed(3) }} um</strong>
+          <span>{{ t('Profile exponent', 'Profile exponent') }}</span>
+          <strong>{{ selectedGroupRow.state.profilePower.toFixed(2) }}</strong>
+          <span>{{ t('Aspect ratio', '장단축비') }}</span>
+          <strong>{{ selectedGroupRow.state.aspectRatio.toFixed(2) }}</strong>
+        </div>
+      </template>
+      <p v-else class="inspector-hint">
+        {{ t('Click any lens in the top view to inspect its per-side gaps, sigma values, and dimensions.', 'Top view의 lens를 클릭하면 면별 gap, σ, 치수를 자세히 볼 수 있습니다.') }}
+      </p>
+    </div>
+
     <div class="formula-box">
       <strong>{{ t('Model note', '모델 메모') }}:</strong>
       {{ t(
@@ -559,28 +617,21 @@ const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 type ApertureShape = 'circular' | 'rounded-square' | 'square'
 type ViewMode = 'section' | 'topview' | 'surface' | 'process'
-type LensUnitShape = '1x1' | '2x1' | '1x2' | '2x2'
-type LayoutPreset =
-  | 'all-1x1'
-  | 'all-2x1'
-  | 'all-1x2'
-  | 'all-2x2'
-  | 'mixed-2x2-pdaf'
-  | 'sparse-2x1-pdaf'
-  | 'custom'
 
-interface LensGroup {
-  id: number
-  cells: { r: number; c: number }[]
-  r0: number
-  c0: number
-  h: number
-  w: number
-  kind: LensUnitShape
-  isValidShape: boolean
-}
-
-const GRID_N = 4
+import {
+  GRID_N,
+  LAYOUT_PRESETS,
+  buildCellIndex,
+  buildGridFromRects,
+  densityFactor,
+  deriveGroups,
+  getGroupNeighbors,
+  sigmaShape,
+  type GroupNeighbors,
+  type LayoutPreset,
+  type LensGroup,
+  type LensUnitShape,
+} from '../composables/microlensProcessModel'
 
 const pitch = ref(1.10)
 const maskWidth = ref(0.88)
@@ -602,6 +653,11 @@ const microloadingGain = ref(1.00)
 const layoutPreset = ref<LayoutPreset>('all-1x1')
 const cellGrid = ref<number[]>(buildGridFromRects([]))
 const selectedCell = ref<number | null>(null)
+const selectedGroupId = ref<number | null>(null)
+
+function toggleSelectedGroup(id: number) {
+  selectedGroupId.value = selectedGroupId.value === id ? null : id
+}
 
 const tabs = [
   { key: 'section' as const, en: 'Cross-section', ko: '단면' },
@@ -610,87 +666,14 @@ const tabs = [
   { key: 'process' as const, en: 'Etch response', ko: 'Etch 응답' },
 ]
 
-function buildGridFromRects(rects: [number, number, number, number][]) {
-  const g = new Array(GRID_N * GRID_N).fill(-1)
-  let id = 0
-  for (const [r0, c0, h, w] of rects) {
-    for (let dr = 0; dr < h; dr += 1) {
-      for (let dc = 0; dc < w; dc += 1) {
-        g[(r0 + dr) * GRID_N + (c0 + dc)] = id
-      }
-    }
-    id += 1
-  }
-  for (let i = 0; i < g.length; i += 1) {
-    if (g[i] < 0) {
-      g[i] = id
-      id += 1
-    }
-  }
-  return g
-}
-
-const LAYOUT_PRESETS: Record<Exclude<LayoutPreset, 'custom'>, () => number[]> = {
-  'all-1x1': () => buildGridFromRects([]),
-  'all-2x1': () => buildGridFromRects([
-    [0, 0, 1, 2], [0, 2, 1, 2],
-    [1, 0, 1, 2], [1, 2, 1, 2],
-    [2, 0, 1, 2], [2, 2, 1, 2],
-    [3, 0, 1, 2], [3, 2, 1, 2],
-  ]),
-  'all-1x2': () => buildGridFromRects([
-    [0, 0, 2, 1], [0, 1, 2, 1], [0, 2, 2, 1], [0, 3, 2, 1],
-    [2, 0, 2, 1], [2, 1, 2, 1], [2, 2, 2, 1], [2, 3, 2, 1],
-  ]),
-  'all-2x2': () => buildGridFromRects([
-    [0, 0, 2, 2], [0, 2, 2, 2], [2, 0, 2, 2], [2, 2, 2, 2],
-  ]),
-  'mixed-2x2-pdaf': () => buildGridFromRects([[1, 1, 2, 2]]),
-  'sparse-2x1-pdaf': () => buildGridFromRects([[1, 1, 1, 2], [2, 1, 1, 2]]),
-}
-
 function applyPreset(preset: LayoutPreset) {
   if (preset !== 'custom') {
-    cellGrid.value = LAYOUT_PRESETS[preset]()
+    cellGrid.value = buildGridFromRects(LAYOUT_PRESETS[preset])
   }
   selectedCell.value = null
 }
 
 watch(layoutPreset, (preset) => applyPreset(preset))
-
-function deriveGroups(grid: number[]): LensGroup[] {
-  const map = new Map<number, { r: number; c: number }[]>()
-  for (let i = 0; i < grid.length; i += 1) {
-    const id = grid[i]
-    const r = Math.floor(i / GRID_N)
-    const c = i % GRID_N
-    if (!map.has(id)) map.set(id, [])
-    map.get(id)!.push({ r, c })
-  }
-  const groups: LensGroup[] = []
-  for (const [id, cells] of map) {
-    const rs = cells.map(p => p.r)
-    const cs = cells.map(p => p.c)
-    const r0 = Math.min(...rs)
-    const r1 = Math.max(...rs)
-    const c0 = Math.min(...cs)
-    const c1 = Math.max(...cs)
-    const h = r1 - r0 + 1
-    const w = c1 - c0 + 1
-    const expected = h * w
-    const rectangular = cells.length === expected
-    const allowed = (h === 1 || h === 2) && (w === 1 || w === 2)
-    const isValidShape = rectangular && allowed
-    let kind: LensUnitShape = '1x1'
-    if (h === 1 && w === 1) kind = '1x1'
-    else if (h === 1 && w === 2) kind = '2x1'
-    else if (h === 2 && w === 1) kind = '1x2'
-    else if (h === 2 && w === 2) kind = '2x2'
-    groups.push({ id, cells, r0, c0, h, w, kind, isValidShape })
-  }
-  groups.sort((a, b) => (a.r0 - b.r0) || (a.c0 - b.c0))
-  return groups
-}
 
 const customGridSize = 220
 const customCellSize = customGridSize / GRID_N
@@ -935,36 +918,8 @@ function computeGroupProcessAt(group: LensGroup, etchSeconds: number) {
 // closure near dense pattern, leaving a larger GAP next to bigger lens
 // groups. Both effects vanish for uniform-size layouts.
 
-interface GroupNeighbors {
-  left: LensGroup | null
-  right: LensGroup | null
-  top: LensGroup | null
-  bottom: LensGroup | null
-}
-
-function buildCellIndex(groups: LensGroup[]): Map<string, LensGroup> {
-  const m = new Map<string, LensGroup>()
-  for (const g of groups) {
-    for (const cell of g.cells) m.set(`${cell.r},${cell.c}`, g)
-  }
-  return m
-}
-
-function getGroupNeighbors(group: LensGroup, cellIndex: Map<string, LensGroup>): GroupNeighbors {
-  const rMid = group.r0 + Math.floor(group.h / 2)
-  const cMid = group.c0 + Math.floor(group.w / 2)
-  const pick = (r: number, c: number): LensGroup | null => {
-    if (r < 0 || r >= GRID_N || c < 0 || c >= GRID_N) return null
-    const n = cellIndex.get(`${r},${c}`)
-    return n && n.id !== group.id ? n : null
-  }
-  return {
-    left: pick(rMid, group.c0 - 1),
-    right: pick(rMid, group.c0 + group.w),
-    top: pick(group.r0 - 1, cMid),
-    bottom: pick(group.r0 + group.h, cMid),
-  }
-}
+// GroupNeighbors / buildCellIndex / getGroupNeighbors live in
+// composables/microlensProcessModel.ts so unit tests can import them.
 
 interface SideOffsets {
   edgeLeft: number
@@ -979,7 +934,6 @@ interface SideOffsets {
   sigmaRight: number
   sigmaTop: number
   sigmaBottom: number
-  maxSigmaAbs: number
   asymmetry: number
 }
 
@@ -999,32 +953,21 @@ function computeGroupSideOffsets(
   const kMass = proximityCouplingGain.value * K_MASS_BASE_UM
   const kLoad = microloadingGain.value * K_LOAD_BASE
 
-  function sigmaShape(N: LensGroup | null) {
-    if (!N || !N.isValidShape) return 0
-    const A_N = N.h * N.w
-    return (A_N - A_G) / (A_N + A_G)
-  }
-  function densityFactor(N: LensGroup | null) {
-    // grid-edge neighbor: treat as 1x1-equivalent sparse padding
-    const A_N = N && N.isValidShape ? N.h * N.w : 1
-    const baseline = 2 // two 1x1 cells = sparsest dense baseline
-    return Math.max(0, ((A_G + A_N) - baseline) / 6) // normalize to 1 when both are 2x2 (sum=8)
-  }
-
-  const sL = sigmaShape(neighbors.left)
-  const sR = sigmaShape(neighbors.right)
-  const sT = sigmaShape(neighbors.top)
-  const sB = sigmaShape(neighbors.bottom)
+  const areaOf = (n: LensGroup | null) => (n && n.isValidShape ? n.h * n.w : null)
+  const sL = sigmaShape(A_G, areaOf(neighbors.left))
+  const sR = sigmaShape(A_G, areaOf(neighbors.right))
+  const sT = sigmaShape(A_G, areaOf(neighbors.top))
+  const sB = sigmaShape(A_G, areaOf(neighbors.bottom))
   // mass-flow: my lens extends MORE on larger-neighbor side
   const dSpL = kMass * td * sL
   const dSpR = kMass * td * sR
   const dSpT = kMass * td * sT
   const dSpB = kMass * td * sB
   // microloading: gap stays LARGER (less closure) near denser pattern
-  const dGapL = kLoad * ler * etchSeconds * densityFactor(neighbors.left)
-  const dGapR = kLoad * ler * etchSeconds * densityFactor(neighbors.right)
-  const dGapT = kLoad * ler * etchSeconds * densityFactor(neighbors.top)
-  const dGapB = kLoad * ler * etchSeconds * densityFactor(neighbors.bottom)
+  const dGapL = kLoad * ler * etchSeconds * densityFactor(A_G, areaOf(neighbors.left))
+  const dGapR = kLoad * ler * etchSeconds * densityFactor(A_G, areaOf(neighbors.right))
+  const dGapT = kLoad * ler * etchSeconds * densityFactor(A_G, areaOf(neighbors.top))
+  const dGapB = kLoad * ler * etchSeconds * densityFactor(A_G, areaOf(neighbors.bottom))
 
   const halfX = baseState.finalWX / 2
   const halfY = baseState.finalWY / 2
@@ -1036,28 +979,52 @@ function computeGroupSideOffsets(
   const gapRight = Math.max(0, baseState.finalGapX + 2 * dGapR)
   const gapTop = Math.max(0, baseState.finalGapY + 2 * dGapT)
   const gapBottom = Math.max(0, baseState.finalGapY + 2 * dGapB)
-  const sigmas = [sL, sR, sT, sB]
-  const maxSigmaAbs = Math.max(...sigmas.map(Math.abs))
-  const asymmetry = Math.max(...sigmas) - Math.min(...sigmas)
+  const asymmetry = Math.max(sL, sR, sT, sB) - Math.min(sL, sR, sT, sB)
 
   return {
     edgeLeft, edgeRight, edgeTop, edgeBottom,
     gapLeft, gapRight, gapTop, gapBottom,
     sigmaLeft: sL, sigmaRight: sR, sigmaTop: sT, sigmaBottom: sB,
-    maxSigmaAbs, asymmetry,
+    asymmetry,
   }
 }
 
-const groupProcessStates = computed(() =>
-  lensGroups.value.map(g => ({ group: g, state: computeGroupProcessAt(g, etchTime.value) })),
+const groupCellIndex = computed(() => buildCellIndex(lensGroups.value))
+
+function groupNeighborsFor(group: LensGroup) {
+  return getGroupNeighbors(group, groupCellIndex.value)
+}
+
+interface GroupRenderRow {
+  group: LensGroup
+  state: ProcessState
+  neighbors: GroupNeighbors
+  sides: SideOffsets
+  center: { x: number; y: number }
+}
+
+// Single per-group derivation reused by every consumer (top view, gap markers,
+// surface wireframe, footprint edges, status flags).
+const groupRenderData = computed<GroupRenderRow[]>(() =>
+  lensGroups.value.map((group) => {
+    const state = computeGroupProcessAt(group, etchTime.value)
+    const neighbors = groupNeighborsFor(group)
+    const sides = computeGroupSideOffsets(group, state, neighbors, etchTime.value)
+    return { group, state, neighbors, sides, center: groupCenterUm(group) }
+  }),
 )
+
+const selectedGroupRow = computed<GroupRenderRow | null>(() => {
+  if (selectedGroupId.value === null) return null
+  return groupRenderData.value.find(r => r.group.id === selectedGroupId.value) ?? null
+})
 
 const representativeProcess = computed<ProcessState>(() => computeGroupProcessAt(representativeGroup.value, etchTime.value))
 
-// Backward-compatible scalar computeds (drive cross-section, surface, metrics, flags)
+// Scalar computeds for the metric cards and the cross-section overlay
+// (representative-group view; mixed-layout aggregates are intentionally not
+// derived here — the Top view and 3D surface visualise per-group state).
 const initialGap = computed(() => representativeProcess.value.initialGapX)
-const reflowSpread = computed(() => representativeProcess.value.reflowSpreadX)
-const reflowWidth = computed(() => representativeProcess.value.reflowWX)
 const reflowGap = computed(() => representativeProcess.value.reflowGapX)
 const reflowHeight = computed(() => representativeProcess.value.reflowHeight)
 
@@ -1071,18 +1038,16 @@ function etchTransferAt(timeSeconds: number) {
   }
 }
 
-const etchState = computed(() => etchTransferAt(etchTime.value))
 const finalGap = computed(() => Math.max(representativeProcess.value.finalGapX, representativeProcess.value.finalGapY))
 const finalWidth = computed(() => representativeProcess.value.finalWX)
 const finalHeight = computed(() => representativeProcess.value.finalHeight)
 const heightRetention = computed(() => clamp((finalHeight.value / Math.max(reflowHeight.value, 0.001)) * 100, 0, 120))
 const profilePower = computed(() => representativeProcess.value.profilePower)
 const halfFinalWidth = computed(() => representativeProcess.value.finalWX / 2)
-const halfFinalHeight = computed(() => representativeProcess.value.finalWY / 2)
-const halfReflowWidth = computed(() => reflowWidth.value / 2)
 const roc = computed(() => {
-  const a = (halfFinalWidth.value + halfFinalHeight.value) / 2
-  const h = finalHeight.value
+  const rep = representativeProcess.value
+  const a = (rep.finalWX + rep.finalWY) / 4
+  const h = rep.finalHeight
   return (a * a + h * h) / Math.max(2 * h, 0.001)
 })
 const focalLength = computed(() => roc.value / Math.max(lensIndex.value - 1, 0.05))
@@ -1093,7 +1058,6 @@ const fillFactor = computed(() => {
 })
 const aspectRatio = computed(() => representativeProcess.value.aspectRatio)
 const worstReflowGap = computed(() => Math.min(representativeProcess.value.reflowGapX, representativeProcess.value.reflowGapY))
-const worstInitialGap = computed(() => Math.min(representativeProcess.value.initialGapX, representativeProcess.value.initialGapY))
 const zeroGapEtchTime = computed(() => {
   if (worstReflowGap.value <= 0.002) return 0
   const seconds = worstReflowGap.value / Math.max(2 * lateralEtchRate.value, 1e-6)
@@ -1114,7 +1078,7 @@ const processFlags = computed(() => {
 
   if (rep.reflowGapX <= 0.002 && rep.initialGapX > 0.01) flags.push({ text: t('X-direction merger risk', 'X 방향 merger 위험'), tone: 'risk' })
   if (rep.reflowGapY <= 0.002 && rep.initialGapY > 0.01) flags.push({ text: t('Y-direction merger risk', 'Y 방향 merger 위험'), tone: 'risk' })
-  if (etchState.value.lossFraction > 0.32) flags.push({ text: t('height loss risk', 'height loss 위험'), tone: 'risk' })
+  if (rep.lossFraction > 0.32) flags.push({ text: t('height loss risk', 'height loss 위험'), tone: 'risk' })
   if (zeroGapEtchTime.value > 140 && finalGap.value > 0.06) flags.push({ text: t('etch window too short', 'etch window 부족'), tone: 'risk' })
   if (zeroGapEtchTime.value > 0.1 && etchTime.value > zeroGapEtchTime.value + 30) flags.push({ text: t('over-etch margin', 'over-etch margin'), tone: 'warn' })
   if (fillFactor.value > 92) flags.push({ text: t('high fill factor', '높은 fill factor'), tone: 'good' })
@@ -1123,12 +1087,8 @@ const processFlags = computed(() => {
     flags.push({ text: t('asymmetric reflow profile', '비대칭 reflow profile'), tone: 'warn' })
   }
   // Heterogeneous-neighbor coupling flag: any valid group with asymmetric sigma > 0.6
-  for (const g of lensGroups.value) {
-    if (!g.isValidShape) continue
-    const baseState = computeGroupProcessAt(g, etchTime.value)
-    const neighbors = groupNeighborsFor(g)
-    const sides = computeGroupSideOffsets(g, baseState, neighbors, etchTime.value)
-    if (sides.asymmetry > 0.6) {
+  for (const row of groupRenderData.value) {
+    if (row.group.isValidShape && row.sides.asymmetry > 0.6) {
       flags.push({ text: t('proximity asymmetry', '인접 비대칭 결합'), tone: 'warn' })
       break
     }
@@ -1136,12 +1096,6 @@ const processFlags = computed(() => {
   if (!isLayoutValid.value) flags.push({ text: t('invalid lens layout', '유효하지 않은 lens 배치'), tone: 'risk' })
   return flags
 })
-
-function lensZ1D(x: number, halfWidth: number, height: number, power: number) {
-  const u = Math.abs(x) / Math.max(halfWidth, 0.001)
-  if (u >= 1) return 0
-  return height * Math.pow(1 - Math.pow(u, power), 1.0)
-}
 
 function lensZ2D(x: number, y: number, halfWX: number, halfWY: number, height: number, profile: number) {
   const n = shapeExponent.value
@@ -1154,19 +1108,22 @@ function lensZ2D(x: number, y: number, halfWX: number, halfWY: number, height: n
   return height * Math.pow(1 - Math.pow(r, profile), 1.0)
 }
 
-// Cross-section plot
+// Cross-section plot — draws an actual slice through the 4x4 grid along the
+// selected row, so heterogeneous layouts (mixed 1x1/2x2 etc.) are visible
+// here too. Uses the same per-side asymmetric superellipse as Top view + 3D.
 const sectionW = 640
 const sectionH = 330
 const sectionPad = { left: 52, right: 22, top: 22, bottom: 42 }
-const sectionPitch = computed(() => representativeProcess.value.pitchX)
-const sectionMaskW = computed(() => representativeProcess.value.maskWX)
-const lensCenters = computed(() => [-sectionPitch.value, 0, sectionPitch.value])
-const sectionXMin = computed(() => -1.55 * sectionPitch.value)
-const sectionXMax = computed(() => 1.55 * sectionPitch.value)
+const sectionRow = ref(Math.floor(GRID_N / 2))
+const sectionXMin = computed(() => -GRID_N / 2 * pitch.value - 0.06)
+const sectionXMax = computed(() => GRID_N / 2 * pitch.value + 0.06)
 const sectionYMax = computed(() => Math.max(reflowHeight.value, finalHeight.value, resistThickness.value) * 1.22 + 0.08)
 const sectionYMin = computed(() => -0.12)
 const sectionXTicks = computed(() => {
-  return [-1.5, -1, -0.5, 0, 0.5, 1, 1.5].map(v => v * sectionPitch.value).filter(v => v >= sectionXMin.value && v <= sectionXMax.value)
+  const half = GRID_N / 2 * pitch.value
+  const ticks: number[] = []
+  for (let i = 0; i <= GRID_N; i += 1) ticks.push(-half + i * pitch.value)
+  return ticks
 })
 const sectionYTicks = computed(() => {
   const max = sectionYMax.value
@@ -1183,23 +1140,79 @@ function sectionYScale(y: number) {
   return sectionPad.top + (1 - (y - sectionYMin.value) / (sectionYMax.value - sectionYMin.value)) * plotH
 }
 
-function buildSectionProfile(center: number, width: number, height: number, power: number, fill: boolean) {
-  const half = width / 2
+// Y position (in um, relative to grid center) of the slice through the row.
+const sectionSliceY = computed(() => (sectionRow.value + 0.5 - GRID_N / 2) * pitch.value)
+
+// Unique groups intersecting the selected row, ordered left-to-right.
+const sectionRowGroups = computed<GroupRenderRow[]>(() => {
+  const row = sectionRow.value
+  const cellIdx = groupCellIndex.value
+  const dataById = new Map(groupRenderData.value.map(r => [r.group.id, r]))
+  const out: GroupRenderRow[] = []
+  const seen = new Set<number>()
+  for (let c = 0; c < GRID_N; c += 1) {
+    const g = cellIdx.get(`${row},${c}`)
+    if (!g || seen.has(g.id)) continue
+    seen.add(g.id)
+    const data = dataById.get(g.id)
+    if (data) out.push(data)
+  }
+  return out
+})
+
+function buildSectionSliceProfile(row: GroupRenderRow, kind: 'reflow' | 'final', fill: boolean) {
+  const yLocal = sectionSliceY.value - row.center.y
+  const { state, sides } = row
+  const isReflow = kind === 'reflow'
+  const halfXNeg = isReflow ? state.reflowWX / 2 : sides.edgeLeft
+  const halfXPos = isReflow ? state.reflowWX / 2 : sides.edgeRight
+  const halfYNeg = isReflow ? state.reflowWY / 2 : sides.edgeTop
+  const halfYPos = isReflow ? state.reflowWY / 2 : sides.edgeBottom
+  const height = isReflow ? state.reflowHeight : state.finalHeight
+  const power = isReflow ? 2.0 : state.profilePower
+  const span = halfXNeg + halfXPos
+  if (span <= 0) return ''
+  const samples = 72
   const points: string[] = []
-  for (let i = 0; i <= 72; i += 1) {
-    const xLocal = -half + (2 * half * i) / 72
-    const z = lensZ1D(xLocal, half, height, power)
-    points.push(`${i === 0 ? 'M' : 'L'} ${sectionXScale(center + xLocal).toFixed(2)} ${sectionYScale(z).toFixed(2)}`)
+  for (let i = 0; i <= samples; i += 1) {
+    const xLocal = -halfXNeg + (span * i) / samples
+    const halfX = xLocal >= 0 ? halfXPos : halfXNeg
+    const halfY = yLocal >= 0 ? halfYPos : halfYNeg
+    const z = lensZ2D(xLocal, yLocal, halfX, halfY, height, power)
+    points.push(`${i === 0 ? 'M' : 'L'} ${sectionXScale(row.center.x + xLocal).toFixed(2)} ${sectionYScale(z).toFixed(2)}`)
   }
   if (fill) {
-    points.push(`L ${sectionXScale(center + half).toFixed(2)} ${sectionYScale(0).toFixed(2)}`)
-    points.push(`L ${sectionXScale(center - half).toFixed(2)} ${sectionYScale(0).toFixed(2)} Z`)
+    points.push(`L ${sectionXScale(row.center.x + halfXPos).toFixed(2)} ${sectionYScale(0).toFixed(2)}`)
+    points.push(`L ${sectionXScale(row.center.x - halfXNeg).toFixed(2)} ${sectionYScale(0).toFixed(2)} Z`)
   }
   return points.join(' ')
 }
 
-const reflowProfiles = computed(() => lensCenters.value.map(center => buildSectionProfile(center, representativeProcess.value.reflowWX, reflowHeight.value, 2.0, false)))
-const finalProfiles = computed(() => lensCenters.value.map(center => buildSectionProfile(center, representativeProcess.value.finalWX, finalHeight.value, profilePower.value, true)))
+const reflowProfiles = computed(() => sectionRowGroups.value.map(row => buildSectionSliceProfile(row, 'reflow', false)))
+const finalProfiles = computed(() => sectionRowGroups.value.map(row => buildSectionSliceProfile(row, 'final', true)))
+
+interface SectionMaskRect { key: string; x: number; y: number; width: number; height: number }
+const sectionMaskRects = computed<SectionMaskRect[]>(() => {
+  const yTop = sectionYScale(resistThickness.value)
+  const yBottom = sectionYScale(0)
+  return sectionRowGroups.value.map(row => {
+    const halfX = row.state.maskWX / 2
+    const x1 = sectionXScale(row.center.x - halfX)
+    const x2 = sectionXScale(row.center.x + halfX)
+    return { key: `mask-${row.group.id}`, x: x1, y: yTop, width: Math.max(1, x2 - x1), height: yBottom - yTop }
+  })
+})
+
+interface SectionLabel { key: string; x: number; y: number; text: string }
+const sectionGroupLabels = computed<SectionLabel[]>(() => {
+  const y = sectionYScale(-0.07)
+  return sectionRowGroups.value.map(row => ({
+    key: `lab-${row.group.id}`,
+    x: sectionXScale(row.center.x),
+    y,
+    text: row.group.kind,
+  }))
+})
 
 // 3D wireframe
 const surfaceW = 640
@@ -1212,10 +1225,8 @@ const surfaceScale = computed(() => {
 })
 const globalMaxHeight = computed(() => {
   let max = 0.08
-  for (const g of lensGroups.value) {
-    if (!g.isValidShape) continue
-    const state = computeGroupProcessAt(g, etchTime.value)
-    if (state.finalHeight > max) max = state.finalHeight
+  for (const { group, state } of groupRenderData.value) {
+    if (group.isValidShape && state.finalHeight > max) max = state.finalHeight
   }
   return max
 })
@@ -1255,56 +1266,45 @@ const surfaceLines = computed(() => {
   const lines: { key: string; d: string; stroke: string; major: boolean; depth: number }[] = []
   const steps = 12
   const samples = 32
-  for (const g of lensGroups.value) {
-    if (!g.isValidShape) continue
-    const state = computeGroupProcessAt(g, etchTime.value)
-    const center = groupCenterUm(g)
-    const ax = state.finalWX / 2
-    const ay = state.finalWY / 2
+  // Sample wireframe along one axis with the other axis fixed.
+  for (const { group, state, sides, center } of groupRenderData.value) {
+    if (!group.isValidShape) continue
     const h = state.finalHeight
     const p = state.profilePower
-    const palette = SURFACE_PALETTE[g.kind]
+    const palette = SURFACE_PALETTE[group.kind]
     const depth = center.x + center.y
-    for (let row = 0; row <= steps; row += 1) {
-      const yLocal = -ay + (2 * ay * row) / steps
-      const pts: { x: number; y: number; z: number }[] = []
-      for (let i = 0; i <= samples; i += 1) {
-        const xLocal = -ax + (2 * ax * i) / samples
-        const z = lensZ2D(xLocal, yLocal, ax, ay, h, p)
-        if (z > 0 || Math.abs(Math.abs(xLocal) - ax) < 1e-6) {
-          pts.push({ x: center.x + xLocal, y: center.y + yLocal, z })
+    const xMin = -sides.edgeLeft
+    const xMax = sides.edgeRight
+    const yMin = -sides.edgeTop
+    const yMax = sides.edgeBottom
+    const hxFor = (x: number) => (x >= 0 ? sides.edgeRight : sides.edgeLeft)
+    const hyFor = (y: number) => (y >= 0 ? sides.edgeBottom : sides.edgeTop)
+    const axes = [
+      { tag: 'x', major: palette.rowMajor, minor: palette.rowMinor, fixedLo: yMin, fixedHi: yMax, varLo: xMin, varHi: xMax, build: (fixed: number, vary: number) => ({ x: vary, y: fixed }) },
+      { tag: 'y', major: palette.colMajor, minor: palette.colMinor, fixedLo: xMin, fixedHi: xMax, varLo: yMin, varHi: yMax, build: (fixed: number, vary: number) => ({ x: fixed, y: vary }) },
+    ]
+    for (const axis of axes) {
+      for (let k = 0; k <= steps; k += 1) {
+        const fixed = axis.fixedLo + (axis.fixedHi - axis.fixedLo) * (k / steps)
+        const pts: { x: number; y: number; z: number }[] = []
+        for (let i = 0; i <= samples; i += 1) {
+          const vary = axis.varLo + (axis.varHi - axis.varLo) * (i / samples)
+          const local = axis.build(fixed, vary)
+          const z = lensZ2D(local.x, local.y, hxFor(local.x), hyFor(local.y), h, p)
+          if (z > 0 || i === 0 || i === samples) {
+            pts.push({ x: center.x + local.x, y: center.y + local.y, z })
+          }
         }
-      }
-      if (pts.length > 1) {
-        const major = row === 0 || row === steps || row === steps / 2
-        lines.push({
-          key: `g${g.id}-x-${row}`,
-          d: buildSurfaceLine(pts),
-          stroke: major ? palette.rowMajor : palette.rowMinor,
-          major,
-          depth,
-        })
-      }
-    }
-    for (let col = 0; col <= steps; col += 1) {
-      const xLocal = -ax + (2 * ax * col) / steps
-      const pts: { x: number; y: number; z: number }[] = []
-      for (let i = 0; i <= samples; i += 1) {
-        const yLocal = -ay + (2 * ay * i) / samples
-        const z = lensZ2D(xLocal, yLocal, ax, ay, h, p)
-        if (z > 0 || Math.abs(Math.abs(yLocal) - ay) < 1e-6) {
-          pts.push({ x: center.x + xLocal, y: center.y + yLocal, z })
+        if (pts.length > 1) {
+          const major = k === 0 || k === steps || k === steps / 2
+          lines.push({
+            key: `g${group.id}-${axis.tag}-${k}`,
+            d: buildSurfaceLine(pts),
+            stroke: major ? axis.major : axis.minor,
+            major,
+            depth,
+          })
         }
-      }
-      if (pts.length > 1) {
-        const major = col === 0 || col === steps || col === steps / 2
-        lines.push({
-          key: `g${g.id}-y-${col}`,
-          d: buildSurfaceLine(pts),
-          stroke: major ? palette.colMajor : palette.colMinor,
-          major,
-          depth,
-        })
       }
     }
   }
@@ -1316,25 +1316,21 @@ const surfaceLines = computed(() => {
 const surfaceFootprintEdges = computed(() => {
   const edges: { key: string; d: string; stroke: string }[] = []
   const n = shapeExponent.value
-  for (const g of lensGroups.value) {
-    if (!g.isValidShape) continue
-    const state = computeGroupProcessAt(g, etchTime.value)
-    const center = groupCenterUm(g)
-    const ax = state.finalWX / 2
-    const ay = state.finalWY / 2
+  for (const { group, sides, center } of groupRenderData.value) {
+    if (!group.isValidShape) continue
     const pts: { x: number; y: number; z: number }[] = []
     for (let i = 0; i <= 80; i += 1) {
       const theta = (2 * Math.PI * i) / 80
       const c = Math.cos(theta)
       const s = Math.sin(theta)
       const denom = Math.pow(Math.pow(Math.abs(c), n) + Math.pow(Math.abs(s), n), 1 / n)
-      pts.push({
-        x: center.x + (ax * c) / Math.max(denom, 1e-6),
-        y: center.y + (ay * s) / Math.max(denom, 1e-6),
-        z: 0,
-      })
+      const cNorm = c / Math.max(denom, 1e-6)
+      const sNorm = s / Math.max(denom, 1e-6)
+      const rx = cNorm >= 0 ? sides.edgeRight : sides.edgeLeft
+      const ry = sNorm >= 0 ? sides.edgeBottom : sides.edgeTop
+      pts.push({ x: center.x + rx * cNorm, y: center.y + ry * sNorm, z: 0 })
     }
-    edges.push({ key: `edge-${g.id}`, d: buildSurfaceLine(pts), stroke: SURFACE_PALETTE[g.kind].edge })
+    edges.push({ key: `edge-${group.id}`, d: buildSurfaceLine(pts), stroke: SURFACE_PALETTE[group.kind].edge })
   }
   return edges
 })
@@ -1451,19 +1447,9 @@ interface TopGroupRender {
   sides: SideOffsets
 }
 
-const groupCellIndex = computed(() => buildCellIndex(lensGroups.value))
-
-function groupNeighborsFor(group: LensGroup) {
-  return getGroupNeighbors(group, groupCellIndex.value)
-}
-
 const topGroupsRender = computed<TopGroupRender[]>(() => {
   const exponent = shapeExponent.value
-  return lensGroups.value.map((group) => {
-    const center = groupCenterUm(group)
-    const state = computeGroupProcessAt(group, etchTime.value)
-    const neighbors = groupNeighborsFor(group)
-    const sides = computeGroupSideOffsets(group, state, neighbors, etchTime.value)
+  return groupRenderData.value.map(({ group, state, sides, center }) => {
     const maskPath = buildSuperellipsePath(center.x, center.y, state.maskWX / 2, state.maskWY / 2, exponent)
     const reflowPath = buildSuperellipsePath(center.x, center.y, state.reflowWX / 2, state.reflowWY / 2, exponent)
     const finalPath = buildAsymmetricSuperellipsePath(
@@ -1525,50 +1511,36 @@ interface TopGapMarker {
   tone: 'good' | 'warn' | 'risk'
 }
 
+function gapTone(gap: number): TopGapMarker['tone'] {
+  return gap <= 0.08 ? 'good' : 'warn'
+}
+
 const topGapMarkers = computed<TopGapMarker[]>(() => {
   const markers: TopGapMarker[] = []
-  const groups = lensGroups.value
-  const cellIndex = new Map<string, LensGroup>()
-  for (const g of groups) {
-    for (const cell of g.cells) {
-      cellIndex.set(`${cell.r},${cell.c}`, g)
-    }
-  }
   // For each group, look at right and bottom neighbors only (avoid duplicates).
-  for (const g of groups) {
-    const state = computeGroupProcessAt(g, etchTime.value)
-    const neighbors = groupNeighborsFor(g)
-    const sides = computeGroupSideOffsets(g, state, neighbors, etchTime.value)
-    // Right neighbor (along positive X)
+  for (const { group, neighbors, sides, center } of groupRenderData.value) {
     if (neighbors.right) {
-      const gapX = sides.gapRight
-      const tone: TopGapMarker['tone'] = gapX <= 0.015 ? 'good' : gapX <= 0.08 ? 'good' : 'warn'
-      const center = groupCenterUm(g)
       const y = topYScale(center.y)
       markers.push({
-        key: `gx-${g.id}-${neighbors.right.id}`,
+        key: `gx-${group.id}-${neighbors.right.id}`,
         x1: topXScale(center.x + sides.edgeRight),
         y1: y,
-        x2: topXScale(center.x + sides.edgeRight + gapX),
+        x2: topXScale(center.x + sides.edgeRight + sides.gapRight),
         y2: y,
-        gap: gapX,
-        tone,
+        gap: sides.gapRight,
+        tone: gapTone(sides.gapRight),
       })
     }
-    // Bottom neighbor (along positive Y)
     if (neighbors.bottom) {
-      const gapY = sides.gapBottom
-      const tone: TopGapMarker['tone'] = gapY <= 0.015 ? 'good' : gapY <= 0.08 ? 'good' : 'warn'
-      const center = groupCenterUm(g)
       const x = topXScale(center.x)
       markers.push({
-        key: `gy-${g.id}-${neighbors.bottom.id}`,
+        key: `gy-${group.id}-${neighbors.bottom.id}`,
         x1: x,
         y1: topYScale(center.y + sides.edgeBottom),
         x2: x,
-        y2: topYScale(center.y + sides.edgeBottom + gapY),
-        gap: gapY,
-        tone,
+        y2: topYScale(center.y + sides.edgeBottom + sides.gapBottom),
+        gap: sides.gapBottom,
+        tone: gapTone(sides.gapBottom),
       })
     }
   }
@@ -1881,6 +1853,50 @@ const currentProcessPoint = computed(() => ({
   background: var(--vp-c-brand-1);
 }
 
+.row-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+  font-size: 0.82em;
+  color: var(--vp-c-text-2);
+}
+
+.row-selector-label {
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.row-btn {
+  min-width: 32px;
+  padding: 3px 9px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.85em;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.row-btn:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+
+.row-btn.active {
+  color: #fff;
+  border-color: var(--vp-c-brand-1);
+  background: var(--vp-c-brand-1);
+}
+
+.row-selector-hint {
+  margin-left: 6px;
+  opacity: 0.85;
+}
+
 .plot-panel {
   display: flex;
   justify-content: center;
@@ -1916,6 +1932,87 @@ const currentProcessPoint = computed(() => ({
 
 .surface-note {
   font-size: 10px;
+}
+
+.top-clickable {
+  cursor: pointer;
+  transition: stroke-width 0.12s, fill-opacity 0.12s;
+}
+
+.top-clickable:hover {
+  fill-opacity: 0.92;
+}
+
+.group-inspector {
+  margin: 10px auto 0;
+  max-width: 680px;
+  padding: 10px 12px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 7px;
+  background: var(--vp-c-bg);
+}
+
+.group-inspector-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.group-inspector-head strong {
+  font-family: var(--vp-font-family-mono);
+  font-size: 1.05em;
+  color: var(--vp-c-brand-1);
+}
+
+.group-inspector-coord {
+  flex: 1;
+  font-size: 0.82em;
+  color: var(--vp-c-text-2);
+}
+
+.inspector-close {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 5px;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  font-size: 0.95em;
+  line-height: 1;
+}
+
+.inspector-close:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+
+.group-inspector-grid {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  column-gap: 14px;
+  row-gap: 5px;
+  font-size: 0.84em;
+}
+
+.group-inspector-grid span {
+  color: var(--vp-c-text-2);
+}
+
+.group-inspector-grid strong {
+  font-family: var(--vp-font-family-mono);
+  color: var(--vp-c-text-1);
+  font-weight: 600;
+}
+
+.inspector-hint {
+  margin: 0;
+  color: var(--vp-c-text-2);
+  font-size: 0.84em;
+  text-align: center;
 }
 
 .top-group-label {
