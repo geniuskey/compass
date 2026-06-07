@@ -250,6 +250,19 @@
       </button>
     </div>
 
+    <div v-if="viewMode === 'section'" class="row-selector">
+      <span class="row-selector-label">{{ t('Section row', '단면 행') }}:</span>
+      <button
+        v-for="r in GRID_N"
+        :key="'srow-' + (r - 1)"
+        type="button"
+        :class="['row-btn', { active: sectionRow === r - 1 }]"
+        :aria-pressed="sectionRow === r - 1"
+        @click="sectionRow = r - 1"
+      >{{ r - 1 }}</button>
+      <span class="row-selector-hint">{{ t('left-to-right cross-section through the 4x4 grid', '4x4 grid를 좌→우로 가로지른 단면') }}</span>
+    </div>
+
     <div class="plot-panel">
       <svg
         v-if="viewMode === 'section'"
@@ -282,23 +295,23 @@
         <line :x1="sectionPad.left" :y1="sectionYScale(0)" :x2="sectionW - sectionPad.right" :y2="sectionYScale(0)" stroke="var(--vp-c-text-2)" stroke-width="1" />
         <line :x1="sectionPad.left" :y1="sectionPad.top" :x2="sectionPad.left" :y2="sectionH - sectionPad.bottom" stroke="var(--vp-c-text-2)" stroke-width="1" />
 
-        <template v-for="center in lensCenters" :key="'rect-' + center">
-          <rect
-            :x="sectionXScale(center - sectionMaskW / 2)"
-            :y="sectionYScale(resistThickness)"
-            :width="Math.max(1, sectionXScale(center + sectionMaskW / 2) - sectionXScale(center - sectionMaskW / 2))"
-            :height="sectionYScale(0) - sectionYScale(resistThickness)"
-            fill="#9b59b6"
-            fill-opacity="0.08"
-            stroke="#9b59b6"
-            stroke-width="1"
-            stroke-dasharray="4,3"
-          />
-        </template>
+        <rect
+          v-for="m in sectionMaskRects"
+          :key="m.key"
+          :x="m.x"
+          :y="m.y"
+          :width="m.width"
+          :height="m.height"
+          fill="#9b59b6"
+          fill-opacity="0.08"
+          stroke="#9b59b6"
+          stroke-width="1"
+          stroke-dasharray="4,3"
+        />
 
         <path
-          v-for="profile in reflowProfiles"
-          :key="'reflow-' + profile"
+          v-for="(profile, i) in reflowProfiles"
+          :key="'reflow-' + i"
           :d="profile"
           fill="none"
           stroke="#e67e22"
@@ -307,8 +320,8 @@
           opacity="0.9"
         />
         <path
-          v-for="profile in finalProfiles"
-          :key="'final-' + profile"
+          v-for="(profile, i) in finalProfiles"
+          :key="'final-' + i"
           :d="profile"
           fill="#3498db"
           fill-opacity="0.20"
@@ -316,23 +329,15 @@
           stroke-width="2"
         />
 
-        <line
-          :x1="sectionXScale(-finalGap / 2)"
-          :y1="sectionYScale(-0.035)"
-          :x2="sectionXScale(finalGap / 2)"
-          :y2="sectionYScale(-0.035)"
-          stroke="#c0392b"
-          stroke-width="2"
-          :stroke-dasharray="finalGap <= 0.002 ? '2,2' : 'none'"
-        />
-        <text :x="sectionXScale(0)" :y="sectionYScale(-0.08)" text-anchor="middle" class="plot-label" fill="#c0392b">
-          {{ t('final gap', '최종 gap') }}
-        </text>
-
-        <line :x1="sectionXScale(0)" :y1="sectionYScale(0)" :x2="sectionXScale(0)" :y2="sectionYScale(finalHeight)" stroke="#27ae60" stroke-width="1.4" stroke-dasharray="4,3" />
-        <text :x="sectionXScale(0) + 6" :y="sectionYScale(finalHeight / 2)" class="plot-label" fill="#27ae60">
-          h={{ finalHeight.toFixed(2) }} um
-        </text>
+        <text
+          v-for="lab in sectionGroupLabels"
+          :key="lab.key"
+          :x="lab.x"
+          :y="lab.y"
+          text-anchor="middle"
+          class="plot-label"
+          fill="var(--vp-c-text-2)"
+        >{{ lab.text }}</text>
 
         <line x1="438" y1="22" x2="462" y2="22" stroke="#9b59b6" stroke-width="1.5" stroke-dasharray="4,3" />
         <text x="468" y="26" class="legend-label">{{ t('litho resist island', 'litho resist island') }}</text>
@@ -1147,12 +1152,6 @@ const processFlags = computed(() => {
   return flags
 })
 
-function lensZ1D(x: number, halfWidth: number, height: number, power: number) {
-  const u = Math.abs(x) / Math.max(halfWidth, 0.001)
-  if (u >= 1) return 0
-  return height * Math.pow(1 - Math.pow(u, power), 1.0)
-}
-
 function lensZ2D(x: number, y: number, halfWX: number, halfWY: number, height: number, profile: number) {
   const n = shapeExponent.value
   const r = Math.pow(
@@ -1164,19 +1163,22 @@ function lensZ2D(x: number, y: number, halfWX: number, halfWY: number, height: n
   return height * Math.pow(1 - Math.pow(r, profile), 1.0)
 }
 
-// Cross-section plot
+// Cross-section plot — draws an actual slice through the 4x4 grid along the
+// selected row, so heterogeneous layouts (mixed 1x1/2x2 etc.) are visible
+// here too. Uses the same per-side asymmetric superellipse as Top view + 3D.
 const sectionW = 640
 const sectionH = 330
 const sectionPad = { left: 52, right: 22, top: 22, bottom: 42 }
-const sectionPitch = computed(() => representativeProcess.value.pitchX)
-const sectionMaskW = computed(() => representativeProcess.value.maskWX)
-const lensCenters = computed(() => [-sectionPitch.value, 0, sectionPitch.value])
-const sectionXMin = computed(() => -1.55 * sectionPitch.value)
-const sectionXMax = computed(() => 1.55 * sectionPitch.value)
+const sectionRow = ref(Math.floor(GRID_N / 2))
+const sectionXMin = computed(() => -GRID_N / 2 * pitch.value - 0.06)
+const sectionXMax = computed(() => GRID_N / 2 * pitch.value + 0.06)
 const sectionYMax = computed(() => Math.max(reflowHeight.value, finalHeight.value, resistThickness.value) * 1.22 + 0.08)
 const sectionYMin = computed(() => -0.12)
 const sectionXTicks = computed(() => {
-  return [-1.5, -1, -0.5, 0, 0.5, 1, 1.5].map(v => v * sectionPitch.value).filter(v => v >= sectionXMin.value && v <= sectionXMax.value)
+  const half = GRID_N / 2 * pitch.value
+  const ticks: number[] = []
+  for (let i = 0; i <= GRID_N; i += 1) ticks.push(-half + i * pitch.value)
+  return ticks
 })
 const sectionYTicks = computed(() => {
   const max = sectionYMax.value
@@ -1193,23 +1195,79 @@ function sectionYScale(y: number) {
   return sectionPad.top + (1 - (y - sectionYMin.value) / (sectionYMax.value - sectionYMin.value)) * plotH
 }
 
-function buildSectionProfile(center: number, width: number, height: number, power: number, fill: boolean) {
-  const half = width / 2
+// Y position (in um, relative to grid center) of the slice through the row.
+const sectionSliceY = computed(() => (sectionRow.value + 0.5 - GRID_N / 2) * pitch.value)
+
+// Unique groups intersecting the selected row, ordered left-to-right.
+const sectionRowGroups = computed<GroupRenderRow[]>(() => {
+  const row = sectionRow.value
+  const cellIdx = groupCellIndex.value
+  const dataById = new Map(groupRenderData.value.map(r => [r.group.id, r]))
+  const out: GroupRenderRow[] = []
+  const seen = new Set<number>()
+  for (let c = 0; c < GRID_N; c += 1) {
+    const g = cellIdx.get(`${row},${c}`)
+    if (!g || seen.has(g.id)) continue
+    seen.add(g.id)
+    const data = dataById.get(g.id)
+    if (data) out.push(data)
+  }
+  return out
+})
+
+function buildSectionSliceProfile(row: GroupRenderRow, kind: 'reflow' | 'final', fill: boolean) {
+  const yLocal = sectionSliceY.value - row.center.y
+  const { state, sides } = row
+  const isReflow = kind === 'reflow'
+  const halfXNeg = isReflow ? state.reflowWX / 2 : sides.edgeLeft
+  const halfXPos = isReflow ? state.reflowWX / 2 : sides.edgeRight
+  const halfYNeg = isReflow ? state.reflowWY / 2 : sides.edgeTop
+  const halfYPos = isReflow ? state.reflowWY / 2 : sides.edgeBottom
+  const height = isReflow ? state.reflowHeight : state.finalHeight
+  const power = isReflow ? 2.0 : state.profilePower
+  const span = halfXNeg + halfXPos
+  if (span <= 0) return ''
+  const samples = 72
   const points: string[] = []
-  for (let i = 0; i <= 72; i += 1) {
-    const xLocal = -half + (2 * half * i) / 72
-    const z = lensZ1D(xLocal, half, height, power)
-    points.push(`${i === 0 ? 'M' : 'L'} ${sectionXScale(center + xLocal).toFixed(2)} ${sectionYScale(z).toFixed(2)}`)
+  for (let i = 0; i <= samples; i += 1) {
+    const xLocal = -halfXNeg + (span * i) / samples
+    const halfX = xLocal >= 0 ? halfXPos : halfXNeg
+    const halfY = yLocal >= 0 ? halfYPos : halfYNeg
+    const z = lensZ2D(xLocal, yLocal, halfX, halfY, height, power)
+    points.push(`${i === 0 ? 'M' : 'L'} ${sectionXScale(row.center.x + xLocal).toFixed(2)} ${sectionYScale(z).toFixed(2)}`)
   }
   if (fill) {
-    points.push(`L ${sectionXScale(center + half).toFixed(2)} ${sectionYScale(0).toFixed(2)}`)
-    points.push(`L ${sectionXScale(center - half).toFixed(2)} ${sectionYScale(0).toFixed(2)} Z`)
+    points.push(`L ${sectionXScale(row.center.x + halfXPos).toFixed(2)} ${sectionYScale(0).toFixed(2)}`)
+    points.push(`L ${sectionXScale(row.center.x - halfXNeg).toFixed(2)} ${sectionYScale(0).toFixed(2)} Z`)
   }
   return points.join(' ')
 }
 
-const reflowProfiles = computed(() => lensCenters.value.map(center => buildSectionProfile(center, representativeProcess.value.reflowWX, reflowHeight.value, 2.0, false)))
-const finalProfiles = computed(() => lensCenters.value.map(center => buildSectionProfile(center, representativeProcess.value.finalWX, finalHeight.value, profilePower.value, true)))
+const reflowProfiles = computed(() => sectionRowGroups.value.map(row => buildSectionSliceProfile(row, 'reflow', false)))
+const finalProfiles = computed(() => sectionRowGroups.value.map(row => buildSectionSliceProfile(row, 'final', true)))
+
+interface SectionMaskRect { key: string; x: number; y: number; width: number; height: number }
+const sectionMaskRects = computed<SectionMaskRect[]>(() => {
+  const yTop = sectionYScale(resistThickness.value)
+  const yBottom = sectionYScale(0)
+  return sectionRowGroups.value.map(row => {
+    const halfX = row.state.maskWX / 2
+    const x1 = sectionXScale(row.center.x - halfX)
+    const x2 = sectionXScale(row.center.x + halfX)
+    return { key: `mask-${row.group.id}`, x: x1, y: yTop, width: Math.max(1, x2 - x1), height: yBottom - yTop }
+  })
+})
+
+interface SectionLabel { key: string; x: number; y: number; text: string }
+const sectionGroupLabels = computed<SectionLabel[]>(() => {
+  const y = sectionYScale(-0.07)
+  return sectionRowGroups.value.map(row => ({
+    key: `lab-${row.group.id}`,
+    x: sectionXScale(row.center.x),
+    y,
+    text: row.group.kind,
+  }))
+})
 
 // 3D wireframe
 const surfaceW = 640
@@ -1848,6 +1906,50 @@ const currentProcessPoint = computed(() => ({
   color: #fff;
   border-color: var(--vp-c-brand-1);
   background: var(--vp-c-brand-1);
+}
+
+.row-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+  font-size: 0.82em;
+  color: var(--vp-c-text-2);
+}
+
+.row-selector-label {
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.row-btn {
+  min-width: 32px;
+  padding: 3px 9px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.85em;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.row-btn:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+
+.row-btn.active {
+  color: #fff;
+  border-color: var(--vp-c-brand-1);
+  background: var(--vp-c-brand-1);
+}
+
+.row-selector-hint {
+  margin-left: 6px;
+  opacity: 0.85;
 }
 
 .plot-panel {
