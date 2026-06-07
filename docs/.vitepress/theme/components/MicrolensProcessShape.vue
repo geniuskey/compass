@@ -383,6 +383,7 @@
             stroke-width="1.1"
             stroke-dasharray="4,3"
             opacity="0.7"
+            pointer-events="none"
           />
           <path
             :d="grp.reflowPath"
@@ -391,19 +392,25 @@
             stroke-width="1.3"
             stroke-dasharray="5,4"
             opacity="0.85"
+            pointer-events="none"
           />
           <path
             :d="grp.finalPath"
             :fill="grp.isValid ? heatColor(grp.finalHeightUm) : 'rgba(192, 57, 43, 0.25)'"
-            fill-opacity="0.78"
-            :stroke="grp.isValid ? '#1f4e79' : '#a93226'"
-            stroke-width="1.5"
+            :fill-opacity="selectedGroupId === grp.id ? 0.95 : 0.78"
+            :stroke="selectedGroupId === grp.id ? 'var(--vp-c-brand-1)' : (grp.isValid ? '#1f4e79' : '#a93226')"
+            :stroke-width="selectedGroupId === grp.id ? 3 : 1.5"
+            class="top-clickable"
+            role="button"
+            :aria-label="t(`Inspect ${grp.labelText} lens unit`, `${grp.labelText} lens unit 자세히 보기`)"
+            @click="toggleSelectedGroup(grp.id)"
           />
           <text
             :x="grp.centerPx.x"
             :y="grp.centerPx.y + 4"
             text-anchor="middle"
             class="top-group-label"
+            pointer-events="none"
           >{{ grp.labelText }}</text>
         </template>
 
@@ -543,6 +550,52 @@
       </svg>
     </div>
 
+    <div v-if="viewMode === 'topview'" class="group-inspector">
+      <template v-if="selectedGroupRow">
+        <div class="group-inspector-head">
+          <strong>{{ selectedGroupRow.group.kind }}</strong>
+          <span class="group-inspector-coord">
+            {{ t('cell', '셀') }} ({{ selectedGroupRow.group.r0 }}, {{ selectedGroupRow.group.c0 }})
+            <template v-if="selectedGroupRow.group.h * selectedGroupRow.group.w > 1">
+              –({{ selectedGroupRow.group.r0 + selectedGroupRow.group.h - 1 }}, {{ selectedGroupRow.group.c0 + selectedGroupRow.group.w - 1 }})
+            </template>
+          </span>
+          <button type="button" class="inspector-close" :aria-label="t('Close inspector', '닫기')" @click="selectedGroupId = null">×</button>
+        </div>
+        <div class="group-inspector-grid">
+          <span>{{ t('Initial gap (X / Y)', '초기 gap (X / Y)') }}</span>
+          <strong>{{ selectedGroupRow.state.initialGapX.toFixed(3) }} / {{ selectedGroupRow.state.initialGapY.toFixed(3) }} um</strong>
+          <span>{{ t('Reflow gap (X / Y)', 'Reflow gap (X / Y)') }}</span>
+          <strong>{{ selectedGroupRow.state.reflowGapX.toFixed(3) }} / {{ selectedGroupRow.state.reflowGapY.toFixed(3) }} um</strong>
+          <span>{{ t('Final gap L / R / T / B', '최종 gap 좌/우/상/하') }}</span>
+          <strong>
+            {{ selectedGroupRow.sides.gapLeft.toFixed(3) }} /
+            {{ selectedGroupRow.sides.gapRight.toFixed(3) }} /
+            {{ selectedGroupRow.sides.gapTop.toFixed(3) }} /
+            {{ selectedGroupRow.sides.gapBottom.toFixed(3) }} um
+          </strong>
+          <span>{{ t('Neighbor σ L / R / T / B', '이웃 σ 좌/우/상/하') }}</span>
+          <strong>
+            {{ selectedGroupRow.sides.sigmaLeft.toFixed(2) }} /
+            {{ selectedGroupRow.sides.sigmaRight.toFixed(2) }} /
+            {{ selectedGroupRow.sides.sigmaTop.toFixed(2) }} /
+            {{ selectedGroupRow.sides.sigmaBottom.toFixed(2) }}
+          </strong>
+          <span>{{ t('Final WX × WY', '최종 WX × WY') }}</span>
+          <strong>{{ selectedGroupRow.state.finalWX.toFixed(3) }} × {{ selectedGroupRow.state.finalWY.toFixed(3) }} um</strong>
+          <span>{{ t('Final height', '최종 높이') }}</span>
+          <strong>{{ selectedGroupRow.state.finalHeight.toFixed(3) }} um</strong>
+          <span>{{ t('Profile exponent', 'Profile exponent') }}</span>
+          <strong>{{ selectedGroupRow.state.profilePower.toFixed(2) }}</strong>
+          <span>{{ t('Aspect ratio', '장단축비') }}</span>
+          <strong>{{ selectedGroupRow.state.aspectRatio.toFixed(2) }}</strong>
+        </div>
+      </template>
+      <p v-else class="inspector-hint">
+        {{ t('Click any lens in the top view to inspect its per-side gaps, sigma values, and dimensions.', 'Top view의 lens를 클릭하면 면별 gap, σ, 치수를 자세히 볼 수 있습니다.') }}
+      </p>
+    </div>
+
     <div class="formula-box">
       <strong>{{ t('Model note', '모델 메모') }}:</strong>
       {{ t(
@@ -607,6 +660,11 @@ const microloadingGain = ref(1.00)
 const layoutPreset = ref<LayoutPreset>('all-1x1')
 const cellGrid = ref<number[]>(buildGridFromRects([]))
 const selectedCell = ref<number | null>(null)
+const selectedGroupId = ref<number | null>(null)
+
+function toggleSelectedGroup(id: number) {
+  selectedGroupId.value = selectedGroupId.value === id ? null : id
+}
 
 const tabs = [
   { key: 'section' as const, en: 'Cross-section', ko: '단면' },
@@ -1073,6 +1131,11 @@ const groupRenderData = computed<GroupRenderRow[]>(() =>
     return { group, state, neighbors, sides, center: groupCenterUm(group) }
   }),
 )
+
+const selectedGroupRow = computed<GroupRenderRow | null>(() => {
+  if (selectedGroupId.value === null) return null
+  return groupRenderData.value.find(r => r.group.id === selectedGroupId.value) ?? null
+})
 
 const representativeProcess = computed<ProcessState>(() => computeGroupProcessAt(representativeGroup.value, etchTime.value))
 
@@ -1987,6 +2050,87 @@ const currentProcessPoint = computed(() => ({
 
 .surface-note {
   font-size: 10px;
+}
+
+.top-clickable {
+  cursor: pointer;
+  transition: stroke-width 0.12s, fill-opacity 0.12s;
+}
+
+.top-clickable:hover {
+  fill-opacity: 0.92;
+}
+
+.group-inspector {
+  margin: 10px auto 0;
+  max-width: 680px;
+  padding: 10px 12px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 7px;
+  background: var(--vp-c-bg);
+}
+
+.group-inspector-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.group-inspector-head strong {
+  font-family: var(--vp-font-family-mono);
+  font-size: 1.05em;
+  color: var(--vp-c-brand-1);
+}
+
+.group-inspector-coord {
+  flex: 1;
+  font-size: 0.82em;
+  color: var(--vp-c-text-2);
+}
+
+.inspector-close {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 5px;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  font-size: 0.95em;
+  line-height: 1;
+}
+
+.inspector-close:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+
+.group-inspector-grid {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  column-gap: 14px;
+  row-gap: 5px;
+  font-size: 0.84em;
+}
+
+.group-inspector-grid span {
+  color: var(--vp-c-text-2);
+}
+
+.group-inspector-grid strong {
+  font-family: var(--vp-font-family-mono);
+  color: var(--vp-c-text-1);
+  font-weight: 600;
+}
+
+.inspector-hint {
+  margin: 0;
+  color: var(--vp-c-text-2);
+  font-size: 0.84em;
+  text-align: center;
 }
 
 .top-group-label {
