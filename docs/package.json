@@ -8,7 +8,8 @@
     "docs:preview": "vitepress preview",
     "docs:visual-check": "node scripts/check-pixel-stack-visuals.mjs",
     "docs:guide-check": "node scripts/check-guide-interactives.mjs",
-    "docs:browser-check": "playwright test"
+    "docs:browser-check": "playwright test",
+    "docs:test": "vitest run"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
@@ -17,7 +18,8 @@
     "mermaid": "^11.14.0",
     "three": "^0.160.1",
     "vitepress": "^1.5.0",
-    "vitepress-plugin-mermaid": "^2.0.17"
+    "vitepress-plugin-mermaid": "^2.0.17",
+    "vitest": "^4.1.8"
   },
   "overrides": {
     "uuid": "^14.0.0",

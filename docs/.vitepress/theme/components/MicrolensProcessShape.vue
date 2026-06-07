@@ -617,28 +617,21 @@ const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 type ApertureShape = 'circular' | 'rounded-square' | 'square'
 type ViewMode = 'section' | 'topview' | 'surface' | 'process'
-type LensUnitShape = '1x1' | '2x1' | '1x2' | '2x2'
-type LayoutPreset =
-  | 'all-1x1'
-  | 'all-2x1'
-  | 'all-1x2'
-  | 'all-2x2'
-  | 'mixed-2x2-pdaf'
-  | 'sparse-2x1-pdaf'
-  | 'custom'
 
-interface LensGroup {
-  id: number
-  cells: { r: number; c: number }[]
-  r0: number
-  c0: number
-  h: number
-  w: number
-  kind: LensUnitShape
-  isValidShape: boolean
-}
-
-const GRID_N = 4
+import {
+  GRID_N,
+  LAYOUT_PRESETS,
+  buildCellIndex,
+  buildGridFromRects,
+  densityFactor,
+  deriveGroups,
+  getGroupNeighbors,
+  sigmaShape,
+  type GroupNeighbors,
+  type LayoutPreset,
+  type LensGroup,
+  type LensUnitShape,
+} from '../composables/microlensProcessModel'
 
 const pitch = ref(1.10)
 const maskWidth = ref(0.88)
@@ -673,44 +666,6 @@ const tabs = [
   { key: 'process' as const, en: 'Etch response', ko: 'Etch 응답' },
 ]
 
-function buildGridFromRects(rects: [number, number, number, number][]) {
-  const g = new Array(GRID_N * GRID_N).fill(-1)
-  let id = 0
-  for (const [r0, c0, h, w] of rects) {
-    for (let dr = 0; dr < h; dr += 1) {
-      for (let dc = 0; dc < w; dc += 1) {
-        g[(r0 + dr) * GRID_N + (c0 + dc)] = id
-      }
-    }
-    id += 1
-  }
-  for (let i = 0; i < g.length; i += 1) {
-    if (g[i] < 0) {
-      g[i] = id
-      id += 1
-    }
-  }
-  return g
-}
-
-type Rect = [number, number, number, number]
-const LAYOUT_PRESETS: Record<Exclude<LayoutPreset, 'custom'>, Rect[]> = {
-  'all-1x1': [],
-  'all-2x1': [
-    [0, 0, 1, 2], [0, 2, 1, 2],
-    [1, 0, 1, 2], [1, 2, 1, 2],
-    [2, 0, 1, 2], [2, 2, 1, 2],
-    [3, 0, 1, 2], [3, 2, 1, 2],
-  ],
-  'all-1x2': [
-    [0, 0, 2, 1], [0, 1, 2, 1], [0, 2, 2, 1], [0, 3, 2, 1],
-    [2, 0, 2, 1], [2, 1, 2, 1], [2, 2, 2, 1], [2, 3, 2, 1],
-  ],
-  'all-2x2': [[0, 0, 2, 2], [0, 2, 2, 2], [2, 0, 2, 2], [2, 2, 2, 2]],
-  'mixed-2x2-pdaf': [[1, 1, 2, 2]],
-  'sparse-2x1-pdaf': [[1, 1, 1, 2], [2, 1, 1, 2]],
-}
-
 function applyPreset(preset: LayoutPreset) {
   if (preset !== 'custom') {
     cellGrid.value = buildGridFromRects(LAYOUT_PRESETS[preset])
@@ -719,40 +674,6 @@ function applyPreset(preset: LayoutPreset) {
 }
 
 watch(layoutPreset, (preset) => applyPreset(preset))
-
-function deriveGroups(grid: number[]): LensGroup[] {
-  const map = new Map<number, { r: number; c: number }[]>()
-  for (let i = 0; i < grid.length; i += 1) {
-    const id = grid[i]
-    const r = Math.floor(i / GRID_N)
-    const c = i % GRID_N
-    if (!map.has(id)) map.set(id, [])
-    map.get(id)!.push({ r, c })
-  }
-  const groups: LensGroup[] = []
-  for (const [id, cells] of map) {
-    const rs = cells.map(p => p.r)
-    const cs = cells.map(p => p.c)
-    const r0 = Math.min(...rs)
-    const r1 = Math.max(...rs)
-    const c0 = Math.min(...cs)
-    const c1 = Math.max(...cs)
-    const h = r1 - r0 + 1
-    const w = c1 - c0 + 1
-    const expected = h * w
-    const rectangular = cells.length === expected
-    const allowed = (h === 1 || h === 2) && (w === 1 || w === 2)
-    const isValidShape = rectangular && allowed
-    let kind: LensUnitShape = '1x1'
-    if (h === 1 && w === 1) kind = '1x1'
-    else if (h === 1 && w === 2) kind = '2x1'
-    else if (h === 2 && w === 1) kind = '1x2'
-    else if (h === 2 && w === 2) kind = '2x2'
-    groups.push({ id, cells, r0, c0, h, w, kind, isValidShape })
-  }
-  groups.sort((a, b) => (a.r0 - b.r0) || (a.c0 - b.c0))
-  return groups
-}
 
 const customGridSize = 220
 const customCellSize = customGridSize / GRID_N
@@ -997,36 +918,8 @@ function computeGroupProcessAt(group: LensGroup, etchSeconds: number) {
 // closure near dense pattern, leaving a larger GAP next to bigger lens
 // groups. Both effects vanish for uniform-size layouts.
 
-interface GroupNeighbors {
-  left: LensGroup | null
-  right: LensGroup | null
-  top: LensGroup | null
-  bottom: LensGroup | null
-}
-
-function buildCellIndex(groups: LensGroup[]): Map<string, LensGroup> {
-  const m = new Map<string, LensGroup>()
-  for (const g of groups) {
-    for (const cell of g.cells) m.set(`${cell.r},${cell.c}`, g)
-  }
-  return m
-}
-
-function getGroupNeighbors(group: LensGroup, cellIndex: Map<string, LensGroup>): GroupNeighbors {
-  const rMid = group.r0 + Math.floor(group.h / 2)
-  const cMid = group.c0 + Math.floor(group.w / 2)
-  const pick = (r: number, c: number): LensGroup | null => {
-    if (r < 0 || r >= GRID_N || c < 0 || c >= GRID_N) return null
-    const n = cellIndex.get(`${r},${c}`)
-    return n && n.id !== group.id ? n : null
-  }
-  return {
-    left: pick(rMid, group.c0 - 1),
-    right: pick(rMid, group.c0 + group.w),
-    top: pick(group.r0 - 1, cMid),
-    bottom: pick(group.r0 + group.h, cMid),
-  }
-}
+// GroupNeighbors / buildCellIndex / getGroupNeighbors live in
+// composables/microlensProcessModel.ts so unit tests can import them.
 
 interface SideOffsets {
   edgeLeft: number
@@ -1060,32 +953,21 @@ function computeGroupSideOffsets(
   const kMass = proximityCouplingGain.value * K_MASS_BASE_UM
   const kLoad = microloadingGain.value * K_LOAD_BASE
 
-  function sigmaShape(N: LensGroup | null) {
-    if (!N || !N.isValidShape) return 0
-    const A_N = N.h * N.w
-    return (A_N - A_G) / (A_N + A_G)
-  }
-  function densityFactor(N: LensGroup | null) {
-    // grid-edge neighbor: treat as 1x1-equivalent sparse padding
-    const A_N = N && N.isValidShape ? N.h * N.w : 1
-    const baseline = 2 // two 1x1 cells = sparsest dense baseline
-    return Math.max(0, ((A_G + A_N) - baseline) / 6) // normalize to 1 when both are 2x2 (sum=8)
-  }
-
-  const sL = sigmaShape(neighbors.left)
-  const sR = sigmaShape(neighbors.right)
-  const sT = sigmaShape(neighbors.top)
-  const sB = sigmaShape(neighbors.bottom)
+  const areaOf = (n: LensGroup | null) => (n && n.isValidShape ? n.h * n.w : null)
+  const sL = sigmaShape(A_G, areaOf(neighbors.left))
+  const sR = sigmaShape(A_G, areaOf(neighbors.right))
+  const sT = sigmaShape(A_G, areaOf(neighbors.top))
+  const sB = sigmaShape(A_G, areaOf(neighbors.bottom))
   // mass-flow: my lens extends MORE on larger-neighbor side
   const dSpL = kMass * td * sL
   const dSpR = kMass * td * sR
   const dSpT = kMass * td * sT
   const dSpB = kMass * td * sB
   // microloading: gap stays LARGER (less closure) near denser pattern
-  const dGapL = kLoad * ler * etchSeconds * densityFactor(neighbors.left)
-  const dGapR = kLoad * ler * etchSeconds * densityFactor(neighbors.right)
-  const dGapT = kLoad * ler * etchSeconds * densityFactor(neighbors.top)
-  const dGapB = kLoad * ler * etchSeconds * densityFactor(neighbors.bottom)
+  const dGapL = kLoad * ler * etchSeconds * densityFactor(A_G, areaOf(neighbors.left))
+  const dGapR = kLoad * ler * etchSeconds * densityFactor(A_G, areaOf(neighbors.right))
+  const dGapT = kLoad * ler * etchSeconds * densityFactor(A_G, areaOf(neighbors.top))
+  const dGapB = kLoad * ler * etchSeconds * densityFactor(A_G, areaOf(neighbors.bottom))
 
   const halfX = baseState.finalWX / 2
   const halfY = baseState.finalWY / 2
