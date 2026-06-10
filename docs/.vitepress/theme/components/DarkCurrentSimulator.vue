@@ -277,18 +277,22 @@ const readNoise = ref(1.5)
 const illuminance = ref(100)
 
 // ---- Physics constants ----
-const Eg = 1.12       // eV, Si bandgap
 const kB = 8.617e-5   // eV/K, Boltzmann constant
 
+// Si bandgap with Varshni temperature dependence:
+// Eg(T) = 1.166 − 4.73e-4·T²/(T + 636) eV  (≈1.12 eV at 300K)
+function bandgap(T: number): number {
+  return 1.166 - 4.73e-4 * T * T / (T + 636)
+}
+
 // Calibrate J0 so Jd = 5 e-/s/um^2 at T=300K
-// Jd(T) = J0 * T^1.5 * exp(-Eg/(2*kB*T))
-// J0 = 5 / (300^1.5 * exp(-Eg/(2*kB*300)))
+// Jd(T) = J0 * T^1.5 * exp(-Eg(T)/(2*kB*T))   (diffusion-dominated, ∝ n_i)
 const T_ref = 300
-const J0 = 5 / (Math.pow(T_ref, 1.5) * Math.exp(-Eg / (2 * kB * T_ref)))
+const J0 = 5 / (Math.pow(T_ref, 1.5) * Math.exp(-bandgap(T_ref) / (2 * kB * T_ref)))
 
 function darkCurrentDensity(tempC: number): number {
   const T = tempC + 273.15
-  return J0 * Math.pow(T, 1.5) * Math.exp(-Eg / (2 * kB * T))
+  return J0 * Math.pow(T, 1.5) * Math.exp(-bandgap(T) / (2 * kB * T))
 }
 
 function darkCurrentPixel(tempC: number, pitchUm: number): number {

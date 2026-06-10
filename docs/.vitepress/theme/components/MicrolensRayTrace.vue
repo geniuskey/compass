@@ -577,9 +577,14 @@ const crosstalkCount = computed(() => {
 })
 
 const focalLength = computed(() => {
-  // Approximate focal length: f = h * n_lens / (n_lens - 1)
+  // Best-fit spherical cap through apex and rim: R_c = (a² + h²) / 2h.
+  // Single refracting surface with the image formed inside the lens medium
+  // (object at infinity): f = n_lens · R_c / (n_lens − 1), measured from the vertex.
   const nLens = 1.56
-  return lensHeight.value * nLens / (nLens - 1)
+  const h = Math.max(lensHeight.value, 1e-6)
+  const a = lensRadius.value
+  const Rc = (a * a + h * h) / (2 * h)
+  return nLens * Rc / (nLens - 1)
 })
 
 const fNumber = computed(() => {

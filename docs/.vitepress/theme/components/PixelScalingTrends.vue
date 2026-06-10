@@ -444,9 +444,37 @@ function calcNyquist(pitch: number): number {
   return 1 / (2 * pitch) * 1000 // lp/mm
 }
 
+function besselJ0(x: number): number {
+  let sum = 1
+  let term = 1
+  for (let m = 1; m <= 30; m++) {
+    term *= -(x * x) / (4 * m * m)
+    sum += term
+    if (Math.abs(term) < 1e-15) break
+  }
+  return sum
+}
+
+function besselJ1(x: number): number {
+  if (Math.abs(x) < 1e-10) return 0
+  let sum = x / 2
+  let term = x / 2
+  for (let m = 1; m <= 30; m++) {
+    term *= -(x * x) / (4 * m * (m + 1))
+    sum += term
+    if (Math.abs(term) < 1e-15) break
+  }
+  return sum
+}
+
 function calcDiffQe(pitch: number): number {
-  const airyRadius = 1.22 * wavelengthUm.value * fNumber.value
-  return Math.min(1, (pitch / airyRadius) ** 2)
+  // Fraction of Airy PSF energy collected by a p×p pixel: encircled energy
+  // EE(r) = 1 − J0²(v) − J1²(v), v = πr/(λN), at the equal-area radius r = p/√π
+  const rEq = pitch / Math.sqrt(Math.PI)
+  const v = Math.PI * rEq / (wavelengthUm.value * fNumber.value)
+  const j0 = besselJ0(v)
+  const j1 = besselJ1(v)
+  return Math.min(1, Math.max(0, 1 - j0 * j0 - j1 * j1))
 }
 
 function calcDiffQePercent(pitch: number): number {

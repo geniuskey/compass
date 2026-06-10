@@ -1076,8 +1076,12 @@ const focusEfficiency = computed(() => {
 
 // ===== Info Metrics =====
 const estFocalLength = computed(() => {
+  // Best-fit spherical cap: R_c = (a² + h²) / 2h. The refracted rays travel
+  // inside the lens medium, so f = n · R_c / (n − 1) (single surface, object at infinity).
   const avgR = (Rx.value + Ry.value) / 2
-  return (avgR * avgR) / (2 * h.value * (refIdx.value - 1))
+  const hv = Math.max(h.value, 1e-6)
+  const Rc = (avgR * avgR + hv * hv) / (2 * hv)
+  return refIdx.value * Rc / (refIdx.value - 1)
 })
 
 const fNumber = computed(() => {
