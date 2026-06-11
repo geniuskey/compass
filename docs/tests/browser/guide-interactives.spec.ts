@@ -49,6 +49,15 @@ test.describe('pixel stack guide visuals', () => {
       await xyTab.click()
       await expect(page.getByRole('img', { name: /XY|평면/ })).toBeVisible()
       await expect(page.getByLabel(/Microlens|마이크로렌즈/).or(page.getByText(/Microlens|마이크로렌즈/)).first()).toBeVisible()
+
+      const fullscreenToggle = page.getByRole('button', { name: /Toggle fullscreen|전체화면 전환/ }).first()
+      await expect(fullscreenToggle).toBeVisible()
+      await fullscreenToggle.click()
+      await expect(page.locator('.param-diagram.sim-fullscreen')).toHaveCount(1)
+      await expect(page.locator('.param-diagram.sim-fullscreen .legend-table')).toBeVisible()
+
+      await page.keyboard.press('Escape')
+      await expect(page.locator('.param-diagram.sim-fullscreen')).toHaveCount(0)
     })
   }
 })

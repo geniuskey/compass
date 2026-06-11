@@ -1,5 +1,14 @@
 <template>
-  <div class="param-diagram">
+  <div :class="['param-diagram', 'sim-fs-root', { 'sim-fullscreen': isFullscreen }]">
+    <button
+      type="button"
+      class="sim-fs-btn param-fs-btn"
+      :aria-label="t('Toggle fullscreen', '전체화면 전환')"
+      :aria-pressed="isFullscreen"
+      :title="t('Toggle fullscreen', '전체화면 전환')"
+      @click="toggleFullscreen"
+    >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
+
     <div class="tab-row">
       <button
         v-for="tab in tabs"
@@ -39,16 +48,17 @@
       >{{ t('Reset', '초기화') }}</button>
     </div>
 
-    <!-- ==================== XZ Cross-Section ==================== -->
-    <svg
-      v-if="activeTab === 'xz'"
-      :viewBox="`0 0 ${xzW} ${xzH}`"
-      class="diagram-svg"
-      role="img"
-      :aria-label="t('XZ cross-section with parameter annotations', 'XZ 단면 파라미터 주석')"
-      font-family="Arial, sans-serif"
-      font-size="11"
-    >
+    <div class="param-map-layout">
+      <!-- ==================== XZ Cross-Section ==================== -->
+      <svg
+        v-if="activeTab === 'xz'"
+        :viewBox="`0 0 ${xzW} ${xzH}`"
+        class="diagram-svg"
+        role="img"
+        :aria-label="t('XZ cross-section with parameter annotations', 'XZ 단면 파라미터 주석')"
+        font-family="Arial, sans-serif"
+        font-size="11"
+      >
       <!-- Background media fills (bottom-to-top). Patterned layers use the surrounding medium here;
            the actual microlens, CFA relief, metal grid, DTI, and PD shapes are drawn below. -->
       <rect
@@ -471,18 +481,18 @@
           <path d="M0,0 L3,5 L6,0 z" fill="currentColor" />
         </marker>
       </defs>
-    </svg>
+      </svg>
 
-    <!-- ==================== XY Top View ==================== -->
-    <svg
-      v-else
-      :viewBox="`0 0 ${xyW} ${xyH}`"
-      class="diagram-svg"
-      role="img"
-      :aria-label="t('XY top view with parameter annotations', 'XY 평면 파라미터 주석')"
-      font-family="Arial, sans-serif"
-      font-size="11"
-    >
+      <!-- ==================== XY Top View ==================== -->
+      <svg
+        v-else
+        :viewBox="`0 0 ${xyW} ${xyH}`"
+        class="diagram-svg"
+        role="img"
+        :aria-label="t('XY top view with parameter annotations', 'XY 평면 파라미터 주석')"
+        font-family="Arial, sans-serif"
+        font-size="11"
+      >
       <!-- 2x2 Bayer cells: solid area is the footprint at grid top, dashed area is the tapered top. -->
       <template v-if="xyVisible.color_filter">
         <rect
@@ -771,36 +781,37 @@
           <path d="M0,0 L3,5 L6,0 z" fill="currentColor" />
         </marker>
       </defs>
-    </svg>
+      </svg>
 
-    <!-- Parameter legend table -->
-    <div class="legend-table">
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th>{{ t('Parameter', '파라미터') }}</th>
-            <th>{{ t('Default', '기본값') }}</th>
-            <th>{{ t('Meaning', '의미') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in legendRows"
-            :key="row.id"
-            :class="{ active: highlight === row.id }"
-            @mouseenter="highlight = row.id"
-            @mouseleave="highlight = null"
-          >
-            <td>
-              <span class="swatch" :style="{ background: row.color }"></span>
-            </td>
-            <td><code>{{ row.param }}</code></td>
-            <td>{{ row.value }}</td>
-            <td>{{ t(row.meaningEn, row.meaningKo) }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- Parameter legend table -->
+      <div class="legend-table">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>{{ t('Parameter', '파라미터') }}</th>
+              <th>{{ t('Default', '기본값') }}</th>
+              <th>{{ t('Meaning', '의미') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in legendRows"
+              :key="row.id"
+              :class="{ active: highlight === row.id }"
+              @mouseenter="highlight = row.id"
+              @mouseleave="highlight = null"
+            >
+              <td>
+                <span class="swatch" :style="{ background: row.color }"></span>
+              </td>
+              <td><code>{{ row.param }}</code></td>
+              <td>{{ row.value }}</td>
+              <td>{{ t(row.meaningEn, row.meaningKo) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
@@ -808,9 +819,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { useFullscreen } from '../composables/useFullscreen'
 import { bayerCells2x2, pixelStackDefaults, type BayerChannel } from '../composables/pixelStackDefaults'
 
 const { t } = useLocale()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 const tabs = computed(() => [
   { key: 'xz', label: t('XZ Cross-Section', 'XZ 단면') },
@@ -1202,10 +1215,78 @@ const legendRows = [
   margin: 1.5rem 0;
 }
 
+.param-map-layout {
+  min-width: 0;
+}
+
+.param-diagram.sim-fullscreen {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.param-diagram.sim-fullscreen .tab-row {
+  margin-bottom: 0;
+  padding-right: 48px;
+}
+
+.param-diagram.sim-fullscreen .hint {
+  max-width: calc(100% - 52px);
+  margin: 0;
+}
+
+.param-diagram.sim-fullscreen .xy-toggles {
+  margin-bottom: 0;
+}
+
+.param-diagram.sim-fullscreen .param-map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.param-diagram.sim-fullscreen .diagram-svg {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  object-fit: contain;
+}
+
+.param-diagram.sim-fullscreen .legend-table {
+  height: 100%;
+  min-height: 0;
+  margin-top: 0;
+  overflow: auto;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+}
+
+.param-diagram.sim-fullscreen .legend-table table {
+  font-size: 0.78rem;
+}
+
+.param-diagram.sim-fullscreen .legend-table th,
+.param-diagram.sim-fullscreen .legend-table td {
+  padding: 5px 8px;
+}
+
+.param-diagram.sim-fullscreen .legend-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .tab-row {
   display: flex;
   gap: 6px;
   margin-bottom: 8px;
+  padding-right: 48px;
   flex-wrap: wrap;
 }
 
@@ -1394,6 +1475,17 @@ const legendRows = [
   }
   .dim-text {
     font-size: 9px;
+  }
+}
+
+@media (max-width: 900px) {
+  .param-diagram.sim-fullscreen .param-map-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(320px, 52vh) minmax(0, 1fr);
+  }
+
+  .param-diagram.sim-fullscreen .diagram-svg {
+    height: 100%;
   }
 }
 </style>

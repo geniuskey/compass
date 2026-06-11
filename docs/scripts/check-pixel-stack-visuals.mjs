@@ -66,6 +66,7 @@ for (const page of pages) {
   const html = fs.readFileSync(filePath, 'utf8')
 
   requireAnyToken(page, html, ['Interactive Pixel Stack Builder', '인터랙티브 픽셀 스택 빌더'])
+  requireAnyToken(page, html, ['Toggle fullscreen', '전체화면 전환'])
   requireToken(page, html, 'position[z] center')
   requireAnyToken(page, html, ['PD center depth below top of Si', '실리콘 상단 기준 PD 중심 깊이'])
   requireToken(page, html, 'microlens.gap')
