@@ -86,12 +86,18 @@ class TestMicrolensStaircaseConvergence:
 
             volumes.append(total_lens_vol)
 
-        # Volumes should converge: differences between consecutive levels decrease
+        # Volumes should converge. Strict per-step monotonicity of the
+        # differences is too brittle: beats between the slice levels and the
+        # fixed lateral grid make individual steps wobble. Require the final
+        # step to be well below the largest step and the finest two volumes
+        # to agree tightly.
         diffs = [abs(volumes[i + 1] - volumes[i]) for i in range(len(volumes) - 1)]
-        for i in range(len(diffs) - 1):
-            assert diffs[i + 1] < diffs[i] + 1e-10, (
-                f"Volume not converging: diff[{i}]={diffs[i]:.6f}, diff[{i+1}]={diffs[i+1]:.6f}"
-            )
+        assert diffs[-1] <= max(diffs) * 0.5 + 1e-10, (
+            f"Volume not converging: diffs={[f'{d:.6f}' for d in diffs]}"
+        )
+        assert volumes[-1] == pytest.approx(volumes[-2], rel=0.005), (
+            f"Finest volumes disagree: {volumes[-2]:.6f} vs {volumes[-1]:.6f}"
+        )
 
         # Fine and coarse volumes should agree within 10%
         assert volumes[-1] == pytest.approx(volumes[0], rel=0.10), (

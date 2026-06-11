@@ -111,7 +111,7 @@ class MeentSolver(SolverBase):
                     # 2D stacks where R+T > 1. Clamp to physical range.
                     if R + T > 1.0 + 0.01:
                         logger.warning(
-                            f"meent: R+T={R+T:.4f} > 1 at λ={wavelength:.4f}um "
+                            f"meent: R+T={R + T:.4f} > 1 at λ={wavelength:.4f}um "
                             f"(numerical instability for multi-layer 2D stack)"
                         )
                     A = max(0.0, 1.0 - R - T)
@@ -147,6 +147,7 @@ class MeentSolver(SolverBase):
         for arr_name, arr in result_arrays.items():
             if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
                 import warnings
+
                 warnings.warn(f"meent: NaN/Inf detected in {arr_name} output", stacklevel=2)
 
         return SimulationResult(
@@ -155,11 +156,18 @@ class MeentSolver(SolverBase):
             reflection=result_arrays["reflection"],
             transmission=result_arrays["transmission"],
             absorption=result_arrays["absorption"],
-            metadata={"solver_name": "meent", "backend": self._backend, "fourier_order": fourier_order},
+            metadata={
+                "solver_name": "meent",
+                "backend": self._backend,
+                "fourier_order": fourier_order,
+            },
         )
 
     def _compute_per_pixel_qe(
-        self, layer_slices, wavelength: float, total_absorption: float,
+        self,
+        layer_slices,
+        wavelength: float,
+        total_absorption: float,
     ) -> dict:
         """Compute per-pixel QE using eps_imag weighting in PD regions."""
         if self._pixel_stack is None:
@@ -174,11 +182,23 @@ class MeentSolver(SolverBase):
         pixel_weights = {}
         total_weight = 0.0
 
+        pitch = self._pixel_stack.pitch
+        si_z_end = max(
+            (layer.z_end for layer in self._pixel_stack.layers if layer.name == "silicon"),
+            default=0.0,
+        )
         for pd in self._pixel_stack.photodiodes:
             r, c = pd.pixel_index
             key = f"{pd.color}_{r}_{c}"
-            pd_z_min = pd.position[2] - pd.size[2] / 2
-            pd_z_max = pd.position[2] + pd.size[2] / 2
+            # position[2] is the PD-center depth below the silicon top surface
+            pd_cz = si_z_end - pd.position[2]
+            pd_z_min = pd_cz - pd.size[2] / 2
+            pd_z_max = pd_cz + pd.size[2] / 2
+
+            # PhotodiodeSpec.position is the offset from the pixel center;
+            # convert to absolute domain coordinates ([0, lx) x [0, ly)).
+            pd_cx = (c + 0.5) * pitch + pd.position[0]
+            pd_cy = (r + 0.5) * pitch + pd.position[1]
 
             weight = 0.0
             for s in layer_slices:
@@ -188,10 +208,10 @@ class MeentSolver(SolverBase):
                     continue
                 dz = z_overlap_max - z_overlap_min
                 nx_s, ny_s = s.eps_grid.shape
-                ix_min = max(0, int(((pd.position[0] - pd.size[0] / 2 + lx / 2) / lx) * nx_s))
-                ix_max = min(nx_s, int(((pd.position[0] + pd.size[0] / 2 + lx / 2) / lx) * nx_s))
-                iy_min = max(0, int(((pd.position[1] - pd.size[1] / 2 + ly / 2) / ly) * ny_s))
-                iy_max = min(ny_s, int(((pd.position[1] + pd.size[1] / 2 + ly / 2) / ly) * ny_s))
+                ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx_s))
+                ix_max = min(nx_s, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx_s)))
+                iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny_s))
+                iy_max = min(ny_s, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny_s)))
                 if ix_max <= ix_min or iy_max <= iy_min:
                     continue
                 eps_region = s.eps_grid[ix_min:ix_max, iy_min:iy_max]
@@ -200,15 +220,18 @@ class MeentSolver(SolverBase):
             pixel_weights[key] = max(weight, 0.0)
             total_weight += max(weight, 0.0)
 
+        # Per-pixel QE convention: absorbed power normalized by the power
+        # incident on that pixel's own area (shared with the torcwa solver).
         qe_per_pixel = {}
         if total_weight > 0:
             for key, w in pixel_weights.items():
-                qe_per_pixel[key] = total_absorption * (w / total_weight)
+                qe_per_pixel[key] = min(1.0, total_absorption * (w / total_weight) * n_pixels)
         else:
+            # Uniform stack: every pixel sees the cell-average absorption
             for r in range(n_rows):
                 for c in range(n_cols):
                     key = f"{bayer[r][c]}_{r}_{c}"
-                    qe_per_pixel[key] = total_absorption / n_pixels
+                    qe_per_pixel[key] = total_absorption
         return qe_per_pixel
 
     def get_field_distribution(
@@ -256,6 +279,7 @@ class MeentSolver(SolverBase):
             for s in layer_info:
                 if z_accum + s.thickness >= position:
                     from scipy.ndimage import zoom
+
                     eps = s.eps_grid
                     zx = nx_out / eps.shape[0]
                     zy = ny_out / eps.shape[1]

@@ -76,7 +76,10 @@ class GrcwaSolver(SolverBase):
             freq = 1.0 / wavelength  # normalized frequency
 
             layer_slices = self._pixel_stack.get_layer_slices(
-                wavelength, nx, ny, n_lens_slices=n_lens_slices,
+                wavelength,
+                nx,
+                ny,
+                n_lens_slices=n_lens_slices,
             )
 
             R_pol, T_pol, A_pol = [], [], []
@@ -91,9 +94,13 @@ class GrcwaSolver(SolverBase):
 
                 try:
                     obj = grcwa.obj(
-                        nG, L1=[lx, 0], L2=[0, ly],
-                        freq=freq, theta=self._source.theta_deg,
-                        phi=self._source.phi_deg, verbose=0,
+                        nG,
+                        L1=[lx, 0],
+                        L2=[0, ly],
+                        freq=freq,
+                        theta=self._source.theta_deg,
+                        phi=self._source.phi_deg,
+                        verbose=0,
                     )
 
                     # Input layer (semi-infinite air)
@@ -115,8 +122,10 @@ class GrcwaSolver(SolverBase):
                     obj.GridLayer_geteps(np.concatenate(grid_eps_list))
 
                     obj.MakeExcitationPlanewave(
-                        planewave["p_amp"], planewave["s_amp"],
-                        planewave["p_phase"], planewave["s_phase"],
+                        planewave["p_amp"],
+                        planewave["s_amp"],
+                        planewave["p_phase"],
+                        planewave["s_phase"],
                         order=0,
                     )
                     R, T = obj.RT_Solve(normalize=1)
@@ -163,6 +172,7 @@ class GrcwaSolver(SolverBase):
         for arr_name, arr in result_arrays.items():
             if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
                 import warnings
+
                 warnings.warn(f"grcwa: NaN/Inf detected in {arr_name} output", stacklevel=2)
 
         return SimulationResult(
@@ -171,11 +181,18 @@ class GrcwaSolver(SolverBase):
             reflection=result_arrays["reflection"],
             transmission=result_arrays["transmission"],
             absorption=result_arrays["absorption"],
-            metadata={"solver_name": "grcwa", "fourier_order": fourier_order, "device": self.device},
+            metadata={
+                "solver_name": "grcwa",
+                "fourier_order": fourier_order,
+                "device": self.device,
+            },
         )
 
     def _compute_per_pixel_qe(
-        self, layer_slices, wavelength: float, total_absorption: float,
+        self,
+        layer_slices,
+        wavelength: float,
+        total_absorption: float,
     ) -> dict:
         """Compute per-pixel QE using eps_imag weighting in PD regions."""
         if self._pixel_stack is None:
@@ -190,11 +207,23 @@ class GrcwaSolver(SolverBase):
         pixel_weights = {}
         total_weight = 0.0
 
+        pitch = self._pixel_stack.pitch
+        si_z_end = max(
+            (layer.z_end for layer in self._pixel_stack.layers if layer.name == "silicon"),
+            default=0.0,
+        )
         for pd in self._pixel_stack.photodiodes:
             r, c = pd.pixel_index
             key = f"{pd.color}_{r}_{c}"
-            pd_z_min = pd.position[2] - pd.size[2] / 2
-            pd_z_max = pd.position[2] + pd.size[2] / 2
+            # position[2] is the PD-center depth below the silicon top surface
+            pd_cz = si_z_end - pd.position[2]
+            pd_z_min = pd_cz - pd.size[2] / 2
+            pd_z_max = pd_cz + pd.size[2] / 2
+
+            # PhotodiodeSpec.position is the offset from the pixel center;
+            # convert to absolute domain coordinates ([0, lx) x [0, ly)).
+            pd_cx = (c + 0.5) * pitch + pd.position[0]
+            pd_cy = (r + 0.5) * pitch + pd.position[1]
 
             weight = 0.0
             for s in layer_slices:
@@ -204,10 +233,10 @@ class GrcwaSolver(SolverBase):
                     continue
                 dz = z_overlap_max - z_overlap_min
                 nx_s, ny_s = s.eps_grid.shape
-                ix_min = max(0, int(((pd.position[0] - pd.size[0] / 2 + lx / 2) / lx) * nx_s))
-                ix_max = min(nx_s, int(((pd.position[0] + pd.size[0] / 2 + lx / 2) / lx) * nx_s))
-                iy_min = max(0, int(((pd.position[1] - pd.size[1] / 2 + ly / 2) / ly) * ny_s))
-                iy_max = min(ny_s, int(((pd.position[1] + pd.size[1] / 2 + ly / 2) / ly) * ny_s))
+                ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx_s))
+                ix_max = min(nx_s, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx_s)))
+                iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny_s))
+                iy_max = min(ny_s, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny_s)))
                 if ix_max <= ix_min or iy_max <= iy_min:
                     continue
                 eps_region = s.eps_grid[ix_min:ix_max, iy_min:iy_max]
@@ -216,15 +245,18 @@ class GrcwaSolver(SolverBase):
             pixel_weights[key] = max(weight, 0.0)
             total_weight += max(weight, 0.0)
 
+        # Per-pixel QE convention: absorbed power normalized by the power
+        # incident on that pixel's own area (shared with the torcwa solver).
         qe_per_pixel = {}
         if total_weight > 0:
             for key, w in pixel_weights.items():
-                qe_per_pixel[key] = total_absorption * (w / total_weight)
+                qe_per_pixel[key] = min(1.0, total_absorption * (w / total_weight) * n_pixels)
         else:
+            # Uniform stack: every pixel sees the cell-average absorption
             for r in range(n_rows):
                 for c in range(n_cols):
                     key = f"{bayer[r][c]}_{r}_{c}"
-                    qe_per_pixel[key] = total_absorption / n_pixels
+                    qe_per_pixel[key] = total_absorption
         return qe_per_pixel
 
     def get_field_distribution(
@@ -294,6 +326,7 @@ class GrcwaSolver(SolverBase):
             for s in layer_info:
                 if z_accum + s.thickness >= position:
                     from scipy.ndimage import zoom
+
                     eps = s.eps_grid
                     zx = nx_out / eps.shape[0]
                     zy = ny_out / eps.shape[1]

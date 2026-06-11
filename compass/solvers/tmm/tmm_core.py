@@ -171,19 +171,9 @@ def transfer_matrix_1d(
 
     # Extract r and t from the system matrix
     # Using boundary conditions at first and last interfaces
-    denom = (
-        eta_0 * M[0, 0]
-        + eta_0 * eta_s * M[0, 1]
-        + M[1, 0]
-        + eta_s * M[1, 1]
-    )
+    denom = eta_0 * M[0, 0] + eta_0 * eta_s * M[0, 1] + M[1, 0] + eta_s * M[1, 1]
 
-    r = (
-        eta_0 * M[0, 0]
-        + eta_0 * eta_s * M[0, 1]
-        - M[1, 0]
-        - eta_s * M[1, 1]
-    ) / denom
+    r = (eta_0 * M[0, 0] + eta_0 * eta_s * M[0, 1] - M[1, 0] - eta_s * M[1, 1]) / denom
 
     t = 2.0 * eta_0 / denom
 
@@ -227,7 +217,11 @@ def tmm_spectrum(
     for i, wl in enumerate(wavelengths):
         n_layers = n_layers_func(wl)
         R_arr[i], T_arr[i], A_arr[i] = transfer_matrix_1d(
-            n_layers, d_layers, wl, theta_inc, polarization,
+            n_layers,
+            d_layers,
+            wl,
+            theta_inc,
+            polarization,
         )
 
     return R_arr, T_arr, A_arr
@@ -276,9 +270,7 @@ def tmm_field_profile(
     cos_theta = _snell_cos_theta(n_layers, theta_inc)
 
     # Compute admittances
-    eta_vals = np.array([
-        _eta(n_layers[j], cos_theta[j], polarization) for j in range(n_total)
-    ])
+    eta_vals = np.array([_eta(n_layers[j], cos_theta[j], polarization) for j in range(n_total)])
     # Interface positions: z=0 at first interface
     interface_z = np.zeros(n_total)
     for j in range(2, n_total):

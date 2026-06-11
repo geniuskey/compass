@@ -58,9 +58,7 @@ class TMMSolver(SolverBase):
         self._layer_names: list[str] = []
         self._layer_materials: list[str] = []
         self._layer_thicknesses: np.ndarray = np.array([])
-        self._field_resolution: int = config.get("params", {}).get(
-            "field_resolution", 200
-        )
+        self._field_resolution: int = config.get("params", {}).get("field_resolution", 200)
         self._polarization_average: bool = config.get("params", {}).get(
             "polarization_average", True
         )
@@ -164,7 +162,7 @@ class TMMSolver(SolverBase):
         # We need to reverse the layer order for TMM convention where
         # layer[0] = incident medium, layer[-1] = substrate.
         d_tmm = d[::-1].copy()
-        d_tmm[0] = np.inf   # incident medium (air)
+        d_tmm[0] = np.inf  # incident medium (air)
         d_tmm[-1] = np.inf  # substrate (silicon)
         return d_tmm
 
@@ -201,7 +199,11 @@ class TMMSolver(SolverBase):
 
             for pol in pol_runs:
                 R, T, A = transfer_matrix_1d(
-                    n_layers_tmm, d_layers_tmm, wavelength, theta_rad, pol,
+                    n_layers_tmm,
+                    d_layers_tmm,
+                    wavelength,
+                    theta_rad,
+                    pol,
                 )
                 R_pol.append(R)
                 T_pol.append(T)
@@ -235,16 +237,15 @@ class TMMSolver(SolverBase):
             },
         )
 
-    def _compute_approximate_qe(
-        self, total_absorption: np.ndarray
-    ) -> dict[str, np.ndarray]:
+    def _compute_approximate_qe(self, total_absorption: np.ndarray) -> dict[str, np.ndarray]:
         """Compute approximate per-pixel QE from total stack absorption.
 
-        Since TMM has no lateral resolution, we approximate per-pixel QE by:
-        1. Computing the fraction of absorption that occurs in silicon
-           (using Beer-Lambert law for the silicon layer thickness).
-        2. Distributing equally among all pixels (since TMM sees no lateral
-           variation).
+        TMM has no lateral resolution: every pixel sees the same uniform 1D
+        stack, so under the standard per-pixel QE convention (absorbed power
+        normalized by the power incident on that pixel's own area — shared
+        with the RCWA solvers) each pixel's approximate QE equals the total
+        stack absorption. This includes parasitic absorption in the color
+        filter and other lossy layers, so it is an upper bound on silicon QE.
 
         Args:
             total_absorption: Total absorption spectrum A(lambda).
@@ -262,10 +263,7 @@ class TMMSolver(SolverBase):
         if n_pixels == 0:
             return {}
 
-        # For TMM, absorption is total stack absorption (silicon + other layers).
-        # We use total absorption as a proxy for QE distributed among pixels.
-        # Each pixel gets an equal share since we have no lateral information.
-        per_pixel_qe = total_absorption / n_pixels
+        per_pixel_qe = total_absorption
 
         qe_per_pixel: dict[str, np.ndarray] = {}
         for r in range(n_rows):
@@ -337,7 +335,9 @@ class TMMSolver(SolverBase):
 
         if plane == "xy":
             # Uniform field in xy plane (no lateral variation)
-            val = np.interp(position, z_points, intensity_1d, left=intensity_1d[0], right=intensity_1d[-1])
+            val = np.interp(
+                position, z_points, intensity_1d, left=intensity_1d[0], right=intensity_1d[-1]
+            )
             return np.full((nx_out, nx_out), val)
         elif plane in ("xz", "yz"):
             # Replicate 1D z-profile across lateral dimension

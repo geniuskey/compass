@@ -134,7 +134,10 @@ class PhotodiodeSpec:
     """Photodiode region definition.
 
     Attributes:
-        position: (x, y, z) relative to pixel center in um.
+        position: (x, y, z) in um. x and y are offsets from the pixel center;
+            z is the depth of the PD center below the silicon top surface
+            (PD center z = si_z_end - position[2], matching
+            GeometryBuilder.photodiode_mask_3d).
         size: (dx, dy, dz) in um.
         pixel_index: (row, col) in unit cell.
         color: Color channel (R, G, B).

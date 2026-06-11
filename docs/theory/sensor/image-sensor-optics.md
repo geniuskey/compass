@@ -71,9 +71,9 @@ Silicon is the absorbing medium where photon-to-electron conversion occurs. The 
 |------------|-------|------------------------|
 | 400 nm | Violet | ~0.1 um |
 | 450 nm | Blue | ~0.4 um |
-| 550 nm | Green | ~1.7 um |
-| 650 nm | Red | ~3.3 um |
-| 800 nm | NIR | ~10 um |
+| 550 nm | Green | ~1.5 um |
+| 650 nm | Red | ~3.5 um |
+| 800 nm | NIR | ~12 um |
 
 This means blue light is absorbed near the surface while red/NIR light requires several micrometers of silicon. Typical BSI pixel silicon thickness is 2-4 um.
 

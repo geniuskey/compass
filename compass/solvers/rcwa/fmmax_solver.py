@@ -72,9 +72,7 @@ class FmmaxSolver(SolverBase):
         if not pixel_stack.layers:
             raise ValueError("pixel_stack must have at least one layer")
         self._pixel_stack = pixel_stack
-        logger.info(
-            f"fmmax: geometry setup, formulation={self._fmm_formulation}"
-        )
+        logger.info(f"fmmax: geometry setup, formulation={self._fmm_formulation}")
 
     def setup_source(self, source_config: dict) -> None:
         """Configure excitation source.
@@ -91,9 +89,7 @@ class FmmaxSolver(SolverBase):
         if np.any(self._source.wavelengths <= 0):
             raise ValueError("all wavelengths must be positive")
         self._source_config = source_config
-        logger.info(
-            f"fmmax: source setup - {self._source.n_wavelengths} wavelengths"
-        )
+        logger.info(f"fmmax: source setup - {self._source.n_wavelengths} wavelengths")
 
     def run(self) -> SimulationResult:
         """Execute fmmax RCWA simulation and return standardized results.
@@ -116,8 +112,7 @@ class FmmaxSolver(SolverBase):
             from fmmax import basis, fmm
         except ImportError as err:
             raise ImportError(
-                "fmmax and jax are required. "
-                "Install with: pip install fmmax jax"
+                "fmmax and jax are required. Install with: pip install fmmax jax"
             ) from err
 
         # Configure JAX device
@@ -160,9 +155,7 @@ class FmmaxSolver(SolverBase):
         all_A: list[float] = []
 
         for _wl_idx, wavelength in enumerate(self._source.wavelengths):
-            layer_slices = self._pixel_stack.get_layer_slices(
-                wavelength, nx, ny
-            )
+            layer_slices = self._pixel_stack.get_layer_slices(wavelength, nx, ny)
 
             R_pol: list[float] = []
             T_pol: list[float] = []
@@ -184,10 +177,7 @@ class FmmaxSolver(SolverBase):
                         fmm=fmm,
                     )
                 except Exception as e:
-                    logger.error(
-                        f"fmmax failed at lambda={wavelength:.4f}um, "
-                        f"pol={pol}: {e}"
-                    )
+                    logger.error(f"fmmax failed at lambda={wavelength:.4f}um, pol={pol}: {e}")
                     R, T, A = 0.0, 0.0, 0.0
 
                 R_pol.append(R)
@@ -197,9 +187,7 @@ class FmmaxSolver(SolverBase):
                 self._last_layer_slices = layer_slices
                 self._last_wavelength = wavelength
 
-                pixel_qe = self._compute_per_pixel_qe(
-                    layer_slices, wavelength, A
-                )
+                pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
                 for key, val in pixel_qe.items():
                     qe_pol_accum.setdefault(key, []).append(val)
 
@@ -355,9 +343,7 @@ class FmmaxSolver(SolverBase):
             Dictionary mapping pixel key to QE value.
         """
         if self._pixel_stack is None:
-            raise RuntimeError(
-                "pixel_stack is not set; call setup_geometry() first"
-            )
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         bayer = self._pixel_stack.bayer_map
         n_rows, n_cols = self._pixel_stack.unit_cell
         n_pixels = n_rows * n_cols
@@ -368,11 +354,23 @@ class FmmaxSolver(SolverBase):
         pixel_weights: dict[str, float] = {}
         total_weight = 0.0
 
+        pitch = self._pixel_stack.pitch
+        si_z_end = max(
+            (layer.z_end for layer in self._pixel_stack.layers if layer.name == "silicon"),
+            default=0.0,
+        )
         for pd in self._pixel_stack.photodiodes:
             r, c = pd.pixel_index
             key = f"{pd.color}_{r}_{c}"
-            pd_z_min = pd.position[2] - pd.size[2] / 2
-            pd_z_max = pd.position[2] + pd.size[2] / 2
+            # position[2] is the PD-center depth below the silicon top surface
+            pd_cz = si_z_end - pd.position[2]
+            pd_z_min = pd_cz - pd.size[2] / 2
+            pd_z_max = pd_cz + pd.size[2] / 2
+
+            # PhotodiodeSpec.position is the offset from the pixel center;
+            # convert to absolute domain coordinates ([0, lx) x [0, ly)).
+            pd_cx = (c + 0.5) * pitch + pd.position[0]
+            pd_cy = (r + 0.5) * pitch + pd.position[1]
 
             weight = 0.0
             for s in layer_slices:
@@ -382,34 +380,10 @@ class FmmaxSolver(SolverBase):
                     continue
                 dz = z_overlap_max - z_overlap_min
                 nx_s, ny_s = s.eps_grid.shape
-                ix_min = max(
-                    0,
-                    int(
-                        ((pd.position[0] - pd.size[0] / 2 + lx / 2) / lx)
-                        * nx_s
-                    ),
-                )
-                ix_max = min(
-                    nx_s,
-                    int(
-                        ((pd.position[0] + pd.size[0] / 2 + lx / 2) / lx)
-                        * nx_s
-                    ),
-                )
-                iy_min = max(
-                    0,
-                    int(
-                        ((pd.position[1] - pd.size[1] / 2 + ly / 2) / ly)
-                        * ny_s
-                    ),
-                )
-                iy_max = min(
-                    ny_s,
-                    int(
-                        ((pd.position[1] + pd.size[1] / 2 + ly / 2) / ly)
-                        * ny_s
-                    ),
-                )
+                ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx_s))
+                ix_max = min(nx_s, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx_s)))
+                iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny_s))
+                iy_max = min(ny_s, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny_s)))
                 if ix_max <= ix_min or iy_max <= iy_min:
                     continue
                 eps_region = s.eps_grid[ix_min:ix_max, iy_min:iy_max]
@@ -418,15 +392,18 @@ class FmmaxSolver(SolverBase):
             pixel_weights[key] = max(weight, 0.0)
             total_weight += max(weight, 0.0)
 
+        # Per-pixel QE convention: absorbed power normalized by the power
+        # incident on that pixel's own area (shared with the torcwa solver).
         qe_per_pixel: dict[str, float] = {}
         if total_weight > 0:
             for key, w in pixel_weights.items():
-                qe_per_pixel[key] = total_absorption * (w / total_weight)
+                qe_per_pixel[key] = min(1.0, total_absorption * (w / total_weight) * n_pixels)
         else:
+            # Uniform stack: every pixel sees the cell-average absorption
             for r in range(n_rows):
                 for c in range(n_cols):
                     key = f"{bayer[r][c]}_{r}_{c}"
-                    qe_per_pixel[key] = total_absorption / n_pixels
+                    qe_per_pixel[key] = total_absorption
         return qe_per_pixel
 
     def get_field_distribution(
@@ -454,9 +431,7 @@ class FmmaxSolver(SolverBase):
             return np.zeros((64, 64))
 
         if self._pixel_stack is None:
-            raise RuntimeError(
-                "pixel_stack is not set; call setup_geometry() first"
-            )
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         layer_info = self._last_layer_slices
         _lx, ly = self._pixel_stack.domain_size
         nz = len(layer_info)
@@ -476,9 +451,7 @@ class FmmaxSolver(SolverBase):
                 col = eps[:, y_idx]
                 x_orig = np.linspace(0, 1, len(col))
                 x_new = np.linspace(0, 1, nx_out)
-                field_2d[:, zi] = np.interp(
-                    x_new, x_orig, np.abs(np.imag(col)) + 1e-10
-                )
+                field_2d[:, zi] = np.interp(x_new, x_orig, np.abs(np.imag(col)) + 1e-10)
             if component == "|E|2":
                 for xi in range(nx_out):
                     intensity = 1.0
@@ -498,9 +471,7 @@ class FmmaxSolver(SolverBase):
                     eps = s.eps_grid
                     zx = nx_out / eps.shape[0]
                     zy = ny_out / eps.shape[1]
-                    return np.asarray(
-                        np.abs(zoom(np.real(eps), (zx, zy), order=1))
-                    )
+                    return np.asarray(np.abs(zoom(np.real(eps), (zx, zy), order=1)))
                 z_accum += s.thickness
 
         return np.zeros((64, 64))

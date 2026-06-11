@@ -118,8 +118,14 @@ class FlaportFdtdSolver(SolverBase):
                         eps_3d=None,
                     )
                     Sz_ref_above, Sz_ref_below, _ = self._run_and_poynting(
-                        grid_ref, n_steps, snap_start, z_above, z_below, z_trans,
-                        damping_tensor=None, pml_layers=pml_layers,
+                        grid_ref,
+                        n_steps,
+                        snap_start,
+                        z_above,
+                        z_below,
+                        z_trans,
+                        damping_tensor=None,
+                        pml_layers=pml_layers,
                     )
                     P_inc = abs(Sz_ref_below)
 
@@ -144,8 +150,14 @@ class FlaportFdtdSolver(SolverBase):
                     self._last_eps_3d = eps_3d
 
                     Sz_above, _Sz_below, Sz_trans = self._run_and_poynting(
-                        grid, n_steps, snap_start, z_above, z_below, z_trans,
-                        damping_tensor=damping_tensor, pml_layers=pml_layers,
+                        grid,
+                        n_steps,
+                        snap_start,
+                        z_above,
+                        z_below,
+                        z_trans,
+                        damping_tensor=damping_tensor,
+                        pml_layers=pml_layers,
                     )
 
                     # --- Compute R, T, A using reference normalization ---
@@ -332,10 +344,7 @@ class FlaportFdtdSolver(SolverBase):
                     (z_below, Sz_below_snaps),
                     (z_trans, Sz_trans_snaps),
                 ]:
-                    Sz = (
-                        E_np[:, :, z, 0] * H_np[:, :, z, 1]
-                        - E_np[:, :, z, 1] * H_np[:, :, z, 0]
-                    )
+                    Sz = E_np[:, :, z, 0] * H_np[:, :, z, 1] - E_np[:, :, z, 1] * H_np[:, :, z, 0]
                     snaps.append(float(np.mean(Sz)))
 
         return (
@@ -384,19 +393,31 @@ class FlaportFdtdSolver(SolverBase):
         pixel_weights = {}
         total_weight = 0.0
 
+        pitch = self._pixel_stack.pitch
+        si_z_end = max(
+            (layer.z_end for layer in self._pixel_stack.layers if layer.name == "silicon"),
+            default=0.0,
+        )
         for pd in self._pixel_stack.photodiodes:
             r, c = pd.pixel_index
             color = pd.color
             key = f"{color}_{r}_{c}"
 
+            # PhotodiodeSpec.position is the offset from the pixel center;
+            # convert to absolute domain coordinates ([0, lx) x [0, ly)).
+            pd_cx = (c + 0.5) * pitch + pd.position[0]
+            pd_cy = (r + 0.5) * pitch + pd.position[1]
+
             # Map PD bounds to grid indices
-            ix_min = max(0, int(((pd.position[0] - pd.size[0] / 2 + lx / 2) / lx) * nx))
-            ix_max = min(nx, int(((pd.position[0] + pd.size[0] / 2 + lx / 2) / lx) * nx))
-            iy_min = max(0, int(((pd.position[1] - pd.size[1] / 2 + ly / 2) / ly) * ny))
-            iy_max = min(ny, int(((pd.position[1] + pd.size[1] / 2 + ly / 2) / ly) * ny))
-            iz_min = max(0, int(((pd.position[2] - pd.size[2] / 2 - z_min) / (z_max - z_min)) * nz))
+            ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx))
+            ix_max = min(nx, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx)))
+            iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny))
+            iy_max = min(ny, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny)))
+            # position[2] is the PD-center depth below the silicon top surface
+            pd_cz = si_z_end - pd.position[2]
+            iz_min = max(0, int(((pd_cz - pd.size[2] / 2 - z_min) / (z_max - z_min)) * nz))
             iz_max = min(
-                nz, int(((pd.position[2] + pd.size[2] / 2 - z_min) / (z_max - z_min)) * nz)
+                nz, int(np.ceil(((pd_cz + pd.size[2] / 2 - z_min) / (z_max - z_min)) * nz))
             )
 
             if ix_max <= ix_min or iy_max <= iy_min or iz_max <= iz_min:
@@ -409,16 +430,19 @@ class FlaportFdtdSolver(SolverBase):
             pixel_weights[key] = weight
             total_weight += weight
 
+        # Per-pixel QE convention: absorbed power normalized by the power
+        # incident on that pixel's own area (shared with the torcwa solver).
         qe_per_pixel = {}
         if total_weight > 0:
             for key, w in pixel_weights.items():
-                qe_per_pixel[key] = total_absorption * (w / total_weight)
+                qe_per_pixel[key] = min(1.0, total_absorption * (w / total_weight) * n_pixels)
         else:
+            # Uniform stack: every pixel sees the cell-average absorption
             for r in range(n_rows):
                 for c in range(n_cols):
                     color = bayer[r][c]
                     key = f"{color}_{r}_{c}"
-                    qe_per_pixel[key] = total_absorption / n_pixels
+                    qe_per_pixel[key] = total_absorption
 
         return qe_per_pixel
 
