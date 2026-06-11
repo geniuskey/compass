@@ -1,4 +1,5 @@
 """Cone illumination model — exit pupil illumination."""
+
 from __future__ import annotations
 
 import logging
@@ -9,6 +10,7 @@ from compass.core.units import deg_to_rad
 
 logger = logging.getLogger(__name__)
 
+
 class ConeIllumination:
     """Model cone illumination from lens exit pupil.
 
@@ -16,7 +18,14 @@ class ConeIllumination:
     Angular sampling generates planewave directions for weighted summation.
     """
 
-    def __init__(self, cra_deg: float = 0.0, f_number: float = 2.0, n_points: int = 37, sampling: str = "fibonacci", weighting: str = "cosine"):
+    def __init__(
+        self,
+        cra_deg: float = 0.0,
+        f_number: float = 2.0,
+        n_points: int = 37,
+        sampling: str = "fibonacci",
+        weighting: str = "cosine",
+    ):
         self.cra_deg = cra_deg
         self.f_number = f_number
         self.n_points = n_points
@@ -108,7 +117,7 @@ class ConeIllumination:
         points while avoiding the strong center bias of a naive theta/phi grid.
         """
         n_points = max(1, int(self.n_points))
-        n_rings = max(1, int(round(np.sqrt(n_points))))
+        n_rings = max(1, round(np.sqrt(n_points)))
         counts = self._ring_counts(n_points, n_rings)
         cap = 1.0 - np.cos(self.half_cone_rad)
 
@@ -164,10 +173,8 @@ class ConeIllumination:
         chief = np.array([np.sin(cra_rad), 0.0, np.cos(cra_rad)])
         basis_x = np.array([np.cos(cra_rad), 0.0, -np.sin(cra_rad)])
         basis_y = np.array([0.0, 1.0, 0.0])
-        direction = (
-            np.cos(theta_local) * chief
-            + np.sin(theta_local)
-            * (np.cos(phi_local) * basis_x + np.sin(phi_local) * basis_y)
+        direction = np.cos(theta_local) * chief + np.sin(theta_local) * (
+            np.cos(phi_local) * basis_x + np.sin(phi_local) * basis_y
         )
         direction = direction / np.linalg.norm(direction)
         theta = np.arccos(np.clip(direction[2], -1.0, 1.0))
@@ -186,7 +193,7 @@ class ConeIllumination:
     def _ring_counts(n_points: int, n_rings: int) -> list[int]:
         weights = np.arange(1, n_rings + 1, dtype=float)
         raw = n_points * weights / weights.sum()
-        counts = [max(1, int(round(v))) for v in raw]
+        counts = [max(1, round(v)) for v in raw]
         while sum(counts) < n_points:
             counts[-1] += 1
         while sum(counts) > n_points:
@@ -213,10 +220,10 @@ class ConeIllumination:
         elif self.weighting == "cosine":
             return float(np.cos(theta))
         elif self.weighting == "cos4":
-            return float(np.cos(theta)**4)
+            return float(np.cos(theta) ** 4)
         elif self.weighting == "gaussian":
             sigma = self.half_cone_rad / 2
-            return float(np.exp(-theta**2 / (2 * sigma**2)))
+            return float(np.exp(-(theta**2) / (2 * sigma**2)))
         elif self.weighting == "custom":
             # Default to uniform when no callable is provided via string
             return 1.0

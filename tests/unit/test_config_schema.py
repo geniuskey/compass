@@ -2,8 +2,8 @@
 
 
 from compass.core.config_schema import (
-    CompassConfig,
     ColorFilterConfig,
+    CompassConfig,
     PixelConfig,
     SolverConfig,
     SourceConfig,

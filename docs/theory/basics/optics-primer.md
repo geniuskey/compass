@@ -125,12 +125,12 @@ But the absorption is not the same for all colors:
 
 | Wavelength | Color | Absorption Depth in Silicon |
 |---|---|---|
-| 450 nm | Blue | ~0.2 um |
+| 450 nm | Blue | ~0.4 um |
 | 550 nm | Green | ~1.5 um |
-| 650 nm | Red | ~3.0 um |
-| 850 nm | Near-IR | ~15 um |
+| 650 nm | Red | ~3.5 um |
+| 850 nm | Near-IR | ~19 um |
 
-**Absorption depth** is the distance light must travel in silicon before most of it (about 63%) is absorbed. Blue light is absorbed very quickly -- within the first 0.2 um of silicon. Red light penetrates much deeper, needing about 3 um. Near-infrared light can travel even further.
+**Absorption depth** is the distance light must travel in silicon before most of it (about 63%) is absorbed. Blue light is absorbed very quickly -- within the first 0.4 um of silicon. Red light penetrates much deeper, needing about 3 um. Near-infrared light can travel even further.
 
 This has huge implications for pixel design:
 

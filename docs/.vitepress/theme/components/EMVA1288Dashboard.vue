@@ -109,15 +109,21 @@ const convGain = computed(() => 1000 / fwc.value)
 const snrMax = computed(() => 20 * Math.log10(Math.sqrt(fwc.value)))
 const dr = computed(() => 20 * Math.log10(fwc.value / readNoise.value))
 const drStops = computed(() => dr.value / 6.02)
-const absThreshold = computed(() => readNoise.value / peakQE.value)
+const absThreshold = computed(() => readNoise.value / peakQE.value.qe)
 
 const peakQE = computed(() => {
+  // Search the visible band: interference in the stack shifts the QE peak
+  // away from 550nm as silicon thickness changes.
   const stack = defaultBsiStack('green', siThick.value)
-  const r = tmmCalc(stack, 'air', 'sio2', 0.55, 0, 'avg')
-  return r.layerA[SI_LAYER_IDX]
+  let best = { qe: 0, wl: 0.55 }
+  for (let wl = 0.45; wl <= 0.65 + 1e-9; wl += 0.01) {
+    const qe = tmmCalc(stack, 'air', 'sio2', wl, 0, 'avg').layerA[SI_LAYER_IDX]
+    if (qe > best.qe) best = { qe, wl }
+  }
+  return best
 })
 
-const peakResp = computed(() => peakQE.value * 550 / 1240)
+const peakResp = computed(() => peakQE.value.qe * (peakQE.value.wl * 1000) / 1240)
 const adcSteps = computed(() => 2 ** bitDepth.value)
 const quantNoise = computed(() => (fwc.value / adcSteps.value) / Math.sqrt(12))
 
@@ -127,7 +133,7 @@ function gradeValue(val: number, goodThresh: number, badThresh: number, higherBe
 }
 
 const emvaParams = computed(() => [
-  { key: 'qe', label: t('Peak QE (550nm)', '피크 QE (550nm)'), value: (peakQE.value * 100).toFixed(1), unit: '%', grade: gradeValue(peakQE.value * 100, 70, 40, true) },
+  { key: 'qe', label: t(`Peak QE (${Math.round(peakQE.value.wl * 1000)}nm)`, `피크 QE (${Math.round(peakQE.value.wl * 1000)}nm)`), value: (peakQE.value.qe * 100).toFixed(1), unit: '%', grade: gradeValue(peakQE.value.qe * 100, 70, 40, true) },
   { key: 'resp', label: t('Peak Responsivity', '피크 응답도'), value: peakResp.value.toFixed(3), unit: 'A/W', grade: 'mid' as const },
   { key: 'fwc', label: t('Saturation Capacity', '포화 용량'), value: fwc.value.toLocaleString(), unit: 'e-', grade: gradeValue(fwc.value, 8000, 3000, true) },
   { key: 'read', label: t('Temporal Dark Noise', '시간적 암노이즈'), value: readNoise.value.toFixed(1), unit: 'e- rms', grade: gradeValue(readNoise.value, 2, 10, false) },

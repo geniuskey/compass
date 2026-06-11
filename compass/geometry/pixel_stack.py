@@ -6,6 +6,7 @@ producing both layer-slice output (for RCWA) and voxel-grid output (for FDTD).
 
 from __future__ import annotations
 
+import itertools
 import logging
 
 import numpy as np
@@ -499,10 +500,7 @@ class PixelStack:
 
     def _has_cf_channel_overrides(self, cf_cfg: dict) -> bool:
         """Whether any color filter channel uses the new per-color schema."""
-        for color in _CF_CHANNEL_NAMES:
-            if self._cf_channel_config(cf_cfg, color):
-                return True
-        return False
+        return any(self._cf_channel_config(cf_cfg, color) for color in _CF_CHANNEL_NAMES)
 
     def _color_filter_spec(self, cf_cfg: dict, color: str) -> dict:
         """Resolve material, height, and contact angle for one CF channel."""
@@ -622,7 +620,7 @@ class PixelStack:
 
         slices = []
         breaks = self._color_filter_slice_breaks(layer, cf_cfg)
-        for i, (z0_rel, z1_rel) in enumerate(zip(breaks[:-1], breaks[1:])):
+        for i, (z0_rel, z1_rel) in enumerate(itertools.pairwise(breaks)):
             thickness = z1_rel - z0_rel
             if thickness <= 0.0:
                 continue
@@ -790,7 +788,7 @@ class PixelStack:
         material = si_cfg.get("material", "silicon")
         breaks = self._silicon_slice_breaks(layer, si_cfg)
         slices: list[LayerSlice] = []
-        for i, (z0_rel, z1_rel) in enumerate(zip(breaks[:-1], breaks[1:])):
+        for i, (z0_rel, z1_rel) in enumerate(itertools.pairwise(breaks)):
             thickness = z1_rel - z0_rel
             if thickness <= 0.0:
                 continue

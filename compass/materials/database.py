@@ -458,7 +458,7 @@ class MaterialDB:
         self._materials["tungsten"] = mat
 
     def _register_color_filter_fallback(self, name: str) -> None:
-        """Register color filter with approximate Lorentzian absorption profiles."""
+        """Register color filter with approximate Gaussian-passband absorption profiles."""
         wl = np.linspace(0.38, 0.78, 41)
 
         # Generic absorption profiles for R, G, B filters

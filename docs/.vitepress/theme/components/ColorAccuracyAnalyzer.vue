@@ -502,6 +502,10 @@ const DE_METHODS = [
 ]
 
 // ---- ColorChecker Classic 24 data (standard 24 patches, 7 wavelengths 400-700nm @ 50nm) ----
+// srgb: nominal post-2014 X-Rite sRGB(D65) values (approximate; X-Rite specifies the
+// chart in L*a*b* D50/2 -- see the official ColorChecker data sheet).
+// refl: coarse 50nm-sampled reflectance approximations for spectral simulation,
+// NOT measured X-Rite spectra; adequate for relative CCM/Delta-E exploration only.
 const CLASSIC_PATCHES: { name: string; srgb: number[]; refl: number[] }[] = [
   { name: 'Dark Skin',     srgb: [115,82,68],   refl: [0.055,0.058,0.069,0.099,0.132,0.143,0.146] },
   { name: 'Light Skin',    srgb: [194,150,130],  refl: [0.092,0.107,0.152,0.191,0.260,0.286,0.275] },
@@ -530,6 +534,10 @@ const CLASSIC_PATCHES: { name: string; srgb: number[]; refl: number[] }[] = [
 ]
 
 // ---- ColorChecker SG 140 data (L*a*b* D50/2°) ----
+// Approximate patch values in the X-Rite-specified D50/2° Lab space; rendering to
+// sRGB(D65) goes through the Bradford chromatic adaptation below. Patch spectra are
+// reconstructed from Lab via a 3-Gaussian basis (no measured SG spectra), so absolute
+// spectral accuracy is limited -- relative comparisons remain meaningful.
 const SG_LAB: number[][] = [
   [96.04,-0.12,0.31],[53.35,-36.85,15.22],[70.48,-32.43,0.55],[48.52,-28.76,-8.49],[39.43,-16.58,-26.34],
   [55.28,9.35,-34.09],[53.34,14.25,-13.53],[80.57,3.73,-7.71],[50.72,51.66,-14.77],[96.04,-0.12,0.31],

@@ -124,11 +124,22 @@ const channels = [
   { key: 'b' as const, label: 'B', color: '#3498db' },
 ]
 
+// Optical stack height between microlens and photodiode (µm) and photodiode
+// aperture fraction of the pixel — typical BSI values.
+const STACK_HEIGHT_UM = 2.0
+const PD_APERTURE_FRACTION = 0.7
+
 function riAtRadius(rNorm: number, chOffset: number): number {
   const cra = maxCRA.value * rNorm * (Math.PI / 180)
   const cos4 = Math.cos(cra) ** 4
-  const mismatch = (1 - mlShift.value) * rNorm
-  const mlCoupling = Math.exp(-2 * (mismatch * maxCRA.value / 15) ** 2)
+  // Residual chief-ray angle after microlens shift compensation displaces the
+  // focused spot laterally by δ = h·tan(θ_res); coupling falls off as the spot
+  // walks off the photodiode aperture (half-width a = f_pd·p/2). Smaller
+  // pixels are hit harder by the same mismatch.
+  const thetaRes = (1 - mlShift.value) * cra
+  const spotShift = STACK_HEIGHT_UM * Math.tan(Math.abs(thetaRes))
+  const pdHalfWidth = (PD_APERTURE_FRACTION * pitch.value) / 2
+  const mlCoupling = Math.exp(-((spotShift / pdHalfWidth) ** 2))
   const cfShift = 1 - chOffset * rNorm * 0.02
   return cos4 * mlCoupling * Math.max(0.5, cfShift) * 100
 }

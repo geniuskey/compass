@@ -1,5 +1,7 @@
 """Unit tests for GeometryBuilder."""
 
+import itertools
+
 import numpy as np
 import pytest
 
@@ -408,7 +410,7 @@ class TestMetalGridRounded:
                 corner_radius=r,
             )
             fractions.append(mask.mean())
-        for a, b in zip(fractions, fractions[1:]):
+        for a, b in itertools.pairwise(fractions):
             assert b >= a - 1e-12
 
     def test_per_pixel_symmetry(self):

@@ -1,5 +1,5 @@
 # Material: Color Filter (Green)
-# Source: Approximate Lorentzian absorption profile
+# Model: approximate Gaussian passband, k = k_max*(1 - exp(-((wl-c)/w)^2))
 # Passband center: 0.53 um, FWHM width: 0.05 um
 # n_base = 1.55, k_max = 0.12
 # wavelength(um), n, k

@@ -41,6 +41,7 @@ class TorcwaSolver(SolverBase):
         """Configure numerical precision settings."""
         try:
             import torch
+
             stability = self.config.get("stability", {})
             torch.backends.cuda.matmul.allow_tf32 = stability.get("allow_tf32", False)
             torch.backends.cudnn.allow_tf32 = stability.get("allow_tf32", False)
@@ -83,9 +84,7 @@ class TorcwaSolver(SolverBase):
             import torch
             import torcwa
         except ImportError as err:
-            raise ImportError(
-                "torcwa is required. Install with: pip install torcwa"
-            ) from err
+            raise ImportError("torcwa is required. Install with: pip install torcwa") from err
 
         params = self.config.get("params", {})
         fourier_order = params.get("fourier_order", [9, 9])
@@ -108,10 +107,15 @@ class TorcwaSolver(SolverBase):
         all_R, all_T, all_A = [], [], []
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
-            logger.debug(f"torcwa: wavelength {wavelength:.4f} um ({wl_idx+1}/{self._source.n_wavelengths})")
+            logger.debug(
+                f"torcwa: wavelength {wavelength:.4f} um ({wl_idx + 1}/{self._source.n_wavelengths})"
+            )
 
             layer_slices = self._pixel_stack.get_layer_slices(
-                wavelength, nx, ny, n_lens_slices=n_lens_slices,
+                wavelength,
+                nx,
+                ny,
+                n_lens_slices=n_lens_slices,
             )
 
             qe_pol_accum: dict[str, list] = {}
@@ -120,9 +124,15 @@ class TorcwaSolver(SolverBase):
             for pol in pol_runs:
                 try:
                     result = self._run_single(
-                        torcwa, torch, wavelength, L,
-                        fourier_order, layer_slices,
-                        pol, dtype, precision_strategy,
+                        torcwa,
+                        torch,
+                        wavelength,
+                        L,
+                        fourier_order,
+                        layer_slices,
+                        pol,
+                        dtype,
+                        precision_strategy,
                     )
                     R_pol.append(result["R"])
                     T_pol.append(result["T"])
@@ -157,6 +167,7 @@ class TorcwaSolver(SolverBase):
         for arr_name, arr in result_arrays.items():
             if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
                 import warnings
+
                 warnings.warn(f"torcwa: NaN/Inf detected in {arr_name} output", stacklevel=2)
 
         return SimulationResult(
@@ -209,28 +220,52 @@ class TorcwaSolver(SolverBase):
         # Track layers for per-pixel QE and field extraction
         layer_info = []
         for s in reversed(layer_slices):
-            eps_tensor = torch.tensor(
-                s.eps_grid, dtype=dtype, device=self.device
-            )
+            eps_tensor = torch.tensor(s.eps_grid, dtype=dtype, device=self.device)
             sim.add_layer(thickness=s.thickness, eps=eps_tensor)
             layer_info.append(s)
 
         # Solve (no add_output_layer — defaults to free space)
         sim.solve_global_smatrix()
 
+        # Map COMPASS polarization runs onto torcwa's ps notation:
+        # TE = s-polarized, TM = p-polarized. amplitude is [Ep, Es].
+        if polarization in ("TM", "p", "P"):
+            in_tag, source_amp = "p", [1.0, 0.0]
+        else:
+            in_tag, source_amp = "s", [0.0, 1.0]
+
         # Extract R, T via S_parameters method
         if callable(sim.S_parameters):
-            # torcwa >= 0.1.x: S_parameters is a method
-            S_R = sim.S_parameters(
-                orders=[0, 0], direction='forward', port='reflection',
-                polarization='xx', power_norm=True,
-            )
-            S_T = sim.S_parameters(
-                orders=[0, 0], direction='forward', port='transmission',
-                polarization='xx', power_norm=True,
-            )
-            R = float(torch.abs(S_R) ** 2)
-            T = float(torch.abs(S_T) ** 2)
+            # Total reflectance/transmittance: sum diffraction efficiency over
+            # ALL Fourier orders and BOTH output polarizations. The zeroth
+            # order alone underestimates R/T (and overstates A) as soon as
+            # higher orders propagate, which is the norm for multi-um Bayer
+            # unit cells in the visible.
+            all_orders = [
+                [m, n]
+                for m in range(-fourier_order[0], fourier_order[0] + 1)
+                for n in range(-fourier_order[1], fourier_order[1] + 1)
+            ]
+            R = 0.0
+            T = 0.0
+            for out_tag in ("s", "p"):
+                pol_tag = out_tag + in_tag
+                S_R = sim.S_parameters(
+                    orders=all_orders,
+                    direction="forward",
+                    port="reflection",
+                    polarization=pol_tag,
+                    power_norm=True,
+                )
+                S_T = sim.S_parameters(
+                    orders=all_orders,
+                    direction="forward",
+                    port="transmission",
+                    polarization=pol_tag,
+                    power_norm=True,
+                )
+                R += float(torch.sum(torch.abs(S_R) ** 2))
+                T += float(torch.sum(torch.abs(S_T) ** 2))
         else:
             # Legacy: S_parameters is an object with R, T attributes
             R = float(sim.S_parameters.R.real)
@@ -242,15 +277,140 @@ class TorcwaSolver(SolverBase):
         self._last_layer_info = layer_info
         self._last_wavelength = wavelength
 
-        # Per-pixel QE: compute absorption in each photodiode region
-        qe_per_pixel = self._compute_per_pixel_qe(
-            sim, torch, layer_slices, wavelength, A
-        )
+        # Per-pixel QE: integrate the absorbed power density eps'' |E|^2 in
+        # the silicon under each photodiode footprint. Falls back to the
+        # geometric eps''-weighting approximation if field reconstruction
+        # is unavailable.
+        try:
+            sim.source_planewave(
+                amplitude=source_amp,
+                direction="forward",
+                notation="ps",
+            )
+            qe_per_pixel = self._compute_per_pixel_qe_fields(sim, torch, layer_info, wavelength, A)
+        except Exception as e:
+            logger.warning(
+                f"torcwa: field-based QE failed at λ={wavelength:.4f}um ({e}); "
+                "falling back to eps''-weight approximation"
+            )
+            qe_per_pixel = self._compute_per_pixel_qe(sim, torch, layer_slices, wavelength, A)
 
         return {"R": R, "T": T, "A": A, "qe_per_pixel": qe_per_pixel}
 
+    def _compute_per_pixel_qe_fields(
+        self,
+        sim,
+        torch,
+        layer_info,
+        wavelength: float,
+        total_absorption: float,
+    ) -> dict:
+        """Per-pixel QE from field reconstruction.
+
+        The absorbed power density is p(r) = (omega eps0 / 2) eps''(r) |E(r)|^2.
+        Normalized by the incident power (n_in cos(theta) A_cell / 2) sqrt(eps0/mu0)
+        |E0|^2 this gives, in COMPASS units (lengths in um, |E0| = 1):
+
+            QE_pd = k0 * sum_PD eps'' |E|^2 dV / (n_in cos(theta) A_cell)
+
+        QE counts absorption in silicon slices only (parasitic absorption in
+        color filters / metal grid is excluded), integrated over the photodiode
+        xy footprint and the full silicon depth. Per-pixel QE follows the
+        standard definition: absorbed power normalized by the power incident
+        on THAT pixel's area (pitch^2), not on the whole unit cell.
+
+        Args:
+            sim: torcwa rcwa object (solved, with a planewave source set).
+            torch: torch module.
+            layer_info: LayerSlice list in torcwa layer order (input side first).
+            wavelength: Wavelength in um.
+            total_absorption: A = 1 - R - T for the energy cross-check.
+
+        Returns:
+            Dictionary mapping pixel name to QE value.
+        """
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
+        assert self._source is not None
+
+        lx, ly = self._pixel_stack.domain_size
+        pitch = self._pixel_stack.pitch
+        k0 = 2.0 * np.pi / wavelength
+        cos_theta = float(np.cos(self._source.theta_rad))
+        norm = k0 / (cos_theta * lx * ly)  # n_in = 1 (air)
+
+        # Integrate eps'' |E|^2 per absorbing slice; keep silicon separately.
+        si_density = None  # accumulated eps''|E|^2 dz on the xy grid
+        total_field_abs = 0.0
+        grid_shape = None
+
+        for li, s in enumerate(layer_info):
+            eps_imag = np.imag(s.eps_grid)
+            if float(eps_imag.max()) < 1e-9:
+                continue
+            n0, n1 = s.eps_grid.shape
+            if grid_shape is None:
+                grid_shape = (n0, n1)
+            # Sample fields at the torcwa positions of the eps grid samples
+            # (eps_grid[a, b] sits at (a*lx/n0, b*ly/n1) in torcwa's lattice).
+            x_axis = torch.arange(n0, device=self.device, dtype=torch.float32) * (lx / n0)
+            y_axis = torch.arange(n1, device=self.device, dtype=torch.float32) * (ly / n1)
+            nz = int(np.clip(round(s.thickness / 0.05), 8, 64))
+            dz = s.thickness / nz
+            e2_sum = torch.zeros((n0, n1), device=self.device, dtype=torch.float32)
+            for kz in range(nz):
+                z_prop = (kz + 0.5) * dz
+                E, _H = sim.field_xy(li, x_axis, y_axis, z_prop=z_prop)
+                e2_sum += sum(torch.abs(c) ** 2 for c in E)
+            density = e2_sum.cpu().numpy() * eps_imag * dz  # eps''|E|^2 integrated in z
+            cell_area = (lx / n0) * (ly / n1)
+            total_field_abs += norm * float(density.sum()) * cell_area
+            if s.name.startswith("silicon"):
+                si_density = density if si_density is None else si_density + density
+
+        if si_density is None or grid_shape is None:
+            raise RuntimeError("no absorbing silicon slice found for QE integration")
+
+        if total_absorption > 0.02 and abs(total_field_abs - total_absorption) > 0.1:
+            logger.warning(
+                f"torcwa: field-integrated absorption {total_field_abs:.3f} deviates "
+                f"from 1-R-T = {total_absorption:.3f} at λ={wavelength:.4f}um "
+                "(increase fourier_order / grid resolution)"
+            )
+
+        # Photodiode xy footprints. PhotodiodeSpec.position is the offset from
+        # the pixel center; convert to absolute domain coordinates per pixel.
+        n0, n1 = grid_shape
+        cell_area = (lx / n0) * (ly / n1)
+        n_rows, n_cols = self._pixel_stack.unit_cell
+        pixel_area = (lx / n_cols) * (ly / n_rows)
+        norm_pixel = k0 / (cos_theta * pixel_area)
+        qe_per_pixel: dict[str, float] = {}
+        for pd in self._pixel_stack.photodiodes:
+            r, c = pd.pixel_index
+            x_c = (c + 0.5) * pitch + pd.position[0]
+            y_c = (r + 0.5) * pitch + pd.position[1]
+            # eps grids are indexed [row=y, col=x] on cell centers
+            iy0 = max(0, int(np.floor((y_c - pd.size[1] / 2) / ly * n0)))
+            iy1 = min(n0, int(np.ceil((y_c + pd.size[1] / 2) / ly * n0)))
+            ix0 = max(0, int(np.floor((x_c - pd.size[0] / 2) / lx * n1)))
+            ix1 = min(n1, int(np.ceil((x_c + pd.size[0] / 2) / lx * n1)))
+            key = f"{pd.color}_{r}_{c}"
+            if ix1 <= ix0 or iy1 <= iy0:
+                qe_per_pixel[key] = 0.0
+                continue
+            qe = norm_pixel * float(si_density[iy0:iy1, ix0:ix1].sum()) * cell_area
+            qe_per_pixel[key] = float(np.clip(qe, 0.0, 1.0))
+
+        return qe_per_pixel
+
     def _compute_per_pixel_qe(
-        self, sim, torch, layer_slices, wavelength: float, total_absorption: float,
+        self,
+        sim,
+        torch,
+        layer_slices,
+        wavelength: float,
+        total_absorption: float,
     ) -> dict:
         """Compute per-pixel QE from layer absorption profiles.
 
@@ -266,7 +426,7 @@ class TorcwaSolver(SolverBase):
         n_pixels = n_rows * n_cols
         if n_pixels == 0:
             return {}
-        _pitch = self._pixel_stack.pitch
+        pitch = self._pixel_stack.pitch
 
         # Build absorption weight per pixel from eps_imag in PD regions
         pixel_weights = {}
@@ -277,11 +437,14 @@ class TorcwaSolver(SolverBase):
             color = pd.color
             key = f"{color}_{r}_{c}"
 
-            # PD bounding box in absolute coordinates
-            pd_x_min = pd.position[0] - pd.size[0] / 2
-            pd_x_max = pd.position[0] + pd.size[0] / 2
-            pd_y_min = pd.position[1] - pd.size[1] / 2
-            pd_y_max = pd.position[1] + pd.size[1] / 2
+            # PD bounding box in absolute coordinates. PhotodiodeSpec.position
+            # is the offset from the pixel center, so shift by the pixel origin.
+            pd_cx = (c + 0.5) * pitch + pd.position[0]
+            pd_cy = (r + 0.5) * pitch + pd.position[1]
+            pd_x_min = pd_cx - pd.size[0] / 2
+            pd_x_max = pd_cx + pd.size[0] / 2
+            pd_y_min = pd_cy - pd.size[1] / 2
+            pd_y_max = pd_cy + pd.size[1] / 2
             pd_z_min = pd.position[2] - pd.size[2] / 2
             pd_z_max = pd.position[2] + pd.size[2] / 2
 
@@ -297,12 +460,12 @@ class TorcwaSolver(SolverBase):
                 eps = s.eps_grid
                 nx_s, ny_s = eps.shape
 
-                # Map PD xy to grid indices
+                # Map PD xy (domain coordinates in [0, lx) x [0, ly)) to grid indices
                 lx, ly = self._pixel_stack.domain_size
-                ix_min = max(0, int(((pd_x_min + lx / 2) / lx) * nx_s))
-                ix_max = min(nx_s, int(((pd_x_max + lx / 2) / lx) * nx_s))
-                iy_min = max(0, int(((pd_y_min + ly / 2) / ly) * ny_s))
-                iy_max = min(ny_s, int(((pd_y_max + ly / 2) / ly) * ny_s))
+                ix_min = max(0, int((pd_x_min / lx) * nx_s))
+                ix_max = min(nx_s, int(np.ceil((pd_x_max / lx) * nx_s)))
+                iy_min = max(0, int((pd_y_min / ly) * ny_s))
+                iy_max = min(ny_s, int(np.ceil((pd_y_max / ly) * ny_s)))
 
                 if ix_max <= ix_min or iy_max <= iy_min:
                     continue
@@ -315,18 +478,19 @@ class TorcwaSolver(SolverBase):
             pixel_weights[key] = max(weight, 0.0)
             total_weight += max(weight, 0.0)
 
-        # Distribute total absorption proportionally
+        # Distribute total absorption proportionally; normalize per pixel area
+        # (QE convention: absorbed power / power incident on that pixel).
         qe_per_pixel = {}
         if total_weight > 0:
             for key, w in pixel_weights.items():
-                qe_per_pixel[key] = total_absorption * (w / total_weight)
+                qe_per_pixel[key] = min(1.0, total_absorption * (w / total_weight) * n_pixels)
         else:
-            # Fallback: even distribution
+            # Fallback: uniform stack — every pixel sees the cell-average absorption
             for r in range(n_rows):
                 for c in range(n_cols):
                     color = bayer[r][c]
                     key = f"{color}_{r}_{c}"
-                    qe_per_pixel[key] = total_absorption / n_pixels
+                    qe_per_pixel[key] = total_absorption
 
         return qe_per_pixel
 
@@ -359,19 +523,20 @@ class TorcwaSolver(SolverBase):
 
         # Try using torcwa's built-in field reconstruction
         try:
-            return self._extract_field_from_sim(
-                sim, layer_info, component, plane, position
-            )
+            return self._extract_field_from_sim(sim, layer_info, component, plane, position)
         except Exception as e:
             logger.debug(f"torcwa field reconstruction failed: {e}")
 
         # Fallback: build approximate field from permittivity
-        return self._approximate_field(
-            layer_info, component, plane, position
-        )
+        return self._approximate_field(layer_info, component, plane, position)
 
     def _extract_field_from_sim(
-        self, sim, layer_info, component, plane, position,
+        self,
+        sim,
+        layer_info,
+        component,
+        plane,
+        position,
     ) -> np.ndarray:
         """Extract field using torcwa's internal field reconstruction."""
         if self._pixel_stack is None:
@@ -393,7 +558,7 @@ class TorcwaSolver(SolverBase):
                 z_accum += s.thickness
 
             # Use torcwa field_cell if available
-            if hasattr(sim, 'field_cell'):
+            if hasattr(sim, "field_cell"):
                 E, _H = sim.field_cell(
                     layer_idx=target_layer_idx,
                     nx=nx_field,
@@ -406,7 +571,11 @@ class TorcwaSolver(SolverBase):
         raise RuntimeError("field_cell not available")
 
     def _approximate_field(
-        self, layer_info, component, plane, position,
+        self,
+        layer_info,
+        component,
+        plane,
+        position,
     ) -> np.ndarray:
         """Build approximate field distribution from permittivity profile.
 
@@ -426,6 +595,7 @@ class TorcwaSolver(SolverBase):
                 if z_accum + s.thickness >= position:
                     eps = s.eps_grid
                     from scipy.ndimage import zoom
+
                     target_shape = (nx_out, ny_out)
                     if eps.shape != target_shape:
                         zx = target_shape[0] / eps.shape[0]
