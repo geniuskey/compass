@@ -22,7 +22,7 @@
         <!-- Preset selector -->
         <div class="ctrl-section">
           <label class="section-label">{{ t('Preset', '프리셋') }}</label>
-          <select v-model="preset" class="preset-select" @change="applyPreset">
+          <select v-model="preset" class="preset-select" :aria-label="t('Preset', '프리셋')" @change="applyPreset">
             <option value="bsi_1um">BSI 1um ({{ t('default', '기본') }})</option>
             <option value="bsi_08um">BSI 0.8um ({{ t('thin Si', '얇은 Si') }})</option>
             <option value="high_qe">{{ t('High QE (thick Si)', '고 QE (두꺼운 Si)') }}</option>
@@ -35,11 +35,11 @@
           <div class="section-header">{{ t('Pixel Parameters', '픽셀 파라미터') }}</div>
           <div class="slider-group">
             <label>{{ t('Pixel pitch:', '픽셀 피치:') }} <strong>{{ pitch.toFixed(1) }} um</strong></label>
-            <input type="range" min="0.5" max="2.0" step="0.1" v-model.number="pitch" class="ctrl-range" @input="markCustom" />
+            <input type="range" min="0.5" max="2.0" step="0.1" v-model.number="pitch" class="ctrl-range" :aria-label="t('Pixel pitch', '픽셀 피치')" @input="markCustom" />
           </div>
           <div class="slider-group">
             <label>{{ t('Silicon thickness:', '실리콘 두께:') }} <strong>{{ siThickness.toFixed(1) }} um</strong></label>
-            <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="ctrl-range" @input="markCustom" />
+            <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="ctrl-range" :aria-label="t('Silicon thickness', '실리콘 두께')" @input="markCustom" />
           </div>
         </div>
 
@@ -57,19 +57,19 @@
           <div v-show="barlOpen" class="collapsible-body">
             <div class="slider-group">
               <label>SiO2 #1: <strong>{{ barl1 }} nm</strong></label>
-              <input type="range" min="0" max="50" step="1" v-model.number="barl1" class="ctrl-range" @input="markCustom" />
+              <input type="range" min="0" max="50" step="1" v-model.number="barl1" class="ctrl-range" aria-label="SiO2 #1" @input="markCustom" />
             </div>
             <div class="slider-group">
               <label>HfO2: <strong>{{ barl2 }} nm</strong></label>
-              <input type="range" min="0" max="50" step="1" v-model.number="barl2" class="ctrl-range" @input="markCustom" />
+              <input type="range" min="0" max="50" step="1" v-model.number="barl2" class="ctrl-range" aria-label="HfO2" @input="markCustom" />
             </div>
             <div class="slider-group">
               <label>SiO2 #3: <strong>{{ barl3 }} nm</strong></label>
-              <input type="range" min="0" max="50" step="1" v-model.number="barl3" class="ctrl-range" @input="markCustom" />
+              <input type="range" min="0" max="50" step="1" v-model.number="barl3" class="ctrl-range" aria-label="SiO2 #3" @input="markCustom" />
             </div>
             <div class="slider-group">
               <label>Si3N4: <strong>{{ barl4 }} nm</strong></label>
-              <input type="range" min="0" max="80" step="1" v-model.number="barl4" class="ctrl-range" @input="markCustom" />
+              <input type="range" min="0" max="80" step="1" v-model.number="barl4" class="ctrl-range" aria-label="Si3N4" @input="markCustom" />
             </div>
           </div>
         </div>
@@ -79,7 +79,7 @@
           <div class="section-header">{{ t('Color Filter', '컬러 필터') }}</div>
           <div class="slider-group">
             <label>{{ t('CF thickness:', 'CF 두께:') }} <strong>{{ cfThickness.toFixed(2) }} um</strong></label>
-            <input type="range" min="0.2" max="1.0" step="0.05" v-model.number="cfThickness" class="ctrl-range" @input="markCustom" />
+            <input type="range" min="0.2" max="1.0" step="0.05" v-model.number="cfThickness" class="ctrl-range" :aria-label="t('CF thickness', 'CF 두께')" @input="markCustom" />
           </div>
           <div class="slider-group">
             <label>{{ t('Channel:', '채널:') }}</label>
@@ -105,11 +105,11 @@
           <div v-show="topOpen" class="collapsible-body">
             <div class="slider-group">
               <label>{{ t('Planarization:', '평탄화:') }} <strong>{{ planThickness.toFixed(2) }} um</strong></label>
-              <input type="range" min="0.1" max="0.5" step="0.05" v-model.number="planThickness" class="ctrl-range" @input="markCustom" />
+              <input type="range" min="0.1" max="0.5" step="0.05" v-model.number="planThickness" class="ctrl-range" :aria-label="t('Planarization', '평탄화')" @input="markCustom" />
             </div>
             <div class="slider-group">
               <label>{{ t('Microlens:', '마이크로렌즈:') }} <strong>{{ mlThickness.toFixed(2) }} um</strong></label>
-              <input type="range" min="0.2" max="1.0" step="0.05" v-model.number="mlThickness" class="ctrl-range" @input="markCustom" />
+              <input type="range" min="0.2" max="1.0" step="0.05" v-model.number="mlThickness" class="ctrl-range" :aria-label="t('Microlens', '마이크로렌즈')" @input="markCustom" />
             </div>
           </div>
         </div>
@@ -119,7 +119,7 @@
           <div class="section-header">{{ t('Simulation Settings', '시뮬레이션 설정') }}</div>
           <div class="slider-group">
             <label>{{ t('Angle of incidence:', '입사각:') }} <strong>{{ angle }}deg</strong></label>
-            <input type="range" min="0" max="30" step="1" v-model.number="angle" class="ctrl-range" />
+            <input type="range" min="0" max="30" step="1" v-model.number="angle" class="ctrl-range" :aria-label="t('Angle of incidence', '입사각')" />
           </div>
           <div class="slider-group">
             <label>{{ t('Polarization:', '편광:') }}</label>

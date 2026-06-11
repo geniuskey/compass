@@ -21,44 +21,45 @@
         <label>
           {{ t('Quantum Efficiency', '양자 효율') }}: <strong>{{ qe }}%</strong>
         </label>
-        <input type="range" min="10" max="90" step="1" v-model.number="qe" class="ctrl-range" />
+        <input type="range" min="10" max="90" step="1" v-model.number="qe" class="ctrl-range" :aria-label="t('Quantum Efficiency', '양자 효율')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Pixel Pitch', '픽셀 피치') }}: <strong>{{ pitch.toFixed(1) }} &mu;m</strong>
         </label>
-        <input type="range" min="0.5" max="3.0" step="0.1" v-model.number="pitch" class="ctrl-range" />
+        <input type="range" min="0.5" max="3.0" step="0.1" v-model.number="pitch" class="ctrl-range" :aria-label="t('Pixel Pitch', '픽셀 피치')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Integration Time', '적분 시간') }}: <strong>{{ integrationTime }} ms</strong>
         </label>
-        <input type="range" min="1" max="100" step="1" v-model.number="integrationTime" class="ctrl-range" />
+        <input type="range" min="1" max="100" step="1" v-model.number="integrationTime" class="ctrl-range" :aria-label="t('Integration Time', '적분 시간')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Scene Illuminance', '조도') }}: <strong>{{ illuminance.toFixed(0) }} lux</strong>
         </label>
-        <input type="range" min="0" max="4" step="0.01" v-model.number="logIlluminance" class="ctrl-range" />
+        <input type="range" min="0" max="4" step="0.01" v-model.number="logIlluminance" class="ctrl-range" :aria-label="t('Scene Illuminance', '조도')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Dark Current', '암전류') }}: <strong>{{ darkCurrent.toFixed(1) }} e⁻/s</strong>
         </label>
-        <input type="range" min="0.1" max="50" step="0.1" v-model.number="darkCurrent" class="ctrl-range" />
+        <input type="range" min="0.1" max="50" step="0.1" v-model.number="darkCurrent" class="ctrl-range" :aria-label="t('Dark Current', '암전류')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Read Noise', '읽기 잡음') }}: <strong>{{ readNoise.toFixed(1) }} e⁻ rms</strong>
         </label>
-        <input type="range" min="0.5" max="10" step="0.1" v-model.number="readNoise" class="ctrl-range" />
+        <input type="range" min="0.5" max="10" step="0.1" v-model.number="readNoise" class="ctrl-range" :aria-label="t('Read Noise', '읽기 잡음')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Full Well Capacity', '풀웰 용량') }}: <strong>{{ fullWell }} e⁻</strong>
         </label>
-        <input type="range" min="1000" max="30000" step="100" v-model.number="fullWell" class="ctrl-range" />
+        <input type="range" min="1000" max="30000" step="100" v-model.number="fullWell" class="ctrl-range" :aria-label="t('Full Well Capacity', '풀웰 용량')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <!-- Info cards -->
@@ -165,8 +166,8 @@
           <template v-if="ptcHover">
             <line :x1="ptcHover.sx" :y1="ptcPad.top" :x2="ptcHover.sx" :y2="ptcPad.top + ptcPlotH" stroke="var(--vp-c-text-2)" stroke-width="0.8" stroke-dasharray="4,3" />
             <rect :x="ptcHover.tx" :y="ptcPad.top + 4" width="120" height="34" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
-            <text :x="ptcHover.tx + 6" :y="ptcPad.top + 18" class="tooltip-text">Signal: {{ ptcHover.sig.toFixed(0) }} e⁻</text>
-            <text :x="ptcHover.tx + 6" :y="ptcPad.top + 30" class="tooltip-text">Noise: {{ ptcHover.noise.toFixed(2) }} e⁻</text>
+            <text :x="ptcHover.tx + 6" :y="ptcPad.top + 18" class="tooltip-text">{{ t('Signal', '신호') }}: {{ ptcHover.sig.toFixed(0) }} e⁻</text>
+            <text :x="ptcHover.tx + 6" :y="ptcPad.top + 30" class="tooltip-text">{{ t('Noise', '잡음') }}: {{ ptcHover.noise.toFixed(2) }} e⁻</text>
           </template>
         </svg>
       </div>
@@ -272,6 +273,16 @@ const logIlluminance = ref(Math.log10(500))
 const darkCurrent = ref(5.0)
 const readNoise = ref(1.5)
 const fullWell = ref(6000)
+
+function resetControls() {
+  qe.value = 60
+  pitch.value = 1.0
+  integrationTime.value = 33
+  logIlluminance.value = Math.log10(500)
+  darkCurrent.value = 5.0
+  readNoise.value = 1.5
+  fullWell.value = 6000
+}
 
 const illuminance = computed(() => Math.pow(10, logIlluminance.value))
 
@@ -523,6 +534,22 @@ function onSnrMouseMove(event: MouseEvent) {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.reset-btn {
+  align-self: end;
+  justify-self: start;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .results-grid {
   display: grid;

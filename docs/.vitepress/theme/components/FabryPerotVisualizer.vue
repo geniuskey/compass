@@ -29,6 +29,7 @@
           step="0.01"
           v-model.number="n2"
           class="ctrl-range"
+          :aria-label="t('Film index', '박막 굴절률')"
         />
       </div>
       <div class="slider-group">
@@ -42,6 +43,7 @@
           step="0.01"
           v-model.number="n3"
           class="ctrl-range"
+          :aria-label="t('Substrate index', '기판 굴절률')"
         />
       </div>
       <div class="slider-group">
@@ -55,6 +57,7 @@
           step="1"
           v-model.number="thickness"
           class="ctrl-range"
+          :aria-label="t('Film thickness', '박막 두께')"
         />
       </div>
       <div class="slider-group">
@@ -68,8 +71,12 @@
           step="5"
           v-model.number="wavelength"
           class="ctrl-range"
+          :aria-label="t('Wavelength', '파장')"
         />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">
+        {{ t('Reset', '초기화') }}
+      </button>
     </div>
 
     <!-- Two-panel display -->
@@ -469,6 +476,13 @@ const n3 = ref(3.5)
 const thickness = ref(100)
 const wavelength = ref(550)
 
+function resetControls() {
+  n2.value = 2.0
+  n3.value = 3.5
+  thickness.value = 100
+  wavelength.value = 550
+}
+
 // Constants
 const n1 = 1.0 // air
 
@@ -725,6 +739,20 @@ const tVsThickPath = computed(() => {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.reset-btn {
+  align-self: flex-end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .panels-row {
   display: flex;

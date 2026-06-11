@@ -19,20 +19,21 @@
     <div class="controls-grid">
       <div class="slider-group">
         <label>{{ t('Read Noise', '읽기 노이즈') }}: <strong>{{ readNoise.toFixed(1) }} e&minus;</strong></label>
-        <input type="range" min="0.5" max="30" step="0.5" v-model.number="readNoise" class="ctrl-range" />
+        <input type="range" min="0.5" max="30" step="0.5" v-model.number="readNoise" class="ctrl-range" :aria-label="t('Read Noise', '읽기 노이즈')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Full Well Capacity', '풀 웰 용량') }}: <strong>{{ fwc.toLocaleString() }} e&minus;</strong></label>
-        <input type="range" min="1000" max="100000" step="1000" v-model.number="fwc" class="ctrl-range" />
+        <input type="range" min="1000" max="100000" step="1000" v-model.number="fwc" class="ctrl-range" :aria-label="t('Full Well Capacity', '풀 웰 용량')" />
       </div>
       <div class="slider-group">
         <label>PRNU: <strong>{{ prnu.toFixed(1) }}%</strong></label>
-        <input type="range" min="0.1" max="5" step="0.1" v-model.number="prnu" class="ctrl-range" />
+        <input type="range" min="0.1" max="5" step="0.1" v-model.number="prnu" class="ctrl-range" aria-label="PRNU" />
       </div>
       <div class="slider-group">
         <label>{{ t('Conversion Gain', '변환 이득') }}: <strong>{{ cg.toFixed(2) }} &mu;V/e&minus;</strong></label>
-        <input type="range" min="0.5" max="10" step="0.1" v-model.number="cg" class="ctrl-range" />
+        <input type="range" min="0.5" max="10" step="0.1" v-model.number="cg" class="ctrl-range" :aria-label="t('Conversion Gain', '변환 이득')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <div class="results-grid">
@@ -127,6 +128,13 @@ const fwc = ref(10000)
 const prnu = ref(1.0)
 const cg = ref(3.0)
 
+function resetControls() {
+  readNoise.value = 5.0
+  fwc.value = 10000
+  prnu.value = 1.0
+  cg.value = 3.0
+}
+
 const snrMax = computed(() => 20 * Math.log10(Math.sqrt(fwc.value)))
 const shotReadCross = computed(() => readNoise.value ** 2)
 const prnuShotCross = computed(() => 1 / (prnu.value / 100) ** 2)
@@ -205,6 +213,9 @@ function onHover(e: MouseEvent) {
 .slider-group label { display: block; margin-bottom: 4px; font-size: 0.85em; }
 .ctrl-range { width: 100%; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: var(--vp-c-divider); outline: none; }
 .ctrl-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.ctrl-range::-moz-range-thumb { width: 18px; height: 18px; border: none; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.reset-btn { align-self: end; justify-self: start; padding: 4px 12px; font-size: 0.8em; border: 1px solid var(--vp-c-divider); border-radius: 6px; background: var(--vp-c-bg); color: var(--vp-c-text-2); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+.reset-btn:hover { color: var(--vp-c-brand-1); border-color: var(--vp-c-brand-1); }
 .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 16px; }
 .result-card { background: var(--vp-c-bg); border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 12px; text-align: center; }
 .result-label { font-size: 0.8em; color: var(--vp-c-text-2); margin-bottom: 4px; }
