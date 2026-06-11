@@ -33,12 +33,14 @@ logger = logging.getLogger(__name__)
 
 try:
     import torch
+
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
 
 try:
     import cupy as cp
+
     HAS_CUPY = True
 except ImportError:
     HAS_CUPY = False
@@ -518,14 +520,14 @@ class AdaptivePrecisionRunner:
                 R = result.get("R", 0)
                 T = result.get("T", 0)
                 check = EigenvalueStabilizer.validate_energy_conservation(
-                    np.array([R]), np.array([T]), self.tolerance,
+                    np.array([R]),
+                    np.array([T]),
+                    self.tolerance,
                 )
 
                 if check["valid"]:
                     if strategy["label"] != "GPU-f32":
-                        logger.warning(
-                            f"λ={wavelength:.3f}um: fallback to {strategy['label']}"
-                        )
+                        logger.warning(f"λ={wavelength:.3f}um: fallback to {strategy['label']}")
                     return dict(result)
                 else:
                     logger.warning(
@@ -534,9 +536,7 @@ class AdaptivePrecisionRunner:
                     )
 
             except Exception as e:
-                logger.warning(
-                    f"λ={wavelength:.3f}um: {strategy['label']} failed: {e}"
-                )
+                logger.warning(f"λ={wavelength:.3f}um: {strategy['label']} failed: {e}")
                 continue
 
         raise RuntimeError(
@@ -589,9 +589,7 @@ class StabilityDiagnostics:
 
         # 3. TF32 check
         if HAS_TORCH and torch.backends.cuda.matmul.allow_tf32:
-            warnings.append(
-                "TF32 is ENABLED. Set allow_tf32: false for RCWA stability."
-            )
+            warnings.append("TF32 is ENABLED. Set allow_tf32: false for RCWA stability.")
 
         # 4. Check Fourier factorization for patterned layers
         has_patterned = any(l.is_patterned for l in pixel_stack.layers)

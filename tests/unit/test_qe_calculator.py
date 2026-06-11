@@ -105,54 +105,69 @@ class TestFromPoyntingFlux:
 
 
 class TestComputeCrosstalk:
-    """Tests for QECalculator.compute_crosstalk."""
+    """Tests for QECalculator.compute_crosstalk (band-integrated spectral crosstalk)."""
+
+    WL = np.array([0.45, 0.55, 0.65])
 
     def test_shape(self):
-        """Crosstalk matrix has shape (n_pixels, n_pixels, n_wavelengths)."""
+        """Crosstalk matrix has shape (n_pixels, n_pixels)."""
         qe = {
-            "A": np.array([0.4, 0.3]),
-            "B": np.array([0.3, 0.4]),
+            "A": np.array([0.4, 0.3, 0.2]),
+            "B": np.array([0.3, 0.4, 0.2]),
         }
-        ct = QECalculator.compute_crosstalk(qe, bayer_map=[])
-        assert ct.shape == (2, 2, 2)
+        ct = QECalculator.compute_crosstalk(qe, self.WL)
+        assert ct.shape == (2, 2)
 
     def test_rows_sum_to_one(self):
-        """Each row of the crosstalk matrix sums to 1 (light is redistributed)."""
+        """Each row of the crosstalk matrix sums to 1 (collected signal shares)."""
         qe = {
-            "A": np.array([0.4, 0.3, 0.5]),
-            "B": np.array([0.3, 0.4, 0.2]),
-            "C": np.array([0.1, 0.1, 0.1]),
+            "R_0_0": np.array([0.1, 0.2, 0.6]),
+            "G_0_1": np.array([0.1, 0.5, 0.2]),
+            "B_1_0": np.array([0.5, 0.1, 0.05]),
         }
-        ct = QECalculator.compute_crosstalk(qe, bayer_map=[])
+        ct = QECalculator.compute_crosstalk(qe, self.WL)
         for i in range(ct.shape[0]):
-            for wl in range(ct.shape[2]):
-                assert ct[i, :, wl].sum() == pytest.approx(1.0, abs=1e-10)
+            assert ct[i, :].sum() == pytest.approx(1.0, abs=1e-10)
 
     def test_single_pixel(self):
-        """Single pixel means all 'light' stays in that pixel."""
-        qe = {"only": np.array([0.5, 0.3])}
-        ct = QECalculator.compute_crosstalk(qe, bayer_map=[])
-        assert ct.shape == (1, 1, 2)
-        np.testing.assert_allclose(ct[0, 0, :], [1.0, 1.0])
+        """Single pixel collects all of its own band."""
+        qe = {"only": np.array([0.5, 0.3, 0.2])}
+        ct = QECalculator.compute_crosstalk(qe, self.WL)
+        assert ct.shape == (1, 1)
+        assert ct[0, 0] == pytest.approx(1.0)
 
     def test_zero_qe_handled(self):
         """Zero total QE does not cause division by zero."""
         qe = {
-            "A": np.array([0.0]),
-            "B": np.array([0.0]),
+            "A": np.array([0.0, 0.0, 0.0]),
+            "B": np.array([0.0, 0.0, 0.0]),
         }
-        ct = QECalculator.compute_crosstalk(qe, bayer_map=[])
+        ct = QECalculator.compute_crosstalk(qe, self.WL)
         assert np.all(np.isfinite(ct))
 
-    def test_dominant_pixel(self):
-        """Pixel with much higher QE gets most of the crosstalk fraction."""
+    def test_color_bands_separate_channels(self):
+        """An ideal Bayer pixel set yields a near-identity crosstalk matrix."""
         qe = {
-            "A": np.array([0.9]),
-            "B": np.array([0.01]),
+            "B_0_0": np.array([0.6, 0.01, 0.01]),
+            "G_0_1": np.array([0.01, 0.6, 0.01]),
+            "R_1_1": np.array([0.01, 0.01, 0.6]),
         }
-        ct = QECalculator.compute_crosstalk(qe, bayer_map=[])
-        # Column 0 (pixel A) should dominate
-        assert ct[0, 0, 0] > 0.9
+        ct = QECalculator.compute_crosstalk(qe, self.WL)
+        pixels = sorted(qe.keys())  # B_0_0, G_0_1, R_1_1
+        for i, name in enumerate(pixels):
+            assert ct[i, i] > 0.9, f"{name} should collect its own band"
+
+    def test_leaky_filter_shows_crosstalk(self):
+        """A pixel responding inside another channel's band shows up off-diagonal."""
+        qe = {
+            "G_0_0": np.array([0.2, 0.5, 0.05]),  # leaks in blue band
+            "B_0_1": np.array([0.4, 0.05, 0.01]),
+        }
+        ct = QECalculator.compute_crosstalk(qe, np.array([0.45, 0.55, 0.65]))
+        pixels = sorted(qe.keys())  # B_0_1, G_0_0
+        b_idx, g_idx = pixels.index("B_0_1"), pixels.index("G_0_0")
+        # In the blue band (0.45), G collects 0.2 of 0.6 total -> 1/3 crosstalk
+        assert ct[b_idx, g_idx] == pytest.approx(0.2 / 0.6, abs=1e-9)
 
 
 class TestSpectralResponse:

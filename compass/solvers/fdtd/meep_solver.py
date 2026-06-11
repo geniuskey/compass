@@ -29,8 +29,7 @@ try:
     import meep as mp
 
     _MEEP_AVAILABLE = all(
-        hasattr(mp, attr)
-        for attr in ("Simulation", "Medium", "Vector3", "Block", "PML")
+        hasattr(mp, attr) for attr in ("Simulation", "Medium", "Vector3", "Block", "PML")
     )
 except ImportError:
     pass
@@ -167,8 +166,7 @@ class MeepSolver(SolverBase):
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
             logger.debug(
-                f"meep: wavelength {wavelength:.4f} um "
-                f"({wl_idx + 1}/{self._source.n_wavelengths})"
+                f"meep: wavelength {wavelength:.4f} um ({wl_idx + 1}/{self._source.n_wavelengths})"
             )
 
             fcen = 1.0 / wavelength  # meep frequency in units of c/um
@@ -181,12 +179,23 @@ class MeepSolver(SolverBase):
             for pol in pol_runs:
                 try:
                     R, T, A, field_data = self._run_single_wavelength(
-                        mp, wavelength, fcen, cell_size,
-                        lx, ly, sz, z_center,
-                        pml_thickness, resolution,
-                        runtime_periods, decay_threshold,
-                        src_z, refl_z, trans_z,
-                        pol, use_dispersive,
+                        mp,
+                        wavelength,
+                        fcen,
+                        cell_size,
+                        lx,
+                        ly,
+                        sz,
+                        z_center,
+                        pml_thickness,
+                        resolution,
+                        runtime_periods,
+                        decay_threshold,
+                        src_z,
+                        refl_z,
+                        trans_z,
+                        pol,
+                        use_dispersive,
                     )
                 except Exception as e:
                     logger.error(
@@ -202,8 +211,13 @@ class MeepSolver(SolverBase):
 
                 # Per-pixel QE
                 qe_this_pol = self._compute_pixel_qe(
-                    mp, field_data, wavelength, resolution,
-                    lx, ly, z_center,
+                    mp,
+                    field_data,
+                    wavelength,
+                    resolution,
+                    lx,
+                    ly,
+                    z_center,
                 )
                 for k, v in qe_this_pol.items():
                     qe_pol_accum.setdefault(k, []).append(v)
@@ -225,6 +239,7 @@ class MeepSolver(SolverBase):
         for arr_name, arr in result_arrays.items():
             if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
                 import warnings
+
                 warnings.warn(f"meep: NaN/Inf detected in {arr_name} output", stacklevel=2)
 
         return SimulationResult(
@@ -335,7 +350,9 @@ class MeepSolver(SolverBase):
 
         # Add flux monitors for reference run
         refl_fr_ref = sim_ref.add_flux(
-            fcen, fwidth, 1,
+            fcen,
+            fwidth,
+            1,
             mp.FluxRegion(
                 center=mp.Vector3(0, 0, refl_z),
                 size=mp.Vector3(lx, ly, 0),
@@ -343,7 +360,9 @@ class MeepSolver(SolverBase):
         )
 
         trans_fr_ref = sim_ref.add_flux(
-            fcen, fwidth, 1,
+            fcen,
+            fwidth,
+            1,
             mp.FluxRegion(
                 center=mp.Vector3(0, 0, trans_z),
                 size=mp.Vector3(lx, ly, 0),
@@ -382,7 +401,9 @@ class MeepSolver(SolverBase):
 
         # Add flux monitors
         refl_fr = sim.add_flux(
-            fcen, fwidth, 1,
+            fcen,
+            fwidth,
+            1,
             mp.FluxRegion(
                 center=mp.Vector3(0, 0, refl_z),
                 size=mp.Vector3(lx, ly, 0),
@@ -390,7 +411,9 @@ class MeepSolver(SolverBase):
         )
 
         trans_fr = sim.add_flux(
-            fcen, fwidth, 1,
+            fcen,
+            fwidth,
+            1,
             mp.FluxRegion(
                 center=mp.Vector3(0, 0, trans_z),
                 size=mp.Vector3(lx, ly, 0),
@@ -416,7 +439,9 @@ class MeepSolver(SolverBase):
             si_z_size = si_layer.thickness
             dft_vol = sim.add_dft_fields(
                 [mp.Ex, mp.Ey, mp.Ez],
-                fcen, 0, 1,
+                fcen,
+                0,
+                1,
                 center=mp.Vector3(0, 0, si_z_center),
                 size=mp.Vector3(lx, ly, si_z_size),
             )
@@ -446,8 +471,7 @@ class MeepSolver(SolverBase):
         A = float(np.clip(1.0 - R - T, 0.0, 1.0))
 
         logger.debug(
-            f"meep: lambda={wavelength:.4f}um, pol={polarization}, "
-            f"R={R:.4f}, T={T:.4f}, A={A:.4f}"
+            f"meep: lambda={wavelength:.4f}um, pol={polarization}, R={R:.4f}, T={T:.4f}, A={A:.4f}"
         )
 
         # Store simulation for field extraction and QE
@@ -500,9 +524,7 @@ class MeepSolver(SolverBase):
                         cf_thickness = min(float(cf_spec["thickness"]), layer.thickness)
                         if cf_thickness <= 0.0:
                             continue
-                        meep_mat = self._get_meep_material(
-                            mp, mat_name, wavelength, use_dispersive
-                        )
+                        meep_mat = self._get_meep_material(mp, mat_name, wavelength, use_dispersive)
 
                         # Pixel center in meep coordinates
                         px = (c + 0.5) * self._pixel_stack.pitch - lx / 2.0
@@ -543,9 +565,7 @@ class MeepSolver(SolverBase):
                         geometry.append(
                             mp.Block(
                                 center=mp.Vector3(gx, 0, grid_z_center),
-                                size=mp.Vector3(
-                                    grid_width, ly, grid_thickness
-                                ),
+                                size=mp.Vector3(grid_width, ly, grid_thickness),
                                 material=grid_meep_mat,
                             )
                         )
@@ -556,9 +576,7 @@ class MeepSolver(SolverBase):
                         geometry.append(
                             mp.Block(
                                 center=mp.Vector3(0, gy, grid_z_center),
-                                size=mp.Vector3(
-                                    lx, grid_width, grid_thickness
-                                ),
+                                size=mp.Vector3(lx, grid_width, grid_thickness),
                                 material=grid_meep_mat,
                             )
                         )
@@ -567,9 +585,7 @@ class MeepSolver(SolverBase):
                 # Silicon bulk block
                 si_cfg = self._pixel_stack._layer_configs.get("silicon", {})
                 si_mat_name = si_cfg.get("material", "silicon")
-                si_meep_mat = self._get_meep_material(
-                    mp, si_mat_name, wavelength, use_dispersive
-                )
+                si_meep_mat = self._get_meep_material(mp, si_mat_name, wavelength, use_dispersive)
 
                 geometry.append(
                     mp.Block(
@@ -594,9 +610,7 @@ class MeepSolver(SolverBase):
                         geometry.append(
                             mp.Block(
                                 center=mp.Vector3(dx, 0, layer_z_center),
-                                size=mp.Vector3(
-                                    dti_width, ly, layer.thickness
-                                ),
+                                size=mp.Vector3(dti_width, ly, layer.thickness),
                                 material=dti_meep_mat,
                             )
                         )
@@ -607,9 +621,7 @@ class MeepSolver(SolverBase):
                         geometry.append(
                             mp.Block(
                                 center=mp.Vector3(0, dy, layer_z_center),
-                                size=mp.Vector3(
-                                    lx, dti_width, layer.thickness
-                                ),
+                                size=mp.Vector3(lx, dti_width, layer.thickness),
                                 material=dti_meep_mat,
                             )
                         )
@@ -619,9 +631,7 @@ class MeepSolver(SolverBase):
                 n_lens_slices = 20
                 slice_thickness = layer.thickness / n_lens_slices
                 ml_mat_name = layer.base_material
-                ml_meep_mat = self._get_meep_material(
-                    mp, ml_mat_name, wavelength, use_dispersive
-                )
+                ml_meep_mat = self._get_meep_material(mp, ml_mat_name, wavelength, use_dispersive)
 
                 for ml_spec in self._pixel_stack.microlenses:
                     ml_idx = self._pixel_stack.microlenses.index(ml_spec)
@@ -638,18 +648,14 @@ class MeepSolver(SolverBase):
                             continue
                         # Inverse of the lens profile: radius at height z
                         # z = h*(1-r^2)^(1/(2*alpha)) => r = sqrt(1-(z/h)^(2*alpha))
-                        r_frac = np.sqrt(
-                            max(0.0, 1.0 - frac ** (2.0 * ml_spec.alpha_param))
-                        )
+                        r_frac = np.sqrt(max(0.0, 1.0 - frac ** (2.0 * ml_spec.alpha_param)))
                         rx = ml_spec.radius_x * r_frac
                         ry = ml_spec.radius_y * r_frac
 
                         if rx < 0.01 or ry < 0.01:
                             continue
 
-                        slice_z = (
-                            layer.z_start + rel_z - z_center
-                        )
+                        slice_z = layer.z_start + rel_z - z_center
 
                         geometry.append(
                             mp.Ellipsoid(
@@ -658,9 +664,7 @@ class MeepSolver(SolverBase):
                                     cy + ml_spec.shift_y,
                                     slice_z,
                                 ),
-                                size=mp.Vector3(
-                                    2 * rx, 2 * ry, slice_thickness
-                                ),
+                                size=mp.Vector3(2 * rx, 2 * ry, slice_thickness),
                                 material=ml_meep_mat,
                             )
                         )
@@ -798,7 +802,7 @@ class MeepSolver(SolverBase):
             ey_dft = sim.get_dft_array(dft_vol, mp.Ey, 0)  # type: ignore[attr-defined]
             ez_dft = sim.get_dft_array(dft_vol, mp.Ez, 0)  # type: ignore[attr-defined]
 
-            E_sq = np.abs(ex_dft)**2 + np.abs(ey_dft)**2 + np.abs(ez_dft)**2
+            E_sq = np.abs(ex_dft) ** 2 + np.abs(ey_dft) ** 2 + np.abs(ez_dft) ** 2
 
             # Get permittivity (epsilon) in the volume for absorption calc
             # Use the PixelStack to get Im(eps) in the silicon region
@@ -827,9 +831,7 @@ class MeepSolver(SolverBase):
                 return qe_per_pixel
 
             # Get silicon permittivity (imaginary part for absorption)
-            eps_si = self._pixel_stack.material_db.get_epsilon(
-                si_layer.base_material, wavelength
-            )
+            eps_si = self._pixel_stack.material_db.get_epsilon(si_layer.base_material, wavelength)
             eps_imag_si = np.imag(eps_si)
 
             # Volume absorption: Im(eps) * |E|^2
@@ -970,7 +972,7 @@ class MeepSolver(SolverBase):
                 ex = sim.get_array(vol=vol, component=mp.Ex)  # type: ignore[attr-defined]
                 ey = sim.get_array(vol=vol, component=mp.Ey)  # type: ignore[attr-defined]
                 ez = sim.get_array(vol=vol, component=mp.Ez)  # type: ignore[attr-defined]
-                field_slice = np.abs(ex)**2 + np.abs(ey)**2 + np.abs(ez)**2
+                field_slice = np.abs(ex) ** 2 + np.abs(ey) ** 2 + np.abs(ez) ** 2
 
             return np.asarray(field_slice)
 

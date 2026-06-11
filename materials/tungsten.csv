@@ -1,5 +1,7 @@
 # Material: Tungsten (W)
-# Source: Approximate tabulated data for visible range
+# Source: Approximate tabulated data, visible range after Palik;
+#         NIR points (>0.78um) are a smooth approximate extension
+#         (R ~ 0.55-0.60 at 1um, consistent with bulk W).
 # Metallic interconnect / light shield material
 # wavelength(um), n, k
 0.380, 3.390, 2.660
@@ -11,3 +13,7 @@
 0.650, 3.700, 3.250
 0.700, 3.720, 3.330
 0.780, 3.740, 3.440
+0.850, 3.740, 3.500
+0.900, 3.740, 3.560
+1.000, 3.750, 3.680
+1.100, 3.750, 3.800

@@ -66,14 +66,10 @@ class FdtdxSolver(SolverBase):
     def __init__(self, config: dict, device: str = "cpu"):
         if not _JAX_AVAILABLE:
             logger.warning(
-                "JAX is not installed. FDTDX requires JAX. "
-                "Install with: pip install jax jaxlib"
+                "JAX is not installed. FDTDX requires JAX. Install with: pip install jax jaxlib"
             )
         if not _FDTDX_AVAILABLE:
-            logger.warning(
-                "fdtdx package is not installed. "
-                "Install with: pip install fdtdx"
-            )
+            logger.warning("fdtdx package is not installed. Install with: pip install fdtdx")
         super().__init__(config, device)
         self._source: PlanewaveSource | None = None
         self._last_fields: dict[str, FieldData] | None = None
@@ -166,13 +162,9 @@ class FdtdxSolver(SolverBase):
             raise RuntimeError("Call setup_source() before run()")
 
         if not _JAX_AVAILABLE:
-            raise ImportError(
-                "JAX is required for fdtdx. Install with: pip install jax jaxlib"
-            )
+            raise ImportError("JAX is required for fdtdx. Install with: pip install jax jaxlib")
         if not _FDTDX_AVAILABLE:
-            raise ImportError(
-                "fdtdx is required. Install with: pip install fdtdx"
-            )
+            raise ImportError("fdtdx is required. Install with: pip install fdtdx")
 
         import fdtdx as fx
         import jax.numpy as jnp
@@ -216,18 +208,15 @@ class FdtdxSolver(SolverBase):
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
             logger.debug(
-                f"fdtdx: wavelength {wavelength:.4f} um "
-                f"({wl_idx + 1}/{self._source.n_wavelengths})"
+                f"fdtdx: wavelength {wavelength:.4f} um ({wl_idx + 1}/{self._source.n_wavelengths})"
             )
 
             # Build 3D permittivity for this wavelength
-            eps_3d_np = self._pixel_stack.get_permittivity_grid(
-                wavelength, nx, ny, nz_interior
-            )
+            eps_3d_np = self._pixel_stack.get_permittivity_grid(wavelength, nx, ny, nz_interior)
 
             # Embed interior permittivity into full grid (with PML padding = air)
             eps_full = np.ones((ny, nx, nz), dtype=complex)
-            eps_full[:, :, pml_layers:pml_layers + nz_interior] = eps_3d_np
+            eps_full[:, :, pml_layers : pml_layers + nz_interior] = eps_3d_np
 
             R_pol: list[float] = []
             T_pol: list[float] = []
@@ -237,10 +226,21 @@ class FdtdxSolver(SolverBase):
             for pol in pol_runs:
                 try:
                     R, T, A, fields = self._run_single_wavelength(
-                        fx, jnp, wavelength, eps_full,
-                        nx, ny, nz, grid_spacing,
-                        pml_layers, courant_factor, time_steps,
-                        source_z, refl_z, trans_z, pol,
+                        fx,
+                        jnp,
+                        wavelength,
+                        eps_full,
+                        nx,
+                        ny,
+                        nz,
+                        grid_spacing,
+                        pml_layers,
+                        courant_factor,
+                        time_steps,
+                        source_z,
+                        refl_z,
+                        trans_z,
+                        pol,
                     )
                 except Exception as e:
                     logger.error(
@@ -256,8 +256,16 @@ class FdtdxSolver(SolverBase):
 
                 # Per-pixel QE from absorption in photodiode regions
                 qe_this_pol = self._compute_pixel_qe(
-                    fields, pd_masks, eps_3d_np, wavelength,
-                    grid_spacing, nx, ny, nz_interior, pml_layers,
+                    fields,
+                    pd_masks,
+                    eps_3d_np,
+                    wavelength,
+                    grid_spacing,
+                    nx,
+                    ny,
+                    nz_interior,
+                    pml_layers,
+                    A,
                 )
                 for k, v in qe_this_pol.items():
                     qe_pol_accum.setdefault(k, []).append(v)
@@ -407,17 +415,14 @@ class FdtdxSolver(SolverBase):
                 hx, hy, _hz = fields_arr[3], fields_arr[4], fields_arr[5]
             else:
                 logger.warning(
-                    f"fdtdx: unexpected result shape {fields_arr.shape}, "
-                    "using zeros for fields"
+                    f"fdtdx: unexpected result shape {fields_arr.shape}, using zeros for fields"
                 )
                 ex = ey = ez = np.zeros((nz, ny, nx))
                 hx = hy = _hz = np.zeros((nz, ny, nx))
 
         # Compute Poynting flux Sz = 0.5 * Re(Ex*Hy* - Ey*Hx*)
         # At reflection monitor (light propagates in -z direction)
-        sz_refl = 0.5 * np.real(
-            ex[refl_z] * np.conj(hy[refl_z]) - ey[refl_z] * np.conj(hx[refl_z])
-        )
+        sz_refl = 0.5 * np.real(ex[refl_z] * np.conj(hy[refl_z]) - ey[refl_z] * np.conj(hx[refl_z]))
         P_refl = np.sum(sz_refl) * grid_spacing**2
 
         # At transmission monitor
@@ -465,8 +470,7 @@ class FdtdxSolver(SolverBase):
         )
 
         logger.debug(
-            f"fdtdx: lambda={wavelength:.4f}um, pol={polarization}, "
-            f"R={R:.4f}, T={T:.4f}, A={A:.4f}"
+            f"fdtdx: lambda={wavelength:.4f}um, pol={polarization}, R={R:.4f}, T={T:.4f}, A={A:.4f}"
         )
 
         return R, T, A, field_data
@@ -515,6 +519,7 @@ class FdtdxSolver(SolverBase):
         ny: int,
         nz_interior: int,
         pml_layers: int,
+        total_absorption: float = 0.0,
     ) -> dict[str, float]:
         """Compute per-pixel quantum efficiency from volume absorption.
 
@@ -554,10 +559,10 @@ class FdtdxSolver(SolverBase):
         # |E|^2 in the interior region (strip PML layers from field arrays)
         if fields.Ey is None or fields.Ez is None:
             raise ValueError("FieldData is missing Ey or Ez components")
-        ex_int = fields.Ex[:, :, pml_layers:pml_layers + nz_interior]
-        ey_int = fields.Ey[:, :, pml_layers:pml_layers + nz_interior]
-        ez_int = fields.Ez[:, :, pml_layers:pml_layers + nz_interior]
-        E_sq = np.abs(ex_int)**2 + np.abs(ey_int)**2 + np.abs(ez_int)**2
+        ex_int = fields.Ex[:, :, pml_layers : pml_layers + nz_interior]
+        ey_int = fields.Ey[:, :, pml_layers : pml_layers + nz_interior]
+        ez_int = fields.Ez[:, :, pml_layers : pml_layers + nz_interior]
+        E_sq = np.abs(ex_int) ** 2 + np.abs(ey_int) ** 2 + np.abs(ez_int) ** 2
 
         # Imaginary part of permittivity (absorption coefficient)
         eps_imag = np.imag(eps_3d)
@@ -575,10 +580,16 @@ class FdtdxSolver(SolverBase):
                     qe_per_pixel[f"{color}_{r}_{c}"] = 0.0
             return qe_per_pixel
 
-        # Compute per-pixel absorption
+        # Per-pixel QE: the field gives relative absorbed-power shares; scale
+        # by the flux-monitor absorption A = 1-R-T to make them absolute, and
+        # normalize per pixel area (QE convention: absorbed power / power
+        # incident on that pixel, shared with the RCWA solvers).
+        n_rows, n_cols = self._pixel_stack.unit_cell
+        n_pixels = max(1, n_rows * n_cols)
         for key, mask in pd_masks.items():
             pixel_abs = np.sum(abs_density * mask) * dV
-            qe_per_pixel[key] = float(pixel_abs / total_absorbed) if total_absorbed > 0 else 0.0
+            share = float(pixel_abs / total_absorbed) if total_absorbed > 0 else 0.0
+            qe_per_pixel[key] = min(1.0, share * total_absorption * n_pixels)
 
         # Fill in any missing pixels with zero
         for r in range(self._pixel_stack.unit_cell[0]):
@@ -620,11 +631,11 @@ class FdtdxSolver(SolverBase):
 
         # Select field component
         if component == "Ex" and fd.Ex is not None:
-            field_3d = np.abs(fd.Ex)**2
+            field_3d = np.abs(fd.Ex) ** 2
         elif component == "Ey" and fd.Ey is not None:
-            field_3d = np.abs(fd.Ey)**2
+            field_3d = np.abs(fd.Ey) ** 2
         elif component == "Ez" and fd.Ez is not None:
-            field_3d = np.abs(fd.Ez)**2
+            field_3d = np.abs(fd.Ez) ** 2
         elif component == "|E|2":
             intensity = fd.E_intensity
             if intensity is not None:

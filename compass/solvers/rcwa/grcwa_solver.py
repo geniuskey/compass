@@ -208,11 +208,17 @@ class GrcwaSolver(SolverBase):
         total_weight = 0.0
 
         pitch = self._pixel_stack.pitch
+        si_z_end = max(
+            (layer.z_end for layer in self._pixel_stack.layers if layer.name == "silicon"),
+            default=0.0,
+        )
         for pd in self._pixel_stack.photodiodes:
             r, c = pd.pixel_index
             key = f"{pd.color}_{r}_{c}"
-            pd_z_min = pd.position[2] - pd.size[2] / 2
-            pd_z_max = pd.position[2] + pd.size[2] / 2
+            # position[2] is the PD-center depth below the silicon top surface
+            pd_cz = si_z_end - pd.position[2]
+            pd_z_min = pd_cz - pd.size[2] / 2
+            pd_z_max = pd_cz + pd.size[2] / 2
 
             # PhotodiodeSpec.position is the offset from the pixel center;
             # convert to absolute domain coordinates ([0, lx) x [0, ly)).

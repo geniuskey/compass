@@ -458,8 +458,13 @@ class MaterialDB:
         self._materials["tungsten"] = mat
 
     def _register_color_filter_fallback(self, name: str) -> None:
-        """Register color filter with approximate Gaussian-passband absorption profiles."""
-        wl = np.linspace(0.38, 0.78, 41)
+        """Register color filter with approximate Gaussian-passband absorption profiles.
+
+        Pigment CFA dyes become nearly transparent in the NIR (the reason
+        sensors need IR-cut filters), so k rolls off beyond ~0.75 um. The red
+        filter is a long-pass dye: transparent from its passband through the NIR.
+        """
+        wl = np.linspace(0.38, 1.10, 73)
 
         # Generic absorption profiles for R, G, B filters
         if name == "cf_red":
@@ -476,6 +481,12 @@ class MaterialDB:
 
         # Absorption: high k outside passband, low k in passband
         k = k_max * (1.0 - np.exp(-(((wl - peak_wl) / width) ** 2)))
+        if name == "cf_red":
+            # Long-pass: transmissive from the passband through the NIR
+            k = np.where(wl > peak_wl, 0.003, k)
+        else:
+            # NIR leakage: blocking dies off beyond ~0.78 um
+            k = k / (1.0 + np.exp((wl - 0.80) / 0.05)) + 0.003
         n = np.full_like(wl, n_base)
 
         mat = MaterialData(
