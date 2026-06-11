@@ -54,6 +54,29 @@ class TestMaterialDB:
         _n, k = db.get_nk("silicon", 0.80)
         assert k < 0.05, f"Si k={k} at 800nm should be low"
 
+    @pytest.mark.parametrize(
+        ("wl", "depth_lo", "depth_hi"),
+        [
+            (0.40, 0.08, 0.13),  # ~0.10 um (Green 2008)
+            (0.55, 1.1, 1.8),  # ~1.4 um
+            (0.60, 1.9, 3.0),  # ~2.4 um
+            (0.80, 9.0, 15.0),  # ~12 um
+            (1.00, 100.0, 220.0),  # ~156 um
+        ],
+    )
+    def test_silicon_penetration_depth_literature(self, db, wl, depth_lo, depth_hi):
+        """Penetration depth 1/alpha = lambda/(4 pi k) must match Green 2008."""
+        _n, k = db.get_nk("silicon", wl)
+        depth = wl / (4.0 * np.pi * k)
+        assert depth_lo < depth < depth_hi, f"Si 1/alpha={depth:.3g} um at {wl} um"
+
+    def test_silicon_k_monotonic_above_band_edge(self, db):
+        """Si k must decrease monotonically 400-1000nm (no interband spikes)."""
+        wavelengths = np.arange(0.40, 1.001, 0.01)
+        k_values = [db.get_nk("silicon", float(wl))[1] for wl in wavelengths]
+        diffs = np.diff(k_values)
+        assert np.all(diffs <= 1e-9), "Si k(lambda) not monotonically decreasing"
+
     def test_sio2_transparent(self, db):
         """SiO2 should be transparent in visible (k≈0)."""
         n, k = db.get_nk("sio2", 0.55)

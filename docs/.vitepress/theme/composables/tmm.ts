@@ -103,10 +103,12 @@ export const MATERIALS: Record<string, MaterialData> = {
   ]},
   aln: { name:'AlN', type:'cauchy', cauchyA:2.02, cauchyB:0.030 },
   sic: { name:'SiC', type:'cauchy', cauchyA:2.55, cauchyB:0.05 },
+  // Approximate values after Aspnes & Studna (1983); Ge absorbs strongly
+  // across the visible (k ~ 2-2.5 below 560nm), E1 structure near 540-600nm.
   ge: { name:'Ge', type:'tabulated', table:[
-    [.38,4.70,2.40],[.40,4.80,2.24],[.45,5.09,1.86],[.50,4.87,1.44],
-    [.55,4.65,1.00],[.60,4.50,.711],[.65,4.39,.518],[.70,4.31,.385],
-    [.78,4.21,.245],[.85,4.15,.171],[.90,4.11,.130],[1.0,4.05,.070],
+    [.38,4.15,2.60],[.40,4.12,2.55],[.45,4.22,2.43],[.50,4.50,2.41],
+    [.55,5.00,2.30],[.60,5.60,1.35],[.65,5.25,.700],[.70,4.95,.480],
+    [.78,4.72,.340],[.85,4.60,.250],[.90,4.52,.180],[1.0,4.44,.080],
   ]},
   // Crystalline Si at 300K. n: Aspnes & Studna (1983); k = αλ/4π with α from
   // M.A. Green, Sol. Energy Mater. Sol. Cells 92, 1305 (2008).

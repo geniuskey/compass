@@ -147,8 +147,11 @@ class GeometryBuilder:
         lx = pitch * cols
         ly = pitch * rows
 
-        x = np.linspace(0, lx, nx, endpoint=False)
-        y = np.linspace(0, ly, ny, endpoint=False)
+        # Cell-centered sampling keeps discretized masks mirror-symmetric
+        # about pixel centers (a global half-cell shift is irrelevant for
+        # periodic structures but symmetry of each pixel is preserved).
+        x = (np.arange(nx) + 0.5) * (lx / nx)
+        y = (np.arange(ny) + 0.5) * (ly / ny)
         xx, yy = np.meshgrid(x, y, indexing="xy")
 
         mask = np.zeros((ny, nx), dtype=bool)
@@ -229,8 +232,11 @@ class GeometryBuilder:
         if half_width <= 0.0 or period <= 0.0:
             return np.zeros((ny, nx), dtype=np.float64)
 
-        x = np.linspace(0, lx, nx, endpoint=False)
-        y = np.linspace(0, ly, ny, endpoint=False)
+        # Cell-centered sampling keeps discretized masks mirror-symmetric
+        # about pixel centers (a global half-cell shift is irrelevant for
+        # periodic structures but symmetry of each pixel is preserved).
+        x = (np.arange(nx) + 0.5) * (lx / nx)
+        y = (np.arange(ny) + 0.5) * (ly / ny)
         xx, yy = np.meshgrid(x, y, indexing="xy")
 
         # Distance to the nearest pyramid centre on the periodic lattice.
@@ -275,8 +281,11 @@ class GeometryBuilder:
         lx = pitch * cols
         ly = pitch * rows
 
-        x = np.linspace(0, lx, nx, endpoint=False)
-        y = np.linspace(0, ly, ny, endpoint=False)
+        # Cell-centered sampling keeps discretized masks mirror-symmetric
+        # about pixel centers (a global half-cell shift is irrelevant for
+        # periodic structures but symmetry of each pixel is preserved).
+        x = (np.arange(nx) + 0.5) * (lx / nx)
+        y = (np.arange(ny) + 0.5) * (ly / ny)
         xx, yy = np.meshgrid(x, y, indexing="xy")
 
         inner_half = max((pitch - grid_width) / 2.0, 0.0)
@@ -327,8 +336,11 @@ class GeometryBuilder:
         lx = pitch * cols
         ly = pitch * rows
 
-        x = np.linspace(0, lx, nx, endpoint=False)
-        y = np.linspace(0, ly, ny, endpoint=False)
+        # Cell-centered sampling keeps discretized masks mirror-symmetric
+        # about pixel centers (a global half-cell shift is irrelevant for
+        # periodic structures but symmetry of each pixel is preserved).
+        x = (np.arange(nx) + 0.5) * (lx / nx)
+        y = (np.arange(ny) + 0.5) * (ly / ny)
         z = np.linspace(si_z_start, si_z_end, nz)
 
         xx, yy, zz = np.meshgrid(x, y, z, indexing="xy")

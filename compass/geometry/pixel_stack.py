@@ -393,8 +393,10 @@ class PixelStack:
         cache_key = (nx, ny)
         if cache_key not in self._meshgrid_cache:
             lx, ly = self.domain_size
-            x = np.linspace(0, lx, nx, endpoint=False)
-            y = np.linspace(0, ly, ny, endpoint=False)
+            # Cell-centered sampling (see GeometryBuilder): keeps masks and
+            # the microlens height map mirror-symmetric about pixel centers.
+            x = (np.arange(nx) + 0.5) * (lx / nx)
+            y = (np.arange(ny) + 0.5) * (ly / ny)
             self._meshgrid_cache[cache_key] = np.meshgrid(x, y, indexing="xy")
         return self._meshgrid_cache[cache_key]
 
