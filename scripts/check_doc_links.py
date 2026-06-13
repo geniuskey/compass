@@ -67,7 +67,7 @@ def scan(quiet: bool) -> int:
     errors: list[tuple[Path, int, str, str]] = []
     files = list(_iter_md(DOCS))
     for f in files:
-        for i, line in enumerate(f.read_text().splitlines(), 1):
+        for i, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
             for m in LINK_RE.finditer(line):
                 text, target = m.group(1), m.group(2)
                 # Skip pure asset paths handled by VitePress (e.g., images

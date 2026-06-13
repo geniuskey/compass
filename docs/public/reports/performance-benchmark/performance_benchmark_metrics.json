@@ -1,0 +1,861 @@
+{
+  "benchmark": {
+    "name": "performance-benchmark",
+    "generated_on": "2026-06-11",
+    "core_repeats": 5,
+    "solver_repeats": 3
+  },
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.12",
+    "machine": "AMD64",
+    "processor": "Intel64 Family 6 Model 151 Stepping 5, GenuineIntel",
+    "cpu_count": 12,
+    "torch_version": "2.11.0+cpu",
+    "cuda_available": false,
+    "cuda_device_count": 0,
+    "cuda_device_name": null,
+    "torcwa_available": true,
+    "torcwa_version": "0.1.4.2"
+  },
+  "summary": {
+    "material_all_ms": 0.019762600073590875,
+    "pixelstack_2x2_ms": 0.10254479991272092,
+    "pixelstack_4x4_ms": 0.10530309984460473,
+    "tmm_31_median_s": 0.019025800051167607,
+    "torcwa_5_median_s": 2.840412799967453,
+    "tmm_slope_ms_per_wavelength": 0.5785615162246607,
+    "torcwa_cpu_slope_ms_per_wavelength": 604.8363057031696,
+    "torcwa_to_tmm_per_wavelength_ratio": 925.6146554907926
+  },
+  "core_operations": [
+    {
+      "name": "Silicon epsilon spectrum lookup",
+      "category": "material",
+      "size_label": "silicon x 41 wl",
+      "status": "ok",
+      "repeats": 5,
+      "warmups": 1,
+      "median_s": 0.0005113999359309673,
+      "mean_s": 0.0005085599143058062,
+      "min_s": 0.0003746000584214926,
+      "max_s": 0.0006380998529493809,
+      "stdev_s": 0.00011463925552856795,
+      "peak_traced_mb_median": 0.002239227294921875,
+      "peak_traced_mb_max": 0.003093719482421875,
+      "samples_s": [
+        0.0005113999359309673,
+        0.0006337999366223812,
+        0.0003848997876048088,
+        0.0003746000584214926,
+        0.0006380998529493809
+      ],
+      "peak_traced_mb_samples": [
+        0.002239227294921875,
+        0.003093719482421875,
+        0.0022602081298828125,
+        0.002216339111328125,
+        0.0021724700927734375
+      ],
+      "result": {
+        "materials": 43,
+        "wavelengths": 41,
+        "last_shape": [
+          41
+        ]
+      },
+      "metadata": {}
+    },
+    {
+      "name": "All-material spectrum lookup",
+      "category": "material",
+      "size_label": "43 materials x 41 wl",
+      "status": "ok",
+      "repeats": 5,
+      "warmups": 1,
+      "median_s": 0.019762600073590875,
+      "mean_s": 0.02082981993444264,
+      "min_s": 0.01876419992186129,
+      "max_s": 0.025928099872544408,
+      "stdev_s": 0.0026264528565982355,
+      "peak_traced_mb_median": 0.003566741943359375,
+      "peak_traced_mb_max": 0.0041141510009765625,
+      "samples_s": [
+        0.019084999803453684,
+        0.02060920000076294,
+        0.025928099872544408,
+        0.01876419992186129,
+        0.019762600073590875
+      ],
+      "peak_traced_mb_samples": [
+        0.003566741943359375,
+        0.003719329833984375,
+        0.003543853759765625,
+        0.0041141510009765625,
+        0.003543853759765625
+      ],
+      "result": {
+        "materials": 43,
+        "wavelengths": 41,
+        "checksum": 4122.0435236143185
+      },
+      "metadata": {}
+    },
+    {
+      "name": "PixelStack construction",
+      "category": "construction",
+      "size_label": "2x2 Bayer",
+      "status": "ok",
+      "repeats": 5,
+      "warmups": 1,
+      "median_s": 0.10254479991272092,
+      "mean_s": 0.103806719975546,
+      "min_s": 0.08864680002443492,
+      "max_s": 0.11993509996682405,
+      "stdev_s": 0.010429593958232255,
+      "peak_traced_mb_median": 0.18795299530029297,
+      "peak_traced_mb_max": 0.18845176696777344,
+      "samples_s": [
+        0.11993509996682405,
+        0.08864680002443492,
+        0.10254479991272092,
+        0.10906710010021925,
+        0.09883979987353086
+      ],
+      "peak_traced_mb_samples": [
+        0.18845176696777344,
+        0.18795299530029297,
+        0.18732738494873047,
+        0.18808269500732422,
+        0.18781089782714844
+      ],
+      "result": {
+        "layers": 9,
+        "unit_cell": [
+          2,
+          2
+        ]
+      },
+      "metadata": {}
+    },
+    {
+      "name": "PixelStack construction",
+      "category": "construction",
+      "size_label": "4x4 TetraCell",
+      "status": "ok",
+      "repeats": 5,
+      "warmups": 1,
+      "median_s": 0.10530309984460473,
+      "mean_s": 0.10648827999830246,
+      "min_s": 0.09936980018392205,
+      "max_s": 0.1195263999979943,
+      "stdev_s": 0.007308521374920976,
+      "peak_traced_mb_median": 0.1882619857788086,
+      "peak_traced_mb_max": 0.18921184539794922,
+      "samples_s": [
+        0.1195263999979943,
+        0.09936980018392205,
+        0.10530309984460473,
+        0.10823170002549887,
+        0.10001039993949234
+      ],
+      "peak_traced_mb_samples": [
+        0.18921184539794922,
+        0.1882619857788086,
+        0.1882762908935547,
+        0.18778705596923828,
+        0.18806076049804688
+      ],
+      "result": {
+        "layers": 9,
+        "unit_cell": [
+          4,
+          4
+        ]
+      },
+      "metadata": {}
+    },
+    {
+      "name": "get_layer_slices",
+      "category": "layer_slices",
+      "size_label": "32x32, 8 lens slices",
+      "status": "ok",
+      "repeats": 5,
+      "warmups": 1,
+      "median_s": 0.004202499985694885,
+      "mean_s": 0.004029340017586947,
+      "min_s": 0.0027281001675873995,
+      "max_s": 0.0050091000739485025,
+      "stdev_s": 0.0007470138460473743,
+      "peak_traced_mb_median": 0.42852783203125,
+      "peak_traced_mb_max": 0.42855072021484375,
+      "samples_s": [
+        0.004202499985694885,
+        0.0027281001675873995,
+        0.0050091000739485025,
+        0.004322600085288286,
+        0.003884399775415659
+      ],
+      "peak_traced_mb_samples": [
+        0.42855072021484375,
+        0.42852783203125,
+        0.42852783203125,
+        0.42852783203125,
+        0.42852783203125
+      ],
+      "result": {
+        "slice_count": 26,
+        "grid_cells": 1024
+      },
+      "metadata": {
+        "nx": 32,
+        "ny": 32,
+        "grid_cells": 1024
+      }
+    },
+    {
+      "name": "get_layer_slices",
+      "category": "layer_slices",
+      "size_label": "64x64, 8 lens slices",
+      "status": "ok",
+      "repeats": 5,
+      "warmups": 1,
+      "median_s": 0.004645999986678362,
+      "mean_s": 0.0046930000185966495,
+      "min_s": 0.003338899929076433,
+      "max_s": 0.0065737999975681305,
+      "stdev_s": 0.0011448942607261824,
+      "peak_traced_mb_median": 1.64727783203125,
+      "peak_traced_mb_max": 1.6473007202148438,
+      "samples_s": [
+        0.005183100001886487,
+        0.004645999986678362,
+        0.003338899929076433,
+        0.0065737999975681305,
+        0.0037232001777738333
+      ],
+      "peak_traced_mb_samples": [
+        1.6473007202148438,
+        1.64727783203125,
+        1.64727783203125,
+        1.64727783203125,
+        1.64727783203125
+      ],
+      "result": {
+        "slice_count": 26,
+        "grid_cells": 4096
+      },
+      "metadata": {
+        "nx": 64,
+        "ny": 64,
+        "grid_cells": 4096
+      }
+    },
+    {
+      "name": "get_layer_slices",
+      "category": "layer_slices",
+      "size_label": "128x128, 8 lens slices",
+      "status": "ok",
+      "repeats": 5,
+      "warmups": 1,
+      "median_s": 0.006399499950930476,
+      "mean_s": 0.00796619993634522,
+      "min_s": 0.005376099841669202,
+      "max_s": 0.014793399954214692,
+      "stdev_s": 0.0034518965151865448,
+      "peak_traced_mb_median": 6.52227783203125,
+      "peak_traced_mb_max": 6.522300720214844,
+      "samples_s": [
+        0.005376099841669202,
+        0.006285599898546934,
+        0.014793399954214692,
+        0.006976400036364794,
+        0.006399499950930476
+      ],
+      "peak_traced_mb_samples": [
+        6.522300720214844,
+        6.52227783203125,
+        6.52227783203125,
+        6.52227783203125,
+        6.52227783203125
+      ],
+      "result": {
+        "slice_count": 26,
+        "grid_cells": 16384
+      },
+      "metadata": {
+        "nx": 128,
+        "ny": 128,
+        "grid_cells": 16384
+      }
+    },
+    {
+      "name": "get_layer_slices",
+      "category": "layer_slices",
+      "size_label": "192x192, 8 lens slices",
+      "status": "ok",
+      "repeats": 5,
+      "warmups": 1,
+      "median_s": 0.014933799859136343,
+      "mean_s": 0.015202359994873405,
+      "min_s": 0.01385869993828237,
+      "max_s": 0.016356400214135647,
+      "stdev_s": 0.0008917045700167468,
+      "peak_traced_mb_median": 14.64727783203125,
+      "peak_traced_mb_max": 14.647300720214844,
+      "samples_s": [
+        0.014856399968266487,
+        0.01385869993828237,
+        0.014933799859136343,
+        0.016006499994546175,
+        0.016356400214135647
+      ],
+      "peak_traced_mb_samples": [
+        14.647300720214844,
+        14.64727783203125,
+        14.64727783203125,
+        14.647235870361328,
+        14.64727783203125
+      ],
+      "result": {
+        "slice_count": 26,
+        "grid_cells": 36864
+      },
+      "metadata": {
+        "nx": 192,
+        "ny": 192,
+        "grid_cells": 36864
+      }
+    },
+    {
+      "name": "get_permittivity_grid",
+      "category": "permittivity_grid",
+      "size_label": "32x32x64",
+      "status": "ok",
+      "repeats": 4,
+      "warmups": 1,
+      "median_s": 0.008251299965195358,
+      "mean_s": 0.008411349961534142,
+      "min_s": 0.007396799977868795,
+      "max_s": 0.009745999937877059,
+      "stdev_s": 0.0008565178167362344,
+      "peak_traced_mb_median": 1.7842178344726562,
+      "peak_traced_mb_max": 1.78424072265625,
+      "samples_s": [
+        0.008441900135949254,
+        0.008060699794441462,
+        0.009745999937877059,
+        0.007396799977868795
+      ],
+      "peak_traced_mb_samples": [
+        1.78424072265625,
+        1.7842178344726562,
+        1.7842178344726562,
+        1.7842178344726562
+      ],
+      "result": {
+        "shape": [
+          32,
+          32,
+          64
+        ],
+        "grid_cells": 65536
+      },
+      "metadata": {
+        "nx": 32,
+        "ny": 32,
+        "nz": 64,
+        "grid_cells": 65536
+      }
+    },
+    {
+      "name": "get_permittivity_grid",
+      "category": "permittivity_grid",
+      "size_label": "64x64x64",
+      "status": "ok",
+      "repeats": 4,
+      "warmups": 1,
+      "median_s": 0.009921550052240491,
+      "mean_s": 0.010107625043019652,
+      "min_s": 0.0097119000274688,
+      "max_s": 0.010875500040128827,
+      "stdev_s": 0.0004545044881924585,
+      "peak_traced_mb_median": 7.034217834472656,
+      "peak_traced_mb_max": 7.03424072265625,
+      "samples_s": [
+        0.009848000016063452,
+        0.00999510008841753,
+        0.010875500040128827,
+        0.0097119000274688
+      ],
+      "peak_traced_mb_samples": [
+        7.03424072265625,
+        7.034217834472656,
+        7.034217834472656,
+        7.034217834472656
+      ],
+      "result": {
+        "shape": [
+          64,
+          64,
+          64
+        ],
+        "grid_cells": 262144
+      },
+      "metadata": {
+        "nx": 64,
+        "ny": 64,
+        "nz": 64,
+        "grid_cells": 262144
+      }
+    },
+    {
+      "name": "get_permittivity_grid",
+      "category": "permittivity_grid",
+      "size_label": "96x96x64",
+      "status": "ok",
+      "repeats": 4,
+      "warmups": 1,
+      "median_s": 0.01580719999037683,
+      "mean_s": 0.015586800000164658,
+      "min_s": 0.013761899899691343,
+      "max_s": 0.016970900120213628,
+      "stdev_s": 0.0011841830681402978,
+      "peak_traced_mb_median": 15.784217834472656,
+      "peak_traced_mb_max": 15.78424072265625,
+      "samples_s": [
+        0.013761899899691343,
+        0.01617190008983016,
+        0.0154424998909235,
+        0.016970900120213628
+      ],
+      "peak_traced_mb_samples": [
+        15.78424072265625,
+        15.784217834472656,
+        15.784217834472656,
+        15.784217834472656
+      ],
+      "result": {
+        "shape": [
+          96,
+          96,
+          64
+        ],
+        "grid_cells": 589824
+      },
+      "metadata": {
+        "nx": 96,
+        "ny": 96,
+        "nz": 64,
+        "grid_cells": 589824
+      }
+    },
+    {
+      "name": "get_permittivity_grid",
+      "category": "permittivity_grid",
+      "size_label": "128x128x64",
+      "status": "ok",
+      "repeats": 4,
+      "warmups": 1,
+      "median_s": 0.027159349876455963,
+      "mean_s": 0.02682772494154051,
+      "min_s": 0.023096000077202916,
+      "max_s": 0.029896199936047196,
+      "stdev_s": 0.002465930581872965,
+      "peak_traced_mb_median": 28.034217834472656,
+      "peak_traced_mb_max": 28.03424072265625,
+      "samples_s": [
+        0.02777659986168146,
+        0.029896199936047196,
+        0.023096000077202916,
+        0.026542099891230464
+      ],
+      "peak_traced_mb_samples": [
+        28.03424072265625,
+        28.034217834472656,
+        28.034217834472656,
+        28.034175872802734
+      ],
+      "result": {
+        "shape": [
+          128,
+          128,
+          64
+        ],
+        "grid_cells": 1048576
+      },
+      "metadata": {
+        "nx": 128,
+        "ny": 128,
+        "nz": 64,
+        "grid_cells": 1048576
+      }
+    }
+  ],
+  "solver_sweeps": [
+    {
+      "name": "TMM wavelength sweep",
+      "category": "solver",
+      "size_label": "1 wavelengths",
+      "status": "ok",
+      "repeats": 3,
+      "warmups": 1,
+      "median_s": 0.0010968998540192842,
+      "mean_s": 0.0013123666091511648,
+      "min_s": 0.0009816000238060951,
+      "max_s": 0.0018585999496281147,
+      "stdev_s": 0.00038910295072834154,
+      "peak_traced_mb_median": 0.010650634765625,
+      "peak_traced_mb_max": 0.0106658935546875,
+      "samples_s": [
+        0.0010968998540192842,
+        0.0009816000238060951,
+        0.0018585999496281147
+      ],
+      "peak_traced_mb_samples": [
+        0.010528564453125,
+        0.0106658935546875,
+        0.010650634765625
+      ],
+      "result": {
+        "metadata_runtime_s": 0.001024700002744794,
+        "max_energy_residual": 0.0,
+        "mean_absorption": 0.9039566953582513,
+        "gpu_peak_allocated_mb": null
+      },
+      "metadata": {
+        "solver": "tmm",
+        "device": "cpu",
+        "n_wavelengths": 1
+      }
+    },
+    {
+      "name": "TMM wavelength sweep",
+      "category": "solver",
+      "size_label": "11 wavelengths",
+      "status": "ok",
+      "repeats": 3,
+      "warmups": 1,
+      "median_s": 0.007697799941524863,
+      "mean_s": 0.008056000030289093,
+      "min_s": 0.007463000016286969,
+      "max_s": 0.009007200133055449,
+      "stdev_s": 0.0006793962897798668,
+      "peak_traced_mb_median": 0.011812210083007812,
+      "peak_traced_mb_max": 0.011837005615234375,
+      "samples_s": [
+        0.007463000016286969,
+        0.009007200133055449,
+        0.007697799941524863
+      ],
+      "peak_traced_mb_samples": [
+        0.011837005615234375,
+        0.011798858642578125,
+        0.011812210083007812
+      ],
+      "result": {
+        "metadata_runtime_s": 0.00685369991697371,
+        "max_energy_residual": 1.1102230246251565e-16,
+        "mean_absorption": 0.6448031054739058,
+        "gpu_peak_allocated_mb": null
+      },
+      "metadata": {
+        "solver": "tmm",
+        "device": "cpu",
+        "n_wavelengths": 11
+      }
+    },
+    {
+      "name": "TMM wavelength sweep",
+      "category": "solver",
+      "size_label": "31 wavelengths",
+      "status": "ok",
+      "repeats": 3,
+      "warmups": 1,
+      "median_s": 0.019025800051167607,
+      "mean_s": 0.018089266726747155,
+      "min_s": 0.01542820013128221,
+      "max_s": 0.019813799997791648,
+      "stdev_s": 0.0019089600219481492,
+      "peak_traced_mb_median": 0.013065338134765625,
+      "peak_traced_mb_max": 0.0131378173828125,
+      "samples_s": [
+        0.019813799997791648,
+        0.01542820013128221,
+        0.019025800051167607
+      ],
+      "peak_traced_mb_samples": [
+        0.013059616088867188,
+        0.013065338134765625,
+        0.0131378173828125
+      ],
+      "result": {
+        "metadata_runtime_s": 0.018416799837723374,
+        "max_energy_residual": 1.1102230246251565e-16,
+        "mean_absorption": 0.6344990178785744,
+        "gpu_peak_allocated_mb": null
+      },
+      "metadata": {
+        "solver": "tmm",
+        "device": "cpu",
+        "n_wavelengths": 31
+      }
+    },
+    {
+      "name": "TMM wavelength sweep",
+      "category": "solver",
+      "size_label": "61 wavelengths",
+      "status": "ok",
+      "repeats": 3,
+      "warmups": 1,
+      "median_s": 0.03213419998064637,
+      "mean_s": 0.03352520001741747,
+      "min_s": 0.03143390011973679,
+      "max_s": 0.03700749995186925,
+      "stdev_s": 0.002478899567537935,
+      "peak_traced_mb_median": 0.0151519775390625,
+      "peak_traced_mb_max": 0.015424728393554688,
+      "samples_s": [
+        0.03143390011973679,
+        0.03213419998064637,
+        0.03700749995186925
+      ],
+      "peak_traced_mb_samples": [
+        0.015424728393554688,
+        0.015079498291015625,
+        0.0151519775390625
+      ],
+      "result": {
+        "metadata_runtime_s": 0.03643639991059899,
+        "max_energy_residual": 1.1102230246251565e-16,
+        "mean_absorption": 0.6319337934624945,
+        "gpu_peak_allocated_mb": null
+      },
+      "metadata": {
+        "solver": "tmm",
+        "device": "cpu",
+        "n_wavelengths": 61
+      }
+    },
+    {
+      "name": "TMM wavelength sweep",
+      "category": "solver",
+      "size_label": "101 wavelengths",
+      "status": "ok",
+      "repeats": 3,
+      "warmups": 1,
+      "median_s": 0.060681500006467104,
+      "mean_s": 0.06119193338478605,
+      "min_s": 0.0484121001791209,
+      "max_s": 0.07448219996877015,
+      "stdev_s": 0.010649191907866187,
+      "peak_traced_mb_median": 0.019613265991210938,
+      "peak_traced_mb_max": 0.0197296142578125,
+      "samples_s": [
+        0.060681500006467104,
+        0.07448219996877015,
+        0.0484121001791209
+      ],
+      "peak_traced_mb_samples": [
+        0.0196075439453125,
+        0.019613265991210938,
+        0.0197296142578125
+      ],
+      "result": {
+        "metadata_runtime_s": 0.04797110008075833,
+        "max_energy_residual": 1.1102230246251565e-16,
+        "mean_absorption": 0.6308632727950834,
+        "gpu_peak_allocated_mb": null
+      },
+      "metadata": {
+        "solver": "tmm",
+        "device": "cpu",
+        "n_wavelengths": 101
+      }
+    },
+    {
+      "name": "torcwa RCWA low-order sweep",
+      "category": "solver",
+      "size_label": "1 wavelengths",
+      "status": "ok",
+      "repeats": 3,
+      "warmups": 1,
+      "median_s": 0.6147072999738157,
+      "mean_s": 0.5902705333040407,
+      "min_s": 0.5114728000480682,
+      "max_s": 0.644631499890238,
+      "stdev_s": 0.05704195245529992,
+      "peak_traced_mb_median": 1.5379858016967773,
+      "peak_traced_mb_max": 1.541651725769043,
+      "samples_s": [
+        0.5114728000480682,
+        0.6147072999738157,
+        0.644631499890238
+      ],
+      "peak_traced_mb_samples": [
+        1.541651725769043,
+        1.5379858016967773,
+        1.5359277725219727
+      ],
+      "result": {
+        "metadata_runtime_s": 0.6437720998656005,
+        "max_energy_residual": 0.0,
+        "mean_absorption": 0.8863282460820301,
+        "gpu_peak_allocated_mb": null
+      },
+      "metadata": {
+        "solver": "torcwa",
+        "device": "cpu",
+        "n_wavelengths": 1,
+        "fourier_order": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "torcwa RCWA low-order sweep",
+      "category": "solver",
+      "size_label": "3 wavelengths",
+      "status": "ok",
+      "repeats": 3,
+      "warmups": 1,
+      "median_s": 1.7692565000616014,
+      "mean_s": 1.7264606333337724,
+      "min_s": 1.6244489999953657,
+      "max_s": 1.7856763999443501,
+      "stdev_s": 0.07244392443040348,
+      "peak_traced_mb_median": 2.878891944885254,
+      "peak_traced_mb_max": 2.881105422973633,
+      "samples_s": [
+        1.6244489999953657,
+        1.7692565000616014,
+        1.7856763999443501
+      ],
+      "peak_traced_mb_samples": [
+        2.881105422973633,
+        2.8779029846191406,
+        2.878891944885254
+      ],
+      "result": {
+        "metadata_runtime_s": 1.784965500002727,
+        "max_energy_residual": 0.0,
+        "mean_absorption": 0.9476450299703174,
+        "gpu_peak_allocated_mb": null
+      },
+      "metadata": {
+        "solver": "torcwa",
+        "device": "cpu",
+        "n_wavelengths": 3,
+        "fourier_order": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "torcwa RCWA low-order sweep",
+      "category": "solver",
+      "size_label": "5 wavelengths",
+      "status": "ok",
+      "repeats": 3,
+      "warmups": 1,
+      "median_s": 2.840412799967453,
+      "mean_s": 2.864347799991568,
+      "min_s": 2.8212645000312477,
+      "max_s": 2.931366099976003,
+      "stdev_s": 0.04802953082715211,
+      "peak_traced_mb_median": 2.889796257019043,
+      "peak_traced_mb_max": 2.8919153213500977,
+      "samples_s": [
+        2.840412799967453,
+        2.8212645000312477,
+        2.931366099976003
+      ],
+      "peak_traced_mb_samples": [
+        2.8897781372070312,
+        2.889796257019043,
+        2.8919153213500977
+      ],
+      "result": {
+        "metadata_runtime_s": 2.930307100061327,
+        "max_energy_residual": 0.0,
+        "mean_absorption": 0.9506171761403494,
+        "gpu_peak_allocated_mb": null
+      },
+      "metadata": {
+        "solver": "torcwa",
+        "device": "cpu",
+        "n_wavelengths": 5,
+        "fourier_order": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "torcwa RCWA low-order sweep",
+      "category": "solver",
+      "size_label": "9 wavelengths",
+      "status": "ok",
+      "repeats": 3,
+      "warmups": 1,
+      "median_s": 5.456538799917325,
+      "mean_s": 5.646424799924716,
+      "min_s": 5.212808399926871,
+      "max_s": 6.269927199929953,
+      "stdev_s": 0.4519716503492182,
+      "peak_traced_mb_median": 2.909834861755371,
+      "peak_traced_mb_max": 2.9143333435058594,
+      "samples_s": [
+        6.269927199929953,
+        5.456538799917325,
+        5.212808399926871
+      ],
+      "peak_traced_mb_samples": [
+        2.9143333435058594,
+        2.909834861755371,
+        2.908428192138672
+      ],
+      "result": {
+        "metadata_runtime_s": 5.211944299982861,
+        "max_energy_residual": 0.0,
+        "mean_absorption": 0.9561480908585812,
+        "gpu_peak_allocated_mb": null
+      },
+      "metadata": {
+        "solver": "torcwa",
+        "device": "cpu",
+        "n_wavelengths": 9,
+        "fourier_order": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "torcwa RCWA low-order sweep",
+      "category": "solver",
+      "size_label": "GPU",
+      "status": "not_available",
+      "repeats": 0,
+      "warmups": 0,
+      "median_s": null,
+      "mean_s": null,
+      "min_s": null,
+      "max_s": null,
+      "stdev_s": null,
+      "peak_traced_mb_median": null,
+      "peak_traced_mb_max": null,
+      "samples_s": [],
+      "peak_traced_mb_samples": [],
+      "result": {},
+      "metadata": {
+        "solver": "torcwa",
+        "device": "cuda",
+        "n_wavelengths": null
+      },
+      "error": "CUDA is not available in this environment."
+    }
+  ]
+}

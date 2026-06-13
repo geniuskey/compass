@@ -1,0 +1,232 @@
+{
+  "generated_on": "2026-06-11",
+  "benchmark": {
+    "pixel": "generic_bsi",
+    "pitch_um": 1.0,
+    "wavelength_um": [
+      0.45,
+      0.55,
+      0.65
+    ],
+    "polarization": "TE",
+    "angle_deg": 0.0,
+    "parity_target_max_abs_rta_delta": 0.05
+  },
+  "backends": [
+    {
+      "name": "torcwa",
+      "label": "torcwa",
+      "role": "reference",
+      "physical_ok": true,
+      "parity_ok": true,
+      "bounded": true,
+      "runtime_s": 0.9607472999487072,
+      "energy_residual": 0.0,
+      "max_abs_rta_delta_vs_torcwa": 0.0,
+      "exception": null,
+      "warnings": [],
+      "logs": [],
+      "metadata": {
+        "solver_name": "torcwa",
+        "fourier_order": [
+          1,
+          1
+        ],
+        "device": "cpu",
+        "runtime_seconds": 0.9607472999487072,
+        "solver_type": "rcwa"
+      },
+      "spectra": {
+        "wavelength_um": [
+          0.45,
+          0.55,
+          0.65
+        ],
+        "reflection": [
+          0.11367084796074778,
+          0.03416026663035154,
+          0.00806004274636507
+        ],
+        "transmission": [
+          9.059572221303824e-07,
+          0.0006748448358848691,
+          0.0004980019584763795
+        ],
+        "absorption": [
+          0.8863282460820301,
+          0.9651648885337636,
+          0.9914419552951586
+        ],
+        "qe_mean": [
+          0.0023050742117778095,
+          0.005737672612705559,
+          0.000956492717638195
+        ]
+      }
+    },
+    {
+      "name": "grcwa",
+      "label": "grcwa",
+      "role": "candidate",
+      "physical_ok": true,
+      "parity_ok": false,
+      "bounded": true,
+      "runtime_s": 0.04996139998547733,
+      "energy_residual": 0.0,
+      "max_abs_rta_delta_vs_torcwa": 0.11367175391796991,
+      "exception": null,
+      "warnings": [],
+      "logs": [],
+      "metadata": {
+        "solver_name": "grcwa",
+        "fourier_order": [
+          3,
+          3
+        ],
+        "device": "cpu",
+        "runtime_seconds": 0.04996139998547733,
+        "solver_type": "rcwa"
+      },
+      "spectra": {
+        "wavelength_um": [
+          0.45,
+          0.55,
+          0.65
+        ],
+        "reflection": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transmission": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "absorption": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "qe_mean": [
+          0.9790721744411537,
+          0.910125506553011,
+          0.8897259581225186
+        ]
+      }
+    },
+    {
+      "name": "meent",
+      "label": "meent/numpy",
+      "role": "candidate",
+      "physical_ok": false,
+      "parity_ok": false,
+      "bounded": false,
+      "runtime_s": 3.7172839001286775,
+      "energy_residual": 332.30609722705464,
+      "max_abs_rta_delta_vs_torcwa": null,
+      "exception": null,
+      "warnings": [],
+      "logs": [
+        "meent: R+T=16.5237 > 1 at \u03bb=0.4500um (numerical instability for multi-layer 2D stack)",
+        "meent: R+T=181.6570 > 1 at \u03bb=0.5500um (numerical instability for multi-layer 2D stack)",
+        "meent: R+T=333.3061 > 1 at \u03bb=0.6500um (numerical instability for multi-layer 2D stack)"
+      ],
+      "metadata": {
+        "solver_name": "meent",
+        "backend": "numpy",
+        "fourier_order": [
+          1,
+          1
+        ],
+        "runtime_seconds": 3.7172839001286775,
+        "solver_type": "rcwa",
+        "device": "cpu"
+      },
+      "spectra": {
+        "wavelength_um": [
+          0.45,
+          0.55,
+          0.65
+        ],
+        "reflection": [
+          16.501775295945354,
+          180.83345744156262,
+          325.37722419823865
+        ],
+        "transmission": [
+          0.021927177111755614,
+          0.8235176666586083,
+          7.928873028815966
+        ],
+        "absorption": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "qe_mean": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "fmmax",
+      "label": "fmmax",
+      "role": "candidate",
+      "physical_ok": false,
+      "parity_ok": false,
+      "bounded": true,
+      "runtime_s": 0.4478637999854982,
+      "energy_residual": 1.0,
+      "max_abs_rta_delta_vs_torcwa": null,
+      "exception": null,
+      "warnings": [],
+      "logs": [
+        "fmmax failed at lambda=0.4500um, pol=TE: 'Expansion' object has no attribute 'primitive_lattice_vectors'",
+        "fmmax failed at lambda=0.5500um, pol=TE: 'Expansion' object has no attribute 'primitive_lattice_vectors'",
+        "fmmax failed at lambda=0.6500um, pol=TE: 'Expansion' object has no attribute 'primitive_lattice_vectors'"
+      ],
+      "metadata": {
+        "solver_name": "fmmax",
+        "fmm_formulation": "jones",
+        "fourier_order": [
+          3,
+          3
+        ],
+        "dtype": "complex64",
+        "runtime_seconds": 0.4478637999854982,
+        "solver_type": "rcwa",
+        "device": "cpu"
+      },
+      "spectra": {
+        "wavelength_um": [
+          0.45,
+          0.55,
+          0.65
+        ],
+        "reflection": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transmission": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "absorption": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "qe_mean": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  ]
+}

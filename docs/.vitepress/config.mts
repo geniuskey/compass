@@ -132,7 +132,21 @@ const reportsSidebar = [
     { text: 'Overview', link: '/reports/' },
   ]},
   { text: 'Solver Validation', collapsed: false, items: [
+    { text: 'TMM/RCWA Planar Validation', link: '/reports/tmm-rcwa-planar-validation' },
+    { text: 'RCWA Backend Parity', link: '/reports/rcwa-backend-parity' },
     { text: 'RCWA/FDTD Convergence', link: '/reports/convergence-analysis' },
+  ]},
+  { text: 'Optical Response', collapsed: false, items: [
+    { text: 'CRA Cone Illumination Sweep', link: '/reports/cra-cone-illumination-sweep' },
+  ]},
+  { text: 'Stack Optimization', collapsed: false, items: [
+    { text: 'BARL Optimization Benchmark', link: '/reports/barl-optimization-benchmark' },
+  ]},
+  { text: 'Crosstalk', collapsed: false, items: [
+    { text: 'DTI Crosstalk Benchmark', link: '/reports/dti-crosstalk-benchmark' },
+  ]},
+  { text: 'Performance', collapsed: false, items: [
+    { text: 'Performance Benchmark', link: '/reports/performance-benchmark' },
   ]},
   { text: 'Geometry Validation', collapsed: false, items: [
     { text: 'Pixel Stack Geometry Audit', link: '/reports/pixel-stack-geometry-audit' },
@@ -286,7 +300,21 @@ const reportsSidebarKo = [
     { text: '개요', link: '/ko/reports/' },
   ]},
   { text: '솔버 검증', collapsed: false, items: [
+    { text: 'TMM/RCWA 평면 검증', link: '/ko/reports/tmm-rcwa-planar-validation' },
+    { text: 'RCWA Backend Parity', link: '/ko/reports/rcwa-backend-parity' },
     { text: 'RCWA/FDTD 수렴', link: '/ko/reports/convergence-analysis' },
+  ]},
+  { text: '광학 응답', collapsed: false, items: [
+    { text: 'CRA Cone Illumination Sweep', link: '/ko/reports/cra-cone-illumination-sweep' },
+  ]},
+  { text: '스택 최적화', collapsed: false, items: [
+    { text: 'BARL Optimization Benchmark', link: '/ko/reports/barl-optimization-benchmark' },
+  ]},
+  { text: '크로스토크', collapsed: false, items: [
+    { text: 'DTI Crosstalk Benchmark', link: '/ko/reports/dti-crosstalk-benchmark' },
+  ]},
+  { text: '성능', collapsed: false, items: [
+    { text: 'Performance Benchmark', link: '/ko/reports/performance-benchmark' },
   ]},
   { text: 'Geometry 검증', collapsed: false, items: [
     { text: '픽셀 스택 Geometry 감사', link: '/ko/reports/pixel-stack-geometry-audit' },

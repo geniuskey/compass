@@ -8,6 +8,12 @@ Python benchmark 산출물과 geometry 감사 스크립트에서 생성한 publi
 
 ## 리포트 목록
 
+- [TMM vs RCWA 평면 스택 검증](./tmm-rcwa-planar-validation.md) (생성일 2026-06-11)
+- [RCWA Backend Parity](./rcwa-backend-parity.md) (생성일 2026-06-11)
+- [CRA Cone Illumination Sweep](./cra-cone-illumination-sweep.md) (생성일 2026-06-11)
+- [BARL Optimization Benchmark](./barl-optimization-benchmark.md) (생성일 2026-06-11)
+- [DTI Crosstalk Benchmark](./dti-crosstalk-benchmark.md) (생성일 2026-06-11)
+- [Performance Benchmark](./performance-benchmark.md) (생성일 2026-06-11)
 - [RCWA/FDTD 수렴 분석](./convergence-analysis.md) (생성일 2026-05-07)
 - [픽셀 스택 Geometry 감사](./pixel-stack-geometry-audit.md) (생성일 2026-06-06)
 - [컬러 필터 Relief 민감도](./color-filter-relief-sensitivity.md) (생성일 2026-06-06)
@@ -15,13 +21,7 @@ Python benchmark 산출물과 geometry 감사 스크립트에서 생성한 publi
 
 ## 리포트 대기열
 
-| 우선순위 | 리포트 | 필요한 근거 |
-| --- | --- | --- |
-| 1 | RCWA backend parity | torcwa/grcwa/meent/fmmax QE, R/T/A, runtime table |
-| 2 | CRA cone illumination sweep | CRA/F-number/corner sampling map과 수렴 table |
-| 3 | BARL optimization benchmark | 로컬 output에서 승격한 thickness/material sweep |
-| 4 | DTI crosstalk benchmark | FDTI/BDTI width/depth/material sweep과 crosstalk matrix |
-| 5 | Performance benchmark | CPU/GPU runtime, memory, wavelength-sweep cost |
+_현재 대기 중인 리포트는 없다._
 
 ## 이 섹션에 들어갈 내용
 

@@ -1,0 +1,411 @@
+{
+  "generated_on": "2026-06-11",
+  "benchmark": {
+    "pixel": "generic_bsi",
+    "pitch_um": 1.0,
+    "wavelength_um": 0.55,
+    "geometry_grid": [
+      400,
+      400
+    ],
+    "representative_scalar_fdtd": {
+      "grid": [
+        44,
+        44,
+        118
+      ],
+      "steps": 3500,
+      "source_set": "all",
+      "note": "Snapshot copied as fixed evidence from the convergence ladder."
+    }
+  },
+  "width_sweep": [
+    {
+      "mode": "fdti",
+      "width_um": 0.0,
+      "depth_um": 3.0,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 0.0,
+      "max_xy_dti_area_fraction": 0.0,
+      "effective_dti_volume_fraction": 0.0,
+      "open_silicon_volume_fraction": 1.0,
+      "slices": [
+        {
+          "name": "silicon",
+          "z_start_um": 0.0,
+          "z_end_um": 2.9,
+          "thickness_um": 2.9,
+          "dti_area_fraction": 0.0
+        }
+      ]
+    },
+    {
+      "mode": "fdti",
+      "width_um": 0.04,
+      "depth_um": 3.0,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 2.9,
+      "max_xy_dti_area_fraction": 0.0784,
+      "effective_dti_volume_fraction": 0.0784,
+      "open_silicon_volume_fraction": 0.9216,
+      "slices": [
+        {
+          "name": "silicon",
+          "z_start_um": 0.0,
+          "z_end_um": 2.9,
+          "thickness_um": 2.9,
+          "dti_area_fraction": 0.0784
+        }
+      ]
+    },
+    {
+      "mode": "fdti",
+      "width_um": 0.06,
+      "depth_um": 3.0,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 2.9,
+      "max_xy_dti_area_fraction": 0.1164,
+      "effective_dti_volume_fraction": 0.11640000000000002,
+      "open_silicon_volume_fraction": 0.8835999999999999,
+      "slices": [
+        {
+          "name": "silicon",
+          "z_start_um": 0.0,
+          "z_end_um": 2.9,
+          "thickness_um": 2.9,
+          "dti_area_fraction": 0.1164
+        }
+      ]
+    },
+    {
+      "mode": "fdti",
+      "width_um": 0.08,
+      "depth_um": 3.0,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 2.9,
+      "max_xy_dti_area_fraction": 0.1536,
+      "effective_dti_volume_fraction": 0.1536,
+      "open_silicon_volume_fraction": 0.8464,
+      "slices": [
+        {
+          "name": "silicon",
+          "z_start_um": 0.0,
+          "z_end_um": 2.9,
+          "thickness_um": 2.9,
+          "dti_area_fraction": 0.1536
+        }
+      ]
+    },
+    {
+      "mode": "fdti",
+      "width_um": 0.1,
+      "depth_um": 3.0,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 2.9,
+      "max_xy_dti_area_fraction": 0.19,
+      "effective_dti_volume_fraction": 0.18999999999999997,
+      "open_silicon_volume_fraction": 0.81,
+      "slices": [
+        {
+          "name": "silicon",
+          "z_start_um": 0.0,
+          "z_end_um": 2.9,
+          "thickness_um": 2.9,
+          "dti_area_fraction": 0.19
+        }
+      ]
+    },
+    {
+      "mode": "fdti",
+      "width_um": 0.12,
+      "depth_um": 3.0,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 2.9,
+      "max_xy_dti_area_fraction": 0.2256,
+      "effective_dti_volume_fraction": 0.2256,
+      "open_silicon_volume_fraction": 0.7744,
+      "slices": [
+        {
+          "name": "silicon",
+          "z_start_um": 0.0,
+          "z_end_um": 2.9,
+          "thickness_um": 2.9,
+          "dti_area_fraction": 0.2256
+        }
+      ]
+    },
+    {
+      "mode": "fdti",
+      "width_um": 0.15,
+      "depth_um": 3.0,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 2.9,
+      "max_xy_dti_area_fraction": 0.2775,
+      "effective_dti_volume_fraction": 0.2775,
+      "open_silicon_volume_fraction": 0.7224999999999999,
+      "slices": [
+        {
+          "name": "silicon",
+          "z_start_um": 0.0,
+          "z_end_um": 2.9,
+          "thickness_um": 2.9,
+          "dti_area_fraction": 0.2775
+        }
+      ]
+    }
+  ],
+  "depth_sweep": [
+    {
+      "mode": "bdti",
+      "width_um": 0.1,
+      "depth_um": 0.0,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 0.0,
+      "max_xy_dti_area_fraction": 0.0,
+      "effective_dti_volume_fraction": 0.0,
+      "open_silicon_volume_fraction": 1.0,
+      "slices": [
+        {
+          "name": "silicon",
+          "z_start_um": 0.0,
+          "z_end_um": 2.9,
+          "thickness_um": 2.9,
+          "dti_area_fraction": 0.0
+        }
+      ]
+    },
+    {
+      "mode": "bdti",
+      "width_um": 0.1,
+      "depth_um": 0.3,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 0.2999999999999998,
+      "max_xy_dti_area_fraction": 0.19,
+      "effective_dti_volume_fraction": 0.019655172413793092,
+      "open_silicon_volume_fraction": 0.9803448275862069,
+      "slices": [
+        {
+          "name": "silicon_bulk",
+          "z_start_um": 0.0,
+          "z_end_um": 2.6,
+          "thickness_um": 2.6,
+          "dti_area_fraction": 0.0
+        },
+        {
+          "name": "silicon_bdti",
+          "z_start_um": 2.6,
+          "z_end_um": 2.9,
+          "thickness_um": 0.2999999999999998,
+          "dti_area_fraction": 0.19
+        }
+      ]
+    },
+    {
+      "mode": "bdti",
+      "width_um": 0.1,
+      "depth_um": 0.6,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 0.6000000000000001,
+      "max_xy_dti_area_fraction": 0.19,
+      "effective_dti_volume_fraction": 0.03931034482758621,
+      "open_silicon_volume_fraction": 0.9606896551724138,
+      "slices": [
+        {
+          "name": "silicon_bulk",
+          "z_start_um": 0.0,
+          "z_end_um": 2.3,
+          "thickness_um": 2.3,
+          "dti_area_fraction": 0.0
+        },
+        {
+          "name": "silicon_bdti",
+          "z_start_um": 2.3,
+          "z_end_um": 2.9,
+          "thickness_um": 0.6000000000000001,
+          "dti_area_fraction": 0.19
+        }
+      ]
+    },
+    {
+      "mode": "bdti",
+      "width_um": 0.1,
+      "depth_um": 1.2,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 1.2,
+      "max_xy_dti_area_fraction": 0.19,
+      "effective_dti_volume_fraction": 0.07862068965517241,
+      "open_silicon_volume_fraction": 0.9213793103448276,
+      "slices": [
+        {
+          "name": "silicon_bulk",
+          "z_start_um": 0.0,
+          "z_end_um": 1.7,
+          "thickness_um": 1.7,
+          "dti_area_fraction": 0.0
+        },
+        {
+          "name": "silicon_bdti",
+          "z_start_um": 1.7,
+          "z_end_um": 2.9,
+          "thickness_um": 1.2,
+          "dti_area_fraction": 0.19
+        }
+      ]
+    },
+    {
+      "mode": "bdti",
+      "width_um": 0.1,
+      "depth_um": 1.8,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 1.8,
+      "max_xy_dti_area_fraction": 0.19,
+      "effective_dti_volume_fraction": 0.11793103448275863,
+      "open_silicon_volume_fraction": 0.8820689655172413,
+      "slices": [
+        {
+          "name": "silicon_bulk",
+          "z_start_um": 0.0,
+          "z_end_um": 1.0999999999999999,
+          "thickness_um": 1.0999999999999999,
+          "dti_area_fraction": 0.0
+        },
+        {
+          "name": "silicon_bdti",
+          "z_start_um": 1.0999999999999999,
+          "z_end_um": 2.9,
+          "thickness_um": 1.8,
+          "dti_area_fraction": 0.19
+        }
+      ]
+    },
+    {
+      "mode": "bdti",
+      "width_um": 0.1,
+      "depth_um": 2.4,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 2.4,
+      "max_xy_dti_area_fraction": 0.19,
+      "effective_dti_volume_fraction": 0.15724137931034482,
+      "open_silicon_volume_fraction": 0.8427586206896551,
+      "slices": [
+        {
+          "name": "silicon_bulk",
+          "z_start_um": 0.0,
+          "z_end_um": 0.5,
+          "thickness_um": 0.5,
+          "dti_area_fraction": 0.0
+        },
+        {
+          "name": "silicon_bdti",
+          "z_start_um": 0.5,
+          "z_end_um": 2.9,
+          "thickness_um": 2.4,
+          "dti_area_fraction": 0.19
+        }
+      ]
+    },
+    {
+      "mode": "bdti",
+      "width_um": 0.1,
+      "depth_um": 2.9,
+      "silicon_thickness_um": 2.9,
+      "active_dti_depth_um": 2.9,
+      "max_xy_dti_area_fraction": 0.19,
+      "effective_dti_volume_fraction": 0.18999999999999997,
+      "open_silicon_volume_fraction": 0.81,
+      "slices": [
+        {
+          "name": "silicon",
+          "z_start_um": 0.0,
+          "z_end_um": 2.9,
+          "thickness_um": 2.9,
+          "dti_area_fraction": 0.19
+        }
+      ]
+    }
+  ],
+  "pixel_benchmark_snapshot": [
+    {
+      "mode": "fdti",
+      "mean_self_collection_fraction": 0.5830873154469457,
+      "max_neighbor_crosstalk_fraction": 0.25822417836126677,
+      "mean_total_pd_signal": 15320.354485369142,
+      "max_energy_tail_relative_change": 0.04709843318759477,
+      "matrix": [
+        [
+          0.7931746082703969,
+          0.10057476339386437,
+          0.10057476339386437,
+          0.005675864941874426
+        ],
+        [
+          0.25822417836126677,
+          0.470175371001563,
+          0.20549461475388575,
+          0.0661058358832845
+        ],
+        [
+          0.25822417836126677,
+          0.20549461475388575,
+          0.470175371001563,
+          0.06610583588328452
+        ],
+        [
+          0.060185736245605345,
+          0.1704951761200673,
+          0.1704951761200673,
+          0.5988239115142601
+        ]
+      ]
+    },
+    {
+      "mode": "bdti_0p6um",
+      "mean_self_collection_fraction": 0.5827451946048239,
+      "max_neighbor_crosstalk_fraction": 0.2609124864402936,
+      "mean_total_pd_signal": 15249.179770690309,
+      "max_energy_tail_relative_change": 0.04696282874027519,
+      "matrix": [
+        [
+          0.7939483152159363,
+          0.10014745639953135,
+          0.10014745639953135,
+          0.0057567719850010095
+        ],
+        [
+          0.2609124864402936,
+          0.4681446981797666,
+          0.20343591261316155,
+          0.06750690276677819
+        ],
+        [
+          0.2609124864402935,
+          0.20343591261316155,
+          0.4681446981797666,
+          0.06750690276677819
+        ],
+        [
+          0.06127466674783031,
+          0.16899113320417172,
+          0.16899113320417175,
+          0.6007430668438262
+        ]
+      ]
+    }
+  ],
+  "periodic_trench_summary": {
+    "fdti": {
+      "max_abs_error_R": 0.026557762271347846,
+      "max_abs_error_T": 0.02698011935277761,
+      "max_abs_error_A": 0.027838486766180504,
+      "mean_fdtd_silicon_absorption_proxy": 0.6087103328224176,
+      "mean_fdtd_trench_field_leakage": 0.1304583724250464
+    },
+    "bdti": {
+      "max_abs_error_R": 0.018285819966702088,
+      "max_abs_error_T": 0.00881966457550798,
+      "max_abs_error_A": 0.019033790017604746,
+      "mean_fdtd_silicon_absorption_proxy": 0.6104874325359292,
+      "mean_fdtd_trench_field_leakage": 0.09597948824750697
+    }
+  }
+}

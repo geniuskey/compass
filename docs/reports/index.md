@@ -8,6 +8,12 @@ Publication-style reports generated from Python benchmark artifacts and geometry
 
 ## Available reports
 
+- [TMM vs RCWA Planar Stack Validation](./tmm-rcwa-planar-validation.md) (generated 2026-06-11)
+- [RCWA Backend Parity](./rcwa-backend-parity.md) (generated 2026-06-11)
+- [CRA Cone Illumination Sweep](./cra-cone-illumination-sweep.md) (generated 2026-06-11)
+- [BARL Optimization Benchmark](./barl-optimization-benchmark.md) (generated 2026-06-11)
+- [DTI Crosstalk Benchmark](./dti-crosstalk-benchmark.md) (generated 2026-06-11)
+- [Performance Benchmark](./performance-benchmark.md) (generated 2026-06-11)
 - [RCWA/FDTD Convergence Analysis](./convergence-analysis.md) (generated 2026-05-07)
 - [Pixel Stack Geometry Audit](./pixel-stack-geometry-audit.md) (generated 2026-06-06)
 - [Color Filter Relief Sensitivity](./color-filter-relief-sensitivity.md) (generated 2026-06-06)
@@ -15,13 +21,7 @@ Publication-style reports generated from Python benchmark artifacts and geometry
 
 ## Report queue
 
-| Priority | Report | Evidence required |
-| --- | --- | --- |
-| 1 | RCWA backend parity | torcwa/grcwa/meent/fmmax QE, R/T/A, runtime table |
-| 2 | CRA cone illumination sweep | CRA/F-number/corner sampling maps and convergence table |
-| 3 | BARL optimization benchmark | Thickness/material sweep promoted from local outputs |
-| 4 | DTI crosstalk benchmark | FDTI/BDTI width/depth/material sweep with crosstalk matrix |
-| 5 | Performance benchmark | CPU/GPU runtime, memory, wavelength-sweep cost |
+_No report is currently queued._
 
 ## What belongs here
 
