@@ -10,12 +10,12 @@
         {{ isPlaying ? t('Pause', '일시정지') : t('Play', '재생') }}
       </button>
       <div class="slider-group">
-        <label>{{ t('Wavelength', '파장') }}: <strong>{{ wavelength }} nm</strong></label>
-        <input type="range" min="400" max="700" step="10" v-model.number="wavelength" class="ctrl-range" />
+        <label for="em-wavelength">{{ t('Wavelength', '파장') }}: <strong>{{ wavelength }} nm</strong></label>
+        <input id="em-wavelength" type="range" min="400" max="700" step="10" v-model.number="wavelength" class="ctrl-range" />
       </div>
       <div class="slider-group">
-        <label>{{ t('Absorption', '흡수') }} k: <strong>{{ kValue.toFixed(2) }}</strong></label>
-        <input type="range" min="0" max="1.0" step="0.01" v-model.number="kValue" class="ctrl-range" />
+        <label for="em-kvalue">{{ t('Absorption', '흡수') }} k: <strong>{{ kValue.toFixed(2) }}</strong></label>
+        <input id="em-kvalue" type="range" min="0" max="1.0" step="0.01" v-model.number="kValue" class="ctrl-range" />
       </div>
     </div>
 
@@ -23,9 +23,9 @@
       <svg :viewBox="`0 0 ${W} ${H}`" class="emwave-svg">
         <!-- Background regions -->
         <!-- Transparent medium (left) -->
-        <rect :x="padL" :y="0" :width="interfaceX - padL" :height="H" fill="#e8f4fd" opacity="0.25" />
+        <rect :x="padL" :y="0" :width="interfaceX - padL" :height="H" class="region-lhs" opacity="0.25" />
         <!-- Absorbing medium (right) -->
-        <rect :x="interfaceX" :y="0" :width="padL + plotW - interfaceX" :height="H" fill="#fde8e8" :opacity="kValue > 0 ? 0.3 : 0.1" />
+        <rect :x="interfaceX" :y="0" :width="padL + plotW - interfaceX" :height="H" class="region-rhs" :opacity="kValue > 0 ? 0.3 : 0.1" />
 
         <!-- Interface line -->
         <line
@@ -56,7 +56,7 @@
         <path :d="hFieldPath" fill="none" stroke="#e74c3c" stroke-width="2" stroke-dasharray="6,3" />
 
         <!-- Propagation arrow (k vector) -->
-        <line :x1="padL + 10" :y1="midY - 60" :x2="padL + 50" :y2="midY - 60" stroke="#333" stroke-width="2" marker-end="url(#emArrowK)" />
+        <line :x1="padL + 10" :y1="midY - 60" :x2="padL + 50" :y2="midY - 60" stroke="var(--vp-c-text-1)" stroke-width="2" marker-end="url(#emArrowK)" />
         <text :x="padL + 55" :y="midY - 56" class="vec-label">k</text>
 
         <!-- Wavelength bracket -->
@@ -75,7 +75,7 @@
 
         <defs>
           <marker id="emArrowK" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill="#333" />
+            <polygon points="0 0, 8 3, 0 6" fill="var(--vp-c-text-1)" />
           </marker>
         </defs>
       </svg>
@@ -98,7 +98,8 @@ const amplitude = 45
 
 const wavelength = ref(550)
 const kValue = ref(0.0)
-const isPlaying = ref(true)
+const prefersReduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+const isPlaying = ref(!prefersReduced)
 const phase = ref(0)
 let animFrame = null
 
@@ -258,7 +259,7 @@ onUnmounted(() => {
 }
 .vec-label {
   font-size: 12px;
-  fill: #333;
+  fill: var(--vp-c-text-1);
   font-weight: 700;
   font-style: italic;
 }
@@ -281,5 +282,17 @@ onUnmounted(() => {
 .medium-text {
   font-size: 9px;
   fill: var(--vp-c-text-3);
+}
+.region-lhs {
+  fill: #e8f4fd;
+}
+.region-rhs {
+  fill: #fde8e8;
+}
+.dark .region-lhs {
+  fill: #1a2e3d;
+}
+.dark .region-rhs {
+  fill: #3d1a1a;
 }
 </style>

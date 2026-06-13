@@ -6,7 +6,7 @@
     </p>
 
     <!-- Solver type toggle -->
-    <div class="toggle-row">
+    <div class="toggle-row" role="group" :aria-label="t('Solver type', '솔버 유형')">
       <button type="button"
         class="toggle-pill"
         :class="{ active: solverType === 'rcwa' }"
@@ -218,7 +218,7 @@ const backends = [
 .toggle-pill.active {
   background: var(--vp-c-brand-1);
   border-color: var(--vp-c-brand-1);
-  color: #fff;
+  color: white;
 }
 
 /* Flow diagram */

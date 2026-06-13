@@ -10,10 +10,10 @@
 
     <div class="controls-row">
       <div class="slider-group">
-        <label>
+        <label for="rcwa-order">
           {{ t('Fourier Order', '푸리에 차수') }} N: <strong>{{ order }}</strong>
         </label>
-        <input type="range" min="1" max="1000" step="1" v-model.number="order" class="ctrl-range" />
+        <input id="rcwa-order" type="range" min="1" max="1000" step="1" v-model.number="order" class="ctrl-range" />
       </div>
     </div>
 

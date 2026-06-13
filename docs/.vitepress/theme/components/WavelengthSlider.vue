@@ -56,8 +56,8 @@
     <div class="depth-visualization">
       <svg :viewBox="`0 0 400 120`" class="depth-svg">
         <!-- Silicon block -->
-        <rect x="50" y="10" width="300" height="80" fill="#8B8682" stroke="#555" stroke-width="1" rx="2" />
-        <text x="200" y="105" text-anchor="middle" class="svg-label">Silicon</text>
+        <rect x="50" y="10" width="300" height="80" class="si-block" rx="2" />
+        <text x="200" y="105" text-anchor="middle" class="svg-label">{{ t('Silicon', '실리콘') }}</text>
 
         <!-- Incoming light arrow -->
         <line x1="55" y1="50" x2="80" y2="50" :stroke="wavelengthToCSS" stroke-width="3" />
@@ -228,14 +228,14 @@ const wavelengthToCSS = computed(() => {
 
 const colorName = computed(() => {
   const wl = wavelength.value
-  if (wl < 420) return 'Violet'
-  if (wl < 450) return 'Indigo'
-  if (wl < 495) return 'Blue'
-  if (wl < 520) return 'Cyan'
-  if (wl < 565) return 'Green'
-  if (wl < 590) return 'Yellow'
-  if (wl < 625) return 'Orange'
-  return 'Red'
+  if (wl < 420) return t('Violet', '보라')
+  if (wl < 450) return t('Indigo', '남색')
+  if (wl < 495) return t('Blue', '파랑')
+  if (wl < 520) return t('Cyan', '청록')
+  if (wl < 565) return t('Green', '초록')
+  if (wl < 590) return t('Yellow', '노랑')
+  if (wl < 625) return t('Orange', '주황')
+  return t('Red', '빨강')
 })
 </script>
 
@@ -378,9 +378,18 @@ const colorName = computed(() => {
   font-size: 12px;
   fill: var(--vp-c-text-2);
 }
+.si-block {
+  fill: #8B8682;
+  stroke: #555;
+  stroke-width: 1;
+}
+:global(.dark) .si-block {
+  fill: #6a6560;
+  stroke: #888;
+}
 .svg-depth-label {
   font-size: 10px;
-  fill: #ff6b6b;
+  fill: var(--vp-c-danger-1, #ff6b6b);
   font-weight: 600;
 }
 .svg-scale {

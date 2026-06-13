@@ -23,10 +23,10 @@
         </clipPath>
       </defs>
 
-      <rect x="0" y="0" width="640" height="270" rx="8" class="canvas" fill="#f8fafc" stroke="#d8dee9" />
+      <rect x="0" y="0" width="640" height="270" rx="8" class="canvas" />
 
       <g :transform="`translate(${plot.x} ${plot.y})`">
-        <rect x="0" y="0" :width="plot.size" :height="plot.size" rx="4" class="domain" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2" />
+        <rect x="0" y="0" :width="plot.size" :height="plot.size" rx="4" class="domain" />
 
         <g :clip-path="`url(#${clipId})`">
           <template v-if="variant === 'pixel'">
@@ -104,10 +104,6 @@
               :height="rectH(cell.top.y0, cell.top.y1)"
               :fill="cell.fill"
               class="cf-top"
-              fill-opacity="0.18"
-              stroke="#111827"
-              stroke-width="1.5"
-              stroke-dasharray="5 4"
             />
             <rect
               v-for="grid in metalGridRects"
@@ -157,10 +153,10 @@
             />
           </template>
 
-          <path v-if="showPixelReference" :d="pixelBoundaryPath" class="pixel-reference" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="5 5" opacity="0.55" />
+          <path v-if="showPixelReference" :d="pixelBoundaryPath" class="pixel-reference" />
         </g>
 
-        <rect x="0" y="0" :width="plot.size" :height="plot.size" rx="4" class="domain-outline" fill="none" stroke="#334155" stroke-width="1.2" />
+        <rect x="0" y="0" :width="plot.size" :height="plot.size" rx="4" class="domain-outline" />
 
         <text
           v-for="cell in visibleLabels"
@@ -169,10 +165,6 @@
           :y="unitY(cell.cy) + 5"
           text-anchor="middle"
           class="cell-label"
-          fill="rgba(17, 24, 39, 0.78)"
-          stroke="rgba(255, 255, 255, 0.72)"
-          stroke-width="3"
-          paint-order="stroke"
           font-size="18"
           font-weight="760"
         >
@@ -181,42 +173,41 @@
 
         <template v-if="variant === 'pixel'">
           <circle cx="0" :cy="plot.size" r="4" class="origin-dot" />
-          <text x="-5" :y="plot.size + 17" text-anchor="end" class="tiny" fill="#111827" font-size="11" font-weight="620">origin</text>
+          <text x="-5" :y="plot.size + 17" text-anchor="end" class="tiny" font-size="11" font-weight="620">origin</text>
           <line x1="0" :y1="plot.size + 26" :x2="plot.cell" :y2="plot.size + 26" class="dim" stroke="#2563eb" stroke-width="1.7" fill="none" :marker-end="arrowRef" />
-          <text :x="plot.cell / 2" :y="plot.size + 43" text-anchor="middle" class="label" fill="#111827" font-size="12" font-weight="650">pitch</text>
+          <text :x="plot.cell / 2" :y="plot.size + 43" text-anchor="middle" class="label" font-size="12" font-weight="650">pitch</text>
           <line x1="-22" :y1="plot.size" x2="-22" :y2="plot.cell" class="dim" stroke="#2563eb" stroke-width="1.7" fill="none" :marker-end="arrowRef" />
-          <text x="-36" :y="plot.cell + 35" text-anchor="middle" class="label rotate-label" fill="#111827" font-size="12" font-weight="650">pitch</text>
+          <text x="-36" :y="plot.cell + 35" text-anchor="middle" class="label rotate-label" font-size="12" font-weight="650">pitch</text>
         </template>
 
         <template v-if="variant === 'microlens'">
           <line :x1="unitX(0.5)" :y1="unitY(0.5)" :x2="unitX(0.5 + illustrativeCraShift)" :y2="unitY(0.5)" class="shift" stroke="#f59e0b" stroke-width="1.7" stroke-dasharray="4 4" fill="none" :marker-end="arrowRef" />
-          <text :x="unitX(0.5 + illustrativeCraShift) + 5" :y="unitY(0.5) - 6" class="tiny" fill="#111827" font-size="11" font-weight="620">CRA shift</text>
+          <text :x="unitX(0.5 + illustrativeCraShift) + 5" :y="unitY(0.5) - 6" class="tiny" font-size="11" font-weight="620">CRA shift</text>
           <line :x1="unitX(0.5)" :y1="unitY(0.5)" :x2="unitX(0.5 + mlRadiusX)" :y2="unitY(0.5)" class="dim" stroke="#2563eb" stroke-width="1.7" fill="none" :marker-end="arrowRef" />
-          <text :x="unitX(0.5 + mlRadiusX / 2)" :y="unitY(0.5) - 10" text-anchor="middle" class="tiny" fill="#111827" font-size="11" font-weight="620">radius</text>
+          <text :x="unitX(0.5 + mlRadiusX / 2)" :y="unitY(0.5) - 10" text-anchor="middle" class="tiny" font-size="11" font-weight="620">radius</text>
         </template>
 
         <template v-if="variant === 'color_filter'">
           <line :x1="unitX(1 - gridWidth / 2)" :y1="unitY(0.22)" :x2="unitX(1 + gridWidth / 2)" :y2="unitY(0.22)" class="dim" stroke="#2563eb" stroke-width="1.7" fill="none" :marker-end="arrowRef" />
-          <text :x="unitX(1)" :y="unitY(0.22) - 7" text-anchor="middle" class="tiny" fill="#111827" font-size="11" font-weight="620">grid.width</text>
+          <text :x="unitX(1)" :y="unitY(0.22) - 7" text-anchor="middle" class="tiny" font-size="11" font-weight="620">grid.width</text>
         </template>
 
         <template v-if="variant === 'silicon'">
           <line :x1="unitX(0.5 - pdSize / 2)" :y1="unitY(0.5) + pdSizePx / 2 + 11" :x2="unitX(0.5 + pdSize / 2)" :y2="unitY(0.5) + pdSizePx / 2 + 11" class="dim" stroke="#2563eb" stroke-width="1.7" fill="none" :marker-end="arrowRef" />
-          <text :x="unitX(0.5)" :y="unitY(0.5) + pdSizePx / 2 + 26" text-anchor="middle" class="tiny" fill="#111827" font-size="11" font-weight="620">PD size</text>
+          <text :x="unitX(0.5)" :y="unitY(0.5) + pdSizePx / 2 + 26" text-anchor="middle" class="tiny" font-size="11" font-weight="620">PD size</text>
           <line :x1="unitX(1 - dtiWidth / 2)" :y1="unitY(1.75)" :x2="unitX(1 + dtiWidth / 2)" :y2="unitY(1.75)" class="dim" stroke="#2563eb" stroke-width="1.7" fill="none" :marker-end="arrowRef" />
-          <text :x="unitX(1)" :y="unitY(1.75) - 7" text-anchor="middle" class="tiny" fill="#111827" font-size="11" font-weight="620">DTI width</text>
+          <text :x="unitX(1)" :y="unitY(1.75) - 7" text-anchor="middle" class="tiny" font-size="11" font-weight="620">DTI width</text>
         </template>
       </g>
 
       <g class="callouts" transform="translate(278 47)">
-        <text x="0" y="0" class="callout-title" fill="#111827" font-size="14" font-weight="760">{{ meta.calloutTitle }}</text>
+        <text x="0" y="0" class="callout-title" font-size="14" font-weight="760">{{ meta.calloutTitle }}</text>
         <text
           v-for="(line, i) in meta.lines"
           :key="line"
           x="0"
           :y="29 + i * 25"
           class="callout-line"
-          fill="#475569"
           font-size="13"
           font-weight="540"
         >
@@ -504,10 +495,20 @@ const meta = computed(() => {
   stroke: #d8dee9;
 }
 
+:root.dark .canvas {
+  fill: #1a1f2e;
+  stroke: #3a4060;
+}
+
 .domain {
   fill: #ffffff;
   stroke: #94a3b8;
   stroke-width: 1.2;
+}
+
+:root.dark .domain {
+  fill: #242938;
+  stroke: #4a5580;
 }
 
 .domain-outline {
@@ -516,12 +517,20 @@ const meta = computed(() => {
   stroke-width: 1.2;
 }
 
+:root.dark .domain-outline {
+  stroke: #8899bb;
+}
+
 .pixel-reference {
   stroke: #64748b;
   stroke-width: 1;
   fill: none;
   stroke-dasharray: 5 5;
   opacity: 0.55;
+}
+
+:root.dark .pixel-reference {
+  stroke: #7a8aaa;
 }
 
 .lens-footprint {
@@ -556,6 +565,10 @@ const meta = computed(() => {
   stroke: #111827;
   stroke-width: 1.5;
   stroke-dasharray: 5 4;
+}
+
+:root.dark .cf-top {
+  stroke: #c8d0e0;
 }
 
 .dti-fill {
@@ -597,7 +610,7 @@ const meta = computed(() => {
 .cell-label,
 .callout-title,
 .callout-line {
-  fill: #111827;
+  fill: var(--vp-c-text-1);
   font-family: var(--vp-font-family-base);
 }
 
@@ -620,10 +633,15 @@ const meta = computed(() => {
 .cell-label {
   font-size: 18px;
   font-weight: 760;
-  fill: rgba(17, 24, 39, 0.78);
+  fill: rgba(17, 24, 39, 0.85);
   paint-order: stroke;
-  stroke: rgba(255, 255, 255, 0.72);
+  stroke: rgba(255, 255, 255, 0.8);
   stroke-width: 3px;
+}
+
+:root.dark .cell-label {
+  fill: rgba(230, 235, 245, 0.92);
+  stroke: rgba(20, 25, 40, 0.75);
 }
 
 .callout-title {
@@ -632,7 +650,7 @@ const meta = computed(() => {
 }
 
 .callout-line {
-  fill: #475569;
+  fill: var(--vp-c-text-2);
   font-size: 13px;
   font-weight: 540;
 }

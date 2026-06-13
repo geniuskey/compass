@@ -165,6 +165,9 @@
         </div>
       </div>
     </details>
+    <div class="reset-row">
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
+    </div>
     </div>
 
     <div class="sim-fs-view">
@@ -665,6 +668,26 @@ const tabs = [
   { key: 'surface' as const, en: '3D surface', ko: '3D 표면' },
   { key: 'process' as const, en: 'Etch response', ko: 'Etch 응답' },
 ]
+
+function resetControls() {
+  pitch.value = 1.10
+  maskWidth.value = 0.88
+  resistThickness.value = 0.42
+  apertureShape.value = 'rounded-square'
+  reflowTemp.value = 170
+  reflowTime.value = 90
+  lensIndex.value = 1.55
+  maskThickness.value = 0.45
+  polymerGas.value = 55
+  etchTime.value = 55
+  reflowSpreadGain.value = 1.00
+  volumeRetentionGain.value = 1.00
+  lateralEtchGain.value = 1.00
+  verticalLossGain.value = 1.00
+  proximityCouplingGain.value = 1.00
+  microloadingGain.value = 1.00
+  layoutPreset.value = 'all-1x1'
+}
 
 function applyPreset(preset: LayoutPreset) {
   if (preset !== 'custom') {
@@ -2026,6 +2049,10 @@ const currentProcessPoint = computed(() => ({
   pointer-events: none;
 }
 
+:global(.dark) .top-group-label {
+  stroke: rgba(255, 255, 255, 0.45);
+}
+
 .custom-grid-row {
   display: flex;
   flex-wrap: wrap;
@@ -2095,6 +2122,28 @@ const currentProcessPoint = computed(() => ({
 
 .formula-box strong {
   color: var(--vp-c-text-1);
+}
+
+.reset-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.reset-btn {
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 
 @media (max-width: 760px) {

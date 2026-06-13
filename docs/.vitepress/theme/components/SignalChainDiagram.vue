@@ -7,16 +7,16 @@
 
     <div class="controls-row">
       <div class="select-group">
-        <label>{{ t('Select Illuminant', '광원 선택') }}:</label>
-        <select v-model="selectedIlluminant" class="ctrl-select">
+        <label for="sc-illuminant">{{ t('Select Illuminant', '광원 선택') }}:</label>
+        <select id="sc-illuminant" v-model="selectedIlluminant" class="ctrl-select">
           <option value="d65">CIE D65 ({{ t('Daylight', '주광') }})</option>
           <option value="a">CIE A ({{ t('Incandescent', '백열등') }})</option>
           <option value="led">LED White (5000K)</option>
         </select>
       </div>
       <div class="select-group">
-        <label>{{ t('Select Scene', '장면 선택') }}:</label>
-        <select v-model="selectedScene" class="ctrl-select">
+        <label for="sc-scene">{{ t('Select Scene', '장면 선택') }}:</label>
+        <select id="sc-scene" v-model="selectedScene" class="ctrl-select">
           <option value="grey18">{{ t('18% Grey', '18% 그레이') }}</option>
           <option value="red">{{ t('Red Patch', '빨간색 패치') }}</option>
           <option value="green">{{ t('Green Patch', '초록색 패치') }}</option>
@@ -144,8 +144,8 @@
         >{{ tick }}</text>
 
         <!-- Axis titles -->
-        <text :x="pad.left + plotW / 2" :y="svgH - 2" text-anchor="middle" class="axis-title">Wavelength (nm)</text>
-        <text :x="12" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 12, ${pad.top + plotH / 2})`">Relative Intensity</text>
+        <text :x="pad.left + plotW / 2" :y="svgH - 2" text-anchor="middle" class="axis-title">{{ t('Wavelength (nm)', '파장 (nm)') }}</text>
+        <text :x="12" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 12, ${pad.top + plotH / 2})`">{{ t('Relative Intensity', '상대 강도') }}</text>
 
         <!-- Stage 1: Source spectrum -->
         <path :d="sourcePath" fill="none" stroke="#8e44ad" stroke-width="1.5" opacity="0.5" />
@@ -165,21 +165,21 @@
           <line :x1="xScale(hoverWl)" :y1="pad.top" :x2="xScale(hoverWl)" :y2="pad.top + plotH" stroke="var(--vp-c-text-2)" stroke-width="0.8" stroke-dasharray="4,3" />
           <rect :x="tooltipX" :y="pad.top + 4" width="130" height="58" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
           <text :x="tooltipX + 6" :y="pad.top + 16" class="tooltip-text">{{ hoverWl }} nm</text>
-          <text :x="tooltipX + 6" :y="pad.top + 28" class="tooltip-text" fill="#8e44ad">Source: {{ hoverSource.toFixed(3) }}</text>
-          <text :x="tooltipX + 6" :y="pad.top + 40" class="tooltip-text" fill="#e67e22">+Scene: {{ hoverScene.toFixed(3) }}</text>
+          <text :x="tooltipX + 6" :y="pad.top + 28" class="tooltip-text" fill="#8e44ad">{{ t('Source', '광원') }}: {{ hoverSource.toFixed(3) }}</text>
+          <text :x="tooltipX + 6" :y="pad.top + 40" class="tooltip-text" fill="#e67e22">+{{ t('Scene', '장면') }}: {{ hoverScene.toFixed(3) }}</text>
           <text :x="tooltipX + 6" :y="pad.top + 52" class="tooltip-text" fill="var(--vp-c-brand-1)">+IR: {{ hoverIR.toFixed(3) }}</text>
         </template>
 
         <!-- Legend -->
         <g :transform="`translate(${pad.left + plotW - 110}, ${pad.top + 8})`">
           <line x1="0" y1="6" x2="14" y2="6" stroke="#8e44ad" stroke-width="1.5" opacity="0.5" />
-          <text x="18" y="10" class="legend-label">Source</text>
+          <text x="18" y="10" class="legend-label">{{ t('Source', '광원') }}</text>
           <line x1="0" y1="20" x2="14" y2="20" stroke="#e67e22" stroke-width="1.5" opacity="0.5" />
-          <text x="18" y="24" class="legend-label">+Scene</text>
+          <text x="18" y="24" class="legend-label">+{{ t('Scene', '장면') }}</text>
           <line x1="0" y1="34" x2="14" y2="34" stroke="#2980b9" stroke-width="1.5" opacity="0.5" />
-          <text x="18" y="38" class="legend-label">+Lens</text>
+          <text x="18" y="38" class="legend-label">+{{ t('Lens', '렌즈') }}</text>
           <line x1="0" y1="48" x2="14" y2="48" stroke="var(--vp-c-brand-1)" stroke-width="2.5" />
-          <text x="18" y="52" class="legend-label">+IR Filter</text>
+          <text x="18" y="52" class="legend-label">+{{ t('IR Filter', 'IR 필터') }}</text>
         </g>
       </svg>
     </div>

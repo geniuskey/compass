@@ -6,11 +6,11 @@
     </p>
 
     <div class="slider-section">
-      <label>
+      <label for="pc-phase-mult">
         {{ t('Phase accumulation', '위상 누적') }}: <strong>{{ phaseMultiplier.toFixed(0) }} &times; 2&pi;</strong>
         ({{ t('total phase', '전체 위상') }} = {{ totalPhase.toFixed(1) }} rad)
       </label>
-      <input type="range" min="0" max="100" step="1" v-model.number="phaseMultiplier" class="ctrl-range" />
+      <input id="pc-phase-mult" type="range" min="0" max="100" step="1" v-model.number="phaseMultiplier" class="ctrl-range" />
     </div>
 
     <div class="panels-row">
@@ -129,8 +129,8 @@
         </template>
 
         <!-- Axis titles -->
-        <text :x="pad.left + plotW / 2" :y="svgH - 2" text-anchor="middle" class="axis-title">Phase (multiples of 2pi)</text>
-        <text x="10" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 10, ${pad.top + plotH / 2})`">Absolute error</text>
+        <text :x="pad.left + plotW / 2" :y="svgH - 2" text-anchor="middle" class="axis-title">{{ t('Phase (multiples of 2π)', '위상 (2π 배수)') }}</text>
+        <text x="10" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 10, ${pad.top + plotH / 2})`">{{ t('Absolute error', '절대 오차') }}</text>
 
         <!-- Legend -->
         <rect :x="pad.left + 10" :y="pad.top + 4" width="10" height="10" fill="#f39c12" rx="1" />

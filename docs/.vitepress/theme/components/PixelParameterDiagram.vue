@@ -1273,7 +1273,7 @@ const legendRows = [
   width: 12px;
   height: 12px;
   border-radius: 2px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--vp-c-divider);
 }
 
 .xy-toggle-reset {
@@ -1384,7 +1384,7 @@ const legendRows = [
   width: 14px;
   height: 14px;
   border-radius: 3px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--vp-c-divider);
   vertical-align: middle;
 }
 
