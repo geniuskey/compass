@@ -19,15 +19,15 @@
     <div class="controls-grid">
       <div class="slider-group">
         <label>{{ t('Max CRA (edge)', '최대 CRA (에지)') }}: <strong>{{ maxCRA }}&deg;</strong></label>
-        <input type="range" min="5" max="40" step="1" v-model.number="maxCRA" class="ctrl-range" />
+        <input type="range" min="5" max="40" step="1" v-model.number="maxCRA" class="ctrl-range" :aria-label="t('Max CRA (edge)', '최대 CRA (에지)')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Pixel Pitch', '픽셀 피치') }}: <strong>{{ pitch.toFixed(2) }} &mu;m</strong></label>
-        <input type="range" min="0.5" max="3" step="0.05" v-model.number="pitch" class="ctrl-range" />
+        <input type="range" min="0.5" max="3" step="0.05" v-model.number="pitch" class="ctrl-range" :aria-label="t('Pixel Pitch', '픽셀 피치')" />
       </div>
       <div class="slider-group">
         <label>{{ t('ML Shift Ratio', 'ML 시프트 비') }}: <strong>{{ mlShift.toFixed(2) }}</strong></label>
-        <input type="range" min="0" max="1" step="0.05" v-model.number="mlShift" class="ctrl-range" />
+        <input type="range" min="0" max="1" step="0.05" v-model.number="mlShift" class="ctrl-range" :aria-label="t('ML Shift Ratio', 'ML 시프트 비')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Channel', '채널') }}</label>
@@ -37,9 +37,10 @@
             :aria-pressed="channel === ch.key"
             :style="{ '--ch-color': ch.color }"
             @click="channel = ch.key"
-          >{{ ch.label }}</button>
+          >{{ ch.key === 'all' ? t('All', '전체') : ch.label }}</button>
         </div>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <div class="results-grid">
@@ -116,6 +117,13 @@ const maxCRA = ref(25)
 const pitch = ref(1.0)
 const mlShift = ref(0.7)
 const channel = ref<'all' | 'r' | 'g' | 'b'>('all')
+
+function resetControls() {
+  maxCRA.value = 25
+  pitch.value = 1.0
+  mlShift.value = 0.7
+  channel.value = 'all'
+}
 
 const channels = [
   { key: 'all' as const, label: 'All', color: 'var(--vp-c-brand-1)' },
@@ -218,6 +226,9 @@ const profilePathB = computed(() => profilePath(riB))
 .slider-group label { display: block; margin-bottom: 4px; font-size: 0.85em; }
 .ctrl-range { width: 100%; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: var(--vp-c-divider); outline: none; }
 .ctrl-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; }
+.ctrl-range::-moz-range-thumb { width: 18px; height: 18px; border: none; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; }
+.reset-btn { align-self: end; justify-self: start; padding: 4px 12px; font-size: 0.8em; border: 1px solid var(--vp-c-divider); border-radius: 6px; background: var(--vp-c-bg); color: var(--vp-c-text-2); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+.reset-btn:hover { color: var(--vp-c-brand-1); border-color: var(--vp-c-brand-1); }
 .channel-toggle { display: flex; gap: 0; border: 1px solid var(--vp-c-divider); border-radius: 8px; overflow: hidden; }
 .ch-btn { padding: 5px 12px; font-size: 0.82em; font-weight: 500; border: none; background: var(--vp-c-bg); color: var(--vp-c-text-2); cursor: pointer; }
 .ch-btn.active { background: var(--ch-color); color: #fff; }

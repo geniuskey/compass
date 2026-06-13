@@ -18,9 +18,10 @@
         </label>
       </div>
       <div class="slider-group">
-        <label>{{ t('Grid spacing', '격자 간격') }} dx: <strong>{{ dx }} nm</strong></label>
-        <input type="range" min="10" max="100" step="5" v-model.number="dx" class="ctrl-range" />
+        <label for="yee-dx">{{ t('Grid spacing', '격자 간격') }} dx: <strong>{{ dx }} nm</strong></label>
+        <input id="yee-dx" type="range" min="10" max="100" step="5" v-model.number="dx" class="ctrl-range" :aria-label="t('Grid spacing dx', '격자 간격 dx')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <div class="info-row">
@@ -194,9 +195,19 @@ const S = 120 // cube size in projected units
 const ox = W / 2 - 30 // origin offset x
 const oy = H / 2 + 40 // origin offset y
 
-const showE = ref(true)
-const showH = ref(true)
-const dx = ref(25)
+const INIT_SHOW_E = true
+const INIT_SHOW_H = true
+const INIT_DX = 25
+
+const showE = ref(INIT_SHOW_E)
+const showH = ref(INIT_SHOW_H)
+const dx = ref(INIT_DX)
+
+function resetControls() {
+  showE.value = INIT_SHOW_E
+  showH.value = INIT_SHOW_H
+  dx.value = INIT_DX
+}
 
 // Isometric projection
 function iso(x, y, z) {
@@ -408,6 +419,21 @@ const hzArrows = computed(() => {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.reset-btn {
+  align-self: end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .info-row {
   display: flex;

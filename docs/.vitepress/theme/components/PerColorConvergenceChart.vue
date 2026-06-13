@@ -525,11 +525,11 @@ const { t } = useLocale()
 
 // --- Color scheme (CIS convention) ---
 const colorMap = { R: '#E53935', G: '#43A047', B: '#1E88E5' }
-const colorLabels = {
-  R: 'Red (620nm)',
-  G: 'Green (530nm)',
-  B: 'Blue (450nm)',
-}
+const colorLabels = computed(() => ({
+  R: t('Red (620nm)', '적색 (620nm)'),
+  G: t('Green (530nm)', '녹색 (530nm)'),
+  B: t('Blue (450nm)', '청색 (450nm)'),
+}))
 
 // --- Tabs ---
 const tabs = [
@@ -824,10 +824,12 @@ function onMouseMove(event) {
   }
 
   if (closest) {
-    const tooltipW = 180
+    const tooltipW = 190
+    const rawX = closest.x + 10
+    const clampedX = Math.max(pad.left, Math.min(rawX + tooltipW > svgW - pad.right ? closest.x - tooltipW - 10 : rawX, svgW - pad.right - tooltipW))
     hoverInfo.value = {
       ...closest,
-      tooltipX: closest.x + tooltipW + 10 > svgW - pad.right ? closest.x - tooltipW - 10 : closest.x + 10,
+      tooltipX: clampedX,
       tooltipY: Math.max(pad.top, Math.min(closest.y - 19, pad.top + plotH - 40)),
       tooltipW,
     }

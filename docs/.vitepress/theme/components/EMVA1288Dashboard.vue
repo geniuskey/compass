@@ -20,28 +20,29 @@
     <div class="controls-grid">
       <div class="slider-group">
         <label>{{ t('Si Thickness', '실리콘 두께') }}: <strong>{{ siThick.toFixed(1) }} &mu;m</strong></label>
-        <input type="range" min="1" max="6" step="0.1" v-model.number="siThick" class="ctrl-range" />
+        <input type="range" min="1" max="6" step="0.1" v-model.number="siThick" class="ctrl-range" :aria-label="t('Si Thickness', '실리콘 두께')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Pixel Pitch', '픽셀 피치') }}: <strong>{{ pitch.toFixed(2) }} &mu;m</strong></label>
-        <input type="range" min="0.5" max="5" step="0.05" v-model.number="pitch" class="ctrl-range" />
+        <input type="range" min="0.5" max="5" step="0.05" v-model.number="pitch" class="ctrl-range" :aria-label="t('Pixel Pitch', '픽셀 피치')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Read Noise', '읽기 노이즈') }}: <strong>{{ readNoise.toFixed(1) }} e&minus;</strong></label>
-        <input type="range" min="0.5" max="30" step="0.5" v-model.number="readNoise" class="ctrl-range" />
+        <input type="range" min="0.5" max="30" step="0.5" v-model.number="readNoise" class="ctrl-range" :aria-label="t('Read Noise', '읽기 노이즈')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Dark Current @25C', '암전류 @25C') }}: <strong>{{ darkCurrent }} e&minus;/s</strong></label>
-        <input type="range" min="0" max="100" step="1" v-model.number="darkCurrent" class="ctrl-range" />
+        <input type="range" min="0" max="100" step="1" v-model.number="darkCurrent" class="ctrl-range" :aria-label="t('Dark Current @25C', '암전류 @25C')" />
       </div>
       <div class="slider-group">
         <label>PRNU: <strong>{{ prnu.toFixed(1) }}%</strong></label>
-        <input type="range" min="0.1" max="5" step="0.1" v-model.number="prnu" class="ctrl-range" />
+        <input type="range" min="0.1" max="5" step="0.1" v-model.number="prnu" class="ctrl-range" aria-label="PRNU" />
       </div>
       <div class="slider-group">
         <label>{{ t('Bit Depth', '비트 심도') }}: <strong>{{ bitDepth }} bit</strong></label>
-        <input type="range" min="8" max="16" step="1" v-model.number="bitDepth" class="ctrl-range" />
+        <input type="range" min="8" max="16" step="1" v-model.number="bitDepth" class="ctrl-range" :aria-label="t('Bit Depth', '비트 심도')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
     </div>
 
@@ -103,6 +104,15 @@ const readNoise = ref(3.0)
 const darkCurrent = ref(10)
 const prnu = ref(1.0)
 const bitDepth = ref(12)
+
+function resetControls() {
+  siThick.value = 3.0
+  pitch.value = 1.0
+  readNoise.value = 3.0
+  darkCurrent.value = 10
+  prnu.value = 1.0
+  bitDepth.value = 12
+}
 
 const fwc = computed(() => Math.round(pitch.value ** 2 * 5000))
 const convGain = computed(() => 1000 / fwc.value)
@@ -206,6 +216,9 @@ const idealSnrPath = computed(() => {
 .slider-group label { display: block; margin-bottom: 4px; font-size: 0.85em; }
 .ctrl-range { width: 100%; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: var(--vp-c-divider); outline: none; }
 .ctrl-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; }
+.ctrl-range::-moz-range-thumb { width: 18px; height: 18px; border: none; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; }
+.reset-btn { align-self: end; justify-self: start; padding: 4px 12px; font-size: 0.8em; border: 1px solid var(--vp-c-divider); border-radius: 6px; background: var(--vp-c-bg); color: var(--vp-c-text-2); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+.reset-btn:hover { color: var(--vp-c-brand-1); border-color: var(--vp-c-brand-1); }
 .param-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .param-card { background: var(--vp-c-bg); border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 10px; text-align: center; }
 .param-label { font-size: 0.75em; color: var(--vp-c-text-2); margin-bottom: 4px; line-height: 1.2; }

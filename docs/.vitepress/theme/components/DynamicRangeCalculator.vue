@@ -19,28 +19,29 @@
     <div class="controls-grid">
       <div class="slider-group">
         <label>{{ t('Full Well Capacity', '풀 웰 용량') }}: <strong>{{ fwc.toLocaleString() }} e&minus;</strong></label>
-        <input type="range" min="1000" max="100000" step="1000" v-model.number="fwc" class="ctrl-range" />
+        <input type="range" min="1000" max="100000" step="1000" v-model.number="fwc" class="ctrl-range" :aria-label="t('Full Well Capacity', '풀 웰 용량')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Read Noise', '읽기 노이즈') }}: <strong>{{ readNoise.toFixed(1) }} e&minus;</strong></label>
-        <input type="range" min="0.5" max="30" step="0.5" v-model.number="readNoise" class="ctrl-range" />
+        <input type="range" min="0.5" max="30" step="0.5" v-model.number="readNoise" class="ctrl-range" :aria-label="t('Read Noise', '읽기 노이즈')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Dark Current', '암전류') }}: <strong>{{ darkCurrent }} e&minus;/s</strong></label>
-        <input type="range" min="0" max="100" step="1" v-model.number="darkCurrent" class="ctrl-range" />
+        <input type="range" min="0" max="100" step="1" v-model.number="darkCurrent" class="ctrl-range" :aria-label="t('Dark Current', '암전류')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Exposure Time', '노출 시간') }}: <strong>{{ expTime }} ms</strong></label>
-        <input type="range" min="1" max="1000" step="1" v-model.number="expTime" class="ctrl-range" />
+        <input type="range" min="1" max="1000" step="1" v-model.number="expTime" class="ctrl-range" :aria-label="t('Exposure Time', '노출 시간')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Temperature', '온도') }}: <strong>{{ temperature }}&deg;C</strong></label>
-        <input type="range" min="-20" max="70" step="1" v-model.number="temperature" class="ctrl-range" />
+        <input type="range" min="-20" max="70" step="1" v-model.number="temperature" class="ctrl-range" :aria-label="t('Temperature', '온도')" />
       </div>
       <div class="slider-group">
         <label>{{ t('HDR Exposure Ratio', 'HDR 노출 비') }}: <strong>1:{{ hdrRatio }}</strong></label>
-        <input type="range" min="2" max="32" step="1" v-model.number="hdrRatio" class="ctrl-range" />
+        <input type="range" min="2" max="32" step="1" v-model.number="hdrRatio" class="ctrl-range" :aria-label="t('HDR Exposure Ratio', 'HDR 노출 비')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <div class="results-grid">
@@ -118,6 +119,15 @@ const expTime = ref(33)
 const temperature = ref(25)
 const hdrRatio = ref(8)
 
+function resetControls() {
+  fwc.value = 10000
+  readNoise.value = 5.0
+  darkCurrent.value = 10
+  expTime.value = 33
+  temperature.value = 25
+  hdrRatio.value = 8
+}
+
 function darkAtTemp(tempC: number): number {
   return darkCurrent.value * Math.pow(2, (tempC - 25) / 5.5)
 }
@@ -179,6 +189,9 @@ const hdrTempPath = computed(() => tempPath(true))
 .slider-group label { display: block; margin-bottom: 4px; font-size: 0.85em; }
 .ctrl-range { width: 100%; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: var(--vp-c-divider); outline: none; }
 .ctrl-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; }
+.ctrl-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; border: none; }
+.reset-btn { align-self: end; justify-self: start; padding: 4px 12px; font-size: 0.8em; border: 1px solid var(--vp-c-divider); border-radius: 6px; background: var(--vp-c-bg); color: var(--vp-c-text-2); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+.reset-btn:hover { color: var(--vp-c-brand-1); border-color: var(--vp-c-brand-1); }
 .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 16px; }
 .result-card { background: var(--vp-c-bg); border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 12px; text-align: center; }
 .result-label { font-size: 0.8em; color: var(--vp-c-text-2); margin-bottom: 4px; }

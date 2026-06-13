@@ -507,7 +507,9 @@ function onMouseLeave() {
 const tooltipX = computed(() => {
   if (hoverIdx.value === null) return 0
   const x = xScale(wavelengths[hoverIdx.value])
-  return x + 165 > svgW - pad.right ? x - 165 : x + 10
+  const w = 155
+  const rawX = x + 10
+  return Math.max(pad.left, rawX + w > svgW - pad.right ? x - w - 10 : rawX)
 })
 </script>
 

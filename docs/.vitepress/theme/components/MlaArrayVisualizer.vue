@@ -98,6 +98,9 @@
         </label>
       </div>
     </div>
+    <div class="reset-row">
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
+    </div>
     </div>
 
     <div class="sim-fs-view">
@@ -328,6 +331,23 @@ const refIdx = ref(1.56)
 const propDist = ref(8.0)
 const meshRes3d = ref(60)
 const colormap3d = ref('Viridis')
+
+function resetControls() {
+  viewMode.value = 'contour'
+  arrayConfig.value = '2x2'
+  Rx.value = 0.8
+  Ry.value = 0.8
+  h.value = 0.5
+  n.value = 2.0
+  alpha.value = 1.0
+  spacingX.value = 1.0
+  spacingY.value = 1.0
+  numRays.value = 15
+  refIdx.value = 1.56
+  propDist.value = 8.0
+  meshRes3d.value = 60
+  colormap3d.value = 'Viridis'
+}
 
 const svgW = 560
 const svgH = 400
@@ -1273,6 +1293,25 @@ const fillFactor = computed(() => {
   color: var(--vp-c-text-2);
   font-family: 'Times New Roman', serif;
   line-height: 1.6;
+}
+.reset-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.reset-btn {
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 @media (max-width: 640px) {
   .controls-row { flex-direction: column; gap: 8px; }

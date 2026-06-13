@@ -173,11 +173,11 @@
           <text :x="pad.left + 92" :y="pad.top + 22" class="legend-label">fdtd</text>
           <!-- Row 2: color dots -->
           <circle :cx="pad.left + 18" :cy="pad.top + 34" r="4" fill="#e74c3c" />
-          <text :x="pad.left + 26" :y="pad.top + 38" class="legend-label">Red</text>
+          <text :x="pad.left + 26" :y="pad.top + 38" class="legend-label">{{ t('Red', '적색') }}</text>
           <circle :cx="pad.left + 62" :cy="pad.top + 34" r="4" fill="#27ae60" />
-          <text :x="pad.left + 70" :y="pad.top + 38" class="legend-label">Green</text>
+          <text :x="pad.left + 70" :y="pad.top + 38" class="legend-label">{{ t('Green', '녹색') }}</text>
           <circle :cx="pad.left + 114" :cy="pad.top + 34" r="4" fill="#2980b9" />
-          <text :x="pad.left + 122" :y="pad.top + 38" class="legend-label">Blue</text>
+          <text :x="pad.left + 122" :y="pad.top + 38" class="legend-label">{{ t('Blue', '청색') }}</text>
         </template>
         <template v-else>
           <rect :x="pad.left + 8" :y="pad.top + 6" width="170" height="54" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.5" opacity="0.9" />
@@ -531,7 +531,8 @@ const tooltipX = computed(() => {
   if (hoverIdx.value === null) return 0
   const x = xScale(wavelengths[hoverIdx.value])
   const w = tooltipWidth.value
-  return x + w > svgW - pad.right ? x - w : x + 10
+  const rawX = x + 10
+  return Math.max(pad.left, rawX + w > svgW - pad.right ? x - w - 10 : rawX)
 })
 </script>
 

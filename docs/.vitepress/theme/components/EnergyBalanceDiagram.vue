@@ -10,16 +10,16 @@
 
     <div class="controls-row">
       <div class="slider-group">
-        <label>
+        <label for="eb-si-thickness">
           {{ t('Silicon thickness:', '실리콘 두께:') }} <strong>{{ siliconThickness.toFixed(1) }} um</strong>
         </label>
-        <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siliconThickness" class="ctrl-range" />
+        <input id="eb-si-thickness" type="range" min="1.0" max="5.0" step="0.1" v-model.number="siliconThickness" class="ctrl-range" />
       </div>
       <div class="slider-group">
-        <label>
+        <label for="eb-barl-quality">
           {{ t('BARL quality:', 'BARL 품질:') }} <strong>{{ barlQuality }}%</strong>
         </label>
-        <input type="range" min="0" max="100" step="1" v-model.number="barlQuality" class="ctrl-range" />
+        <input id="eb-barl-quality" type="range" min="0" max="100" step="1" v-model.number="barlQuality" class="ctrl-range" />
       </div>
     </div>
 

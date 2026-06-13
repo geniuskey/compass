@@ -10,23 +10,24 @@
 
     <div class="controls-row">
       <div class="slider-group">
-        <label>
+        <label for="qe-si-thickness">
           {{ t('Silicon thickness:', '실리콘 두께:') }} <strong>{{ siliconThickness.toFixed(1) }} um</strong>
         </label>
-        <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siliconThickness" class="ctrl-range" />
+        <input id="qe-si-thickness" type="range" min="1.0" max="5.0" step="0.1" v-model.number="siliconThickness" class="ctrl-range" :aria-label="t('Silicon thickness', '실리콘 두께')" />
       </div>
       <div class="slider-group">
-        <label>
+        <label for="qe-barl-quality">
           {{ t('BARL quality:', 'BARL 품질:') }} <strong>{{ barlQuality }}%</strong>
         </label>
-        <input type="range" min="0" max="100" step="1" v-model.number="barlQuality" class="ctrl-range" />
+        <input id="qe-barl-quality" type="range" min="0" max="100" step="1" v-model.number="barlQuality" class="ctrl-range" :aria-label="t('BARL quality', 'BARL 품질')" />
       </div>
       <div class="slider-group">
-        <label>
+        <label for="qe-grid-width">
           {{ t('Metal grid width:', '메탈 그리드 폭:') }} <strong>{{ gridWidth }} nm</strong>
         </label>
-        <input type="range" min="0" max="100" step="1" v-model.number="gridWidth" class="ctrl-range" />
+        <input id="qe-grid-width" type="range" min="0" max="100" step="1" v-model.number="gridWidth" class="ctrl-range" :aria-label="t('Metal grid width', '메탈 그리드 폭')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <div class="info-row">
@@ -119,7 +120,7 @@
         >{{ tick }}</text>
 
         <!-- Axis titles -->
-        <text :x="pad.left + plotW / 2" :y="svgH - 2" text-anchor="middle" class="axis-title">Wavelength (nm)</text>
+        <text :x="pad.left + plotW / 2" :y="svgH - 2" text-anchor="middle" class="axis-title">{{ t('Wavelength (nm)', '파장 (nm)') }}</text>
         <text :x="12" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title" transform="rotate(-90, 12, 125)">QE (%)</text>
 
         <!-- Blue curve -->
@@ -166,9 +167,19 @@ import { useLocale } from '../composables/useLocale'
 
 const { t } = useLocale()
 
-const siliconThickness = ref(3.0)
-const barlQuality = ref(70)
-const gridWidth = ref(50)
+const INIT_SI_THICKNESS = 3.0
+const INIT_BARL_QUALITY = 70
+const INIT_GRID_WIDTH = 50
+
+const siliconThickness = ref(INIT_SI_THICKNESS)
+const barlQuality = ref(INIT_BARL_QUALITY)
+const gridWidth = ref(INIT_GRID_WIDTH)
+
+function resetControls() {
+  siliconThickness.value = INIT_SI_THICKNESS
+  barlQuality.value = INIT_BARL_QUALITY
+  gridWidth.value = INIT_GRID_WIDTH
+}
 
 const svgW = 520
 const svgH = 300
@@ -358,6 +369,7 @@ const spectrumStops = computed(() => {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+  align-items: flex-end;
   margin-bottom: 16px;
 }
 .slider-group {
@@ -416,6 +428,21 @@ const spectrumStops = computed(() => {
 .info-value {
   font-weight: 600;
   font-family: var(--vp-font-family-mono);
+}
+.reset-btn {
+  align-self: end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .svg-wrapper {
   margin-top: 8px;

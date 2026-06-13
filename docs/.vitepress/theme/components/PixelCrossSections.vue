@@ -9,7 +9,7 @@
         :aria-pressed="activeTab === tab.key"
         @click="activeTab = tab.key"
       >
-        {{ tab.label }}
+        {{ t(tab.label, tab.labelKo) }}
       </button>
     </div>
 
@@ -257,7 +257,7 @@
         :y="pad.top - 10"
         class="section-title"
         text-anchor="middle"
-      >XZ Cross-Section (y = 1.0 µm)</text>
+      >{{ t('XZ Cross-Section (y = 1.0 µm)', 'XZ 단면 (y = 1.0 µm)') }}</text>
 
       <!-- Hover tooltip -->
       <template v-if="hoverInfo">
@@ -552,7 +552,7 @@
         :y="pad.top - 10"
         class="section-title"
         text-anchor="middle"
-      >YZ Cross-Section (x = 1.0 µm)</text>
+      >{{ t('YZ Cross-Section (x = 1.0 µm)', 'YZ 단면 (x = 1.0 µm)') }}</text>
 
       <!-- Hover tooltip -->
       <template v-if="hoverInfo">
@@ -619,6 +619,7 @@
           :step="0.02"
           v-model.number="xyZ"
           class="z-slider"
+          :aria-label="t('z slice position (µm)', 'z 단면 위치 (µm)')"
         />
         <span class="layer-badge">{{ xyLayerName }}</span>
       </div>
@@ -845,19 +846,19 @@
           :y="xyPad - 10"
           class="section-title"
           text-anchor="middle"
-        >XY Plan View (z = {{ xyZ.toFixed(2) }} µm)</text>
+        >{{ t('XY Plan View', 'XY 평면도') }} (z = {{ xyZ.toFixed(2) }} µm)</text>
       </svg>
     </div>
 
     <!-- Legend -->
     <div class="legend">
       <span
-        v-for="item in legendItems"
-        :key="item.label"
+        v-for="(item, i) in legendItems"
+        :key="i"
         class="legend-item"
       >
         <span class="legend-swatch" :style="{ background: item.color }"></span>
-        {{ item.label }}
+        {{ t(item.label, item.labelKo) }}
       </span>
     </div>
   </div>
@@ -865,12 +866,15 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 const activeTab = ref('xz')
 const tabs = [
-  { key: 'xz', label: 'XZ Plane' },
-  { key: 'yz', label: 'YZ Plane' },
-  { key: 'xy', label: 'XY Plan View' },
+  { key: 'xz', label: 'XZ Plane', labelKo: 'XZ 평면' },
+  { key: 'yz', label: 'YZ Plane', labelKo: 'YZ 평면' },
+  { key: 'xy', label: 'XY Plan View', labelKo: 'XY 평면도' },
 ]
 
 // SVG dimensions
@@ -886,12 +890,12 @@ const pitch = 1.0
 
 // Layers (bottom to top)
 const layers = [
-  { id: 'silicon', label: 'Silicon', color: '#5d6d7e', zBot: 0, zTop: 3.0, thickness: '3.0', material: 'Si' },
-  { id: 'barl', label: 'BARL', color: '#8e44ad', zBot: 3.0, zTop: 3.08, thickness: '0.08', material: 'SiO2/HfO2/SiO2/Si3N4' },
-  { id: 'colorfilter', label: 'Color Filter', color: '#27ae60', zBot: 3.08, zTop: 3.68, thickness: '0.6', material: 'Organic dye' },
-  { id: 'planarization', label: 'Planarization', color: '#d5dbdb', zBot: 3.68, zTop: 3.98, thickness: '0.3', material: 'SiO2' },
-  { id: 'microlens', label: 'Microlens', color: '#dda0dd', zBot: 3.98, zTop: 4.58, thickness: '0.6', material: 'Polymer (n=1.56)' },
-  { id: 'air', label: 'Air', color: '#d6eaf8', zBot: 4.58, zTop: 5.58, thickness: '1.0', material: 'Air' },
+  { id: 'silicon', label: 'Silicon', labelKo: '실리콘', color: '#5d6d7e', zBot: 0, zTop: 3.0, thickness: '3.0', material: 'Si' },
+  { id: 'barl', label: 'BARL', labelKo: 'BARL', color: '#8e44ad', zBot: 3.0, zTop: 3.08, thickness: '0.08', material: 'SiO2/HfO2/SiO2/Si3N4' },
+  { id: 'colorfilter', label: 'Color Filter', labelKo: '컬러 필터', color: '#27ae60', zBot: 3.08, zTop: 3.68, thickness: '0.6', material: 'Organic dye' },
+  { id: 'planarization', label: 'Planarization', labelKo: '평탄화층', color: '#d5dbdb', zBot: 3.68, zTop: 3.98, thickness: '0.3', material: 'SiO2' },
+  { id: 'microlens', label: 'Microlens', labelKo: '마이크로렌즈', color: '#dda0dd', zBot: 3.98, zTop: 4.58, thickness: '0.6', material: 'Polymer (n=1.56)' },
+  { id: 'air', label: 'Air', labelKo: '공기', color: '#d6eaf8', zBot: 4.58, zTop: 5.58, thickness: '1.0', material: 'Air' },
 ]
 
 const cfZBot = 3.08
@@ -1035,7 +1039,7 @@ function onMouseMoveXZ(event: MouseEvent) {
     svgY: my,
     tooltipX: mx + tooltipW + 10 > svgW - pad.right ? mx - tooltipW - 10 : mx + 10,
     tooltipY: Math.max(pad.top, Math.min(my - 25, pad.top + plotH - 55)),
-    layerName: layer.label,
+    layerName: t(layer.label, layer.labelKo),
     material: layer.material,
     z: physZ,
   }
@@ -1065,7 +1069,7 @@ function onMouseMoveYZ(event: MouseEvent) {
     svgY: my,
     tooltipX: mx + tooltipW + 10 > svgW - pad.right ? mx - tooltipW - 10 : mx + 10,
     tooltipY: Math.max(pad.top, Math.min(my - 25, pad.top + plotH - 55)),
-    layerName: layer.label,
+    layerName: t(layer.label, layer.labelKo),
     material: layer.material,
     z: physZ,
   }
@@ -1090,12 +1094,12 @@ function findBarlSublayer(z: number) {
 
 const xyLayerName = computed(() => {
   const z = xyZ.value
-  if (z < 3.0) return 'Silicon'
+  if (z < 3.0) return t('Silicon', '실리콘')
   if (z < 3.08) { const sub = findBarlSublayer(z); return `BARL (${sub.material})` }
-  if (z < 3.68) return 'Color Filter'
-  if (z < 3.98) return 'Planarization'
-  if (z < 4.58) return 'Microlens'
-  return 'Air'
+  if (z < 3.68) return t('Color Filter', '컬러 필터')
+  if (z < 3.98) return t('Planarization', '평탄화층')
+  if (z < 4.58) return t('Microlens', '마이크로렌즈')
+  return t('Air', '공기')
 })
 
 const xyBgColor = computed(() => {
@@ -1151,20 +1155,20 @@ const xyMicrolenses = computed(() => {
 
 // Legend
 const legendItems = [
-  { label: 'Silicon', color: '#5d6d7e' },
-  { label: 'SiO2 (BARL)', color: '#7fb3d8' },
-  { label: 'HfO2 (BARL)', color: '#6c71c4' },
-  { label: 'SiO2 (BARL)', color: '#e8d44d' },
-  { label: 'Si3N4 (BARL)', color: '#2aa198' },
-  { label: 'Color Filter', color: '#27ae60' },
-  { label: 'CF Red', color: '#c0392b' },
-  { label: 'CF Blue', color: '#2980b9' },
-  { label: 'Planarization', color: '#d5dbdb' },
-  { label: 'Microlens', color: '#dda0dd' },
-  { label: 'Air', color: '#d6eaf8' },
-  { label: 'DTI', color: '#aed6f1' },
-  { label: 'Metal Grid', color: '#555555' },
-  { label: 'Photodiode', color: '#b85c5c' },
+  { label: 'Silicon', labelKo: '실리콘', color: '#5d6d7e' },
+  { label: 'SiO2 (BARL)', labelKo: 'SiO2 (BARL)', color: '#7fb3d8' },
+  { label: 'HfO2 (BARL)', labelKo: 'HfO2 (BARL)', color: '#6c71c4' },
+  { label: 'SiO2 (BARL)', labelKo: 'SiO2 (BARL)', color: '#e8d44d' },
+  { label: 'Si3N4 (BARL)', labelKo: 'Si3N4 (BARL)', color: '#2aa198' },
+  { label: 'Color Filter', labelKo: '컬러 필터', color: '#27ae60' },
+  { label: 'CF Red', labelKo: 'CF 적색', color: '#c0392b' },
+  { label: 'CF Blue', labelKo: 'CF 청색', color: '#2980b9' },
+  { label: 'Planarization', labelKo: '평탄화층', color: '#d5dbdb' },
+  { label: 'Microlens', labelKo: '마이크로렌즈', color: '#dda0dd' },
+  { label: 'Air', labelKo: '공기', color: '#d6eaf8' },
+  { label: 'DTI', labelKo: 'DTI', color: '#aed6f1' },
+  { label: 'Metal Grid', labelKo: '금속 격자', color: '#555555' },
+  { label: 'Photodiode', labelKo: '포토다이오드', color: '#b85c5c' },
 ]
 </script>
 

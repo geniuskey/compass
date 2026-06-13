@@ -25,16 +25,19 @@
       </div>
       <div class="ctrl-group">
         <div class="slider-row"><label>{{ t('CF Thickness','CF 두께') }}: <strong>{{ cfThickness.toFixed(2) }} μm</strong></label>
-        <input type="range" min="0.2" max="1.2" step="0.05" v-model.number="cfThickness" class="ctrl-range" /></div>
+        <input type="range" min="0.2" max="1.2" step="0.05" v-model.number="cfThickness" class="ctrl-range" :aria-label="t('CF Thickness','CF 두께')" /></div>
       </div>
       <div class="ctrl-group">
         <div class="slider-row"><label>{{ t('CRA','주광선각') }}: <strong>{{ craAngle }}°</strong></label>
-        <input type="range" min="0" max="30" step="1" v-model.number="craAngle" class="ctrl-range" /></div>
+        <input type="range" min="0" max="30" step="1" v-model.number="craAngle" class="ctrl-range" :aria-label="t('CRA','주광선각')" /></div>
       </div>
       <div class="ctrl-group">
         <label class="cb-label"><input type="checkbox" v-model="irCutEnabled" /> {{ t('IR Cut','IR 차단') }}</label>
         <div v-if="irCutEnabled" class="slider-row"><label>{{ t('Cutoff','차단') }}: <strong>{{ irCutoff }} nm</strong></label>
-        <input type="range" min="620" max="720" step="5" v-model.number="irCutoff" class="ctrl-range" /></div>
+        <input type="range" min="620" max="720" step="5" v-model.number="irCutoff" class="ctrl-range" :aria-label="t('IR cutoff wavelength','IR 차단 파장')" /></div>
+      </div>
+      <div class="ctrl-group reset-group">
+        <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
       </div>
     </div>
 
@@ -46,9 +49,9 @@
           <div v-for="f in filters" :key="f.id" class="filter-group" :style="{borderLeftColor:f.color}">
             <div class="filter-header"><span class="filter-dot" :style="{background:f.color}"></span><strong>{{ t(f.nameEn,f.nameKo) }}</strong></div>
             <div class="filter-sliders">
-              <div class="slider-row"><label>{{ t('Center','중심') }}: <strong>{{ f.center.value }} nm</strong></label><input type="range" :min="f.centerMin" :max="f.centerMax" step="1" v-model.number="f.center.value" class="ctrl-range" /></div>
-              <div class="slider-row"><label>{{ t('FWHM','반치폭') }}: <strong>{{ f.fwhm.value }} nm</strong></label><input type="range" min="20" max="120" step="2" v-model.number="f.fwhm.value" class="ctrl-range" /></div>
-              <div class="slider-row"><label>{{ t('Peak','피크') }}: <strong>{{ f.peak.value }}%</strong></label><input type="range" min="50" max="100" step="1" v-model.number="f.peak.value" class="ctrl-range" /></div>
+              <div class="slider-row"><label>{{ t('Center','중심') }}: <strong>{{ f.center.value }} nm</strong></label><input type="range" :min="f.centerMin" :max="f.centerMax" step="1" v-model.number="f.center.value" class="ctrl-range" :aria-label="t(`${f.nameEn} center`, `${f.nameKo} 중심`)" /></div>
+              <div class="slider-row"><label>{{ t('FWHM','반치폭') }}: <strong>{{ f.fwhm.value }} nm</strong></label><input type="range" min="20" max="120" step="2" v-model.number="f.fwhm.value" class="ctrl-range" :aria-label="t(`${f.nameEn} FWHM`, `${f.nameKo} 반치폭`)" /></div>
+              <div class="slider-row"><label>{{ t('Peak','피크') }}: <strong>{{ f.peak.value }}%</strong></label><input type="range" min="50" max="100" step="1" v-model.number="f.peak.value" class="ctrl-range" :aria-label="t(`${f.nameEn} peak`, `${f.nameKo} 피크`)" /></div>
             </div>
           </div>
         </div>
@@ -131,8 +134,8 @@
               <circle :cx="cieXScale(filterChroma[f.id].x)" :cy="cieYScale(filterChroma[f.id].y)" r="5" :fill="f.color" stroke="#fff" stroke-width="1.5" />
               <text :x="cieXScale(filterChroma[f.id].x)+(f.id==='r'?8:f.id==='b'?-8:0)" :y="cieYScale(filterChroma[f.id].y)+(f.id==='g'?-8:12)" :text-anchor="f.id==='b'?'end':'start'" class="point-label" :fill="f.color">{{ t(f.nameEn,f.nameKo) }}</text>
             </template>
-            <line :x1="cieXScale(0.3127)-5" :y1="cieYScale(0.329)" :x2="cieXScale(0.3127)+5" :y2="cieYScale(0.329)" stroke="#555" stroke-width="1.5" />
-            <line :x1="cieXScale(0.3127)" :y1="cieYScale(0.329)-5" :x2="cieXScale(0.3127)" :y2="cieYScale(0.329)+5" stroke="#555" stroke-width="1.5" />
+            <line :x1="cieXScale(0.3127)-5" :y1="cieYScale(0.329)" :x2="cieXScale(0.3127)+5" :y2="cieYScale(0.329)" stroke="var(--vp-c-text-2)" stroke-width="1.5" />
+            <line :x1="cieXScale(0.3127)" :y1="cieYScale(0.329)-5" :x2="cieXScale(0.3127)" :y2="cieYScale(0.329)+5" stroke="var(--vp-c-text-2)" stroke-width="1.5" />
             <text :x="cieXScale(0.3127)+7" :y="cieYScale(0.329)-4" class="d65-label">D65</text>
           </svg>
         </div>
@@ -195,6 +198,26 @@ const filters: FilterDef[] = [
   { id:'g', nameEn:'Green', nameKo:'초록', color:'#27ae60', center:ref(530), centerMin:500, centerMax:560, fwhm:ref(50), peak:ref(90) },
   { id:'b', nameEn:'Blue', nameKo:'파랑', color:'#3498db', center:ref(450), centerMin:420, centerMax:480, fwhm:ref(50), peak:ref(90) },
 ]
+
+const filterDefaults: Record<string, { center: number; fwhm: number; peak: number }> = {
+  r: { center: 620, fwhm: 60, peak: 90 },
+  g: { center: 530, fwhm: 50, peak: 90 },
+  b: { center: 450, fwhm: 50, peak: 90 },
+}
+
+function resetControls() {
+  filterModel.value = 'gaussian'
+  irCutEnabled.value = false
+  irCutoff.value = 680
+  craAngle.value = 0
+  cfThickness.value = 0.6
+  for (const f of filters) {
+    const d = filterDefaults[f.id]
+    f.center.value = d.center
+    f.fwhm.value = d.fwhm
+    f.peak.value = d.peak
+  }
+}
 
 // ---- Filter models ----
 const LN2 = Math.log(2)
@@ -536,6 +559,9 @@ function exportConfig() {
 .toggle-btn.active { background:var(--vp-c-brand-1); color:#fff; border-color:var(--vp-c-brand-1); }
 .toggle-btn:hover:not(.active) { border-color:var(--vp-c-brand-1); color:var(--vp-c-brand-1); }
 .cb-label { font-size:0.8em; color:var(--vp-c-text-2); display:flex; align-items:center; gap:4px; }
+.reset-group { display:flex; align-items:center; justify-content:center; flex:0 0 auto; min-width:auto; }
+.reset-btn { padding:4px 12px; font-size:0.8em; border:1px solid var(--vp-c-divider); border-radius:6px; background:var(--vp-c-bg); color:var(--vp-c-text-2); cursor:pointer; transition:color 0.15s, border-color 0.15s; }
+.reset-btn:hover { color:var(--vp-c-brand-1); border-color:var(--vp-c-brand-1); }
 .cb-label input { margin:0; }
 .qe-toggle { font-size:0.8em; color:var(--vp-c-text-3); font-weight:400; margin-left:12px; cursor:pointer; }
 .qe-toggle input { margin:0 3px 0 0; vertical-align:middle; }
@@ -566,7 +592,7 @@ function exportConfig() {
 .locus-label { font-size:7px; fill:var(--vp-c-text-3); }
 .srgb-label { font-size:8px; fill:#888; font-style:italic; }
 .point-label { font-size:9px; font-weight:600; }
-.d65-label { font-size:8px; fill:#555; font-weight:600; }
+.d65-label { font-size:8px; fill:var(--vp-c-text-2); font-weight:600; }
 .analysis-row { display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
 .analysis-box { flex:1; min-width:220px; background:var(--vp-c-bg); border:1px solid var(--vp-c-divider); border-radius:8px; padding:12px; }
 .analysis-box h5 { margin:0 0 8px 0; font-size:0.85em; }

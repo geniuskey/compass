@@ -56,7 +56,7 @@
         <line :x1="padL" :y1="plotBottom" :x2="padL + plotW" :y2="plotBottom" stroke="var(--vp-c-text-3)" stroke-width="1" />
 
         <!-- Left Y-axis label (n) -->
-        <text :x="10" :y="padT + plotH / 2" text-anchor="middle" transform-origin="10 160" :transform="`rotate(-90, 10, ${padT + plotH / 2})`" class="axis-label" fill="#3498db">n (refractive index)</text>
+        <text :x="10" :y="padT + plotH / 2" text-anchor="middle" transform-origin="10 160" :transform="`rotate(-90, 10, ${padT + plotH / 2})`" class="axis-label" fill="#3498db">{{ t('n (refractive index)', 'n (굴절률)') }}</text>
 
         <!-- Left Y-axis ticks -->
         <template v-for="tick in yTicksN" :key="'yn' + tick">
@@ -65,7 +65,7 @@
         </template>
 
         <!-- Right Y-axis label (k) -->
-        <text :x="W - 6" :y="padT + plotH / 2" text-anchor="middle" :transform="`rotate(90, ${W - 6}, ${padT + plotH / 2})`" class="axis-label" fill="#e74c3c">k (extinction coeff.)</text>
+        <text :x="W - 6" :y="padT + plotH / 2" text-anchor="middle" :transform="`rotate(90, ${W - 6}, ${padT + plotH / 2})`" class="axis-label" fill="#e74c3c">{{ t('k (extinction coeff.)', 'k (소광 계수)') }}</text>
 
         <!-- Right Y-axis ticks -->
         <template v-for="tick in yTicksK" :key="'yk' + tick">
@@ -78,7 +78,7 @@
           <line :x1="wlToX(wl)" :y1="plotBottom" :x2="wlToX(wl)" :y2="plotBottom + 4" stroke="var(--vp-c-text-3)" stroke-width="1" />
           <text :x="wlToX(wl)" :y="plotBottom + 22" text-anchor="middle" class="tick-label">{{ wl }}</text>
         </template>
-        <text :x="padL + plotW / 2" :y="H - 4" text-anchor="middle" class="axis-label">Wavelength (nm)</text>
+        <text :x="padL + plotW / 2" :y="H - 4" text-anchor="middle" class="axis-label">{{ t('Wavelength (nm)', '파장 (nm)') }}</text>
 
         <!-- n curve (blue) -->
         <path data-visual-id="material-n-curve" :d="nPath" fill="none" stroke="#3498db" stroke-width="2.5" />

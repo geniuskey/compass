@@ -22,32 +22,33 @@
         <label>
           {{ t('Temperature', '온도') }}: <strong>{{ temperature }} &deg;C</strong>
         </label>
-        <input type="range" min="-20" max="85" step="1" v-model.number="temperature" class="ctrl-range" />
+        <input type="range" min="-20" max="85" step="1" v-model.number="temperature" class="ctrl-range" :aria-label="t('Temperature', '온도')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Pixel Pitch', '픽셀 피치') }}: <strong>{{ pitch.toFixed(2) }} &mu;m</strong>
         </label>
-        <input type="range" min="0.5" max="2.0" step="0.05" v-model.number="pitch" class="ctrl-range" />
+        <input type="range" min="0.5" max="2.0" step="0.05" v-model.number="pitch" class="ctrl-range" :aria-label="t('Pixel Pitch', '픽셀 피치')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Integration Time', '적분 시간') }}: <strong>{{ integrationTime }} ms</strong>
         </label>
-        <input type="range" min="1" max="100" step="1" v-model.number="integrationTime" class="ctrl-range" />
+        <input type="range" min="1" max="100" step="1" v-model.number="integrationTime" class="ctrl-range" :aria-label="t('Integration Time', '적분 시간')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Read Noise', '읽기 잡음') }}: <strong>{{ readNoise.toFixed(1) }} e&minus; rms</strong>
         </label>
-        <input type="range" min="0.5" max="5.0" step="0.1" v-model.number="readNoise" class="ctrl-range" />
+        <input type="range" min="0.5" max="5.0" step="0.1" v-model.number="readNoise" class="ctrl-range" :aria-label="t('Read Noise', '읽기 잡음')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Scene Illuminance', '조도') }}: <strong>{{ illuminance }} lux</strong>
         </label>
-        <input type="range" min="1" max="1000" step="1" v-model.number="illuminance" class="ctrl-range" />
+        <input type="range" min="1" max="1000" step="1" v-model.number="illuminance" class="ctrl-range" :aria-label="t('Scene Illuminance', '조도')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <!-- Info cards -->
@@ -275,6 +276,14 @@ const pitch = ref(1.0)
 const integrationTime = ref(33)
 const readNoise = ref(1.5)
 const illuminance = ref(100)
+
+function resetControls() {
+  temperature.value = 25
+  pitch.value = 1.0
+  integrationTime.value = 33
+  readNoise.value = 1.5
+  illuminance.value = 100
+}
 
 // ---- Physics constants ----
 const kB = 8.617e-5   // eV/K, Boltzmann constant
@@ -632,6 +641,21 @@ onMounted(() => {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.reset-btn {
+  align-self: flex-end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .results-grid {
   display: grid;

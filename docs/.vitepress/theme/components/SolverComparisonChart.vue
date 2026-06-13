@@ -16,23 +16,24 @@
         </select>
       </div>
       <div class="slider-group">
-        <label>{{ t('RCWA Fourier order:', 'RCWA Fourier 차수:') }} <strong>{{ fourierOrder }}</strong></label>
-        <select v-model.number="fourierOrder" class="param-select">
+        <label for="sc-fourier">{{ t('RCWA Fourier order:', 'RCWA Fourier 차수:') }} <strong>{{ fourierOrder }}</strong></label>
+        <select id="sc-fourier" v-model.number="fourierOrder" class="param-select" :aria-label="t('RCWA Fourier order', 'RCWA Fourier 차수')">
           <option v-for="o in fourierOptions" :key="o" :value="o">{{ o }}</option>
         </select>
       </div>
       <div class="slider-group">
-        <label>{{ t('FDTD grid resolution:', 'FDTD 격자 해상도:') }} <strong>{{ fdtdGrid }} nm</strong></label>
-        <select v-model.number="fdtdGrid" class="param-select">
+        <label for="sc-fdtd-grid">{{ t('FDTD grid resolution:', 'FDTD 격자 해상도:') }} <strong>{{ fdtdGrid }} nm</strong></label>
+        <select id="sc-fdtd-grid" v-model.number="fdtdGrid" class="param-select" :aria-label="t('FDTD grid resolution', 'FDTD 격자 해상도')">
           <option v-for="g in gridOptions" :key="g" :value="g">{{ g }} nm</option>
         </select>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <div class="plots-layout">
       <!-- RCWA panel -->
       <div class="plot-section">
-        <div class="plot-title">RCWA (Fourier order = {{ fourierOrder }})</div>
+        <div class="plot-title">RCWA ({{ t('Fourier order', 'Fourier 차수') }} = {{ fourierOrder }})</div>
         <svg :viewBox="`0 0 ${pW} ${pH}`" class="plot-svg">
           <!-- Grid and axes -->
           <line :x1="pL" :y1="pT" :x2="pL" :y2="pB" stroke="var(--vp-c-text-3)" stroke-width="1" />
@@ -51,7 +52,7 @@
             <text :x="wlToX(wl)" :y="pB + 14" text-anchor="middle" class="tick-label">{{ wl }}</text>
           </template>
 
-          <text :x="pL + ppW / 2" :y="pB + 26" text-anchor="middle" class="axis-label-small">Wavelength (nm)</text>
+          <text :x="pL + ppW / 2" :y="pB + 26" text-anchor="middle" class="axis-label-small">{{ t('Wavelength (nm)', '파장 (nm)') }}</text>
           <text :x="8" :y="pT + ppH / 2" text-anchor="middle" :transform="`rotate(-90, 8, ${pT + ppH / 2})`" class="axis-label-small">QE (%)</text>
 
           <!-- QE curves -->
@@ -61,17 +62,17 @@
 
           <!-- Legend -->
           <line :x1="pL + ppW - 70" :y1="pT + 10" :x2="pL + ppW - 55" :y2="pT + 10" stroke="#e74c3c" stroke-width="2" />
-          <text :x="pL + ppW - 50" :y="pT + 14" class="legend-label">Red</text>
+          <text :x="pL + ppW - 50" :y="pT + 14" class="legend-label">{{ t('Red', '빨강') }}</text>
           <line :x1="pL + ppW - 70" :y1="pT + 23" :x2="pL + ppW - 55" :y2="pT + 23" stroke="#27ae60" stroke-width="2" />
-          <text :x="pL + ppW - 50" :y="pT + 27" class="legend-label">Green</text>
+          <text :x="pL + ppW - 50" :y="pT + 27" class="legend-label">{{ t('Green', '초록') }}</text>
           <line :x1="pL + ppW - 70" :y1="pT + 36" :x2="pL + ppW - 55" :y2="pT + 36" stroke="#2980b9" stroke-width="2" />
-          <text :x="pL + ppW - 50" :y="pT + 40" class="legend-label">Blue</text>
+          <text :x="pL + ppW - 50" :y="pT + 40" class="legend-label">{{ t('Blue', '파랑') }}</text>
         </svg>
       </div>
 
       <!-- FDTD panel -->
       <div class="plot-section">
-        <div class="plot-title">FDTD (grid = {{ fdtdGrid }} nm)</div>
+        <div class="plot-title">FDTD ({{ t('grid', '격자') }} = {{ fdtdGrid }} nm)</div>
         <svg :viewBox="`0 0 ${pW} ${pH}`" class="plot-svg">
           <!-- Grid and axes -->
           <line :x1="pL" :y1="pT" :x2="pL" :y2="pB" stroke="var(--vp-c-text-3)" stroke-width="1" />
@@ -90,7 +91,7 @@
             <text :x="wlToX(wl)" :y="pB + 14" text-anchor="middle" class="tick-label">{{ wl }}</text>
           </template>
 
-          <text :x="pL + ppW / 2" :y="pB + 26" text-anchor="middle" class="axis-label-small">Wavelength (nm)</text>
+          <text :x="pL + ppW / 2" :y="pB + 26" text-anchor="middle" class="axis-label-small">{{ t('Wavelength (nm)', '파장 (nm)') }}</text>
           <text :x="8" :y="pT + ppH / 2" text-anchor="middle" :transform="`rotate(-90, 8, ${pT + ppH / 2})`" class="axis-label-small">QE (%)</text>
 
           <!-- QE curves -->
@@ -100,11 +101,11 @@
 
           <!-- Legend -->
           <line :x1="pL + ppW - 70" :y1="pT + 10" :x2="pL + ppW - 55" :y2="pT + 10" stroke="#e74c3c" stroke-width="2" />
-          <text :x="pL + ppW - 50" :y="pT + 14" class="legend-label">Red</text>
+          <text :x="pL + ppW - 50" :y="pT + 14" class="legend-label">{{ t('Red', '빨강') }}</text>
           <line :x1="pL + ppW - 70" :y1="pT + 23" :x2="pL + ppW - 55" :y2="pT + 23" stroke="#27ae60" stroke-width="2" />
-          <text :x="pL + ppW - 50" :y="pT + 27" class="legend-label">Green</text>
+          <text :x="pL + ppW - 50" :y="pT + 27" class="legend-label">{{ t('Green', '초록') }}</text>
           <line :x1="pL + ppW - 70" :y1="pT + 36" :x2="pL + ppW - 55" :y2="pT + 36" stroke="#2980b9" stroke-width="2" />
-          <text :x="pL + ppW - 50" :y="pT + 40" class="legend-label">Blue</text>
+          <text :x="pL + ppW - 50" :y="pT + 40" class="legend-label">{{ t('Blue', '파랑') }}</text>
         </svg>
       </div>
     </div>
@@ -175,6 +176,10 @@ import { useLocale } from '../composables/useLocale'
 
 const { t } = useLocale()
 
+const INIT_PITCH = 1.0
+const INIT_FOURIER_ORDER = 9
+const INIT_FDTD_GRID = 20
+
 // Plot dimensions
 const pW = 460
 const pH = 260
@@ -189,9 +194,15 @@ const pitchOptions = [0.7, 0.9, 1.0, 1.2, 1.4]
 const fourierOptions = [3, 5, 7, 9, 11, 15, 21, 31, 51, 101, 201, 501, 1000]
 const gridOptions = [10, 20, 30, 50]
 
-const pitch = ref(1.0)
-const fourierOrder = ref(9)
-const fdtdGrid = ref(20)
+const pitch = ref(INIT_PITCH)
+const fourierOrder = ref(INIT_FOURIER_ORDER)
+const fdtdGrid = ref(INIT_FDTD_GRID)
+
+function resetControls() {
+  pitch.value = INIT_PITCH
+  fourierOrder.value = INIT_FOURIER_ORDER
+  fdtdGrid.value = INIT_FDTD_GRID
+}
 
 // Wavelength points
 const wls = []
@@ -389,6 +400,21 @@ const fdtdMemory = computed(() => {
   display: block;
   margin-bottom: 4px;
   font-size: 0.85em;
+}
+.reset-btn {
+  align-self: end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .plots-layout {
   display: flex;

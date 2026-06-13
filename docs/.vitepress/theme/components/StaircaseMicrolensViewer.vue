@@ -13,13 +13,13 @@
         <label>
           {{ t('Number of slices', '슬라이스 수') }}: <strong>{{ nSlices }}</strong>
         </label>
-        <input type="range" min="5" max="50" step="1" v-model.number="nSlices" class="ctrl-range" />
+        <input type="range" min="5" max="50" step="1" v-model.number="nSlices" class="ctrl-range" :aria-label="t('Number of slices', '슬라이스 수')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Squareness (n)', '사각도 (n)') }}: <strong>{{ squareness.toFixed(1) }}</strong>
         </label>
-        <input type="range" min="1.5" max="5.0" step="0.1" v-model.number="squareness" class="ctrl-range" />
+        <input type="range" min="1.5" max="5.0" step="0.1" v-model.number="squareness" class="ctrl-range" :aria-label="t('Squareness (n)', '사각도 (n)')" />
       </div>
     </div>
 

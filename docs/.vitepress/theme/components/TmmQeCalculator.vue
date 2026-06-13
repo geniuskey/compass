@@ -21,7 +21,7 @@
     <div class="controls-row">
       <div class="select-group">
         <label>{{ t('Preset:', '프리셋:') }}</label>
-        <select v-model="preset" class="tmm-qe-select">
+        <select v-model="preset" class="tmm-qe-select" :aria-label="t('Preset', '프리셋')">
           <option value="bsi1um">{{ t('BSI 1\u03BCm (default)', 'BSI 1\u03BCm (기본)') }}</option>
           <option value="bsi08um">{{ t('BSI 0.8\u03BCm', 'BSI 0.8\u03BCm') }}</option>
           <option value="custom">{{ t('Custom', '사용자 정의') }}</option>
@@ -31,7 +31,7 @@
         <label>
           {{ t('Silicon thickness:', '실리콘 두께:') }} <strong>{{ siThickness.toFixed(1) }} &micro;m</strong>
         </label>
-        <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="tmm-qe-range" />
+        <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="tmm-qe-range" :aria-label="t('Silicon thickness', '실리콘 두께')" />
       </div>
     </div>
 
@@ -40,7 +40,7 @@
         <label>
           {{ t('Angle of incidence:', '입사각:') }} <strong>{{ angleDeg }}&deg;</strong>
         </label>
-        <input type="range" min="0" max="60" step="1" v-model.number="angleDeg" class="tmm-qe-range" />
+        <input type="range" min="0" max="60" step="1" v-model.number="angleDeg" class="tmm-qe-range" :aria-label="t('Angle of incidence', '입사각')" />
       </div>
       <div class="radio-group">
         <label class="radio-group-label">{{ t('Polarization:', '편광:') }}</label>
@@ -55,6 +55,7 @@
           {{ t('unpolarized', '비편광') }}
         </label>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
     </div>
 
@@ -274,7 +275,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useLocale } from '../composables/useLocale'
 import { useFullscreen } from '../composables/useFullscreen'
 import {
@@ -308,6 +309,14 @@ watch(preset, (v) => {
 watch(siThickness, () => {
   if (preset.value !== 'custom') preset.value = 'custom'
 })
+
+function resetControls() {
+  angleDeg.value = 0
+  polarization.value = 'avg'
+  siThickness.value = 3.0
+  // Restore preset after the thickness watcher has settled
+  nextTick(() => { preset.value = 'bsi1um' })
+}
 
 // --- SVG layout ---
 const svgW = 600
@@ -576,6 +585,21 @@ const spectrumStops = computed(() => {
 .radio-item input[type="radio"] {
   margin: 0;
   cursor: pointer;
+}
+.reset-btn {
+  align-self: flex-end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .info-row {
   display: flex;

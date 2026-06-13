@@ -19,15 +19,15 @@
     <div class="controls-grid">
       <div class="slider-group">
         <label>PRNU: <strong>{{ prnu.toFixed(1) }}%</strong></label>
-        <input type="range" min="0" max="5" step="0.1" v-model.number="prnu" class="ctrl-range" />
+        <input type="range" min="0" max="5" step="0.1" v-model.number="prnu" class="ctrl-range" aria-label="PRNU" />
       </div>
       <div class="slider-group">
         <label>DSNU: <strong>{{ dsnu }} DN</strong></label>
-        <input type="range" min="0" max="50" step="1" v-model.number="dsnu" class="ctrl-range" />
+        <input type="range" min="0" max="50" step="1" v-model.number="dsnu" class="ctrl-range" aria-label="DSNU" />
       </div>
       <div class="slider-group">
         <label>{{ t('Signal Level', '신호 레벨') }}: <strong>{{ signalLevel }} DN</strong></label>
-        <input type="range" min="100" max="4000" step="50" v-model.number="signalLevel" class="ctrl-range" />
+        <input type="range" min="100" max="4000" step="50" v-model.number="signalLevel" class="ctrl-range" :aria-label="t('Signal Level', '신호 레벨')" />
       </div>
       <div class="slider-group">
         <label>{{ t('View', '보기') }}</label>
@@ -37,6 +37,7 @@
           <button type="button" :class="['toggle-btn', { active: viewMode === 'dsnu' }]" :aria-pressed="viewMode === 'dsnu'" @click="viewMode = 'dsnu'">DSNU</button>
         </div>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <div class="results-grid">
@@ -100,6 +101,13 @@ const prnu = ref(1.0)
 const dsnu = ref(5)
 const signalLevel = ref(1000)
 const viewMode = ref<'fpn' | 'prnu' | 'dsnu'>('fpn')
+
+function resetControls() {
+  prnu.value = 1.0
+  dsnu.value = 5
+  signalLevel.value = 1000
+  viewMode.value = 'fpn'
+}
 
 function mulberry32(seed: number): () => number {
   let a = seed | 0
@@ -196,6 +204,9 @@ const binW = computed(() => hPlotW / BINS)
 .slider-group label { display: block; margin-bottom: 4px; font-size: 0.85em; }
 .ctrl-range { width: 100%; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: var(--vp-c-divider); outline: none; }
 .ctrl-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; }
+.ctrl-range::-moz-range-thumb { width: 18px; height: 18px; border: none; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; }
+.reset-btn { align-self: end; justify-self: start; padding: 4px 12px; font-size: 0.8em; border: 1px solid var(--vp-c-divider); border-radius: 6px; background: var(--vp-c-bg); color: var(--vp-c-text-2); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+.reset-btn:hover { color: var(--vp-c-brand-1); border-color: var(--vp-c-brand-1); }
 .view-toggle { display: flex; gap: 0; border: 1px solid var(--vp-c-divider); border-radius: 8px; overflow: hidden; }
 .toggle-btn { padding: 5px 12px; font-size: 0.82em; font-weight: 500; border: none; background: var(--vp-c-bg); color: var(--vp-c-text-2); cursor: pointer; }
 .toggle-btn.active { background: var(--vp-c-brand-1); color: #fff; }

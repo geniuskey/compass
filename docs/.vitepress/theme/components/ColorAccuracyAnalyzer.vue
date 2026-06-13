@@ -23,13 +23,13 @@
         <label>
           {{ t('Si Thickness', '실리콘 두께') }}: <strong>{{ siThickness.toFixed(1) }} &mu;m</strong>
         </label>
-        <input type="range" min="1" max="5" step="0.1" v-model.number="siThickness" class="ctrl-range" />
+        <input type="range" min="1" max="5" step="0.1" v-model.number="siThickness" class="ctrl-range" :aria-label="t('Si Thickness', '실리콘 두께')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('CF Bandwidth (FWHM)', 'CF 대역폭 (FWHM)') }}: <strong>{{ cfBandwidth }} nm</strong>
         </label>
-        <input type="range" min="50" max="150" step="5" v-model.number="cfBandwidth" class="ctrl-range" />
+        <input type="range" min="50" max="150" step="5" v-model.number="cfBandwidth" class="ctrl-range" :aria-label="t('CF Bandwidth (FWHM)', 'CF 대역폭 (FWHM)')" />
       </div>
       <div class="chart-toggle">
         <button type="button"
@@ -53,8 +53,8 @@
       </div>
       <div class="select-group">
         <label class="select-label">{{ t('Illuminant', '광원') }}</label>
-        <select v-model="illuminant" class="ctrl-select">
-          <option v-for="(ill, key) in ILLUMINANTS" :key="key" :value="key">{{ ill.label }}</option>
+        <select v-model="illuminant" class="ctrl-select" :aria-label="t('Illuminant', '광원')">
+          <option v-for="(ill, key) in ILLUMINANTS" :key="key" :value="key">{{ t(ill.label, ill.ko) }}</option>
         </select>
       </div>
       <div class="chart-toggle">
@@ -62,7 +62,7 @@
           :class="['toggle-btn', { active: wbMethod === m.key }]"
           :aria-pressed="wbMethod === m.key"
           @click="wbMethod = m.key"
-        >{{ m.label }}</button>
+        >{{ t(m.en, m.ko) }}</button>
       </div>
     </div>
 
@@ -72,14 +72,15 @@
         <label>
           {{ t('Shot Noise', '샷 노이즈') }}: <strong>{{ shotNoise }} e&minus;</strong>
         </label>
-        <input type="range" min="0" max="100" step="5" v-model.number="shotNoise" class="ctrl-range" />
+        <input type="range" min="0" max="100" step="5" v-model.number="shotNoise" class="ctrl-range" :aria-label="t('Shot Noise', '샷 노이즈')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Read Noise', '리드 노이즈') }}: <strong>{{ readNoise }} e&minus;</strong>
         </label>
-        <input type="range" min="0" max="50" step="1" v-model.number="readNoise" class="ctrl-range" />
+        <input type="range" min="0" max="50" step="1" v-model.number="readNoise" class="ctrl-range" :aria-label="t('Read Noise', '리드 노이즈')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <!-- Action row -->
@@ -156,11 +157,11 @@
           <text :x="qePad.left + qePlotW / 2" :y="qePad.top + qePlotH + 26" text-anchor="middle" class="axis-title">{{ t('Wavelength (nm)', '파장 (nm)') }}</text>
           <!-- Legend -->
           <line :x1="qePad.left + qePlotW - 80" :y1="qePad.top + 6" :x2="qePad.left + qePlotW - 65" :y2="qePad.top + 6" stroke="#e74c3c" stroke-width="2" />
-          <text :x="qePad.left + qePlotW - 62" :y="qePad.top + 9" class="tick-label">Red</text>
+          <text :x="qePad.left + qePlotW - 62" :y="qePad.top + 9" class="tick-label">{{ t('Red', '적색') }}</text>
           <line :x1="qePad.left + qePlotW - 80" :y1="qePad.top + 18" :x2="qePad.left + qePlotW - 65" :y2="qePad.top + 18" stroke="#27ae60" stroke-width="2" />
-          <text :x="qePad.left + qePlotW - 62" :y="qePad.top + 21" class="tick-label">Green</text>
+          <text :x="qePad.left + qePlotW - 62" :y="qePad.top + 21" class="tick-label">{{ t('Green', '녹색') }}</text>
           <line :x1="qePad.left + qePlotW - 80" :y1="qePad.top + 30" :x2="qePad.left + qePlotW - 65" :y2="qePad.top + 30" stroke="#3498db" stroke-width="2" />
-          <text :x="qePad.left + qePlotW - 62" :y="qePad.top + 33" class="tick-label">Blue</text>
+          <text :x="qePad.left + qePlotW - 62" :y="qePad.top + 33" class="tick-label">{{ t('Blue', '청색') }}</text>
         </svg>
       </div>
     </div>
@@ -430,8 +431,8 @@
               <th>{{ t('Illuminant', '광원') }}</th>
               <th>WB</th>
               <th>{{ t('Noise', '노이즈') }}</th>
-              <th>Avg {{ deAxisLabel }}</th>
-              <th>Max {{ deAxisLabel }}</th>
+              <th>{{ t('Avg', '평균') }} {{ deAxisLabel }}</th>
+              <th>{{ t('Max', '최대') }} {{ deAxisLabel }}</th>
               <th>&lt;3</th>
               <th></th>
             </tr>
@@ -475,14 +476,27 @@ const patchView = ref<'swatch' | 'heatmap'>('swatch')
 const illuminant = ref('D65')
 const wbMethod = ref<'none' | 'grayworld' | 'patch'>('none')
 const WB_METHODS = [
-  { key: 'none' as const, label: 'No WB' },
-  { key: 'grayworld' as const, label: 'Gray World' },
-  { key: 'patch' as const, label: 'Neutral Patch' },
+  { key: 'none' as const, en: 'No WB', ko: 'WB 없음' },
+  { key: 'grayworld' as const, en: 'Gray World', ko: '그레이 월드' },
+  { key: 'patch' as const, en: 'Neutral Patch', ko: '뉴트럴 패치' },
 ]
 const shotNoise = ref(0)
 const readNoise = ref(0)
 const optimizing = ref(false)
 const optResult = ref<{ si: number; bw: number; avgDE: number } | null>(null)
+
+function resetControls() {
+  siThickness.value = 3.0
+  cfBandwidth.value = 100
+  chartType.value = 'classic'
+  patchView.value = 'swatch'
+  illuminant.value = 'D65'
+  wbMethod.value = 'none'
+  deMethod.value = 'ciede2000'
+  shotNoise.value = 0
+  readNoise.value = 0
+  optResult.value = null
+}
 
 interface Snapshot { label: string; avgDE: number; maxDE: number; patchDEs: number[] }
 const snapshot = ref<Snapshot | null>(null)
@@ -579,11 +593,11 @@ const SG_NAMES: string[] = (() => {
 })()
 
 // ---- Illuminant data (7 wavelengths 400-700nm @ 50nm) ----
-const ILLUMINANTS: Record<string, { spd: number[]; label: string }> = {
-  D65: { spd: [82.75, 109.35, 117.01, 114.86, 100.0, 90.01, 71.61], label: 'D65 (Daylight)' },
-  D50: { spd: [54.65, 100.27, 122.97, 112.59, 100.0, 78.66, 55.78], label: 'D50 (Warm)' },
-  A:   { spd: [11.46, 25.62, 51.12, 72.17, 100.0, 125.75, 145.11], label: 'A (Tungsten)' },
-  F2:  { spd: [24.82, 65.85, 80.03, 95.72, 100.0, 64.89, 17.22], label: 'F2 (Fluorescent)' },
+const ILLUMINANTS: Record<string, { spd: number[]; label: string; ko: string }> = {
+  D65: { spd: [82.75, 109.35, 117.01, 114.86, 100.0, 90.01, 71.61], label: 'D65 (Daylight)', ko: 'D65 (주광)' },
+  D50: { spd: [54.65, 100.27, 122.97, 112.59, 100.0, 78.66, 55.78], label: 'D50 (Warm)', ko: 'D50 (온백색)' },
+  A:   { spd: [11.46, 25.62, 51.12, 72.17, 100.0, 125.75, 145.11], label: 'A (Tungsten)', ko: 'A (텅스텐)' },
+  F2:  { spd: [24.82, 65.85, 80.03, 95.72, 100.0, 64.89, 17.22], label: 'F2 (Fluorescent)', ko: 'F2 (형광등)' },
 }
 
 const activeIlluminant = computed(() => ILLUMINANTS[illuminant.value].spd)
@@ -1393,6 +1407,21 @@ const bestSavedAvgDE = computed(() => {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.reset-btn {
+  align-self: flex-end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .chart-toggle {
   display: flex;

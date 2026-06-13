@@ -19,11 +19,11 @@
     <div class="controls-grid">
       <div class="slider-group">
         <label>{{ t('Si Thickness', '실리콘 두께') }}: <strong>{{ siThick.toFixed(1) }} &mu;m</strong></label>
-        <input type="range" min="1" max="6" step="0.1" v-model.number="siThick" class="ctrl-range" />
+        <input type="range" min="1" max="6" step="0.1" v-model.number="siThick" class="ctrl-range" :aria-label="t('Si Thickness', '실리콘 두께')" />
       </div>
       <div class="slider-group">
         <label>{{ t('CF Bandwidth', 'CF 대역폭') }}: <strong>{{ cfBw }} nm</strong></label>
-        <input type="range" min="50" max="150" step="5" v-model.number="cfBw" class="ctrl-range" />
+        <input type="range" min="50" max="150" step="5" v-model.number="cfBw" class="ctrl-range" :aria-label="t('CF Bandwidth', 'CF 대역폭')" />
       </div>
     </div>
 
@@ -65,11 +65,11 @@
           :transform="`rotate(-90, 8, ${pad.top + plotH / 2})`">R (A/W)</text>
         <!-- Legend -->
         <line :x1="pad.left + plotW - 90" :y1="pad.top + 8" :x2="pad.left + plotW - 75" :y2="pad.top + 8" stroke="#e74c3c" stroke-width="2" />
-        <text :x="pad.left + plotW - 72" :y="pad.top + 11" class="tick-label">Red</text>
+        <text :x="pad.left + plotW - 72" :y="pad.top + 11" class="tick-label">{{ t('Red', '빨강') }}</text>
         <line :x1="pad.left + plotW - 90" :y1="pad.top + 20" :x2="pad.left + plotW - 75" :y2="pad.top + 20" stroke="#27ae60" stroke-width="2" />
-        <text :x="pad.left + plotW - 72" :y="pad.top + 23" class="tick-label">Green</text>
+        <text :x="pad.left + plotW - 72" :y="pad.top + 23" class="tick-label">{{ t('Green', '초록') }}</text>
         <line :x1="pad.left + plotW - 90" :y1="pad.top + 32" :x2="pad.left + plotW - 75" :y2="pad.top + 32" stroke="#3498db" stroke-width="2" />
-        <text :x="pad.left + plotW - 72" :y="pad.top + 35" class="tick-label">Blue</text>
+        <text :x="pad.left + plotW - 72" :y="pad.top + 35" class="tick-label">{{ t('Blue', '파랑') }}</text>
         <line :x1="pad.left + plotW - 90" :y1="pad.top + 44" :x2="pad.left + plotW - 75" :y2="pad.top + 44" stroke="var(--vp-c-text-3)" stroke-width="1.5" stroke-dasharray="4,3" />
         <text :x="pad.left + plotW - 72" :y="pad.top + 47" class="tick-label">{{ t('Ideal Si', '이상 Si') }}</text>
       </svg>
@@ -169,6 +169,7 @@ const idealPath = computed(() => makePath(spectra.value.ideal))
 .slider-group label { display: block; margin-bottom: 4px; font-size: 0.85em; }
 .ctrl-range { width: 100%; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: var(--vp-c-divider); outline: none; }
 .ctrl-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; }
+.ctrl-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; border: none; }
 .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 16px; }
 .result-card { background: var(--vp-c-bg); border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 12px; text-align: center; }
 .result-label { font-size: 0.8em; color: var(--vp-c-text-2); margin-bottom: 4px; }

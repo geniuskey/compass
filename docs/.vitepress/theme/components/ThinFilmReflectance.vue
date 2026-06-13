@@ -15,6 +15,9 @@
           <option v-for="p in presets" :key="p.key" :value="p.key">{{ t(p.label, p.labelKo) }}</option>
         </select>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">
+        {{ t('Reset', '초기화') }}
+      </button>
     </div>
 
     <div class="layers-section">
@@ -33,6 +36,7 @@
             :value="layer.d"
             @input="updateThickness(idx, $event)"
             class="ctrl-range"
+            :aria-label="t('Layer', '레이어') + ' ' + (idx + 1) + ' ' + t('thickness', '두께')"
           />
         </div>
       </div>
@@ -86,7 +90,7 @@
         <line :x1="padL" :y1="plotBottom" :x2="padL + plotW" :y2="plotBottom" stroke="var(--vp-c-text-3)" stroke-width="1" />
 
         <!-- Y-axis label -->
-        <text :x="12" :y="padT + plotH / 2" text-anchor="middle" :transform="`rotate(-90, 12, ${padT + plotH / 2})`" class="axis-label">Reflectance (%)</text>
+        <text :x="12" :y="padT + plotH / 2" text-anchor="middle" :transform="`rotate(-90, 12, ${padT + plotH / 2})`" class="axis-label">{{ t('Reflectance (%)', '반사율 (%)') }}</text>
 
         <!-- Y-axis ticks -->
         <template v-for="tick in yTicks" :key="'yt' + tick">
@@ -99,7 +103,7 @@
           <line :x1="wlToX(wl)" :y1="plotBottom" :x2="wlToX(wl)" :y2="plotBottom + 4" stroke="var(--vp-c-text-3)" stroke-width="1" />
           <text :x="wlToX(wl)" :y="plotBottom + 22" text-anchor="middle" class="tick-label">{{ wl }}</text>
         </template>
-        <text :x="padL + plotW / 2" :y="H - 4" text-anchor="middle" class="axis-label">Wavelength (nm)</text>
+        <text :x="padL + plotW / 2" :y="H - 4" text-anchor="middle" class="axis-label">{{ t('Wavelength (nm)', '파장 (nm)') }}</text>
 
         <!-- Reflectance curve -->
         <path :d="reflectancePath" fill="none" stroke="var(--vp-c-brand-1)" stroke-width="2.5" />
@@ -133,8 +137,9 @@
             fill="var(--vp-c-brand-1)"
           />
           <text
-            :x="wlToX(hoverData.wl) + 8"
-            :y="rToY(hoverData.r) - 8"
+            :x="wlToX(hoverData.wl) > padL + plotW - 100 ? wlToX(hoverData.wl) - 8 : wlToX(hoverData.wl) + 8"
+            :y="Math.max(padT + 10, rToY(hoverData.r) - 8)"
+            :text-anchor="wlToX(hoverData.wl) > padL + plotW - 100 ? 'end' : 'start'"
             class="hover-label"
           >{{ hoverData.wl }} nm, {{ hoverData.r.toFixed(2) }}%</text>
         </template>
@@ -220,6 +225,12 @@ const currentLayers = computed(() => {
 
 function updateThickness(idx, event) {
   layerThicknesses[selectedPreset.value][idx] = parseInt(event.target.value)
+}
+
+function resetControls() {
+  for (const key of Object.keys(presetConfigs)) {
+    layerThicknesses[key] = presetConfigs[key].layers.map(l => l.d)
+  }
 }
 
 // Transfer matrix method
@@ -419,6 +430,19 @@ function onMouseMove(event) {
   background: var(--vp-c-bg);
   color: var(--vp-c-text-1);
   font-size: 0.9em;
+}
+.reset-btn {
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .layers-section {
   display: flex;

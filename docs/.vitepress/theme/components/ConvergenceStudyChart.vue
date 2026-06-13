@@ -852,10 +852,12 @@ function onMouseMove(event) {
   }
 
   if (closest) {
-    const tooltipW = 180
+    const tooltipW = 190
+    const rawX = closest.x + 10
+    const clampedX = Math.max(pad.left, Math.min(rawX + tooltipW > svgW - pad.right ? closest.x - tooltipW - 10 : rawX, svgW - pad.right - tooltipW))
     hoverInfo.value = {
       ...closest,
-      tooltipX: closest.x + tooltipW + 10 > svgW - pad.right ? closest.x - tooltipW - 10 : closest.x + 10,
+      tooltipX: clampedX,
       tooltipY: Math.max(pad.top, Math.min(closest.y - 19, pad.top + plotH - 40)),
       tooltipW,
     }

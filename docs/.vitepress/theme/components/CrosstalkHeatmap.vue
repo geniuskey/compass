@@ -14,13 +14,13 @@
           {{ t('Wavelength', '파장') }}: <strong>{{ wavelength }} nm</strong>
           <span class="color-dot" :style="{ backgroundColor: wavelengthToCSS(wavelength) }"></span>
         </label>
-        <input type="range" min="400" max="700" step="10" v-model.number="wavelength" class="ctrl-range" />
+        <input type="range" min="400" max="700" step="10" v-model.number="wavelength" class="ctrl-range" :aria-label="t('Wavelength', '파장')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Pixel pitch', '픽셀 피치') }}: <strong>{{ pitch.toFixed(2) }} um</strong>
         </label>
-        <input type="range" min="0.6" max="1.4" step="0.05" v-model.number="pitch" class="ctrl-range" />
+        <input type="range" min="0.6" max="1.4" step="0.05" v-model.number="pitch" class="ctrl-range" :aria-label="t('Pixel pitch', '픽셀 피치')" />
       </div>
       <div class="toggle-group">
         <label class="toggle-label">
@@ -28,6 +28,7 @@
           {{ t('Show Bayer overlay', '베이어 오버레이 표시') }}
         </label>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <div class="info-row">
@@ -123,6 +124,12 @@ const { t } = useLocale()
 const wavelength = ref(550)
 const pitch = ref(1.0)
 const showBayer = ref(true)
+
+function resetControls() {
+  wavelength.value = 550
+  pitch.value = 1.0
+  showBayer.value = true
+}
 const gridN = 5  // 5x5 grid
 const svgSize = 340
 const gridOffset = 20
@@ -345,6 +352,20 @@ function wavelengthToCSS(wl) {
 .toggle-group {
   display: flex;
   align-items: center;
+}
+.reset-btn {
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .toggle-label {
   display: flex;

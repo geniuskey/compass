@@ -29,6 +29,7 @@
           step="5"
           v-model.number="wavelength"
           class="ctrl-range"
+          :aria-label="t('Wavelength', '파장')"
         />
       </div>
       <div class="slider-group">
@@ -42,6 +43,7 @@
           step="0.1"
           v-model.number="siThickness"
           class="ctrl-range"
+          :aria-label="t('Si Thickness', 'Si 두께')"
         />
       </div>
       <div class="slider-group">
@@ -55,8 +57,10 @@
           step="0.1"
           v-model.number="pdDepth"
           class="ctrl-range"
+          :aria-label="t('Photodiode Depth', '포토다이오드 깊이')"
         />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <!-- Two-panel display -->
@@ -114,7 +118,7 @@
             :y="crossTopY + siRectH + 16"
             text-anchor="middle"
             class="si-label"
-          >Silicon</text>
+          >{{ t('Silicon', '실리콘') }}</text>
 
           <!-- Photodiode depth dashed line -->
           <line
@@ -322,7 +326,7 @@
       </div>
       <div class="info-card">
         <div class="info-label">{{ t('Penetration depth', '침투 깊이') }} delta</div>
-        <div class="info-value">{{ penetrationDepth.toFixed(3) }} um</div>
+        <div class="info-value">{{ penetrationDisplay }}</div>
       </div>
       <div class="info-card">
         <div class="info-label">{{ t('Absorbed in PD', 'PD 내 흡수율') }}</div>
@@ -349,6 +353,12 @@ const { isFullscreen, toggleFullscreen } = useFullscreen()
 const wavelength = ref(550)
 const siThickness = ref(3.0)
 const pdDepth = ref(2.0)
+
+function resetControls() {
+  wavelength.value = 550
+  siThickness.value = 3.0
+  pdDepth.value = 2.0
+}
 
 // Unique gradient ID to avoid collisions if multiple instances
 const gradientId = 'siAbsGrad' + Math.random().toString(36).slice(2, 8)
@@ -392,6 +402,12 @@ const absorbedInPD = computed(() => {
 
 const absorbedInSi = computed(() => {
   return 1 - Math.exp(-alphaUm.value * siThickness.value)
+})
+
+// Display-only guard: when absorption is effectively zero (k = 0), show infinity
+const penetrationDisplay = computed(() => {
+  if (alphaUm.value <= 0) return '∞'
+  return `${penetrationDepth.value.toFixed(3)} um`
 })
 
 const alphaDisplay = computed(() => {
@@ -590,6 +606,21 @@ const alphaPath = computed(() => {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.reset-btn {
+  align-self: flex-end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .panels-row {
   display: flex;

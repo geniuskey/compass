@@ -3,34 +3,38 @@
     <div class="controls-row">
       <label class="ctrl-item">
         <input type="checkbox" v-model="exploded" />
-        <span>Exploded View</span>
+        <span>{{ t('Exploded View', '분해 보기') }}</span>
       </label>
       <label class="ctrl-item">
         <input type="checkbox" v-model="autoRotate" />
-        <span>Auto Rotate</span>
+        <span>{{ t('Auto Rotate', '자동 회전') }}</span>
       </label>
-      <button type="button" class="ctrl-btn" @click="resetView">Reset View</button>
+      <button type="button" class="ctrl-btn" @click="resetView">{{ t('Reset View', '뷰 초기화') }}</button>
       <div class="layer-toggles">
         <label v-for="l in layerDefs" :key="l.id" class="toggle-item">
           <input type="checkbox" v-model="l.visible" />
           <span class="toggle-sw" :style="{ background: l.color }"></span>
-          <span class="toggle-lbl">{{ l.label }}</span>
+          <span class="toggle-lbl">{{ t(l.label, l.labelKo) }}</span>
         </label>
       </div>
     </div>
 
     <div ref="canvasHost" class="viewer-host">
-      <div class="hint">Drag: rotate · Right-drag: pan · Wheel: zoom</div>
+      <div class="hint">{{ t('Drag: rotate · Right-drag: pan · Wheel: zoom', '드래그: 회전 · 우클릭 드래그: 이동 · 휠: 확대/축소') }}</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useLocale } from '../composables/useLocale'
+
+const { t } = useLocale()
 
 interface LayerDef {
   id: string
   label: string
+  labelKo: string
   color: string
   zBot: number
   zTop: number
@@ -40,13 +44,18 @@ interface LayerDef {
 }
 
 const layerDefs = reactive<LayerDef[]>([
-  { id: 'silicon', label: 'Silicon', color: '#5d6d7e', zBot: 0, zTop: 3.0, thickness: '3.0', material: 'Si', visible: true },
-  { id: 'barl', label: 'BARL', color: '#8e44ad', zBot: 3.0, zTop: 3.08, thickness: '0.08', material: 'SiO2/HfO2/SiO2/Si3N4', visible: true },
-  { id: 'colorfilter', label: 'Color Filter', color: '#27ae60', zBot: 3.08, zTop: 3.68, thickness: '0.6', material: 'Organic dye', visible: true },
-  { id: 'planarization', label: 'Planarization', color: '#d5dbdb', zBot: 3.68, zTop: 3.98, thickness: '0.3', material: 'SiO2', visible: true },
-  { id: 'microlens', label: 'Microlens', color: '#dda0dd', zBot: 3.98, zTop: 4.58, thickness: '0.6', material: 'Polymer (n=1.56)', visible: true },
-  { id: 'air', label: 'Air', color: '#d6eaf8', zBot: 4.58, zTop: 5.58, thickness: '1.0', material: 'Air', visible: false },
+  { id: 'silicon', label: 'Silicon', labelKo: '실리콘', color: '#5d6d7e', zBot: 0, zTop: 3.0, thickness: '3.0', material: 'Si', visible: true },
+  { id: 'barl', label: 'BARL', labelKo: 'BARL', color: '#8e44ad', zBot: 3.0, zTop: 3.08, thickness: '0.08', material: 'SiO2/HfO2/SiO2/Si3N4', visible: true },
+  { id: 'colorfilter', label: 'Color Filter', labelKo: '컬러 필터', color: '#27ae60', zBot: 3.08, zTop: 3.68, thickness: '0.6', material: 'Organic dye', visible: true },
+  { id: 'planarization', label: 'Planarization', labelKo: '평탄화층', color: '#d5dbdb', zBot: 3.68, zTop: 3.98, thickness: '0.3', material: 'SiO2', visible: true },
+  { id: 'microlens', label: 'Microlens', labelKo: '마이크로렌즈', color: '#dda0dd', zBot: 3.98, zTop: 4.58, thickness: '0.6', material: 'Polymer (n=1.56)', visible: true },
+  { id: 'air', label: 'Air', labelKo: '공기', color: '#d6eaf8', zBot: 4.58, zTop: 5.58, thickness: '1.0', material: 'Air', visible: false },
 ])
+
+// Default visibility per layer (matches initial layerDefs values)
+const defaultVisible: Record<string, boolean> = Object.fromEntries(
+  layerDefs.map(l => [l.id, l.visible]),
+)
 
 const exploded = ref(false)
 const autoRotate = ref(false)
@@ -425,6 +434,9 @@ function applyExplode() {
 }
 
 function resetView() {
+  exploded.value = false
+  autoRotate.value = false
+  for (const l of layerDefs) l.visible = defaultVisible[l.id]
   if (!three) return
   three.camera.position.copy(three.initialCamPos)
   three.controls.target.copy(three.initialTarget)

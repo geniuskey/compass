@@ -20,7 +20,7 @@
       <div class="controls-panel">
         <div class="ctrl-section">
           <label class="section-label">{{ t('Preset', '프리셋') }}</label>
-          <select v-model="preset" class="preset-select" @change="applyPreset">
+          <select v-model="preset" class="preset-select" :aria-label="t('Preset', '프리셋')" @change="applyPreset">
             <option value="balanced">{{ t('Balanced FDTI', '균형형 FDTI') }}</option>
             <option value="deep">{{ t('Full-depth FDTI', '관통형 FDTI') }}</option>
             <option value="shallow">{{ t('Shallow BDTI', '얕은 BDTI') }}</option>
@@ -33,15 +33,15 @@
           <div class="section-header">{{ t('Pixel Geometry', '픽셀 구조') }}</div>
           <div class="slider-group">
             <label>{{ t('Pixel pitch', '픽셀 피치') }} <strong>{{ pitch.toFixed(2) }} um</strong></label>
-            <input v-model.number="pitch" class="ctrl-range" type="range" min="0.7" max="1.6" step="0.05" @input="markCustom" />
+            <input v-model.number="pitch" class="ctrl-range" type="range" min="0.7" max="1.6" step="0.05" :aria-label="t('Pixel pitch', '픽셀 피치')" @input="markCustom" />
           </div>
           <div class="slider-group">
             <label>{{ t('Silicon thickness', '실리콘 두께') }} <strong>{{ siliconThickness.toFixed(1) }} um</strong></label>
-            <input v-model.number="siliconThickness" class="ctrl-range" type="range" min="2.0" max="5.0" step="0.1" @input="markCustom" />
+            <input v-model.number="siliconThickness" class="ctrl-range" type="range" min="2.0" max="5.0" step="0.1" :aria-label="t('Silicon thickness', '실리콘 두께')" @input="markCustom" />
           </div>
           <div class="slider-group">
             <label>{{ t('Microlens height', '마이크로렌즈 높이') }} <strong>{{ lensHeight.toFixed(2) }} um</strong></label>
-            <input v-model.number="lensHeight" class="ctrl-range" type="range" min="0.25" max="0.85" step="0.02" @input="markCustom" />
+            <input v-model.number="lensHeight" class="ctrl-range" type="range" min="0.25" max="0.85" step="0.02" :aria-label="t('Microlens height', '마이크로렌즈 높이')" @input="markCustom" />
           </div>
         </div>
 
@@ -68,13 +68,14 @@
               min="0"
               :max="siliconThickness * 0.95"
               step="0.05"
+              :aria-label="t('Trench depth', '트렌치 깊이')"
               @input="markCustom"
             />
             <div v-else class="locked-depth">{{ t('FDTI is drawn as a full-depth trench through silicon.', 'FDTI는 실리콘 전체를 관통하는 트렌치로 표시됩니다.') }}</div>
           </div>
           <div class="slider-group">
             <label>{{ t('Trench width', '트렌치 폭') }} <strong>{{ trenchWidth.toFixed(2) }} um</strong></label>
-            <input v-model.number="trenchWidth" class="ctrl-range" type="range" min="0.04" max="0.24" step="0.01" @input="markCustom" />
+            <input v-model.number="trenchWidth" class="ctrl-range" type="range" min="0.04" max="0.24" step="0.01" :aria-label="t('Trench width', '트렌치 폭')" @input="markCustom" />
           </div>
           <div class="slider-group">
             <label>{{ t('Fill / liner', '충전 / 라이너') }}</label>
@@ -93,15 +94,15 @@
               {{ t('Wavelength', '파장') }} <strong>{{ wavelengthNm }} nm</strong>
               <span class="color-dot" :style="{ backgroundColor: wavelengthToCSS(wavelengthNm) }"></span>
             </label>
-            <input v-model.number="wavelengthNm" class="ctrl-range" type="range" min="420" max="700" step="10" @input="markCustom" />
+            <input v-model.number="wavelengthNm" class="ctrl-range" type="range" min="420" max="700" step="10" :aria-label="t('Wavelength', '파장')" @input="markCustom" />
           </div>
           <div class="slider-group">
-            <label>{{ t('Chief ray angle', '주광선 각도') }} <strong>{{ craDeg }} deg</strong></label>
-            <input v-model.number="craDeg" class="ctrl-range" type="range" min="-24" max="24" step="1" @input="markCustom" />
+            <label>{{ t('Chief ray angle', '주광선 각도') }} <strong>{{ craDeg }}&deg;</strong></label>
+            <input v-model.number="craDeg" class="ctrl-range" type="range" min="-24" max="24" step="1" :aria-label="t('Chief ray angle', '주광선 각도')" @input="markCustom" />
           </div>
           <div class="slider-group">
             <label>{{ t('Lens offset', '렌즈 오프셋') }} <strong>{{ lensOffset.toFixed(2) }} um</strong></label>
-            <input v-model.number="lensOffset" class="ctrl-range" type="range" min="-0.25" max="0.25" step="0.01" @input="markCustom" />
+            <input v-model.number="lensOffset" class="ctrl-range" type="range" min="-0.25" max="0.25" step="0.01" :aria-label="t('Lens offset', '렌즈 오프셋')" @input="markCustom" />
           </div>
         </div>
       </div>
@@ -227,7 +228,7 @@
             <div v-for="item in qaScenarios" :key="item.key" class="qa-card">
               <div class="qa-header">
                 <span>{{ item.label }}</span>
-                <span :class="['qa-badge', item.pass ? 'pass' : 'warn']">{{ item.pass ? 'PASS' : 'CHECK' }}</span>
+                <span :class="['qa-badge', item.pass ? 'pass' : 'warn']">{{ item.pass ? t('PASS', '통과') : t('CHECK', '점검') }}</span>
               </div>
               <svg viewBox="0 0 180 54" class="qa-mini">
                 <rect x="0" y="0" width="180" height="54" rx="6" fill="var(--vp-c-bg)" />
@@ -661,7 +662,7 @@ const layerRects = computed(() => {
     },
     {
       key: 'si',
-      label: 'Silicon',
+      label: t('Silicon', '실리콘'),
       x,
       y: structureY(siTop),
       w,

@@ -22,19 +22,19 @@
         <label>
           {{ t('Pixel Pitch', '픽셀 피치') }}: <strong>{{ pitch.toFixed(2) }} &mu;m</strong>
         </label>
-        <input type="range" min="0.5" max="3.0" step="0.05" v-model.number="pitch" class="ctrl-range" />
+        <input type="range" min="0.5" max="3.0" step="0.05" v-model.number="pitch" class="ctrl-range" :aria-label="t('Pixel Pitch', '픽셀 피치')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('f-number', 'f값') }}: <strong>f/{{ fNumber.toFixed(1) }}</strong>
         </label>
-        <input type="range" min="1.4" max="11.0" step="0.1" v-model.number="fNumber" class="ctrl-range" />
+        <input type="range" min="1.4" max="11.0" step="0.1" v-model.number="fNumber" class="ctrl-range" :aria-label="t('f-number', 'f값')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Wavelength', '파장') }}: <strong>{{ wavelengthNm }} nm</strong>
         </label>
-        <input type="range" min="400" max="700" step="10" v-model.number="wavelengthNm" class="ctrl-range" />
+        <input type="range" min="400" max="700" step="10" v-model.number="wavelengthNm" class="ctrl-range" :aria-label="t('Wavelength', '파장')" />
       </div>
       <div class="check-group">
         <label>
@@ -42,6 +42,9 @@
           {{ t('Show components', '구성 요소 표시') }}
         </label>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">
+        {{ t('Reset', '초기화') }}
+      </button>
     </div>
 
     <!-- Info cards -->
@@ -253,6 +256,13 @@ const pitch = ref(1.0)
 const fNumber = ref(2.8)
 const wavelengthNm = ref(550)
 const showComponents = ref(true)
+
+function resetControls() {
+  pitch.value = 1.0
+  fNumber.value = 2.8
+  wavelengthNm.value = 550
+  showComponents.value = true
+}
 
 // ---- Physics ----
 const wavelengthUm = computed(() => wavelengthNm.value / 1000)
@@ -473,6 +483,20 @@ const barGroups = computed(() => {
   width: 16px;
   height: 16px;
   accent-color: var(--vp-c-brand-1);
+}
+.reset-btn {
+  align-self: flex-end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .ctrl-range {
   width: 100%;

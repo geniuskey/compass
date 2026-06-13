@@ -21,13 +21,13 @@
     <div class="media-row">
       <div class="media-group">
         <label>{{ t('Incident medium:', '입사 매질:') }}</label>
-        <select v-model="incidentMat" class="bo-select">
+        <select v-model="incidentMat" class="bo-select" :aria-label="t('Incident medium', '입사 매질')">
           <option v-for="k in substrateMats" :key="'inc'+k" :value="k">{{ matName(k) }}</option>
         </select>
       </div>
       <div class="media-group">
         <label>{{ t('Substrate:', '기판:') }}</label>
-        <select v-model="substrateMat" class="bo-select">
+        <select v-model="substrateMat" class="bo-select" :aria-label="t('Substrate', '기판')">
           <option v-for="k in substrateMats" :key="'sub'+k" :value="k">{{ matName(k) }}</option>
         </select>
       </div>
@@ -37,7 +37,7 @@
     <div class="controls-row">
       <div class="select-group">
         <label>{{ t('Preset:', '프리셋:') }}</label>
-        <select v-model="selectedPreset" class="bo-select" @change="applyPreset">
+        <select v-model="selectedPreset" class="bo-select" :aria-label="t('Preset', '프리셋')" @change="applyPreset">
           <option value="custom">{{ t('Custom', '사용자 정의') }}</option>
           <option value="barl4">{{ t('BARL 4-layer (default)', 'BARL 4층 (기본)') }}</option>
           <option value="ar2">{{ t('2-layer AR (MgF₂/TiO₂)', '2층 AR (MgF₂/TiO₂)') }}</option>
@@ -48,12 +48,12 @@
       </div>
       <div class="select-group">
         <label>{{ t('Target:', '목표 대역:') }}</label>
-        <select v-model="targetBand" class="bo-select">
-          <option value="blue">Blue (430-470nm)</option>
-          <option value="green">Green (510-560nm)</option>
-          <option value="red">Red (590-640nm)</option>
-          <option value="visible">Visible (430-640nm)</option>
-          <option value="full">Full (380-780nm)</option>
+        <select v-model="targetBand" class="bo-select" :aria-label="t('Target band', '목표 대역')">
+          <option value="blue">{{ t('Blue (430-470nm)', '청색 (430-470nm)') }}</option>
+          <option value="green">{{ t('Green (510-560nm)', '녹색 (510-560nm)') }}</option>
+          <option value="red">{{ t('Red (590-640nm)', '적색 (590-640nm)') }}</option>
+          <option value="visible">{{ t('Visible (430-640nm)', '가시광 (430-640nm)') }}</option>
+          <option value="full">{{ t('Full (380-780nm)', '전체 (380-780nm)') }}</option>
         </select>
       </div>
       <button type="button" class="optimize-btn" :disabled="optimizing || layers.length === 0" @click="runOptimize">
@@ -76,7 +76,7 @@
         <div v-for="(layer, idx) in layers" :key="layer.id" class="layer-row">
           <span class="layer-num">{{ idx + 1 }}</span>
           <span class="layer-swatch" :style="{ background: matColor(layer.material) }"></span>
-          <select v-model="layer.material" class="bo-select layer-mat-select" @change="markCustom">
+          <select v-model="layer.material" class="bo-select layer-mat-select" :aria-label="t(`Layer ${idx + 1} material`, `${idx + 1}번 레이어 재질`)" @change="markCustom">
             <option v-for="k in coatingMats" :key="k" :value="k">{{ matName(k) }}</option>
           </select>
           <div class="thickness-ctrl">
@@ -85,11 +85,13 @@
               :value="layer.thicknessNm"
               @input="setThickness(idx, $event)"
               class="bo-range"
+              :aria-label="t(`Layer ${idx + 1} thickness (nm)`, `${idx + 1}번 레이어 두께 (nm)`)"
             />
             <input
               type="number" min="0" max="500" step="1"
               v-model.number="layer.thicknessNm"
               class="thickness-input"
+              :aria-label="t(`Layer ${idx + 1} thickness (nm)`, `${idx + 1}번 레이어 두께 (nm)`)"
               @input="markCustom"
             />
             <span class="unit">nm</span>

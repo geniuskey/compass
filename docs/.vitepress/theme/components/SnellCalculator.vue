@@ -9,13 +9,14 @@
       <div class="input-group">
         <label for="snell-n1">n<sub>1</sub> ({{ t('incident', '입사') }})</label>
         <input id="snell-n1" type="number" v-model.number="n1" min="1.0" max="5.0" step="0.01" />
-        <span class="preset-hint">Air=1.0, Water=1.33, Glass=1.5</span>
+        <span class="preset-hint">{{ t('Air=1.0, Water=1.33, Glass=1.5', '공기=1.0, 물=1.33, 유리=1.5') }}</span>
       </div>
       <div class="input-group">
         <label for="snell-n2">n<sub>2</sub> ({{ t('transmitted', '투과') }})</label>
         <input id="snell-n2" type="number" v-model.number="n2" min="1.0" max="5.0" step="0.01" />
         <span class="preset-hint">SiO2=1.46, Si3N4=2.0, Si=3.5</span>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <div class="slider-section">
@@ -61,9 +62,9 @@
     <div class="svg-wrapper">
       <svg viewBox="0 0 400 300" class="snell-svg">
         <!-- Medium 1 (top) -->
-        <rect x="0" y="0" width="400" height="150" fill="#e8f4fd" opacity="0.5" />
+        <rect x="0" y="0" width="400" height="150" class="medium-rect-top" opacity="0.5" />
         <!-- Medium 2 (bottom) -->
-        <rect x="0" y="150" width="400" height="150" fill="#fde8e8" opacity="0.4" />
+        <rect x="0" y="150" width="400" height="150" class="medium-rect-bottom" opacity="0.4" />
 
         <!-- Interface line -->
         <line x1="0" y1="150" x2="400" y2="150" stroke="var(--vp-c-text-3)" stroke-width="2" />
@@ -198,6 +199,12 @@ const n2 = ref(1.0)
 const thetaI = ref(30)
 const rayLen = 120
 
+function resetControls() {
+  n1.value = 1.5
+  n2.value = 1.0
+  thetaI.value = 30
+}
+
 const thetaIRad = computed(() => (thetaI.value * Math.PI) / 180)
 
 const hasCritical = computed(() => n1.value > n2.value)
@@ -300,6 +307,22 @@ function arcPath(cx, cy, r, startAngleDeg, endAngleDeg, aboveInterface) {
   font-size: 0.75em;
   color: var(--vp-c-text-3);
   margin-top: 3px;
+}
+.reset-btn {
+  align-self: flex-end;
+  margin-bottom: 18px;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .slider-section {
   margin-bottom: 16px;
@@ -417,5 +440,17 @@ function arcPath(cx, cy, r, startAngleDeg, endAngleDeg, aboveInterface) {
 .legend-label {
   font-size: 10px;
   fill: var(--vp-c-text-2);
+}
+.medium-rect-top {
+  fill: #e8f4fd;
+}
+.medium-rect-bottom {
+  fill: #fde8e8;
+}
+.dark .medium-rect-top {
+  fill: #1c3a52;
+}
+.dark .medium-rect-bottom {
+  fill: #4a2530;
 }
 </style>

@@ -29,20 +29,21 @@
         <label>
           {{ t('f-number', 'f값') }}: <strong>f/{{ fNumber.toFixed(1) }}</strong>
         </label>
-        <input type="range" min="1.4" max="5.6" step="0.1" v-model.number="fNumber" class="ctrl-range" />
+        <input type="range" min="1.4" max="5.6" step="0.1" v-model.number="fNumber" class="ctrl-range" :aria-label="t('f-number', 'f값')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Wavelength', '파장') }}: <strong>{{ wavelengthNm }} nm</strong>
         </label>
-        <input type="range" min="450" max="650" step="10" v-model.number="wavelengthNm" class="ctrl-range" />
+        <input type="range" min="450" max="650" step="10" v-model.number="wavelengthNm" class="ctrl-range" :aria-label="t('Wavelength', '파장')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('My Pitch', '내 피치') }}: <strong>{{ myPitch.toFixed(2) }} &mu;m</strong>
         </label>
-        <input type="range" min="0.5" max="3.0" step="0.05" v-model.number="myPitch" class="ctrl-range pitch-range" />
+        <input type="range" min="0.5" max="3.0" step="0.05" v-model.number="myPitch" class="ctrl-range pitch-range" :aria-label="t('My Pitch', '내 피치')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <!-- 2x2 mini charts -->
@@ -425,6 +426,13 @@ const fNumber = ref(2.8)
 const wavelengthNm = ref(550)
 const myPitch = ref(1.0)
 
+function resetControls() {
+  selectedNode.value = '40nm'
+  fNumber.value = 2.8
+  wavelengthNm.value = 550
+  myPitch.value = 1.0
+}
+
 const currentNode = computed(() => techNodes.find(n => n.name === selectedNode.value) || techNodes[1])
 const wavelengthUm = computed(() => wavelengthNm.value / 1000)
 
@@ -708,6 +716,22 @@ function onMiniMouseMove(event: MouseEvent, _chartIndex: number) {
 }
 .pitch-range::-webkit-slider-thumb {
   background: var(--vp-c-brand-1);
+}
+.reset-btn {
+  align-self: flex-end;
+  margin-bottom: 4px;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .charts-grid {
   display: grid;

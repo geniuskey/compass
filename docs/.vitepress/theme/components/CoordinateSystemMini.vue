@@ -40,28 +40,27 @@
         <line x1="160" y1="0" x2="160" y2="39" class="light-ray" marker-end="url(#coordLightArrow)" />
         <text x="188" y="25" class="light-label">{{ t('light -z', '빛 -z') }}</text>
 
-        <rect x="0" y="9" width="238" height="31" fill="url(#coordAir)" class="layer air" />
+        <rect x="0" y="9" width="238" height="31" class="layer air layer-air" />
         <path
           d="M20 72 C38 35, 88 35, 106 72 Z M132 72 C150 35, 200 35, 218 72 Z"
-          fill="url(#coordLens)"
-          stroke="#4f9fcb"
+          class="layer-lens"
           stroke-width="1.2"
         />
-        <rect x="0" y="72" width="238" height="24" fill="#d9edf7" class="layer" />
+        <rect x="0" y="72" width="238" height="24" class="layer layer-planar" />
         <g>
-          <rect x="0" y="96" width="238" height="38" fill="#d9edf7" opacity="0.82" class="layer patterned-envelope" />
+          <rect x="0" y="96" width="238" height="38" class="layer layer-planar patterned-envelope" opacity="0.82" />
           <path d="M14 134 L48 134 L43 98 L19 98 Z" fill="#f87171" />
           <path d="M70 134 L104 134 L101 98 L73 98 Z" fill="#4ade80" />
           <path d="M126 134 L160 134 L153 98 L133 98 Z" fill="#60a5fa" />
           <path d="M182 134 L216 134 L213 98 L185 98 Z" fill="#4ade80" />
-          <rect x="56" y="106" width="6" height="28" fill="#4b5563" />
-          <rect x="112" y="106" width="6" height="28" fill="#4b5563" />
-          <rect x="168" y="106" width="6" height="28" fill="#4b5563" />
+          <rect x="56" y="106" width="6" height="28" class="metal-grid" />
+          <rect x="112" y="106" width="6" height="28" class="metal-grid" />
+          <rect x="168" y="106" width="6" height="28" class="metal-grid" />
         </g>
-        <rect x="0" y="134" width="238" height="10" fill="#fef3c7" class="layer" />
-        <rect x="0" y="144" width="238" height="42" fill="#c7cbd1" class="layer silicon" />
-        <rect x="22" y="154" width="32" height="22" rx="3" fill="#9ca3af" />
-        <rect x="184" y="154" width="32" height="22" rx="3" fill="#9ca3af" />
+        <rect x="0" y="134" width="238" height="10" class="layer layer-barl" />
+        <rect x="0" y="144" width="238" height="42" class="layer silicon layer-silicon" />
+        <rect x="22" y="154" width="32" height="22" rx="3" class="layer-dti" />
+        <rect x="184" y="154" width="32" height="22" rx="3" class="layer-dti" />
 
         <g class="labels">
           <text x="254" y="30">{{ t('air', 'air') }}</text>
@@ -133,6 +132,22 @@ const { t } = useLocale()
   font-weight: 520;
 }
 
+.layer-air { fill: url(#coordAir); }
+.layer-lens { fill: url(#coordLens); stroke: #4f9fcb; stroke-width: 1.2; }
+.layer-planar { fill: #d9edf7; }
+.layer-barl { fill: #fef3c7; }
+.layer-silicon { fill: #c7cbd1; }
+.layer-dti { fill: #9ca3af; }
+.metal-grid { fill: #4b5563; }
+
+:root.dark .layer-air { fill: #1a2230; }
+:root.dark .layer-lens { fill: #1a3050; stroke: #3a7aab; stroke-width: 1.2; }
+:root.dark .layer-planar { fill: #1e3040; }
+:root.dark .layer-barl { fill: #302810; }
+:root.dark .layer-silicon { fill: #2a2d32; }
+:root.dark .layer-dti { fill: #3a3d42; }
+:root.dark .metal-grid { fill: #8a9099; }
+
 .light-ray {
   stroke: #f59e0b;
   stroke-width: 2.5;
@@ -143,9 +158,17 @@ const { t } = useLocale()
   fill: #b45309;
 }
 
+:root.dark .light-label {
+  fill: #fbbf24;
+}
+
 .layer {
   stroke: rgba(17, 24, 39, 0.28);
   stroke-width: 1;
+}
+
+:root.dark .layer {
+  stroke: rgba(255, 255, 255, 0.18);
 }
 
 .patterned-envelope {
@@ -154,6 +177,10 @@ const { t } = useLocale()
 
 .silicon {
   stroke: rgba(17, 24, 39, 0.38);
+}
+
+:root.dark .silicon {
+  stroke: rgba(255, 255, 255, 0.25);
 }
 
 .labels text {

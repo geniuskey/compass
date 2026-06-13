@@ -104,7 +104,7 @@
                 :y="layerPositions[idx].y + layerPositions[idx].h / 2 + 4"
                 text-anchor="middle"
                 :class="['layer-name', { 'dark-text': layer.lightText }]"
-              >{{ layer.name }}</text>
+              >{{ t(layer.name, layer.nameKo) }}</text>
 
               <!-- Thickness label (right side) -->
               <line
@@ -136,7 +136,7 @@
                 :y="layerPositions[idx].y + layerPositions[idx].h / 2 + 3"
                 text-anchor="start"
                 class="thickness-label"
-              >{{ layer.thickness }}</text>
+              >{{ thicknessLabel(layer) }}</text>
             </g>
           </template>
         </svg>
@@ -144,7 +144,7 @@
 
       <div class="details-panel">
         <div v-if="selectedLayer" class="detail-card">
-          <h5>{{ selectedLayer.name }}</h5>
+          <h5>{{ t(selectedLayer.name, selectedLayer.nameKo) }}</h5>
           <table class="props-table">
             <tr>
               <td class="prop-key">{{ t('Material', '재료') }}</td>
@@ -152,7 +152,7 @@
             </tr>
             <tr>
               <td class="prop-key">{{ t('Typical thickness', '일반적인 두께') }}</td>
-              <td class="prop-val">{{ selectedLayer.thickness }}</td>
+              <td class="prop-val">{{ thicknessLabel(selectedLayer) }}</td>
             </tr>
             <tr>
               <td class="prop-key">{{ t('Refractive index', '굴절률') }} (n)</td>
@@ -196,6 +196,7 @@ const layers = [
   {
     id: 'air',
     name: 'Air',
+    nameKo: '공기',
     color: '#e8f4fd',
     thickness: '(semi-infinite)',
     material: 'Air / vacuum',
@@ -211,6 +212,7 @@ const layers = [
   {
     id: 'microlens',
     name: 'Microlens',
+    nameKo: '마이크로렌즈',
     color: '#aed6f1',
     opacity: 0.7,
     thickness: '0.4 - 0.8 um',
@@ -227,6 +229,7 @@ const layers = [
   {
     id: 'planarization',
     name: 'Planarization',
+    nameKo: '평탄화층',
     color: '#d5dbdb',
     thickness: '0.3 - 1.0 um',
     material: 'SiO2',
@@ -242,6 +245,7 @@ const layers = [
   {
     id: 'colorfilter',
     name: 'Color Filter',
+    nameKo: '컬러 필터',
     color: '#27ae60',
     thickness: '0.4 - 0.8 um',
     material: 'Organic dye (R/G/B)',
@@ -257,6 +261,7 @@ const layers = [
   {
     id: 'barl',
     name: 'BARL',
+    nameKo: 'BARL',
     color: '#8e44ad',
     thickness: '0.05 - 0.12 um',
     material: 'SiO2 / HfO2 / Si3N4 stack',
@@ -272,6 +277,7 @@ const layers = [
   {
     id: 'silicon',
     name: 'Silicon',
+    nameKo: '실리콘',
     color: '#5d6d7e',
     thickness: '2.0 - 4.0 um',
     material: 'Crystalline Si',
@@ -287,6 +293,7 @@ const layers = [
   {
     id: 'substrate',
     name: 'Substrate / Metal',
+    nameKo: '기판 / 금속',
     color: '#2c3e50',
     thickness: '(semi-infinite)',
     material: 'Si substrate + metal wiring (Cu/W)',
@@ -323,7 +330,11 @@ function selectLayer(id) {
 }
 
 function layerAriaLabel(layer) {
-  return t(`Show ${layer.name} layer details`, `${layer.name} 레이어 세부 정보 보기`)
+  return t(`Show ${layer.name} layer details`, `${layer.nameKo} 레이어 세부 정보 보기`)
+}
+
+function thicknessLabel(layer) {
+  return layer.thickness === '(semi-infinite)' ? t('(semi-infinite)', '(반무한)') : layer.thickness
 }
 
 const selectedLayer = computed(() => {
