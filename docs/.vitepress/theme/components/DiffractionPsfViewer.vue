@@ -21,20 +21,20 @@
         <label>
           {{ t('f-number', 'f-수') }}: <strong>f/{{ fNumber.toFixed(1) }}</strong>
         </label>
-        <input type="range" min="1.0" max="8.0" step="0.1" v-model.number="fNumber" class="ctrl-range" />
+        <input type="range" min="1.0" max="8.0" step="0.1" v-model.number="fNumber" class="ctrl-range" :aria-label="t('f-number', 'f-수')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Wavelength', '파장') }}: <strong>{{ wavelengthNm }} nm</strong>
           <span class="color-dot" :style="{ backgroundColor: wavelengthToCSS(wavelengthNm) }"></span>
         </label>
-        <input type="range" min="400" max="700" step="10" v-model.number="wavelengthNm" class="ctrl-range" />
+        <input type="range" min="400" max="700" step="10" v-model.number="wavelengthNm" class="ctrl-range" :aria-label="t('Wavelength', '파장')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Pixel pitch', '픽셀 피치') }}: <strong>{{ pixelPitch.toFixed(2) }} um</strong>
         </label>
-        <input type="range" min="0.5" max="2.0" step="0.05" v-model.number="pixelPitch" class="ctrl-range" />
+        <input type="range" min="0.5" max="2.0" step="0.05" v-model.number="pixelPitch" class="ctrl-range" :aria-label="t('Pixel pitch', '픽셀 피치')" />
       </div>
       <div class="toggle-group">
         <label class="toggle-label">
@@ -42,6 +42,9 @@
           {{ t('Pixel grid', '픽셀 그리드') }}
         </label>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">
+        {{ t('Reset', '초기화') }}
+      </button>
     </div>
 
     <div class="display-layout">
@@ -125,6 +128,7 @@
 
             <!-- Airy radius vertical line -->
             <line
+              v-if="airyRadius <= profXMax"
               :x1="profScaleX(airyRadius)"
               :y1="profMarginT"
               :x2="profScaleX(airyRadius)"
@@ -134,7 +138,8 @@
               stroke-dasharray="4,3"
             />
             <text
-              :x="profScaleX(airyRadius) + 3"
+              v-if="airyRadius <= profXMax"
+              :x="Math.min(profScaleX(airyRadius) + 3, profMarginL + profPlotW - 34)"
               :y="profMarginT + 12"
               class="tiny-label"
               fill="#e74c3c"
@@ -311,6 +316,13 @@ const fNumber = ref(2.8)
 const wavelengthNm = ref(550)
 const pixelPitch = ref(1.0)
 const showGrid = ref(true)
+
+function resetControls() {
+  fNumber.value = 2.8
+  wavelengthNm.value = 550
+  pixelPitch.value = 1.0
+  showGrid.value = true
+}
 
 // Derived
 const wavelengthUm = computed(() => wavelengthNm.value / 1000)
@@ -627,7 +639,7 @@ function wavelengthToCSS(wl: number): string {
   border-radius: 50%;
   vertical-align: middle;
   margin-left: 4px;
-  border: 1px solid #888;
+  border: 1px solid var(--vp-c-divider);
 }
 .ctrl-range {
   width: 100%;
@@ -660,6 +672,20 @@ function wavelengthToCSS(wl: number): string {
   display: flex;
   align-items: center;
   padding-bottom: 4px;
+}
+.reset-btn {
+  align-self: flex-end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .toggle-label {
   display: flex;
@@ -706,7 +732,9 @@ function wavelengthToCSS(wl: number): string {
 .psf-canvas {
   display: block;
   width: 280px;
-  height: 280px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
 }
 .profile-svg {
   width: 100%;

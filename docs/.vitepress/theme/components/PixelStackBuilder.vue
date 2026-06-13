@@ -9,23 +9,23 @@
       <div class="controls-panel">
         <div class="slider-group">
           <label>{{ t('Microlens height', '마이크로렌즈 높이') }}: <strong>{{ microlens.toFixed(2) }} um</strong></label>
-          <input type="range" min="0.2" max="1.0" step="0.01" v-model.number="microlens" class="ctrl-range" />
+          <input type="range" min="0.2" max="1.0" step="0.01" v-model.number="microlens" class="ctrl-range" :aria-label="t('Microlens height', '마이크로렌즈 높이')" />
         </div>
         <div class="slider-group">
           <label>{{ t('Planarization', '평탄화층') }}: <strong>{{ planarization.toFixed(2) }} um</strong></label>
-          <input type="range" min="0.1" max="0.5" step="0.01" v-model.number="planarization" class="ctrl-range" />
+          <input type="range" min="0.1" max="0.5" step="0.01" v-model.number="planarization" class="ctrl-range" :aria-label="t('Planarization', '평탄화층')" />
         </div>
         <div class="slider-group">
           <label>{{ t('Color filter', '컬러 필터') }}: <strong>{{ colorFilter.toFixed(2) }} um</strong></label>
-          <input type="range" min="0.3" max="1.0" step="0.01" v-model.number="colorFilter" class="ctrl-range" />
+          <input type="range" min="0.3" max="1.0" step="0.01" v-model.number="colorFilter" class="ctrl-range" :aria-label="t('Color filter', '컬러 필터')" />
         </div>
         <div class="slider-group">
           <label>{{ t('BARL total', 'BARL 전체') }}: <strong>{{ barl.toFixed(3) }} um</strong></label>
-          <input type="range" min="0.02" max="0.2" step="0.005" v-model.number="barl" class="ctrl-range" />
+          <input type="range" min="0.02" max="0.2" step="0.005" v-model.number="barl" class="ctrl-range" :aria-label="t('BARL total', 'BARL 전체')" />
         </div>
         <div class="slider-group">
           <label>{{ t('Silicon', '실리콘') }}: <strong>{{ silicon.toFixed(1) }} um</strong></label>
-          <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="silicon" class="ctrl-range" />
+          <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="silicon" class="ctrl-range" :aria-label="t('Silicon', '실리콘')" />
         </div>
 
         <div class="toggle-group">
@@ -40,6 +40,8 @@
             {{ t('Show metal grid', '메탈 그리드 표시') }}
           </label>
         </div>
+
+        <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
 
         <div class="info-card total-card">
           <span class="info-label">{{ t('Total stack height', '전체 스택 높이') }}:</span>
@@ -194,6 +196,16 @@ const showDTI = ref(true)
 const showGrid = ref(true)
 const gridThicknessUm = defaults.colorFilter.grid.thickness
 const gridWallPx = 7
+
+function resetControls() {
+  microlens.value = defaults.microlens.height
+  planarization.value = defaults.planarization.thickness
+  colorFilter.value = defaults.colorFilter.channels.G.thickness
+  barl.value = defaults.barl.layers.reduce((total, layer) => total + layer.thickness, 0)
+  silicon.value = defaults.silicon.thickness
+  showDTI.value = true
+  showGrid.value = true
+}
 
 const totalHeight = computed(() => microlens.value + planarization.value + colorFilter.value + barl.value + silicon.value)
 
@@ -364,6 +376,21 @@ const microlensProfilePath = computed(() => {
 }
 .toggle-label input {
   cursor: pointer;
+}
+.reset-btn {
+  margin-top: 4px;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .total-card {
   background: var(--vp-c-bg);

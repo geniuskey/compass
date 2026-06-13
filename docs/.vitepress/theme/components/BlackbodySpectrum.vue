@@ -10,7 +10,7 @@
         <label>
           {{ t('Color Temperature', '색온도') }}: <strong>{{ temperature }} K</strong>
         </label>
-        <input type="range" min="2000" max="10000" step="100" v-model.number="temperature" class="ctrl-range" />
+        <input type="range" min="2000" max="10000" step="100" v-model.number="temperature" class="ctrl-range" :aria-label="t('Color Temperature', '색온도')" />
       </div>
     </div>
 
@@ -27,6 +27,9 @@
       <label class="checkbox-label">
         <input type="checkbox" v-model="showLED" /> LED White
       </label>
+      <button type="button" class="reset-btn" @click="resetControls">
+        {{ t('Reset', '초기화') }}
+      </button>
     </div>
 
     <div class="info-row">
@@ -142,8 +145,8 @@
         >{{ tick }}</text>
 
         <!-- Axis titles -->
-        <text :x="pad.left + plotW / 2" :y="svgH - 2" text-anchor="middle" class="axis-title">Wavelength (nm)</text>
-        <text :x="12" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 12, ${pad.top + plotH / 2})`">Relative Spectral Radiance</text>
+        <text :x="pad.left + plotW / 2" :y="svgH - 2" text-anchor="middle" class="axis-title">{{ t('Wavelength (nm)', '파장 (nm)') }}</text>
+        <text :x="12" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 12, ${pad.top + plotH / 2})`">{{ t('Relative Spectral Radiance', '상대 분광 복사휘도') }}</text>
 
         <!-- D65 overlay -->
         <path v-if="showD65" :d="d65Path" fill="none" stroke="#2ecc71" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.85" />
@@ -228,6 +231,14 @@ const showD65 = ref(false)
 const showA = ref(false)
 const showF11 = ref(false)
 const showLED = ref(false)
+
+function resetControls() {
+  temperature.value = 5500
+  showD65.value = false
+  showA.value = false
+  showF11.value = false
+  showLED.value = false
+}
 
 const svgW = 560
 const svgH = 320
@@ -561,6 +572,19 @@ function legendY(item) {
 }
 .checkbox-label input[type="checkbox"] {
   accent-color: var(--vp-c-brand-1);
+}
+.reset-btn {
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .info-row {
   display: flex;

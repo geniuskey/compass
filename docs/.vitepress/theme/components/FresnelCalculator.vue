@@ -12,13 +12,14 @@
       <div class="input-group">
         <label for="n1-input">n<sub>1</sub> ({{ t('incident medium', '입사 매질') }})</label>
         <input id="n1-input" type="number" v-model.number="n1" min="1.0" max="5.0" step="0.01" />
-        <span class="preset-hint">Air=1.0, Glass=1.5, Water=1.33</span>
+        <span class="preset-hint">{{ t('Air=1.0, Glass=1.5, Water=1.33', '공기=1.0, 유리=1.5, 물=1.33') }}</span>
       </div>
       <div class="input-group">
         <label for="n2-input">n<sub>2</sub> ({{ t('transmitted medium', '투과 매질') }})</label>
         <input id="n2-input" type="number" v-model.number="n2" min="1.0" max="5.0" step="0.01" />
         <span class="preset-hint">SiO<sub>2</sub>=1.46, Si<sub>3</sub>N<sub>4</sub>=2.0, Si=3.5</span>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <div class="slider-section">
@@ -244,6 +245,12 @@ const n1 = ref(1.0)
 const n2 = ref(1.5)
 const angle = ref(0)
 
+function resetControls() {
+  n1.value = 1.0
+  n2.value = 1.5
+  angle.value = 0
+}
+
 const angleRad = computed(() => (angle.value * Math.PI) / 180)
 
 const brewsterAngle = computed(() => {
@@ -366,6 +373,22 @@ const incidentArc = computed(() => {
   font-size: 0.75em;
   color: var(--vp-c-text-3);
   margin-top: 3px;
+}
+.reset-btn {
+  align-self: flex-end;
+  margin-bottom: 18px;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .slider-section {
   margin-bottom: 16px;

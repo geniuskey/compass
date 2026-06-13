@@ -15,46 +15,46 @@
           {{ t('Design center', '설계 중심파장') }} &lambda;<sub>0</sub>:
           <strong>{{ lambda0.toFixed(0) }} nm</strong>
         </label>
-        <input type="range" min="400" max="900" step="5" v-model.number="lambda0" class="ctrl-range" />
+        <input type="range" min="400" max="900" step="5" v-model.number="lambda0" class="ctrl-range" :aria-label="t('Design center wavelength', '설계 중심파장')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Effective index', '유효 굴절률') }} n<sub>eff</sub>:
           <strong>{{ nEff.toFixed(2) }}</strong>
         </label>
-        <input type="range" min="1.30" max="2.60" step="0.01" v-model.number="nEff" class="ctrl-range" />
+        <input type="range" min="1.30" max="2.60" step="0.01" v-model.number="nEff" class="ctrl-range" :aria-label="t('Effective index', '유효 굴절률')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Mirror reflectance', '거울 반사율') }} R:
           <strong>{{ (mirrorR * 100).toFixed(0) }}%</strong>
         </label>
-        <input type="range" min="0.50" max="0.98" step="0.01" v-model.number="mirrorR" class="ctrl-range" />
+        <input type="range" min="0.50" max="0.98" step="0.01" v-model.number="mirrorR" class="ctrl-range" :aria-label="t('Mirror reflectance', '거울 반사율')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Chief ray angle', '주광선 각도') }} CRA:
           <strong>{{ craDeg.toFixed(1) }}&deg;</strong>
         </label>
-        <input type="range" min="0" max="30" step="0.5" v-model.number="craDeg" class="ctrl-range" />
+        <input type="range" min="0" max="30" step="0.5" v-model.number="craDeg" class="ctrl-range" :aria-label="t('Chief ray angle', '주광선 각도')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('F-number', 'F 넘버') }}:
           <strong>F/{{ fNumber.toFixed(1) }}</strong>
         </label>
-        <input type="range" min="1.0" max="11.0" step="0.1" v-model.number="fNumber" class="ctrl-range" />
+        <input type="range" min="1.0" max="11.0" step="0.1" v-model.number="fNumber" class="ctrl-range" :aria-label="t('F-number', 'F 넘버')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Cone samples', '원뿔 샘플 수') }}:
           <strong>{{ nSamples }}</strong>
         </label>
-        <input type="range" min="7" max="201" step="2" v-model.number="nSamples" class="ctrl-range" />
+        <input type="range" min="7" max="201" step="2" v-model.number="nSamples" class="ctrl-range" :aria-label="t('Cone samples', '원뿔 샘플 수')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Sampling pattern', '샘플링 패턴') }}</label>
-        <select v-model="samplingMode" class="ctrl-select">
+        <select v-model="samplingMode" class="ctrl-select" :aria-label="t('Sampling pattern', '샘플링 패턴')">
           <option value="rings">{{ t('Concentric rings', '동심 ring') }}</option>
           <option value="fibonacci">{{ t('Fibonacci spiral', '피보나치 나선') }}</option>
           <option value="grid">{{ t('Polar grid', '극좌표 격자') }}</option>
@@ -62,13 +62,16 @@
       </div>
       <div class="slider-group">
         <label>{{ t('Pupil weighting', '동공 가중치') }}</label>
-        <select v-model="weightingMode" class="ctrl-select">
+        <select v-model="weightingMode" class="ctrl-select" :aria-label="t('Pupil weighting', '동공 가중치')">
           <option value="uniform">{{ t('Uniform', '균일') }}</option>
           <option value="cosine">cos &theta;<sub>local</sub></option>
           <option value="cos4">cos&#8308; &theta;<sub>local</sub></option>
           <option value="gaussian">{{ t('Gaussian', '가우시안') }}</option>
         </select>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">
+        {{ t('Reset', '초기화') }}
+      </button>
     </div>
 
     <!-- Top view of cone samples -->
@@ -323,6 +326,17 @@ const fNumber = ref(2.0)
 const nSamples = ref(61)
 const samplingMode = ref<'rings' | 'fibonacci' | 'grid'>('rings')
 const weightingMode = ref<'uniform' | 'cosine' | 'cos4' | 'gaussian'>('cos4')
+
+function resetControls() {
+  lambda0.value = 550
+  nEff.value = 1.80
+  mirrorR.value = 0.90
+  craDeg.value = 15.0
+  fNumber.value = 2.0
+  nSamples.value = 61
+  samplingMode.value = 'rings'
+  weightingMode.value = 'cos4'
+}
 
 const colorbarGradientId = 'fpcs-cb-' + Math.random().toString(36).slice(2, 9)
 
@@ -788,6 +802,21 @@ const xTicks = computed(() => {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.reset-btn {
+  align-self: end;
+  justify-self: start;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .ctrl-select {
   width: 100%;

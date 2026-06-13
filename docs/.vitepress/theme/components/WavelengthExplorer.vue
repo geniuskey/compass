@@ -29,6 +29,7 @@
           step="1"
           v-model.number="wavelength"
           class="spectrum-range"
+          :aria-label="t('Wavelength', '파장')"
         />
         <div class="spectrum-labels">
           <span>380</span>

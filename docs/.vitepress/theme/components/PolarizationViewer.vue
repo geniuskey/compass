@@ -20,7 +20,7 @@
       </button>
       <div class="slider-group">
         <label>{{ t('Speed:', '속도:') }} <strong>{{ speed.toFixed(1) }}x</strong></label>
-        <input type="range" min="0.2" max="3.0" step="0.1" v-model.number="speed" class="ctrl-range" />
+        <input type="range" min="0.2" max="3.0" step="0.1" v-model.number="speed" class="ctrl-range" :aria-label="t('Speed', '속도')" />
       </div>
     </div>
 
@@ -186,7 +186,18 @@ const polInfo = {
   unpolarized: { type: 'Unpolarized', typeKo: '비편광', ex: 'Random', ey: 'Random', jones: 'N/A (mixed state)' },
 }
 
-const currentInfo = computed(() => polInfo[polType.value])
+const currentInfo = computed(() => {
+  const info = polInfo[polType.value]
+  if (polType.value === 'unpolarized') {
+    return {
+      ...info,
+      ex: t('Random', '무작위'),
+      ey: t('Random', '무작위'),
+      jones: t('N/A (mixed state)', '해당 없음 (혼합 상태)'),
+    }
+  }
+  return info
+})
 
 // 3D to 2D projection (simple isometric-like)
 function projX(x, y, z) {

@@ -9,12 +9,12 @@
       <div class="select-group">
         <label for="bayer-pattern-select">{{ t('Pattern', '패턴') }}:</label>
         <select id="bayer-pattern-select" v-model="selectedPattern" class="pattern-select">
-          <option v-for="p in patternOptions" :key="p.value" :value="p.value">{{ p.label }}</option>
+          <option v-for="p in patternOptions" :key="p.value" :value="p.value">{{ p.labelKo ? t(p.label, p.labelKo) : p.label }}</option>
         </select>
       </div>
       <div v-if="selectedPixel" class="pixel-info-badge">
         <span class="pixel-color-dot" :style="{ backgroundColor: selectedPixel.displayColor }"></span>
-        <span><strong>{{ selectedPixel.color }}</strong> {{ t('pixel at', '픽셀 위치') }} ({{ selectedPixel.row }}, {{ selectedPixel.col }})</span>
+        <span><strong>{{ t(selectedPixel.color, selectedPixel.colorKo) }}</strong> {{ t('pixel at', '픽셀 위치') }} ({{ selectedPixel.row }}, {{ selectedPixel.col }})</span>
       </div>
     </div>
 
@@ -107,11 +107,11 @@ const padding = 20
 const svgSize = 320
 
 const patternOptions = [
-  { value: 'RGGB', label: 'RGGB (standard Bayer)' },
+  { value: 'RGGB', label: 'RGGB (standard Bayer)', labelKo: 'RGGB (표준 베이어)' },
   { value: 'GRBG', label: 'GRBG' },
   { value: 'BGGR', label: 'BGGR' },
   { value: 'GBRG', label: 'GBRG' },
-  { value: 'QuadBayer', label: 'Quad-Bayer (2x2 OCL)' },
+  { value: 'QuadBayer', label: 'Quad-Bayer (2x2 OCL)', labelKo: '쿼드 베이어 (2x2 OCL)' },
 ]
 
 const selectedPattern = ref('RGGB')
@@ -166,9 +166,9 @@ const patterns = {
 }
 
 const colorMap = {
-  R: { fill: '#e74c3c', displayColor: '#e74c3c', textColor: '#fff', name: 'Red' },
-  G: { fill: '#27ae60', displayColor: '#27ae60', textColor: '#fff', name: 'Green' },
-  B: { fill: '#3498db', displayColor: '#3498db', textColor: '#fff', name: 'Blue' },
+  R: { fill: '#e74c3c', displayColor: '#e74c3c', textColor: '#fff', name: 'Red', nameKo: '적색' },
+  G: { fill: '#27ae60', displayColor: '#27ae60', textColor: '#fff', name: 'Green', nameKo: '녹색' },
+  B: { fill: '#3498db', displayColor: '#3498db', textColor: '#fff', name: 'Blue', nameKo: '청색' },
 }
 
 const currentPatternInfo = computed(() => {
@@ -210,6 +210,7 @@ const gridCells = computed(() => {
             row: absRow,
             col: absCol,
             color: colorMap[color].name,
+            colorKo: colorMap[color].nameKo,
             colorLetter: color,
             fill: colorMap[color].fill,
             textColor: colorMap[color].textColor,
@@ -235,7 +236,7 @@ function selectPixel(cell) {
 function pixelAriaLabel(cell) {
   return t(
     `${cell.color} pixel at row ${cell.row}, column ${cell.col}`,
-    `${cell.color} 픽셀, ${cell.row}행 ${cell.col}열`
+    `${cell.colorKo} 픽셀, ${cell.row}행 ${cell.col}열`
   )
 }
 </script>

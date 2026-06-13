@@ -10,13 +10,13 @@
         <label>
           {{ t('CRA Angle', 'CRA 각도') }}: <strong>{{ cra.toFixed(1) }}&deg;</strong>
         </label>
-        <input type="range" min="0" max="30" step="0.5" v-model.number="cra" class="ctrl-range" />
+        <input type="range" min="0" max="30" step="0.5" v-model.number="cra" class="ctrl-range" :aria-label="t('CRA Angle', 'CRA 각도')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Cone half-angle', '콘 반각') }}: <strong>{{ halfAngle.toFixed(1) }}&deg;</strong>
         </label>
-        <input type="range" min="5" max="30" step="0.5" v-model.number="halfAngle" class="ctrl-range" />
+        <input type="range" min="5" max="30" step="0.5" v-model.number="halfAngle" class="ctrl-range" :aria-label="t('Cone half-angle', '콘 반각')" />
       </div>
     </div>
 

@@ -19,16 +19,17 @@
     <div class="controls-grid">
       <div class="slider-group">
         <label>{{ t('Full Well Capacity', '풀 웰 용량') }}: <strong>{{ fwc.toLocaleString() }} e&minus;</strong></label>
-        <input type="range" min="1000" max="100000" step="1000" v-model.number="fwc" class="ctrl-range" />
+        <input type="range" min="1000" max="100000" step="1000" v-model.number="fwc" class="ctrl-range" :aria-label="t('Full Well Capacity', '풀 웰 용량')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Non-linearity', '비선형성') }}: <strong>{{ nonlin.toFixed(1) }}%</strong></label>
-        <input type="range" min="0" max="10" step="0.1" v-model.number="nonlin" class="ctrl-range" />
+        <input type="range" min="0" max="10" step="0.1" v-model.number="nonlin" class="ctrl-range" :aria-label="t('Non-linearity', '비선형성')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Knee Point', '무릎 지점') }}: <strong>{{ kneePoint }}%</strong></label>
-        <input type="range" min="50" max="100" step="1" v-model.number="kneePoint" class="ctrl-range" />
+        <input type="range" min="50" max="100" step="1" v-model.number="kneePoint" class="ctrl-range" :aria-label="t('Knee Point', '무릎 지점')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <div class="results-grid">
@@ -106,6 +107,12 @@ const { isFullscreen, toggleFullscreen } = useFullscreen()
 const fwc = ref(10000)
 const nonlin = ref(2.0)
 const kneePoint = ref(80)
+
+function resetControls() {
+  fwc.value = 10000
+  nonlin.value = 2.0
+  kneePoint.value = 80
+}
 
 function sensorOutput(inputPct: number): number {
   const knee = kneePoint.value / 100
@@ -185,6 +192,9 @@ const residualPath = computed(() =>
 .slider-group label { display: block; margin-bottom: 4px; font-size: 0.85em; }
 .ctrl-range { width: 100%; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: var(--vp-c-divider); outline: none; }
 .ctrl-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; }
+.ctrl-range::-moz-range-thumb { width: 18px; height: 18px; border: none; border-radius: 50%; background: var(--vp-c-brand-1); cursor: pointer; }
+.reset-btn { align-self: end; justify-self: start; padding: 4px 12px; font-size: 0.8em; border: 1px solid var(--vp-c-divider); border-radius: 6px; background: var(--vp-c-bg); color: var(--vp-c-text-2); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+.reset-btn:hover { color: var(--vp-c-brand-1); border-color: var(--vp-c-brand-1); }
 .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 16px; }
 .result-card { background: var(--vp-c-bg); border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 12px; text-align: center; }
 .result-label { font-size: 0.8em; color: var(--vp-c-text-2); margin-bottom: 4px; }

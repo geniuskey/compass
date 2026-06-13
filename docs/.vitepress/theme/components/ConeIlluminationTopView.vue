@@ -13,19 +13,19 @@
         <label>
           {{ t('CRA', 'CRA') }}: <strong>{{ cra.toFixed(1) }}&deg;</strong>
         </label>
-        <input type="range" min="0" max="30" step="0.5" v-model.number="cra" class="ctrl-range" />
+        <input type="range" min="0" max="30" step="0.5" v-model.number="cra" class="ctrl-range" :aria-label="t('CRA', 'CRA')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('f-number', 'f-넘버') }}: <strong>f/{{ fNumber.toFixed(1) }}</strong>
         </label>
-        <input type="range" min="1.4" max="8.0" step="0.1" v-model.number="fNumber" class="ctrl-range" />
+        <input type="range" min="1.4" max="8.0" step="0.1" v-model.number="fNumber" class="ctrl-range" :aria-label="t('f-number', 'f-넘버')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Sampling points', '샘플링 포인트') }}: <strong>{{ nPoints }}</strong>
         </label>
-        <input type="range" min="7" max="91" step="1" v-model.number="nPoints" class="ctrl-range" />
+        <input type="range" min="7" max="91" step="1" v-model.number="nPoints" class="ctrl-range" :aria-label="t('Sampling points', '샘플링 포인트')" />
       </div>
       <div class="toggle-group">
         <label class="toggle-label">{{ t('Sampling method', '샘플링 방식') }}:</label>
@@ -42,6 +42,7 @@
           </button>
         </div>
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
 
     <p class="method-hint">{{ methodHint }}</p>
@@ -290,6 +291,13 @@ const cra = ref(10)
 const fNumber = ref(2.8)
 const nPoints = ref(37)
 const samplingMethod = ref('fibonacci')
+
+function resetControls() {
+  cra.value = 10
+  fNumber.value = 2.8
+  nPoints.value = 37
+  samplingMethod.value = 'fibonacci'
+}
 
 const samplingMethods = [
   { id: 'fibonacci', labelEn: 'Fibonacci', labelKo: '피보나치' },
@@ -686,6 +694,21 @@ function interpolateColor(weight) {
 }
 .toggle-btn:hover:not(.active) {
   background: var(--vp-c-bg-soft);
+}
+.reset-btn {
+  align-self: flex-end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .method-hint {
   margin: -4px 0 14px 0;

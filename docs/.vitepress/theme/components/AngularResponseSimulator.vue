@@ -48,11 +48,11 @@
         <label>
           {{ t('Wavelength:', '\uD30C\uC7A5:') }} <strong>{{ singleWl }} nm</strong>
         </label>
-        <input type="range" min="380" max="780" step="5" v-model.number="singleWl" class="ctrl-range" />
+        <input type="range" min="380" max="780" step="5" v-model.number="singleWl" class="ctrl-range" :aria-label="t('Wavelength', '파장')" />
       </div>
       <div class="slider-group" v-if="displayMode === 'single'">
         <label>{{ t('Color Filter:', '컬러 필터:') }}</label>
-        <select v-model="singleCf" class="cf-select">
+        <select v-model="singleCf" class="cf-select" :aria-label="t('Color Filter', '컬러 필터')">
           <option value="red">{{ t('Red', '빨강') }}</option>
           <option value="green">{{ t('Green', '초록') }}</option>
           <option value="blue">{{ t('Blue', '파랑') }}</option>
@@ -62,14 +62,15 @@
         <label>
           {{ t('Silicon thickness:', '\uC2E4\uB9AC\uCF58 \uB450\uAED8:') }} <strong>{{ siThickness.toFixed(1) }} um</strong>
         </label>
-        <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="ctrl-range" />
+        <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="ctrl-range" :aria-label="t('Silicon thickness', '실리콘 두께')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Max angle:', '\uCD5C\uB300 \uAC01\uB3C4:') }} <strong>{{ maxAngle }}°</strong>
         </label>
-        <input type="range" min="30" max="80" step="5" v-model.number="maxAngle" class="ctrl-range" />
+        <input type="range" min="30" max="80" step="5" v-model.number="maxAngle" class="ctrl-range" :aria-label="t('Max angle', '최대 각도')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
     </div>
 
@@ -281,6 +282,15 @@ const singleCf = ref<'red' | 'green' | 'blue'>('green')
 const polarization = ref<'s' | 'p' | 'avg'>('avg')
 const siThickness = ref(3.0)
 const maxAngle = ref(60)
+
+function resetControls() {
+  displayMode.value = 'single'
+  singleWl.value = 550
+  singleCf.value = 'green'
+  polarization.value = 'avg'
+  siThickness.value = 3.0
+  maxAngle.value = 60
+}
 
 const cfColorMap: Record<string, string> = { red: '#e74c3c', green: '#27ae60', blue: '#3498db' }
 const singleColor = computed(() => cfColorMap[singleCf.value])
@@ -549,6 +559,21 @@ function onMouseMove(event: MouseEvent) {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.reset-btn {
+  align-self: flex-end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .cf-select {
   width: 100%;

@@ -21,19 +21,19 @@
         <label>
           {{ t('Pixel pitch', '픽셀 피치') }}: <strong>{{ pitch.toFixed(2) }} um</strong>
         </label>
-        <input type="range" min="0.7" max="2.0" step="0.05" v-model.number="pitch" class="ctrl-range" />
+        <input type="range" min="0.7" max="2.0" step="0.05" v-model.number="pitch" class="ctrl-range" :aria-label="t('Pixel pitch', '픽셀 피치')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Lens height', '렌즈 높이') }}: <strong>{{ lensHeight.toFixed(2) }} um</strong>
         </label>
-        <input type="range" min="0.1" max="1.0" step="0.01" v-model.number="lensHeight" class="ctrl-range" />
+        <input type="range" min="0.1" max="1.0" step="0.01" v-model.number="lensHeight" class="ctrl-range" :aria-label="t('Lens height', '렌즈 높이')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Lens radius R', '렌즈 반경 R') }}: <strong>{{ lensRadius.toFixed(2) }} um</strong>
         </label>
-        <input type="range" min="0.2" max="1.0" step="0.01" v-model.number="lensRadius" class="ctrl-range" />
+        <input type="range" min="0.2" max="1.0" step="0.01" v-model.number="lensRadius" class="ctrl-range" :aria-label="t('Lens radius R', '렌즈 반경 R')" />
       </div>
     </div>
 
@@ -42,19 +42,19 @@
         <label>
           {{ t('Shape param n', '형상 파라미터 n') }}: <strong>{{ shapeN.toFixed(1) }}</strong>
         </label>
-        <input type="range" min="1.5" max="6.0" step="0.1" v-model.number="shapeN" class="ctrl-range" />
+        <input type="range" min="1.5" max="6.0" step="0.1" v-model.number="shapeN" class="ctrl-range" :aria-label="t('Shape param n', '형상 파라미터 n')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Planarization', '평탄화층') }}: <strong>{{ planThickness.toFixed(2) }} um</strong>
         </label>
-        <input type="range" min="0.05" max="0.8" step="0.01" v-model.number="planThickness" class="ctrl-range" />
+        <input type="range" min="0.05" max="0.8" step="0.01" v-model.number="planThickness" class="ctrl-range" :aria-label="t('Planarization', '평탄화층')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Color filter', '컬러 필터') }}: <strong>{{ cfThickness.toFixed(2) }} um</strong>
         </label>
-        <input type="range" min="0.1" max="1.5" step="0.01" v-model.number="cfThickness" class="ctrl-range" />
+        <input type="range" min="0.1" max="1.5" step="0.01" v-model.number="cfThickness" class="ctrl-range" :aria-label="t('Color filter', '컬러 필터')" />
       </div>
     </div>
 
@@ -63,13 +63,16 @@
         <label>
           {{ t('CRA angle', 'CRA 각도') }}: <strong>{{ cra }}&deg;</strong>
         </label>
-        <input type="range" min="0" max="30" step="1" v-model.number="cra" class="ctrl-range" />
+        <input type="range" min="0" max="30" step="1" v-model.number="cra" class="ctrl-range" :aria-label="t('CRA angle', 'CRA 각도')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Number of rays', '광선 수') }}: <strong>{{ numRays }}</strong>
         </label>
-        <input type="range" min="5" max="30" step="1" v-model.number="numRays" class="ctrl-range" />
+        <input type="range" min="5" max="30" step="1" v-model.number="numRays" class="ctrl-range" :aria-label="t('Number of rays', '광선 수')" />
+      </div>
+      <div class="slider-group reset-group">
+        <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
       </div>
     </div>
 
@@ -270,6 +273,17 @@ const siThickness = 3.0
 const barlThickness = 0.15
 const cfThickness = ref(0.8)
 const planThickness = ref(0.3)
+
+function resetControls() {
+  pitch.value = 1.0
+  lensHeight.value = 0.6
+  lensRadius.value = 0.48
+  shapeN.value = 2.5
+  cra.value = 0
+  numRays.value = 15
+  cfThickness.value = 0.8
+  planThickness.value = 0.3
+}
 
 const planTop = computed(() => siThickness + barlThickness + cfThickness.value + planThickness.value)
 
@@ -652,6 +666,24 @@ const fNumber = computed(() => {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.reset-group {
+  display: flex;
+  align-items: flex-end;
+}
+.reset-btn {
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .svg-wrapper {
   display: flex;

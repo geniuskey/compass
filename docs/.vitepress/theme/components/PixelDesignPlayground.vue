@@ -118,7 +118,7 @@
         <div class="ctrl-section">
           <div class="section-header">{{ t('Simulation Settings', '시뮬레이션 설정') }}</div>
           <div class="slider-group">
-            <label>{{ t('Angle of incidence:', '입사각:') }} <strong>{{ angle }}deg</strong></label>
+            <label>{{ t('Angle of incidence:', '입사각:') }} <strong>{{ angle }}&deg;</strong></label>
             <input type="range" min="0" max="30" step="1" v-model.number="angle" class="ctrl-range" :aria-label="t('Angle of incidence', '입사각')" />
           </div>
           <div class="slider-group">
@@ -806,6 +806,7 @@ const spectrumStops = computed(() => {
   display: flex;
   gap: 4px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 .tab-btn {
   padding: 6px 14px;

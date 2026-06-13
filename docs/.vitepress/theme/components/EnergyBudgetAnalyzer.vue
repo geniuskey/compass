@@ -32,7 +32,7 @@
       </div>
       <div class="select-group">
         <label>{{ t('Color Filter:', '컬러 필터:') }}</label>
-        <select v-model="cfColor" class="ctrl-select">
+        <select v-model="cfColor" class="ctrl-select" :aria-label="t('Color Filter', '컬러 필터')">
           <option value="red">{{ t('Red', '빨강') }}</option>
           <option value="green">{{ t('Green', '초록') }}</option>
           <option value="blue">{{ t('Blue', '파랑') }}</option>
@@ -45,14 +45,15 @@
         <label>
           {{ t('Wavelength:', '파장:') }} <strong>{{ wavelength }} nm</strong>
         </label>
-        <input type="range" min="380" max="780" step="5" v-model.number="wavelength" class="ctrl-range" />
+        <input type="range" min="380" max="780" step="5" v-model.number="wavelength" class="ctrl-range" :aria-label="t('Wavelength', '파장')" />
       </div>
       <div class="slider-group">
         <label>
           {{ t('Silicon thickness:', '실리콘 두께:') }} <strong>{{ siThickness.toFixed(1) }} um</strong>
         </label>
-        <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="ctrl-range" />
+        <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="ctrl-range" :aria-label="t('Silicon thickness', '실리콘 두께')" />
       </div>
+      <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
     </div>
 
@@ -185,7 +186,7 @@
             <rect
               :x="tooltipX"
               :y="pad.top + 4"
-              width="156"
+              width="170"
               height="106"
               rx="4"
               fill="var(--vp-c-bg)"
@@ -197,7 +198,7 @@
               {{ (spectrumWls[hoverIdx] * 1000).toFixed(0) }} nm
             </text>
             <text :x="tooltipX + 6" :y="pad.top + 31" class="tooltip-text" :fill="colors.silicon">
-              Silicon (QE): {{ (hoverBreakdown.silicon * 100).toFixed(1) }}%
+              {{ t('Silicon (QE)', '실리콘 (QE)') }}: {{ (hoverBreakdown.silicon * 100).toFixed(1) }}%
             </text>
             <text :x="tooltipX + 6" :y="pad.top + 44" class="tooltip-text" :fill="colors.barl">
               BARL: {{ (hoverBreakdown.barl * 100).toFixed(1) }}%
@@ -206,10 +207,10 @@
               CF: {{ (hoverBreakdown.cf * 100).toFixed(1) }}%
             </text>
             <text :x="tooltipX + 6" :y="pad.top + 70" class="tooltip-text" :fill="colors.planarization">
-              Plnr: {{ (hoverBreakdown.planarization * 100).toFixed(1) }}%
+              {{ t('Plnr', '평탄화') }}: {{ (hoverBreakdown.planarization * 100).toFixed(1) }}%
             </text>
             <text :x="tooltipX + 6" :y="pad.top + 83" class="tooltip-text" :fill="colors.microlens">
-              Microlens: {{ (hoverBreakdown.microlens * 100).toFixed(1) }}%
+              {{ t('Microlens', '마이크로렌즈') }}: {{ (hoverBreakdown.microlens * 100).toFixed(1) }}%
             </text>
             <text :x="tooltipX + 6" :y="pad.top + 96" class="tooltip-text" :fill="colors.reflection">
               R: {{ (hoverBreakdown.reflection * 100).toFixed(1) }}%
@@ -249,6 +250,12 @@ const mode = ref<'single' | 'spectrum'>('single')
 const cfColor = ref<'red' | 'green' | 'blue'>('green')
 const wavelength = ref(550)
 const siThickness = ref(3.0)
+
+function resetControls() {
+  cfColor.value = 'green'
+  wavelength.value = 550
+  siThickness.value = 3.0
+}
 
 // --- Colors ---
 const colors = {
@@ -408,7 +415,7 @@ const hoverBreakdown = computed(() => {
 const tooltipX = computed(() => {
   if (hoverIdx.value === null) return 0
   const x = xScale(spectrumWls.value[hoverIdx.value] * 1000)
-  return x + 170 > svgW - pad.right ? x - 166 : x + 10
+  return x + 180 > svgW - pad.right ? x - 180 : x + 10
 })
 
 function onMouseMove(event: MouseEvent) {
@@ -533,6 +540,21 @@ function onMouseMove(event: MouseEvent) {
   background: var(--vp-c-brand-1);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.reset-btn {
+  align-self: flex-end;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reset-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
 }
 .stacked-bar-wrapper {
   margin: 12px 0 4px 0;

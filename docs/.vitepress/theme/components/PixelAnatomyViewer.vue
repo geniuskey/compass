@@ -419,7 +419,7 @@
           <table class="info-table">
             <tr>
               <td class="info-key">{{ t('Typical thickness', '일반적인 두께') }}</td>
-              <td class="info-val">{{ selectedLayer.thickness }}</td>
+              <td class="info-val">{{ selectedLayer.thicknessKo ? t(selectedLayer.thickness, selectedLayer.thicknessKo) : selectedLayer.thickness }}</td>
             </tr>
             <tr>
               <td class="info-key">{{ t('Material', '재료') }}</td>
@@ -462,6 +462,7 @@ interface Layer {
   purpose: string
   purposeKo: string
   thickness: string
+  thicknessKo?: string
   material: string
   materialKo: string
   description: string
@@ -478,6 +479,7 @@ const layers: Layer[] = [
     purpose: 'Light enters from above',
     purposeKo: '빛이 위에서 들어옵니다',
     thickness: 'Semi-infinite',
+    thicknessKo: '반무한',
     material: 'Air (n = 1.0)',
     materialKo: '공기 (n = 1.0)',
     description: 'The medium above the pixel. Light travels in the -z direction from air into the pixel stack. The refractive index of air (n=1) defines the reference for Fresnel reflection at the top surface.',
@@ -534,6 +536,7 @@ const layers: Layer[] = [
     purpose: 'Prevents optical crosstalk between color filters',
     purposeKo: '컬러 필터 간의 광학적 크로스토크를 방지합니다',
     thickness: '40 - 80 nm wide',
+    thicknessKo: '폭 40 - 80 nm',
     material: 'Tungsten (W)',
     materialKo: '텅스텐 (W)',
     description: 'Thin vertical walls of tungsten between adjacent color filter elements. These opaque barriers prevent light that enters through one color filter from leaking sideways into a neighboring pixel with a different color, reducing color crosstalk.',
@@ -590,6 +593,7 @@ const layers: Layer[] = [
     purpose: 'Deep trench isolation walls between pixels',
     purposeKo: '픽셀 사이의 깊은 트렌치 격리 벽',
     thickness: '~0.1 um wide, full Si depth',
+    thicknessKo: '폭 ~0.1 um, Si 전체 깊이',
     material: 'SiO2-filled trench (n ~ 1.46)',
     materialKo: 'SiO2 충전 트렌치 (n ~ 1.46)',
     description: 'Narrow trenches etched through the full depth of the silicon and filled with SiO2. The large refractive index contrast between Si (n~4) and SiO2 (n~1.46) creates total internal reflection, optically isolating adjacent pixels and significantly reducing optical crosstalk.',
@@ -605,7 +609,7 @@ function selectLayer(id: string) {
 }
 
 function layerAriaLabel(layer: Layer): string {
-  return t(`Show ${layer.name} layer details`, `${layer.name} 레이어 세부 정보 보기`)
+  return t(`Show ${layer.name} layer details`, `${layer.nameKo} 레이어 세부 정보 보기`)
 }
 
 function isHighlighted(id: string): boolean {
