@@ -32,6 +32,7 @@ class SolverBase(ABC):
         self.device = device
         self._pixel_stack: PixelStack | None = None
         self._source_config: dict | None = None
+        self._failed_runs: list[dict] = []
 
     @property
     def name(self) -> str:
@@ -80,6 +81,36 @@ class SolverBase(ABC):
         Returns:
             2D field array.
         """
+
+    def _record_failed_run(self, wavelength: float, polarization: str, error: Exception) -> None:
+        """Record a failed (wavelength, polarization) run for result metadata.
+
+        Failed runs must contribute NaN (not 0.0) to the spectral outputs so
+        that polarization averages surface the failure instead of silently
+        deflating R/T/A and QE.
+        """
+        self._failed_runs.append(
+            {
+                "wavelength": float(wavelength),
+                "polarization": str(polarization),
+                "error": str(error),
+            }
+        )
+
+    def _nan_pixel_qe(self) -> dict[str, float]:
+        """Per-pixel QE dict with NaN entries, used for failed runs."""
+        if self._pixel_stack is None:
+            return {}
+        return {
+            f"{pd.color}_{pd.pixel_index[0]}_{pd.pixel_index[1]}": float("nan")
+            for pd in self._pixel_stack.photodiodes
+        }
+
+    def _failure_metadata(self) -> dict:
+        """Metadata describing failed runs; empty when everything succeeded."""
+        if not self._failed_runs:
+            return {}
+        return {"failed_runs": list(self._failed_runs)}
 
     def validate_energy_balance(
         self,

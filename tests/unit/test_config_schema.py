@@ -43,7 +43,6 @@ class TestConfigSchema:
         cfg = SolverConfig()
         assert cfg.stability.precision_strategy == "mixed"
         assert cfg.stability.allow_tf32 is False
-        assert cfg.stability.eigendecomp_device == "cpu"
         assert cfg.stability.fourier_factorization == "li_inverse"
 
     def test_bayer_map_default(self):

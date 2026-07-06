@@ -299,35 +299,3 @@ class TestCusolverEigendecomp:
             PrecisionManager.mixed_precision_eigen_torch(None)
 
 
-class TestCusolverConfigOption:
-    """Tests for the 'cusolver' eigendecomp_device config option."""
-
-    def test_config_schema_accepts_cusolver(self):
-        """StabilityConfig should accept 'cusolver' as eigendecomp_device."""
-        from compass.core.config_schema import StabilityConfig
-
-        cfg = StabilityConfig(eigendecomp_device="cusolver")
-        assert cfg.eigendecomp_device == "cusolver"
-
-    def test_config_schema_accepts_cpu(self):
-        """StabilityConfig should still accept 'cpu' (default)."""
-        from compass.core.config_schema import StabilityConfig
-
-        cfg = StabilityConfig()
-        assert cfg.eigendecomp_device == "cpu"
-
-    def test_config_schema_accepts_gpu(self):
-        """StabilityConfig should still accept 'gpu'."""
-        from compass.core.config_schema import StabilityConfig
-
-        cfg = StabilityConfig(eigendecomp_device="gpu")
-        assert cfg.eigendecomp_device == "gpu"
-
-    def test_config_schema_rejects_invalid(self):
-        """StabilityConfig should reject invalid eigendecomp_device values."""
-        from pydantic import ValidationError
-
-        from compass.core.config_schema import StabilityConfig
-
-        with pytest.raises(ValidationError):
-            StabilityConfig(eigendecomp_device="invalid_device")

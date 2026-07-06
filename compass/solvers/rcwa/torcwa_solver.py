@@ -33,6 +33,7 @@ class TorcwaSolver(SolverBase):
         self._last_sim = None
         self._last_layer_info: list | None = None
         self._last_wavelength: float | None = None
+        self._qe_fallback_used = False
 
         # Configure precision
         self._setup_precision()
@@ -93,9 +94,6 @@ class TorcwaSolver(SolverBase):
         n_lens_slices = params.get("n_lens_slices", 30)
         grid_multiplier = params.get("grid_multiplier", 3)
 
-        stability = self.config.get("stability", {})
-        precision_strategy = stability.get("precision_strategy", "mixed")
-
         lx, ly = self._pixel_stack.domain_size
         L = [lx, ly]  # Period in um
 
@@ -105,6 +103,8 @@ class TorcwaSolver(SolverBase):
         pol_runs = self._source.get_polarization_runs()
         all_qe: dict[str, list[np.ndarray]] = {}
         all_R, all_T, all_A = [], [], []
+        self._failed_runs = []
+        self._qe_fallback_used = False
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
             logger.debug(
@@ -132,7 +132,6 @@ class TorcwaSolver(SolverBase):
                         layer_slices,
                         pol,
                         dtype,
-                        precision_strategy,
                     )
                     R_pol.append(result["R"])
                     T_pol.append(result["T"])
@@ -143,9 +142,12 @@ class TorcwaSolver(SolverBase):
 
                 except Exception as e:
                     logger.error(f"torcwa: failed at λ={wavelength:.4f}um, pol={pol}: {e}")
-                    R_pol.append(0.0)
-                    T_pol.append(0.0)
-                    A_pol.append(0.0)
+                    self._record_failed_run(wavelength, pol, e)
+                    R_pol.append(float("nan"))
+                    T_pol.append(float("nan"))
+                    A_pol.append(float("nan"))
+                    for k, v in self._nan_pixel_qe().items():
+                        qe_pol_accum.setdefault(k, []).append(v)
 
             # Average over polarizations
             n_pol = len(pol_runs)
@@ -179,7 +181,16 @@ class TorcwaSolver(SolverBase):
             metadata={
                 "solver_name": "torcwa",
                 "fourier_order": fourier_order,
+                # QE post-processing method actually used: cross-solver QE
+                # differences between field integration and the eps''-weight
+                # approximation are methodology, not solver accuracy.
+                "qe_method": (
+                    "eps_imag_weight_fallback"
+                    if self._qe_fallback_used
+                    else "field_integration"
+                ),
                 "device": self.device,
+                **self._failure_metadata(),
             },
         )
 
@@ -193,7 +204,6 @@ class TorcwaSolver(SolverBase):
         layer_slices,
         polarization: str,
         dtype,
-        precision_strategy: str,
     ) -> dict:
         """Run single wavelength, single polarization RCWA calculation."""
         freq = 1.0 / wavelength  # torcwa uses normalized frequency
@@ -293,6 +303,7 @@ class TorcwaSolver(SolverBase):
                 f"torcwa: field-based QE failed at λ={wavelength:.4f}um ({e}); "
                 "falling back to eps''-weight approximation"
             )
+            self._qe_fallback_used = True
             qe_per_pixel = self._compute_per_pixel_qe(sim, torch, layer_slices, wavelength, A)
 
         return {"R": R, "T": T, "A": A, "qe_per_pixel": qe_per_pixel}
@@ -464,7 +475,8 @@ class TorcwaSolver(SolverBase):
 
                 dz = z_overlap_max - z_overlap_min
                 eps = s.eps_grid
-                nx_s, ny_s = eps.shape
+                # eps grids are indexed [row=y, col=x] (shape (ny, nx))
+                ny_s, nx_s = eps.shape
 
                 # Map PD xy (domain coordinates in [0, lx) x [0, ly)) to grid indices
                 lx, ly = self._pixel_stack.domain_size
@@ -477,7 +489,7 @@ class TorcwaSolver(SolverBase):
                     continue
 
                 # Absorption weight = integral of eps_imag over PD volume
-                eps_region = eps[ix_min:ix_max, iy_min:iy_max]
+                eps_region = eps[iy_min:iy_max, ix_min:ix_max]
                 eps_imag_mean = float(np.mean(np.imag(eps_region)))
                 weight += eps_imag_mean * dz * (ix_max - ix_min) * (iy_max - iy_min) / (nx_s * ny_s)
 

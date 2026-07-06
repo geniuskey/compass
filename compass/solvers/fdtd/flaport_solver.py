@@ -81,6 +81,7 @@ class FlaportFdtdSolver(SolverBase):
         nz = int(total_z / grid_spacing) + 1 + 2 * pml_layers
 
         pol_runs = self._source.get_polarization_runs()
+        self._failed_runs = []
         all_qe: dict[str, list[float]] = {}
         all_R, all_T, all_A = [], [], []
 
@@ -171,14 +172,17 @@ class FlaportFdtdSolver(SolverBase):
 
                 except Exception as e:
                     logger.error(f"fdtd_flaport failed at λ={wavelength:.4f}um: {e}")
-                    R, T, A = 0.0, 0.0, 0.0
+                    self._record_failed_run(wavelength, pol, e)
+                    R = T = A = float("nan")
 
                 R_pol.append(R)
                 T_pol.append(T)
                 A_pol.append(A)
 
                 # Per-pixel QE via eps_imag weighting in PD regions
-                if eps_3d is not None:
+                if np.isnan(A):
+                    pixel_qe = self._nan_pixel_qe()
+                elif eps_3d is not None:
                     pixel_qe = self._compute_per_pixel_qe(eps_3d, wavelength, A)
                 else:
                     pixel_qe = {}
@@ -213,7 +217,9 @@ class FlaportFdtdSolver(SolverBase):
             metadata={
                 "solver_name": "fdtd_flaport",
                 "grid_spacing": grid_spacing,
+                "qe_method": "eps_imag_weight",
                 "device": self.device,
+                **self._failure_metadata(),
             },
         )
 
@@ -388,7 +394,8 @@ class FlaportFdtdSolver(SolverBase):
             return {}
         lx, ly = self._pixel_stack.domain_size
         z_min, z_max = self._pixel_stack.z_range
-        nx, ny, nz = eps_3d.shape
+        # eps_3d is indexed [row=y, col=x, z] (shape (ny, nx, nz))
+        ny, nx, nz = eps_3d.shape
 
         pixel_weights = {}
         total_weight = 0.0
@@ -424,7 +431,7 @@ class FlaportFdtdSolver(SolverBase):
                 pixel_weights[key] = 0.0
                 continue
 
-            region = eps_3d[ix_min:ix_max, iy_min:iy_max, iz_min:iz_max]
+            region = eps_3d[iy_min:iy_max, ix_min:ix_max, iz_min:iz_max]
             weight = float(np.sum(np.imag(region)))
             weight = max(weight, 0.0)
             pixel_weights[key] = weight

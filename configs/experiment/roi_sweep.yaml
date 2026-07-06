@@ -1,7 +1,7 @@
 # @package _global_
 defaults:
-  - /pixel: default_bsi_1um
-  - /source: cone_illumination
+  - override /pixel: default_bsi_1um
+  - override /source: cone_illumination
 
 experiment:
   name: "roi_sweep"

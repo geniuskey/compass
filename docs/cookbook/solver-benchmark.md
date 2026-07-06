@@ -70,7 +70,7 @@ source_config = {
 ```python
 solvers = [
     {"name": "torcwa", "type": "rcwa", "params": {"fourier_order": [9, 9]}},
-    {"name": "grcwa",  "type": "rcwa", "params": {"fourier_order": [9, 9]}},
+    {"name": "grcwa",  "type": "rcwa", "params": {"nG": 9}},  # grcwa: TOTAL plane waves
     {"name": "meent",  "type": "rcwa", "params": {"fourier_order": [9, 9]}},
 ]
 
@@ -391,7 +391,7 @@ This script runs three experiments:
 
 #### Experiment 1: Normal Incidence Sweep
 
-Compares grcwa (fourier_order=[5,5]) vs fdtd_flaport (dx=0.015um, 500fs, pml=20) across 400-700nm. The FDTD solver uses per-voxel absorption damping and two-pass reference normalization for accurate R/T/A extraction.
+Compares grcwa (nG=5) vs fdtd_flaport (dx=0.015um, 500fs, pml=20) across 400-700nm. The FDTD solver uses per-voxel absorption damping and two-pass reference normalization for accurate R/T/A extraction.
 
 **Acceptance criterion:** max |A_grcwa - A_fdtd| < 5%
 
@@ -415,7 +415,7 @@ from compass.runners.cone_runner import ConeIlluminationRunner
 
 config = {
     "pixel": { ... },  # pixel stack config
-    "solver": {"name": "grcwa", "type": "rcwa", "params": {"fourier_order": [5, 5]}},
+    "solver": {"name": "grcwa", "type": "rcwa", "params": {"nG": 5}},
     "source": {
         "wavelength": {"mode": "sweep", "sweep": {"start": 0.40, "stop": 0.70, "step": 0.02}},
         "angle": {"theta_deg": 0.0, "phi_deg": 0.0},

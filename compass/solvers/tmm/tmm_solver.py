@@ -231,6 +231,7 @@ class TMMSolver(SolverBase):
             metadata={
                 "solver_name": "tmm",
                 "solver_type": "tmm",
+                "qe_method": "tmm_1d_analytic",
                 "n_layers": len(self._layer_names),
                 "layer_names": self._layer_names.copy(),
                 "polarization_average": self._polarization_average,

@@ -10,7 +10,7 @@
 저장소를 클론하고 편집 가능 모드로 설치합니다:
 
 ```bash
-git clone https://github.com/compass-sim/compass.git
+git clone https://github.com/geniuskey/compass.git
 cd compass
 pip install -e .
 ```
@@ -22,7 +22,7 @@ pip install -e .
 COMPASS는 솔버 및 시각화(Visualization) 백엔드를 선택적 의존성 그룹으로 구성합니다. 필요한 것만 설치하십시오:
 
 ```bash
-# RCWA solvers (torcwa, grcwa, meent)
+# RCWA solvers (torcwa, grcwa, meent, fmmax)
 pip install -e ".[rcwa]"
 
 # FDTD solver (flaport)
@@ -40,7 +40,7 @@ pip install -e ".[dev]"
 
 | 그룹    | 패키지                  | 용도                            |
 |---------|-------------------------|---------------------------------|
-| `rcwa`  | torcwa                  | RCWA 솔버 (torcwa, grcwa, meent) |
+| `rcwa`  | torcwa, grcwa, meent, fmmax, jax | RCWA 솔버 |
 | `fdtd`  | fdtd                    | FDTD 솔버 (flaport 백엔드)      |
 | `viz`   | pyvista, plotly          | 인터랙티브 3D 시각화             |
 | `all`   | rcwa + fdtd + viz       | 전체 설치                        |

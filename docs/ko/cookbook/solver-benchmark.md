@@ -70,7 +70,7 @@ source_config = {
 ```python
 solvers = [
     {"name": "torcwa", "type": "rcwa", "params": {"fourier_order": [9, 9]}},
-    {"name": "grcwa",  "type": "rcwa", "params": {"fourier_order": [9, 9]}},
+    {"name": "grcwa",  "type": "rcwa", "params": {"nG": 9}},  # grcwa: TOTAL plane waves
     {"name": "meent",  "type": "rcwa", "params": {"fourier_order": [9, 9]}},
 ]
 
@@ -414,7 +414,7 @@ PYTHONPATH=. python3.11 scripts/validate_rcwa_vs_fdtd.py
 
 #### 실험 1: 수직 입사 스윕
 
-grcwa (fourier_order=[5,5]) vs fdtd_flaport (dx=0.015um, 500fs, pml=20)을 400-700nm 범위에서 비교합니다. FDTD 솔버는 복셀별 흡수 감쇠와 2패스 참조 정규화를 사용하여 정확한 R/T/A를 추출합니다.
+grcwa (nG=5) vs fdtd_flaport (dx=0.015um, 500fs, pml=20)을 400-700nm 범위에서 비교합니다. FDTD 솔버는 복셀별 흡수 감쇠와 2패스 참조 정규화를 사용하여 정확한 R/T/A를 추출합니다.
 
 **허용 기준:** 최대 |A_grcwa - A_fdtd| < 5%
 
@@ -438,7 +438,7 @@ from compass.runners.cone_runner import ConeIlluminationRunner
 
 config = {
     "pixel": { ... },  # 픽셀 스택 설정
-    "solver": {"name": "grcwa", "type": "rcwa", "params": {"fourier_order": [5, 5]}},
+    "solver": {"name": "grcwa", "type": "rcwa", "params": {"nG": 5}},
     "source": {
         "wavelength": {"mode": "sweep", "sweep": {"start": 0.40, "stop": 0.70, "step": 0.02}},
         "angle": {"theta_deg": 0.0, "phi_deg": 0.0},

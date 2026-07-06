@@ -7,8 +7,3 @@ solver:
     fourier_order: [9, 9]
     dtype: "complex64"
     backend: "torch"
-
-  convergence:
-    auto_converge: false
-    order_range: [5, 25]
-    qe_tolerance: 0.01

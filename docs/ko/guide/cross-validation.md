@@ -64,7 +64,8 @@ solver_configs = [
     },
     {
         "name": "grcwa", "type": "rcwa",
-        "params": {"fourier_order": [9, 9], "dtype": "complex128"},
+        # grcwa truncates by TOTAL plane-wave count (nG), not per-axis order
+        "params": {"nG": 49, "dtype": "complex128"},
     },
     {
         "name": "meent", "type": "rcwa",

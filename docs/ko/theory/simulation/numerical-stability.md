@@ -53,7 +53,6 @@ solver:
   stability:
     precision_strategy: "mixed"    # float32 for most, float64 for eigendecomp
     allow_tf32: false              # CRITICAL: disable TF32
-    eigendecomp_device: "cpu"      # CPU eigendecomp is more stable than GPU
 ```
 
 `mixed` 전략은 대부분의 계산을 속도를 위해 float32로 유지하되, 고유값 분해를 float64로 승격시킵니다:
@@ -85,7 +84,7 @@ $$[\varepsilon]_\text{eff} = \left[\text{FT}\left(\frac{1}{\varepsilon}\right)\r
 
 고유값에 대한 후처리로 다음을 처리합니다:
 
-- **축퇴 고유값(Degenerate Eigenvalues)**: 두 고유값이 임계값(`eigenvalue_broadening: 1e-10`)보다 가까운 경우, 그람-슈미트(Gram-Schmidt) 과정으로 고유벡터를 직교화합니다.
+- **축퇴 고유값(Degenerate Eigenvalues)**: 두 고유값이 작은 임계값(~1e-10, `EigenvalueStabilizer` 내부 값)보다 가까운 경우, 그람-슈미트(Gram-Schmidt) 과정으로 고유벡터를 직교화합니다.
 - **분기 선택(Branch Selection)**: 고유값의 제곱근은 올바른 부호를 선택해야 합니다. COMPASS는 전파 모드에 대해 $\text{Re}(\sqrt{\lambda}) \geq 0$을 적용하고, 소멸 모드에 대해서는 올바른 감쇠 방향을 설정합니다.
 
 ### 5단계: 적응형 정밀도 실행기
@@ -107,6 +106,9 @@ solver:
       tolerance: 0.02
       auto_retry_float64: true
 ```
+
+검사가 실패하면 러너가 dtype을 승격(complex64 → complex128)해 시뮬레이션을
+1회 재실행하고, 결과에 `metadata["energy_retry_dtype"]`를 기록합니다.
 
 ## 안정성 문제 진단
 
@@ -135,7 +137,7 @@ solver:
 | 에너지 균형 위반 | T 행렬 오버플로 | S 행렬 알고리즘 사용 확인 |
 | 단파장에서의 노이즈가 있는 QE | float32 불충분 | `auto_retry_float64` 활성화 |
 | TM 수렴 느림 | 나이브 인수분해 | `li_inverse`로 전환 |
-| 조건수 경고 | 거의 특이한 행렬 | 푸리에 차수 감소 또는 브로드닝 증가 |
+| 조건수 경고 | 거의 특이한 행렬 | 푸리에 차수 감소 |
 
 ## 권장 설정
 
@@ -146,14 +148,11 @@ solver:
   stability:
     precision_strategy: "mixed"
     allow_tf32: false
-    eigendecomp_device: "cpu"
     fourier_factorization: "li_inverse"
     energy_check:
       enabled: true
       tolerance: 0.02
       auto_retry_float64: true
-    eigenvalue_broadening: 1.0e-10
-    condition_number_warning: 1.0e+12
 ```
 
 최대 정확도를 위한 설정(속도 희생):
@@ -163,6 +162,5 @@ solver:
   stability:
     precision_strategy: "float64"
     allow_tf32: false
-    eigendecomp_device: "cpu"
     fourier_factorization: "li_inverse"
 ```

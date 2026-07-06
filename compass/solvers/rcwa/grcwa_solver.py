@@ -59,8 +59,23 @@ class GrcwaSolver(SolverBase):
             raise ImportError("grcwa is required. Install with: pip install grcwa") from err
 
         params = self.config.get("params", {})
-        fourier_order = params.get("fourier_order", [9, 9])
-        nG = fourier_order[0]  # grcwa uses single order
+        # grcwa truncates by TOTAL number of plane waves (nG), unlike the
+        # per-axis Fourier order [m, m] used by torcwa/meent/fmmax where the
+        # total count is (2m+1)^2. Configs should set params.nG explicitly;
+        # fourier_order[0] is accepted as a legacy fallback but is NOT
+        # equivalent to the same value in the other RCWA solvers.
+        fourier_order = params.get("fourier_order")
+        if "nG" in params:
+            nG = int(params["nG"])
+        elif fourier_order is not None:
+            nG = int(fourier_order[0])
+            logger.warning(
+                f"grcwa: params.nG not set; using fourier_order[0]={nG} as the total "
+                "plane-wave count. Note grcwa's nG is NOT a per-axis order — set "
+                "params.nG explicitly to silence this warning."
+            )
+        else:
+            nG = 9
         n_lens_slices = params.get("n_lens_slices", 30)
         grid_multiplier = params.get("grid_multiplier", 3)
 
@@ -71,6 +86,7 @@ class GrcwaSolver(SolverBase):
         pol_runs = self._source.get_polarization_runs()
         all_qe: dict[str, list[float]] = {}
         all_R, all_T, all_A = [], [], []
+        self._failed_runs = []
 
         for _wl_idx, wavelength in enumerate(self._source.wavelengths):
             freq = 1.0 / wavelength  # normalized frequency
@@ -142,7 +158,8 @@ class GrcwaSolver(SolverBase):
 
                 except Exception as e:
                     logger.error(f"grcwa failed at λ={wavelength:.4f}um: {e}")
-                    R, T, A = 0.0, 0.0, 0.0
+                    self._record_failed_run(wavelength, pol, e)
+                    R = T = A = float("nan")
 
                 R_pol.append(R)
                 T_pol.append(T)
@@ -152,7 +169,10 @@ class GrcwaSolver(SolverBase):
                 self._last_wavelength = wavelength
 
                 # Per-pixel QE via eps_imag weighting in PD regions
-                pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
+                if np.isnan(A):
+                    pixel_qe = self._nan_pixel_qe()
+                else:
+                    pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
                 for key, val in pixel_qe.items():
                     qe_pol_accum.setdefault(key, []).append(val)
 
@@ -183,8 +203,10 @@ class GrcwaSolver(SolverBase):
             absorption=result_arrays["absorption"],
             metadata={
                 "solver_name": "grcwa",
-                "fourier_order": fourier_order,
+                "nG": nG,
+                "qe_method": "eps_imag_weight",
                 "device": self.device,
+                **self._failure_metadata(),
             },
         )
 
@@ -232,14 +254,15 @@ class GrcwaSolver(SolverBase):
                 if z_overlap_max <= z_overlap_min:
                     continue
                 dz = z_overlap_max - z_overlap_min
-                nx_s, ny_s = s.eps_grid.shape
+                # eps grids are indexed [row=y, col=x] (shape (ny, nx))
+                ny_s, nx_s = s.eps_grid.shape
                 ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx_s))
                 ix_max = min(nx_s, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx_s)))
                 iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny_s))
                 iy_max = min(ny_s, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny_s)))
                 if ix_max <= ix_min or iy_max <= iy_min:
                     continue
-                eps_region = s.eps_grid[ix_min:ix_max, iy_min:iy_max]
+                eps_region = s.eps_grid[iy_min:iy_max, ix_min:ix_max]
                 weight += float(np.mean(np.imag(eps_region))) * dz
 
             pixel_weights[key] = max(weight, 0.0)

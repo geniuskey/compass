@@ -15,7 +15,8 @@ class LayerSlice:
         z_start: Bottom z-coordinate in um.
         z_end: Top z-coordinate in um.
         thickness: Layer thickness in um.
-        eps_grid: 2D complex permittivity array of shape (nx, ny).
+        eps_grid: 2D complex permittivity array of shape (ny, nx),
+            indexed [row=y, col=x].
         name: Layer name for identification.
         material: Base material name.
     """

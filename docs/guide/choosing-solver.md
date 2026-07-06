@@ -93,18 +93,11 @@ solver:
   stability:
     precision_strategy: "mixed"  # mixed | float32 | float64
     allow_tf32: false            # MUST be false for RCWA
-    eigendecomp_device: "cpu"    # cpu | gpu (cpu is more stable)
     fourier_factorization: "li_inverse"  # li_inverse | naive
     energy_check:
       enabled: true
       tolerance: 0.02
       auto_retry_float64: true
-    eigenvalue_broadening: 1.0e-10
-    condition_number_warning: 1.0e+12
-  convergence:
-    auto_converge: false
-    order_range: [5, 25]
-    qe_tolerance: 0.01
 ```
 
 **Key parameter: `fourier_order`**
@@ -135,15 +128,15 @@ solver:
   name: "grcwa"
   type: "rcwa"
   params:
-    fourier_order: [9, 9]
+    nG: 49                  # TOTAL plane-wave count (not a per-axis order)
     dtype: "complex128"     # grcwa defaults to float64
-  convergence:
-    auto_converge: false
-    order_range: [5, 25]
-    qe_tolerance: 0.01
 ```
 
 grcwa uses NumPy-based computation with optional JAX acceleration. It defaults to `complex128` and tends to be numerically more stable than `torcwa` at the cost of speed. It is useful for cross-validation.
+
+::: warning grcwa truncation semantics
+grcwa truncates by the **total** number of plane waves (`nG`), while torcwa/meent/fmmax use a per-axis order `[m, m]` → `(2m+1)²` total. `nG: 49` is far coarser than `fourier_order: [49, 49]` would be in torcwa — do not copy the number between solvers.
+:::
 
 ### meent
 
@@ -155,10 +148,6 @@ solver:
     fourier_order: [9, 9]
     dtype: "complex64"
     backend: "torch"       # numpy | jax | torch
-  convergence:
-    auto_converge: false
-    order_range: [5, 25]
-    qe_tolerance: 0.01
 ```
 
 meent supports three backends: `numpy` (backend=0), `jax` (backend=1), and `torch` (backend=2). The JAX backend can leverage XLA compilation for performance. Note that meent uses **nanometers** internally; the COMPASS adapter handles the conversion from micrometers.

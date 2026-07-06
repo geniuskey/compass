@@ -8,11 +8,6 @@ solver:
     fmm_formulation: "jones"
     dtype: "complex64"
 
-  convergence:
-    auto_converge: false
-    order_range: [5, 25]
-    qe_tolerance: 0.01
-
   stability:
     precision_strategy: "mixed"
     energy_check:

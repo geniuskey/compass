@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Python 3.10 or later
+- Python 3.11 or later
 - A CUDA-capable GPU is recommended for RCWA solvers but not required
 
 ## Install from source
@@ -10,7 +10,7 @@
 Clone the repository and install in editable mode:
 
 ```bash
-git clone https://github.com/compass-sim/compass.git
+git clone https://github.com/geniuskey/compass.git
 cd compass
 pip install -e .
 ```
@@ -22,7 +22,7 @@ This installs the core package with base dependencies: numpy, torch, hydra-core,
 COMPASS organizes solver and visualization backends as optional dependency groups. Install only what you need:
 
 ```bash
-# RCWA solvers (torcwa, grcwa, meent)
+# RCWA solvers (torcwa, grcwa, meent, fmmax)
 pip install -e ".[rcwa]"
 
 # FDTD solver (flaport)
@@ -40,7 +40,7 @@ pip install -e ".[dev]"
 
 | Group   | Packages                | Use case                        |
 |---------|-------------------------|---------------------------------|
-| `rcwa`  | torcwa                  | RCWA solvers (torcwa, grcwa, meent) |
+| `rcwa`  | torcwa, grcwa, meent, fmmax, jax | RCWA solvers |
 | `fdtd`  | fdtd                    | FDTD solver (flaport backend)   |
 | `viz`   | pyvista, plotly          | Interactive 3D visualization    |
 | `all`   | rcwa + fdtd + viz       | Full installation               |

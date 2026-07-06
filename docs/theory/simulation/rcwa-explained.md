@@ -219,12 +219,9 @@ Recommended workflow:
 5. Increase x-y sampling if the geometry itself is under-resolved.
 6. Increase z slices for curved microlenses or tapered color filters.
 
-```yaml
-solver:
-  convergence:
-    auto_converge: true
-    order_range: [5, 25]
-    qe_tolerance: 0.01
+```bash
+# Sweep the Fourier order and watch QE saturate:
+PYTHONPATH=. python scripts/convergence_study.py --sweep fourier_order_torcwa
 ```
 
 ### What usually needs more order
@@ -301,10 +298,6 @@ solver:
     energy_check:
       enabled: true
       tolerance: 0.02
-  convergence:
-    auto_converge: true
-    order_range: [7, 21]
-    qe_tolerance: 0.01
 ```
 
 For final comparisons, rerun at a higher order and, if possible, with a second backend. Solver agreement is not proof of physical truth, but disagreement is a strong signal to inspect geometry, factorization, and convergence.

@@ -188,7 +188,7 @@ Papers on ensuring numerical stability in RCWA simulations.
 ### 5.2 Kim & Lee (2023) -- Eigenvalue Broadening Technique
 
 - **Citation**: S. Kim and D. Lee, "Eigenvalue broadening technique for stable RCWA simulation of high-contrast gratings," *Comput. Phys. Commun.*, vol. 282, 108547, 2023. DOI: [10.1016/j.cpc.2022.108547](https://doi.org/10.1016/j.cpc.2022.108547)
-- **Summary**: This paper proposed a broadening technique for the degenerate eigenvalue problem that arises in RCWA simulations of high-contrast gratings. Through a post-processing method that detects closely spaced eigenvalue pairs and re-orthogonalizes eigenvectors, COMPASS's `EigenvalueStabilizer.fix_degenerate_eigenvalues` method implements this technique. This is the theoretical basis for the `eigenvalue_broadening: 1e-10` parameter.
+- **Summary**: This paper proposed a broadening technique for the degenerate eigenvalue problem that arises in RCWA simulations of high-contrast gratings. Through a post-processing method that detects closely spaced eigenvalue pairs and re-orthogonalizes eigenvectors, COMPASS's `EigenvalueStabilizer.fix_degenerate_eigenvalues` method implements this technique. This is the theoretical basis for the ~1e-10 broadening threshold used internally by `EigenvalueStabilizer`.
 - **Tags**: [RCWA] [Numerical Stability] [Eigenvalues]
 
 ---

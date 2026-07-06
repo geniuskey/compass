@@ -53,7 +53,6 @@ solver:
   stability:
     precision_strategy: "mixed"    # float32 for most, float64 for eigendecomp
     allow_tf32: false              # CRITICAL: disable TF32
-    eigendecomp_device: "cpu"      # CPU eigendecomp is more stable than GPU
 ```
 
 The `mixed` strategy keeps most computation in float32 for speed but promotes the eigendecomposition to float64:
@@ -85,7 +84,7 @@ instead of the naive $\text{FT}(\varepsilon)$. This dramatically improves conver
 
 Post-processing of eigenvalues to handle:
 
-- **Degenerate eigenvalues**: When two eigenvalues are closer than a threshold (`eigenvalue_broadening: 1e-10`), their eigenvectors are orthogonalized via Gram-Schmidt.
+- **Degenerate eigenvalues**: When two eigenvalues are closer than a small threshold (~1e-10, internal to `EigenvalueStabilizer`), their eigenvectors are orthogonalized via Gram-Schmidt.
 - **Branch selection**: The square root of eigenvalues must choose the correct sign. COMPASS enforces $\text{Re}(\sqrt{\lambda}) \geq 0$ for propagating modes and the correct decay direction for evanescent modes.
 
 ### Layer 5: Adaptive Precision Runner
@@ -107,6 +106,10 @@ solver:
       tolerance: 0.02
       auto_retry_float64: true
 ```
+
+When the check fails, the runner reruns the simulation once with the dtype
+promoted (complex64 → complex128) and tags the result with
+`metadata["energy_retry_dtype"]`.
 
 ## Diagnosing stability issues
 
@@ -135,7 +138,7 @@ After simulation, `StabilityDiagnostics.post_simulation_check` validates:
 | Energy balance violation | T-matrix overflow | Ensure S-matrix algorithm is used |
 | Noisy QE at short wavelengths | Float32 insufficient | Enable `auto_retry_float64` |
 | Slow TM convergence | Naive factorization | Switch to `li_inverse` |
-| Condition number warning | Nearly singular matrix | Reduce Fourier order or increase broadening |
+| Condition number warning | Nearly singular matrix | Reduce the Fourier order |
 
 ## Recommended settings
 
@@ -146,14 +149,11 @@ solver:
   stability:
     precision_strategy: "mixed"
     allow_tf32: false
-    eigendecomp_device: "cpu"
     fourier_factorization: "li_inverse"
     energy_check:
       enabled: true
       tolerance: 0.02
       auto_retry_float64: true
-    eigenvalue_broadening: 1.0e-10
-    condition_number_warning: 1.0e+12
 ```
 
 For maximum accuracy (at the cost of speed):
@@ -163,6 +163,5 @@ solver:
   stability:
     precision_strategy: "float64"
     allow_tf32: false
-    eigendecomp_device: "cpu"
     fourier_factorization: "li_inverse"
 ```

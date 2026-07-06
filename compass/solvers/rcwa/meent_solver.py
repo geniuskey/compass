@@ -66,6 +66,7 @@ class MeentSolver(SolverBase):
         ny = max(64, (2 * fourier_order[1] + 1) * 3)
 
         pol_runs = self._source.get_polarization_runs()
+        self._failed_runs = []
         all_qe: dict[str, list[float]] = {}
         all_R, all_T, all_A = [], [], []
 
@@ -118,7 +119,8 @@ class MeentSolver(SolverBase):
 
                 except Exception as e:
                     logger.error(f"meent failed at λ={wavelength:.4f}um: {e}")
-                    R, T, A = 0.0, 0.0, 0.0
+                    self._record_failed_run(wavelength, pol, e)
+                    R = T = A = float("nan")
 
                 R_pol.append(R)
                 T_pol.append(T)
@@ -127,7 +129,10 @@ class MeentSolver(SolverBase):
                 self._last_layer_slices = layer_slices
                 self._last_wavelength = wavelength
 
-                pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
+                if np.isnan(A):
+                    pixel_qe = self._nan_pixel_qe()
+                else:
+                    pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
                 for key, val in pixel_qe.items():
                     qe_pol_accum.setdefault(key, []).append(val)
 
@@ -160,6 +165,8 @@ class MeentSolver(SolverBase):
                 "solver_name": "meent",
                 "backend": self._backend,
                 "fourier_order": fourier_order,
+                "qe_method": "eps_imag_weight",
+                **self._failure_metadata(),
             },
         )
 
@@ -207,14 +214,15 @@ class MeentSolver(SolverBase):
                 if z_overlap_max <= z_overlap_min:
                     continue
                 dz = z_overlap_max - z_overlap_min
-                nx_s, ny_s = s.eps_grid.shape
+                # eps grids are indexed [row=y, col=x] (shape (ny, nx))
+                ny_s, nx_s = s.eps_grid.shape
                 ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx_s))
                 ix_max = min(nx_s, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx_s)))
                 iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny_s))
                 iy_max = min(ny_s, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny_s)))
                 if ix_max <= ix_min or iy_max <= iy_min:
                     continue
-                eps_region = s.eps_grid[ix_min:ix_max, iy_min:iy_max]
+                eps_region = s.eps_grid[iy_min:iy_max, ix_min:ix_max]
                 weight += float(np.mean(np.imag(eps_region))) * dz
 
             pixel_weights[key] = max(weight, 0.0)

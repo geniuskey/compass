@@ -8,7 +8,9 @@ version = "0.1.0"
 description = "Cross-solver Optical Modeling Platform for Advanced Sensor Simulation"
 readme = {text = "COMPASS: Cross-solver Optical Modeling Platform for Advanced Sensor Simulation", content-type = "text/plain"}
 license = "MIT"
-requires-python = ">=3.10"
+# Keep in sync with ruff.toml target-version, mypy.ini python_version,
+# and the CI matrix (.github/workflows/ci.yml).
+requires-python = ">=3.11"
 authors = [
     { name = "COMPASS Team" },
 ]
@@ -35,6 +37,9 @@ rcwa = [
     "jax>=0.6.2",
 ]
 fdtd = [
+    # flaport FDTD. The other FDTD backends are not pip-installable from here:
+    # meep requires conda (conda install -c conda-forge pymeep), and
+    # fdtdz / fdtdx follow their upstream install instructions.
     "fdtd>=0.3.5",
 ]
 viz = [
@@ -61,15 +66,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
 
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-ignore_missing_imports = true
-
-[tool.ruff]
-target-version = "py310"
-line-length = 100
-
-[tool.ruff.lint]
-select = ["E", "F", "W", "I"]
+# Linting and type checking are configured in ruff.toml and mypy.ini —
+# the single sources of truth. Do not duplicate their settings here:
+# ruff prefers ruff.toml and mypy prefers mypy.ini, so [tool.ruff] /
+# [tool.mypy] sections in this file would be silently ignored and drift.

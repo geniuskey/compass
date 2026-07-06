@@ -1,7 +1,7 @@
 # @package _global_
 defaults:
-  - /pixel: default_bsi_1um
-  - /source: wavelength_sweep
+  - override /pixel: default_bsi_1um
+  - override /source: wavelength_sweep
 
 experiment:
   name: "optimize_microlens"

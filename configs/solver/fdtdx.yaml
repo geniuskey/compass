@@ -9,8 +9,3 @@ solver:
     time_steps: 2000
     dtype: "float32"
     courant_factor: 0.5
-
-  convergence:
-    auto_converge: false
-    spacing_range: [0.01, 0.05]
-    qe_tolerance: 0.01
