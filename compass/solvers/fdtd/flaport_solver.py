@@ -388,7 +388,8 @@ class FlaportFdtdSolver(SolverBase):
             return {}
         lx, ly = self._pixel_stack.domain_size
         z_min, z_max = self._pixel_stack.z_range
-        nx, ny, nz = eps_3d.shape
+        # eps_3d is indexed [row=y, col=x, z] (shape (ny, nx, nz))
+        ny, nx, nz = eps_3d.shape
 
         pixel_weights = {}
         total_weight = 0.0
@@ -424,7 +425,7 @@ class FlaportFdtdSolver(SolverBase):
                 pixel_weights[key] = 0.0
                 continue
 
-            region = eps_3d[ix_min:ix_max, iy_min:iy_max, iz_min:iz_max]
+            region = eps_3d[iy_min:iy_max, ix_min:ix_max, iz_min:iz_max]
             weight = float(np.sum(np.imag(region)))
             weight = max(weight, 0.0)
             pixel_weights[key] = weight

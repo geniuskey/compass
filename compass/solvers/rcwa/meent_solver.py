@@ -207,14 +207,15 @@ class MeentSolver(SolverBase):
                 if z_overlap_max <= z_overlap_min:
                     continue
                 dz = z_overlap_max - z_overlap_min
-                nx_s, ny_s = s.eps_grid.shape
+                # eps grids are indexed [row=y, col=x] (shape (ny, nx))
+                ny_s, nx_s = s.eps_grid.shape
                 ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx_s))
                 ix_max = min(nx_s, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx_s)))
                 iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny_s))
                 iy_max = min(ny_s, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny_s)))
                 if ix_max <= ix_min or iy_max <= iy_min:
                     continue
-                eps_region = s.eps_grid[ix_min:ix_max, iy_min:iy_max]
+                eps_region = s.eps_grid[iy_min:iy_max, ix_min:ix_max]
                 weight += float(np.mean(np.imag(eps_region))) * dz
 
             pixel_weights[key] = max(weight, 0.0)

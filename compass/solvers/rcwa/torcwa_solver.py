@@ -464,7 +464,8 @@ class TorcwaSolver(SolverBase):
 
                 dz = z_overlap_max - z_overlap_min
                 eps = s.eps_grid
-                nx_s, ny_s = eps.shape
+                # eps grids are indexed [row=y, col=x] (shape (ny, nx))
+                ny_s, nx_s = eps.shape
 
                 # Map PD xy (domain coordinates in [0, lx) x [0, ly)) to grid indices
                 lx, ly = self._pixel_stack.domain_size
@@ -477,7 +478,7 @@ class TorcwaSolver(SolverBase):
                     continue
 
                 # Absorption weight = integral of eps_imag over PD volume
-                eps_region = eps[ix_min:ix_max, iy_min:iy_max]
+                eps_region = eps[iy_min:iy_max, ix_min:ix_max]
                 eps_imag_mean = float(np.mean(np.imag(eps_region)))
                 weight += eps_imag_mean * dz * (ix_max - ix_min) * (iy_max - iy_min) / (nx_s * ny_s)
 
