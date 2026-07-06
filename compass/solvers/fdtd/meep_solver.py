@@ -159,6 +159,7 @@ class MeepSolver(SolverBase):
         )
 
         pol_runs = self._source.get_polarization_runs()
+        self._failed_runs = []
         all_qe: dict[str, list[float]] = {}
         all_R: list[float] = []
         all_T: list[float] = []
@@ -202,7 +203,8 @@ class MeepSolver(SolverBase):
                         f"meep: failed at lambda={wavelength:.4f}um, pol={pol}: {e}",
                         exc_info=True,
                     )
-                    R, T, A = 0.0, 0.0, 0.0
+                    self._record_failed_run(wavelength, pol, e)
+                    R = T = A = float("nan")
                     field_data = None
 
                 R_pol.append(R)
@@ -210,15 +212,18 @@ class MeepSolver(SolverBase):
                 A_pol.append(A)
 
                 # Per-pixel QE
-                qe_this_pol = self._compute_pixel_qe(
-                    mp,
-                    field_data,
-                    wavelength,
-                    resolution,
-                    lx,
-                    ly,
-                    z_center,
-                )
+                if np.isnan(A):
+                    qe_this_pol = self._nan_pixel_qe()
+                else:
+                    qe_this_pol = self._compute_pixel_qe(
+                        mp,
+                        field_data,
+                        wavelength,
+                        resolution,
+                        lx,
+                        ly,
+                        z_center,
+                    )
                 for k, v in qe_this_pol.items():
                     qe_pol_accum.setdefault(k, []).append(v)
 
@@ -254,6 +259,7 @@ class MeepSolver(SolverBase):
                 "pml_thickness": pml_thickness,
                 "runtime_periods": runtime_periods,
                 "device": self.device,
+                **self._failure_metadata(),
             },
         )
 

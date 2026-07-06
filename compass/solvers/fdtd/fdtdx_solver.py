@@ -200,6 +200,7 @@ class FdtdxSolver(SolverBase):
         _, pd_masks = self._pixel_stack.get_photodiode_mask(nx, ny, nz_interior)
 
         pol_runs = self._source.get_polarization_runs()
+        self._failed_runs = []
         all_qe: dict[str, list[float]] = {}
         all_R: list[float] = []
         all_T: list[float] = []
@@ -247,7 +248,8 @@ class FdtdxSolver(SolverBase):
                         f"fdtdx: failed at lambda={wavelength:.4f}um, pol={pol}: {e}",
                         exc_info=True,
                     )
-                    R, T, A = 0.0, 0.0, 0.0
+                    self._record_failed_run(wavelength, pol, e)
+                    R = T = A = float("nan")
                     fields = None
 
                 R_pol.append(R)
@@ -255,18 +257,21 @@ class FdtdxSolver(SolverBase):
                 A_pol.append(A)
 
                 # Per-pixel QE from absorption in photodiode regions
-                qe_this_pol = self._compute_pixel_qe(
-                    fields,
-                    pd_masks,
-                    eps_3d_np,
-                    wavelength,
-                    grid_spacing,
-                    nx,
-                    ny,
-                    nz_interior,
-                    pml_layers,
-                    A,
-                )
+                if np.isnan(A):
+                    qe_this_pol = self._nan_pixel_qe()
+                else:
+                    qe_this_pol = self._compute_pixel_qe(
+                        fields,
+                        pd_masks,
+                        eps_3d_np,
+                        wavelength,
+                        grid_spacing,
+                        nx,
+                        ny,
+                        nz_interior,
+                        pml_layers,
+                        A,
+                    )
                 for k, v in qe_this_pol.items():
                     qe_pol_accum.setdefault(k, []).append(v)
 
@@ -307,6 +312,7 @@ class FdtdxSolver(SolverBase):
                 "courant_factor": courant_factor,
                 "grid_size": (nx, ny, nz),
                 "device": self.device,
+                **self._failure_metadata(),
             },
         )
 

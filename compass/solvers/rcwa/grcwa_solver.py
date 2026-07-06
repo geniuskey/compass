@@ -71,6 +71,7 @@ class GrcwaSolver(SolverBase):
         pol_runs = self._source.get_polarization_runs()
         all_qe: dict[str, list[float]] = {}
         all_R, all_T, all_A = [], [], []
+        self._failed_runs = []
 
         for _wl_idx, wavelength in enumerate(self._source.wavelengths):
             freq = 1.0 / wavelength  # normalized frequency
@@ -142,7 +143,8 @@ class GrcwaSolver(SolverBase):
 
                 except Exception as e:
                     logger.error(f"grcwa failed at λ={wavelength:.4f}um: {e}")
-                    R, T, A = 0.0, 0.0, 0.0
+                    self._record_failed_run(wavelength, pol, e)
+                    R = T = A = float("nan")
 
                 R_pol.append(R)
                 T_pol.append(T)
@@ -152,7 +154,10 @@ class GrcwaSolver(SolverBase):
                 self._last_wavelength = wavelength
 
                 # Per-pixel QE via eps_imag weighting in PD regions
-                pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
+                if np.isnan(A):
+                    pixel_qe = self._nan_pixel_qe()
+                else:
+                    pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
                 for key, val in pixel_qe.items():
                     qe_pol_accum.setdefault(key, []).append(val)
 
@@ -185,6 +190,7 @@ class GrcwaSolver(SolverBase):
                 "solver_name": "grcwa",
                 "fourier_order": fourier_order,
                 "device": self.device,
+                **self._failure_metadata(),
             },
         )
 

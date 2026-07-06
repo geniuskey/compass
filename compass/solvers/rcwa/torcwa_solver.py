@@ -105,6 +105,7 @@ class TorcwaSolver(SolverBase):
         pol_runs = self._source.get_polarization_runs()
         all_qe: dict[str, list[np.ndarray]] = {}
         all_R, all_T, all_A = [], [], []
+        self._failed_runs = []
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
             logger.debug(
@@ -143,9 +144,12 @@ class TorcwaSolver(SolverBase):
 
                 except Exception as e:
                     logger.error(f"torcwa: failed at λ={wavelength:.4f}um, pol={pol}: {e}")
-                    R_pol.append(0.0)
-                    T_pol.append(0.0)
-                    A_pol.append(0.0)
+                    self._record_failed_run(wavelength, pol, e)
+                    R_pol.append(float("nan"))
+                    T_pol.append(float("nan"))
+                    A_pol.append(float("nan"))
+                    for k, v in self._nan_pixel_qe().items():
+                        qe_pol_accum.setdefault(k, []).append(v)
 
             # Average over polarizations
             n_pol = len(pol_runs)
@@ -180,6 +184,7 @@ class TorcwaSolver(SolverBase):
                 "solver_name": "torcwa",
                 "fourier_order": fourier_order,
                 "device": self.device,
+                **self._failure_metadata(),
             },
         )
 

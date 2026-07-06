@@ -66,6 +66,7 @@ class MeentSolver(SolverBase):
         ny = max(64, (2 * fourier_order[1] + 1) * 3)
 
         pol_runs = self._source.get_polarization_runs()
+        self._failed_runs = []
         all_qe: dict[str, list[float]] = {}
         all_R, all_T, all_A = [], [], []
 
@@ -118,7 +119,8 @@ class MeentSolver(SolverBase):
 
                 except Exception as e:
                     logger.error(f"meent failed at λ={wavelength:.4f}um: {e}")
-                    R, T, A = 0.0, 0.0, 0.0
+                    self._record_failed_run(wavelength, pol, e)
+                    R = T = A = float("nan")
 
                 R_pol.append(R)
                 T_pol.append(T)
@@ -127,7 +129,10 @@ class MeentSolver(SolverBase):
                 self._last_layer_slices = layer_slices
                 self._last_wavelength = wavelength
 
-                pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
+                if np.isnan(A):
+                    pixel_qe = self._nan_pixel_qe()
+                else:
+                    pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
                 for key, val in pixel_qe.items():
                     qe_pol_accum.setdefault(key, []).append(val)
 
@@ -160,6 +165,7 @@ class MeentSolver(SolverBase):
                 "solver_name": "meent",
                 "backend": self._backend,
                 "fourier_order": fourier_order,
+                **self._failure_metadata(),
             },
         )
 
