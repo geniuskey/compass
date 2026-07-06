@@ -188,7 +188,7 @@ RCWA 시뮬레이션의 수치 안정성 확보에 관한 논문들이다.
 ### 5.2 Kim & Lee (2023) -- 고유값 브로드닝 기법
 
 - **인용**: S. Kim and D. Lee, "Eigenvalue broadening technique for stable RCWA simulation of high-contrast gratings," *Comput. Phys. Commun.*, vol. 282, 108547, 2023. DOI: [10.1016/j.cpc.2022.108547](https://doi.org/10.1016/j.cpc.2022.108547)
-- **요약**: 고대비 격자의 RCWA 시뮬레이션에서 발생하는 축퇴 고유값 문제에 대한 브로드닝 기법을 제안한 논문이다. 근접한 고유값 쌍을 감지하고 고유벡터를 재직교화하는 후처리 방법으로, COMPASS의 `EigenvalueStabilizer.fix_degenerate_eigenvalues` 메서드가 이 기법을 구현한다. `eigenvalue_broadening: 1e-10` 파라미터의 이론적 근거이다.
+- **요약**: 고대비 격자의 RCWA 시뮬레이션에서 발생하는 축퇴 고유값 문제에 대한 브로드닝 기법을 제안한 논문이다. 근접한 고유값 쌍을 감지하고 고유벡터를 재직교화하는 후처리 방법으로, COMPASS의 `EigenvalueStabilizer.fix_degenerate_eigenvalues` 메서드가 이 기법을 구현한다. `EigenvalueStabilizer`가 내부적으로 사용하는 ~1e-10 브로드닝 임계값의 이론적 근거이다.
 - **태그**: [RCWA] [수치안정성] [고유값]
 
 ---

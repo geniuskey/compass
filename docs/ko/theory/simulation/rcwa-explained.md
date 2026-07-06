@@ -218,12 +218,9 @@ RCWA 수렴은 추정하지 말고 측정해야 합니다.
 5. 형상 자체가 거칠면 x-y sampling을 올립니다.
 6. 마이크로렌즈 또는 테이퍼 컬러 필터가 있으면 z slice 수를 늘립니다.
 
-```yaml
-solver:
-  convergence:
-    auto_converge: true
-    order_range: [5, 25]
-    qe_tolerance: 0.01
+```bash
+# 푸리에 차수를 스윕하며 QE가 포화되는지 확인:
+PYTHONPATH=. python scripts/convergence_study.py --sweep fourier_order_torcwa
 ```
 
 ### 차수를 더 요구하는 구조
@@ -300,10 +297,6 @@ solver:
     energy_check:
       enabled: true
       tolerance: 0.02
-  convergence:
-    auto_converge: true
-    order_range: [7, 21]
-    qe_tolerance: 0.01
 ```
 
 최종 비교는 더 높은 차수에서 다시 실행하고, 가능하다면 두 번째 backend로 확인하세요. solver agreement가 물리적 참값을 증명하지는 않지만, disagreement는 geometry, factorization, convergence를 다시 볼 강한 신호입니다.

@@ -104,13 +104,7 @@ torch.cuda.OutOfMemoryError: CUDA out of memory
 **Solutions (try in order):**
 
 1. Reduce Fourier order: `fourier_order: [9, 9]` instead of `[15, 15]`
-2. Move eigendecomposition to CPU (keeps other operations on GPU):
-```yaml
-solver:
-  stability:
-    eigendecomp_device: "cpu"
-```
-3. Use CPU for the entire simulation: `compute.backend: "cpu"`
+2. Use CPU for the entire simulation: `compute.backend: "cpu"`
 
 ### TF32 precision issues on Ampere+ GPUs
 
@@ -201,14 +195,7 @@ solver:
     fourier_factorization: "li_inverse"
 ```
 
-**Step 3: Move eigendecomposition to CPU**
-```yaml
-solver:
-  stability:
-    eigendecomp_device: "cpu"
-```
-
-**Step 4: Enable automatic fallback**
+**Step 3: Enable automatic fallback**
 ```yaml
 solver:
   stability:
@@ -218,9 +205,9 @@ solver:
       auto_retry_float64: true
 ```
 
-The `AdaptivePrecisionRunner` implements a 3-level fallback strategy: GPU float32 -> GPU float64 -> CPU float64. If all three fail, the error is raised.
+When the energy check fails, the runner reruns the simulation once with the dtype promoted (complex64 -> complex128) and tags the result with `metadata["energy_retry_dtype"]`.
 
-**Step 5: Increase Fourier order** (if truncation is the issue)
+**Step 4: Increase Fourier order** (if truncation is the issue)
 ```yaml
 solver:
   params:
@@ -264,21 +251,9 @@ matrix_f64 = matrix.astype(np.complex128)
 eigenvalues, eigenvectors = np.linalg.eig(matrix_f64)
 ```
 
-2. **Eigenvalue broadening**: Adds a small perturbation to break exact degeneracies:
+2. **Eigenvalue broadening**: `EigenvalueStabilizer` adds a small perturbation (~1e-10, internal threshold) to break exact degeneracies and re-orthogonalizes the affected eigenvectors.
 
-```yaml
-solver:
-  stability:
-    eigenvalue_broadening: 1.0e-10
-```
-
-3. **Condition number monitoring**: Warn when the eigenvector matrix condition number exceeds a threshold:
-
-```yaml
-solver:
-  stability:
-    condition_number_warning: 1.0e+12
-```
+3. **Condition number monitoring**: the stability diagnostics warn when the eigenvector matrix condition number becomes large; the practical fix is reducing the Fourier order.
 
 ### Li's inverse rule and Fourier factorization
 
@@ -360,7 +335,6 @@ For a 3 um silicon layer at 550 nm: $\Delta\lambda \approx \frac{0.55^2}{2 \time
 | Running on CPU            | Check `result.metadata["device"]`  | Set `compute.backend: "cuda"`         |
 | High Fourier order        | Order > [13, 13]                   | Reduce order, verify convergence      |
 | Float64 everywhere        | `precision_strategy: "float64"`    | Use `"mixed"` instead                 |
-| CPU eigendecomposition    | `eigendecomp_device: "cpu"`        | Try `"gpu"` if stability permits      |
 | Unpolarized (2 runs/wl)  | `polarization: "unpolarized"`      | Use TE or TM if structure is symmetric |
 | Many wavelengths          | Step < 5 nm over wide range        | Use coarser step, interpolate results |
 | Large unit cell           | `unit_cell: [4, 4]`               | Use smallest periodic unit            |

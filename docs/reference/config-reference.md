@@ -1,6 +1,6 @@
 # Config Reference
 
-Complete reference for the COMPASS configuration schema. All configuration is validated by Pydantic models defined in `compass.core.config_schema`.
+Complete reference for the COMPASS configuration schema. The composed Hydra config is validated by the Pydantic models in `compass.core.config_schema` before a simulation runs: unknown keys in any nested section (a typo like `thicknes:`) fail fast with a validation error. Only the top level accepts extra sections, so experiment overlays can add `experiment`, `optimization`, or sweep tables consumed by dedicated runners.
 
 ## Top-level: CompassConfig
 
@@ -106,9 +106,20 @@ List of `{thickness, material}` pairs, ordered top to bottom.
 | `photodiode.position` | [float, float, float] | `[0, 0, 0.5]` | PD offset (x, y, z) um |
 | `photodiode.size` | [float, float, float] | `[0.7, 0.7, 2.0]` | PD extent (dx, dy, dz) um |
 | `dti.enabled` | bool | `true` | Enable DTI |
-| `dti.width` | float | `0.1` | Trench width (um) |
+| `dti.mode` | str | `"fdti"` | `"fdti"` (full) or `"bdti"` (backside partial) |
+| `dti.width` | float | `0.1` | Trench width at the opening (um) |
 | `dti.depth` | float | `3.0` | Trench depth (um) |
-| `dti.material` | str | `"sio2"` | Fill material |
+| `dti.material` | str | `"sio2"` | Core fill material |
+| `dti.liner.enabled` | bool | `false` | Conformal high-k liner on trench sidewalls |
+| `dti.liner.material` | str | `"al2o3"` | Liner material |
+| `dti.liner.thickness` | float | `0.0` | Liner thickness (um) |
+| `dti.taper_angle` | float | `90.0` | Sidewall angle from substrate plane (90 = vertical) |
+| `dti.n_slices` | int | `6` | Staircase z-slices for tapered trenches |
+| `surface_texture.enabled` | bool | `false` | Backside inverted-pyramid array for NIR light trapping |
+| `surface_texture.height` | float | `0.3` | Pyramid height (um) |
+| `surface_texture.period` | float or null | `null` | Pyramid period (um); defaults to pixel pitch |
+| `surface_texture.fill_material` | str | `"sio2"` | Pit back-fill material |
+| `surface_texture.n_slices` | int | `8` | Staircase z-slices for the pyramids |
 
 ## solver: SolverConfig
 
@@ -119,38 +130,41 @@ solver:
   params:
     fourier_order: [9, 9]
     dtype: "complex64"
-  convergence: ...
   stability: ...
 ```
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `name` | str | `"torcwa"` | Solver backend name |
-| `type` | str | `"rcwa"` | `"rcwa"` or `"fdtd"` |
-| `params` | dict | `{"fourier_order": [9,9]}` | Solver-specific parameters |
+| `type` | str | `"rcwa"` | `"rcwa"`, `"fdtd"`, or `"tmm"` |
+| `params` | dict | `{"fourier_order": [9,9]}` | Solver-specific parameters (see below) |
 
-### solver.convergence: ConvergenceConfig
+### solver.params semantics
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `auto_converge` | bool | `false` | Auto Fourier order sweep |
-| `order_range` | [int, int] | `[5, 25]` | Min/max Fourier order |
-| `qe_tolerance` | float | `0.01` | Convergence threshold |
-| `spacing_range` | [float, float] or null | `null` | Grid spacing range for FDTD |
+`params` is passed through to the solver adapter, so the meaning of each key is
+solver-specific. The most important difference:
+
+- **torcwa / meent / fmmax** use a per-axis Fourier order
+  `fourier_order: [m, m]` → `(2m+1)²` total plane waves.
+- **grcwa** truncates by TOTAL plane-wave count: set `nG` (e.g. `nG: 49`).
+  `fourier_order[0]` is accepted as a legacy fallback with a warning, but it is
+  **not** equivalent to the same number in the other RCWA solvers.
+- **FDTD solvers** use `grid_spacing` (um) or `resolution` (pixels/um, meep).
+
+Every result records `metadata["qe_method"]` (`field_integration`,
+`eps_imag_weight`, `tmm_1d_analytic`) so cross-solver QE differences can be
+attributed to post-processing methodology rather than solver accuracy.
 
 ### solver.stability: StabilityConfig
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `precision_strategy` | str | `"mixed"` | `"float32"`, `"float64"`, `"mixed"`, `"adaptive"` |
-| `allow_tf32` | bool | `false` | Allow TF32 on Ampere+ GPUs |
-| `eigendecomp_device` | str | `"cpu"` | `"cpu"` or `"gpu"` |
+| `precision_strategy` | str | `"mixed"` | `"float32"`, `"float64"`, `"mixed"`, `"adaptive"` — consumed by the diagnostics pre-simulation checks |
+| `allow_tf32` | bool | `false` | Allow TF32 on Ampere+ GPUs (keep `false` for RCWA) |
 | `fourier_factorization` | str | `"li_inverse"` | `"naive"`, `"li_inverse"`, `"normal_vector"` |
-| `energy_check.enabled` | bool | `true` | Enable energy balance check |
-| `energy_check.tolerance` | float | `0.02` | Max allowed |R+T+A-1| |
-| `energy_check.auto_retry_float64` | bool | `true` | Auto retry in float64 on failure |
-| `eigenvalue_broadening` | float | `1e-10` | Degeneracy detection threshold |
-| `condition_number_warning` | float | `1e12` | Warn on ill-conditioned matrices |
+| `energy_check.enabled` | bool | `true` | Validate R+T+A ≈ 1 after the run |
+| `energy_check.tolerance` | float | `0.02` | Max allowed \|R+T+A-1\| |
+| `energy_check.auto_retry_float64` | bool | `true` | On violation, rerun once with the dtype promoted (complex64→complex128, float32→float64); the retry is tagged `metadata["energy_retry_dtype"]` |
 
 ## source: SourceConfig
 
@@ -206,9 +220,14 @@ configs/
     default_bsi_0p8um.yaml
   solver/
     torcwa.yaml
-    grcwa.yaml
+    grcwa.yaml            # + grcwa_fast.yaml, grcwa_converged.yaml presets
     meent.yaml
+    fmmax.yaml
     fdtd_flaport.yaml
+    fdtdz.yaml
+    fdtdx.yaml
+    meep.yaml
+    tmm.yaml
   source/
     planewave.yaml
     wavelength_sweep.yaml
@@ -221,6 +240,7 @@ configs/
     solver_comparison.yaml
     qe_benchmark.yaml
     roi_sweep.yaml
+    optimize_microlens.yaml
 ```
 
 Override any parameter from the command line:

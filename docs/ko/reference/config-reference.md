@@ -106,9 +106,20 @@ barl:
 | `photodiode.position` | [float, float, float] | `[0, 0, 0.5]` | PD 오프셋 (x, y, z) um |
 | `photodiode.size` | [float, float, float] | `[0.7, 0.7, 2.0]` | PD 크기 (dx, dy, dz) um |
 | `dti.enabled` | bool | `true` | DTI 활성화 |
-| `dti.width` | float | `0.1` | 트렌치 폭 (um) |
+| `dti.mode` | str | `"fdti"` | `"fdti"`(전체) 또는 `"bdti"`(후면 부분) |
+| `dti.width` | float | `0.1` | 트렌치 개구부 폭 (um) |
 | `dti.depth` | float | `3.0` | 트렌치 깊이 (um) |
-| `dti.material` | str | `"sio2"` | 충전 재료 |
+| `dti.material` | str | `"sio2"` | 코어 충전 재료 |
+| `dti.liner.enabled` | bool | `false` | 트렌치 측벽 컨포멀 high-k 라이너 |
+| `dti.liner.material` | str | `"al2o3"` | 라이너 재료 |
+| `dti.liner.thickness` | float | `0.0` | 라이너 두께 (um) |
+| `dti.taper_angle` | float | `90.0` | 기판면 기준 측벽 각도 (90 = 수직) |
+| `dti.n_slices` | int | `6` | 테이퍼 트렌치의 계단형 z-슬라이스 수 |
+| `surface_texture.enabled` | bool | `false` | NIR 광포획용 후면 역피라미드 어레이 |
+| `surface_texture.height` | float | `0.3` | 피라미드 높이 (um) |
+| `surface_texture.period` | float or null | `null` | 피라미드 주기 (um); 기본은 픽셀 피치 |
+| `surface_texture.fill_material` | str | `"sio2"` | 피트 충전 재료 |
+| `surface_texture.n_slices` | int | `8` | 피라미드 계단형 z-슬라이스 수 |
 
 ## solver: SolverConfig
 
@@ -119,38 +130,41 @@ solver:
   params:
     fourier_order: [9, 9]
     dtype: "complex64"
-  convergence: ...
   stability: ...
 ```
 
 | 필드 | 타입 | 기본값 | 설명 |
 |------|------|--------|------|
 | `name` | str | `"torcwa"` | 솔버 백엔드 이름 |
-| `type` | str | `"rcwa"` | `"rcwa"` 또는 `"fdtd"` |
-| `params` | dict | `{"fourier_order": [9,9]}` | 솔버 고유 매개변수 |
+| `type` | str | `"rcwa"` | `"rcwa"`, `"fdtd"`, 또는 `"tmm"` |
+| `params` | dict | `{"fourier_order": [9,9]}` | 솔버 고유 매개변수 (아래 참조) |
 
-### solver.convergence: ConvergenceConfig
+### solver.params 의미
 
-| 필드 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `auto_converge` | bool | `false` | 자동 푸리에 차수 스윕 |
-| `order_range` | [int, int] | `[5, 25]` | 최소/최대 푸리에 차수 |
-| `qe_tolerance` | float | `0.01` | 수렴 임계값 |
-| `spacing_range` | [float, float] or null | `null` | FDTD용 그리드 간격 범위 |
+`params`는 솔버 어댑터에 그대로 전달되므로 각 키의 의미는 솔버마다 다릅니다.
+가장 중요한 차이:
+
+- **torcwa / meent / fmmax**: 축별 푸리에 차수 `fourier_order: [m, m]` →
+  총 평면파 수 `(2m+1)²`.
+- **grcwa**: **총 평면파 수**로 절단합니다. `nG`를 직접 지정하세요(예: `nG: 49`).
+  레거시 폴백으로 `fourier_order[0]`도 경고와 함께 허용되지만, 다른 RCWA
+  솔버의 같은 숫자와 **동등하지 않습니다**.
+- **FDTD 솔버**: `grid_spacing`(um) 또는 `resolution`(pixels/um, meep) 사용.
+
+모든 결과에는 `metadata["qe_method"]`(`field_integration`, `eps_imag_weight`,
+`tmm_1d_analytic`)가 기록되므로, 솔버 간 QE 차이가 솔버 정확도 차이인지
+후처리 방법 차이인지 구분할 수 있습니다.
 
 ### solver.stability: StabilityConfig
 
 | 필드 | 타입 | 기본값 | 설명 |
 |------|------|--------|------|
-| `precision_strategy` | str | `"mixed"` | `"float32"`, `"float64"`, `"mixed"`, `"adaptive"` |
-| `allow_tf32` | bool | `false` | Ampere+ GPU에서 TF32 허용 |
-| `eigendecomp_device` | str | `"cpu"` | `"cpu"` 또는 `"gpu"` |
+| `precision_strategy` | str | `"mixed"` | `"float32"`, `"float64"`, `"mixed"`, `"adaptive"` — 진단(pre-simulation check)에서 사용 |
+| `allow_tf32` | bool | `false` | Ampere+ GPU에서 TF32 허용 (RCWA에서는 `false` 유지) |
 | `fourier_factorization` | str | `"li_inverse"` | `"naive"`, `"li_inverse"`, `"normal_vector"` |
-| `energy_check.enabled` | bool | `true` | 에너지 밸런스 검사 활성화 |
-| `energy_check.tolerance` | float | `0.02` | 최대 허용 |R+T+A-1| |
-| `energy_check.auto_retry_float64` | bool | `true` | 실패 시 float64로 자동 재시도 |
-| `eigenvalue_broadening` | float | `1e-10` | 축퇴 감지 임계값 |
-| `condition_number_warning` | float | `1e12` | 병조건 행렬 경고 기준 |
+| `energy_check.enabled` | bool | `true` | 실행 후 R+T+A ≈ 1 검증 |
+| `energy_check.tolerance` | float | `0.02` | 최대 허용 \|R+T+A-1\| |
+| `energy_check.auto_retry_float64` | bool | `true` | 위반 시 dtype을 승격해 1회 재실행 (complex64→complex128, float32→float64); 재시도는 `metadata["energy_retry_dtype"]`로 표시 |
 
 ## source: SourceConfig
 
@@ -206,9 +220,14 @@ configs/
     default_bsi_0p8um.yaml
   solver/
     torcwa.yaml
-    grcwa.yaml
+    grcwa.yaml            # + grcwa_fast.yaml, grcwa_converged.yaml 프리셋
     meent.yaml
+    fmmax.yaml
     fdtd_flaport.yaml
+    fdtdz.yaml
+    fdtdx.yaml
+    meep.yaml
+    tmm.yaml
   source/
     planewave.yaml
     wavelength_sweep.yaml
@@ -221,6 +240,7 @@ configs/
     solver_comparison.yaml
     qe_benchmark.yaml
     roi_sweep.yaml
+    optimize_microlens.yaml
 ```
 
 명령줄에서 모든 매개변수를 오버라이드할 수 있습니다:

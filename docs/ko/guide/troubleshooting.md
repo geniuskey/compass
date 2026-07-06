@@ -104,13 +104,7 @@ torch.cuda.OutOfMemoryError: CUDA out of memory
 **해결책 (순서대로 시도):**
 
 1. 푸리에 차수 감소: `[15, 15]` 대신 `fourier_order: [9, 9]`
-2. 고유값 분해(Eigendecomposition)를 CPU로 이동 (기타 연산은 GPU 유지):
-```yaml
-solver:
-  stability:
-    eigendecomp_device: "cpu"
-```
-3. 전체 시뮬레이션에 CPU 사용: `compute.backend: "cpu"`
+2. 전체 시뮬레이션에 CPU 사용: `compute.backend: "cpu"`
 
 ### Ampere 이상 GPU에서의 TF32 정밀도 문제
 
@@ -201,14 +195,7 @@ solver:
     fourier_factorization: "li_inverse"
 ```
 
-**3단계: 고유값 분해를 CPU로 이동**
-```yaml
-solver:
-  stability:
-    eigendecomp_device: "cpu"
-```
-
-**4단계: 자동 폴백 활성화**
+**3단계: 자동 폴백 활성화**
 ```yaml
 solver:
   stability:
@@ -218,9 +205,9 @@ solver:
       auto_retry_float64: true
 ```
 
-`AdaptivePrecisionRunner`는 3단계 폴백 전략을 구현합니다: GPU float32 -> GPU float64 -> CPU float64. 세 가지 모두 실패하면 오류가 발생합니다.
+에너지 검사가 실패하면 러너가 dtype을 승격(complex64 -> complex128)해 시뮬레이션을 1회 재실행하고, 결과에 `metadata["energy_retry_dtype"]`를 기록합니다.
 
-**5단계: 푸리에 차수 증가** (절삭이 문제인 경우)
+**4단계: 푸리에 차수 증가** (절삭이 문제인 경우)
 ```yaml
 solver:
   params:
@@ -264,21 +251,9 @@ matrix_f64 = matrix.astype(np.complex128)
 eigenvalues, eigenvectors = np.linalg.eig(matrix_f64)
 ```
 
-2. **고유값 확장(Eigenvalue Broadening)**: 정확한 축퇴를 깨기 위해 작은 섭동을 추가합니다:
+2. **고유값 확장(Eigenvalue Broadening)**: `EigenvalueStabilizer`가 정확한 축퇴를 깨기 위해 작은 섭동(~1e-10, 모듈 내부 임계값)을 추가하고 해당 고유벡터를 재직교화합니다.
 
-```yaml
-solver:
-  stability:
-    eigenvalue_broadening: 1.0e-10
-```
-
-3. **조건수 모니터링**: 고유벡터 행렬 조건수가 임계값을 초과할 때 경고합니다:
-
-```yaml
-solver:
-  stability:
-    condition_number_warning: 1.0e+12
-```
+3. **조건수 모니터링**: 안정성 진단이 고유벡터 행렬 조건수가 커질 때 경고합니다. 실용적인 해결책은 푸리에 차수를 줄이는 것입니다.
 
 ### Li의 역규칙과 푸리에 인수분해(Fourier Factorization)
 
@@ -360,7 +335,6 @@ $$\Delta\lambda \approx \frac{\lambda^2}{2 n d}$$
 | CPU에서 실행 중            | `result.metadata["device"]` 확인    | `compute.backend: "cuda"` 설정         |
 | 높은 푸리에 차수            | 차수 > [13, 13]                    | 차수 감소, 수렴 확인                     |
 | 전체 Float64              | `precision_strategy: "float64"`    | 대신 `"mixed"` 사용                     |
-| CPU 고유값 분해            | `eigendecomp_device: "cpu"`        | 안정성이 허용하면 `"gpu"` 시도           |
 | 비편광 (2회 실행/파장)      | `polarization: "unpolarized"`      | 구조가 대칭이면 TE 또는 TM 사용          |
 | 많은 파장                  | 넓은 범위에서 간격 < 5 nm           | 더 큰 간격 사용, 결과 보간               |
 | 큰 단위 셀                 | `unit_cell: [4, 4]`               | 가장 작은 주기 단위 사용                  |

@@ -40,9 +40,7 @@ solver:
   stability:
     precision_strategy: "mixed"
     allow_tf32: false
-    eigendecomp_device: "cpu"
     fourier_factorization: "li_inverse"
-    eigenvalue_broadening: 1.0e-10
     energy_check:
       enabled: true
       tolerance: 0.02

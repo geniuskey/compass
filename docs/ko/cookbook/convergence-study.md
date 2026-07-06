@@ -152,7 +152,7 @@ PYTHONPATH=. python3.11 scripts/convergence_study.py --sweep full_spectrum --fou
 
 | 파라미터 | 빠른 실행 | 기본값 | 수렴 |
 |---------|----------|-------|------|
-| grcwa fourier_order | [25, 25] | [49, 49] | [49, 49] |
+| grcwa nG | 25 | 49 | 49 |
 | torcwa fourier_order | [3, 3] | [5, 5] | [7, 7] |
 | n_lens_slices | 15 | 30 | 50 |
 | grid_multiplier | 3 | 3 | 3 |
@@ -161,8 +161,8 @@ PYTHONPATH=. python3.11 scripts/convergence_study.py --sweep full_spectrum --fou
 grcwa는 빠르지만 많은 푸리에 차수와 파장에서 수치적 불안정성이 있습니다. 전체 스펙트럼 안정성이 필요한 프로덕션 시뮬레이션에서는 **torcwa [5,5] 또는 [7,7]**을 권장합니다. grcwa nG=49는 빠른 단일 파장 확인에 적합합니다.
 :::
 
-::: info fourier_order 설정 형식 참고
-COMPASS 설정 YAML에서 `fourier_order`는 `[nG_x, nG_y]`로 지정됩니다. grcwa의 경우 솔버가 내부적으로 이를 총 하모닉스로 매핑합니다. torcwa의 경우 `[N, N]`이 절단 차수를 직접 설정합니다.
+::: info 절단(truncation) 설정 형식 참고
+두 솔버는 절단 방식이 다릅니다: torcwa의 `params.fourier_order: [N, N]`은 축별 차수로 총 `(2N+1)²`개의 평면파를 의미하고, grcwa의 `params.nG`는 **총** 평면파 수입니다. 두 숫자는 호환되지 않으며, `nG: 49`는 torcwa `[49, 49]`보다 훨씬 거친 설정입니다.
 :::
 
 ## 설정 프리셋

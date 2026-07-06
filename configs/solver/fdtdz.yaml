@@ -1,10 +1,10 @@
 # @package _global_
 #
-# fdtdz solver configuration (EXPERIMENTAL / PLANNED)
+# fdtdz solver configuration
 #
 # fdtdz is a JAX-based 3D FDTD solver optimized for TPU/GPU.
-# This configuration is a stub for Phase 2 integration.
-# Status: Not yet implemented.
+# The adapter is implemented; the solver package itself must be installed
+# separately (see docs/guide/installation).
 
 solver:
   name: "fdtdz"

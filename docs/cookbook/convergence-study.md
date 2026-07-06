@@ -152,7 +152,7 @@ PYTHONPATH=. python3.11 scripts/convergence_study.py --sweep full_spectrum --fou
 
 | Parameter | Fast | Default | Converged |
 |-----------|------|---------|-----------|
-| grcwa fourier_order | [25, 25] | [49, 49] | [49, 49] |
+| grcwa nG | 25 | 49 | 49 |
 | torcwa fourier_order | [3, 3] | [5, 5] | [7, 7] |
 | n_lens_slices | 15 | 30 | 50 |
 | grid_multiplier | 3 | 3 | 3 |
@@ -161,8 +161,8 @@ PYTHONPATH=. python3.11 scripts/convergence_study.py --sweep full_spectrum --fou
 grcwa is fast but has numerical instability at many Fourier orders and across wavelengths. For production simulations requiring full-spectrum stability, **torcwa [5,5] or [7,7]** is recommended. grcwa nG=49 is suitable for quick single-wavelength checks.
 :::
 
-::: info Note on fourier_order config format
-In COMPASS config YAML, `fourier_order` is specified as `[nG_x, nG_y]`. For grcwa, the solver internally maps this to total harmonics. For torcwa, `[N, N]` directly sets the truncation order.
+::: info Note on the truncation config format
+The two solvers truncate differently: torcwa's `params.fourier_order: [N, N]` is a per-axis order — `(2N+1)²` total plane waves — while grcwa's `params.nG` is the TOTAL plane-wave count. The numbers are not interchangeable; `nG: 49` is far coarser than torcwa `[49, 49]`.
 :::
 
 ## Config Presets

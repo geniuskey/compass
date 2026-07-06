@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/geniuskey/compass/actions/workflows/ci.yml/badge.svg)](https://github.com/geniuskey/compass/actions/workflows/ci.yml)
 [![Docs](https://github.com/geniuskey/compass/actions/workflows/docs.yml/badge.svg)](https://geniuskey.github.io/compass/)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
@@ -16,8 +16,8 @@ stacks.
 
 ## Features
 
-- **Multi-solver support** -- swap between torcwa, grcwa, meent, and flaport FDTD
-  through a single configuration change
+- **Multi-solver support** -- nine solver backends (four RCWA, four FDTD, one TMM)
+  behind one interface; swap solvers through a single configuration change
 - **Parametric pixel modeling** -- define BSI pixel stacks (microlens, color filter,
   metal grid, photodiode) with Hydra-based YAML configs
 - **Material database** -- built-in n/k data for Si, SiO2, SiN, W, Al, and common
@@ -43,14 +43,17 @@ pip install -e .
 pip install -e ".[all]"
 ```
 
-### Individual solver extras
+### Solver group extras
 
 ```bash
-pip install -e ".[torcwa]"
-pip install -e ".[grcwa]"
-pip install -e ".[meent]"
-pip install -e ".[fdtd]"
+pip install -e ".[rcwa]"   # torcwa, grcwa, meent, fmmax (+ jax)
+pip install -e ".[fdtd]"   # flaport fdtd
+pip install -e ".[viz]"    # pyvista, plotly
+pip install -e ".[dev]"    # pytest, mypy, ruff
 ```
+
+meep is conda-only (`conda install -c conda-forge pymeep`); fdtdz and fdtdx
+follow their upstream install instructions.
 
 ## Quick Start
 
@@ -82,34 +85,43 @@ print(result.reflection)      # spectral reflectance
 
 ## Solver Support
 
-| Solver | Type | Backend | GPU | Status |
-|--------|------|---------|-----|--------|
-| [torcwa](https://github.com/kch3782/torcwa) | RCWA | PyTorch | Yes | Supported |
-| [grcwa](https://github.com/weiliangjinca/grcwa) | RCWA | JAX/NumPy | Yes | Supported |
-| [meent](https://github.com/kc-ml2/meent) | RCWA | PyTorch/JAX | Yes | Supported |
-| [flaport/fdtd](https://github.com/flaport/fdtd) | FDTD | PyTorch | Yes | Supported |
-| fdtdz | FDTD | JAX | Yes | Planned |
-| meep | FDTD | C++/Python | No | Planned |
+| Solver | Type | Backend | Notes |
+|--------|------|---------|-------|
+| [torcwa](https://github.com/kch3782/torcwa) | RCWA | PyTorch | Default backend; S-matrix, GPU |
+| [grcwa](https://github.com/weiliangjinca/grcwa) | RCWA | autograd/NumPy | Cross-validation reference |
+| [meent](https://github.com/kc-ml2/meent) | RCWA | NumPy/JAX/PyTorch | Multi-backend, analytic eigendecomp |
+| [fmmax](https://github.com/facebookresearch/fmmax) | RCWA | JAX | 4 selectable vector formulations |
+| [flaport/fdtd](https://github.com/flaport/fdtd) | FDTD | PyTorch | 2.5D FDTD, GPU + autograd |
+| [fdtdz](https://github.com/spinsphotonics/fdtdz) | FDTD | JAX | 2D (z-invariant) cross-sections |
+| [fdtdx](https://github.com/ymahlau/fdtdx) | FDTD | JAX | 3D, multi-GPU, differentiable |
+| [meep](https://github.com/NanoComp/meep) | FDTD | C++/Python | Subpixel averaging, adjoint gradients |
+| tmm | TMM | NumPy | 1D planar stacks, ~1000x faster than RCWA |
 
 ## Project Structure
 
 ```
 compass/
-  core/           # Types, config loading, constants
+  core/            # Types, config schema, units
   geometry/        # PixelStack, layer builders
   materials/       # Material database and interpolation
-  solvers/         # RCWA and FDTD solver adapters
+  solvers/         # RCWA / FDTD / TMM solver adapters
   sources/         # Planewave and cone illumination
-  analysis/        # QE extraction, field analysis
+  runners/         # Single-run, sweep, comparison, ROI orchestration
+  analysis/        # QE extraction, crosstalk, energy balance
+  optimization/    # Inverse design (scipy.optimize)
+  diagnostics/     # RCWA stability diagnostics
+  io/              # HDF5 / CSV / JSON export, ray files
   visualization/   # Plotting utilities
 configs/           # Hydra YAML configurations
+materials/         # n/k CSV data (metals, dielectrics, polymers, semiconductors)
+scripts/           # CLI entry points, convergence studies, report generators
 docs/              # VitePress documentation site
 tests/             # Test suite
 ```
 
 ## Documentation
 
-Full documentation is available at [compass-sim.github.io/compass](https://compass-sim.github.io/compass)
+Full documentation is available at [geniuskey.github.io/compass](https://geniuskey.github.io/compass/)
 or can be built locally:
 
 ```bash

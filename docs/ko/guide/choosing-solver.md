@@ -93,18 +93,11 @@ solver:
   stability:
     precision_strategy: "mixed"  # mixed | float32 | float64
     allow_tf32: false            # MUST be false for RCWA
-    eigendecomp_device: "cpu"    # cpu | gpu (cpu is more stable)
     fourier_factorization: "li_inverse"  # li_inverse | naive
     energy_check:
       enabled: true
       tolerance: 0.02
       auto_retry_float64: true
-    eigenvalue_broadening: 1.0e-10
-    condition_number_warning: 1.0e+12
-  convergence:
-    auto_converge: false
-    order_range: [5, 25]
-    qe_tolerance: 0.01
 ```
 
 **핵심 파라미터: `fourier_order`**
@@ -135,15 +128,15 @@ solver:
   name: "grcwa"
   type: "rcwa"
   params:
-    fourier_order: [9, 9]
+    nG: 49                  # 총 평면파 수 (축별 차수가 아님)
     dtype: "complex128"     # grcwa defaults to float64
-  convergence:
-    auto_converge: false
-    order_range: [5, 25]
-    qe_tolerance: 0.01
 ```
 
 grcwa는 선택적 JAX 가속이 가능한 NumPy 기반 계산을 사용합니다. 기본적으로 `complex128`을 사용하며 속도를 희생하는 대신 torcwa보다 수치적으로 더 안정적인 경향이 있습니다. 교차 검증에 유용합니다.
+
+::: warning grcwa 절단(truncation) 의미
+grcwa는 **총** 평면파 수(`nG`)로 절단하는 반면, torcwa/meent/fmmax는 축별 차수 `[m, m]` → 총 `(2m+1)²`개를 사용합니다. `nG: 49`는 torcwa의 `fourier_order: [49, 49]`보다 훨씬 거친 설정이므로 숫자를 솔버 간에 그대로 복사하면 안 됩니다.
+:::
 
 ### meent
 
@@ -155,10 +148,6 @@ solver:
     fourier_order: [9, 9]
     dtype: "complex64"
     backend: "torch"       # numpy | jax | torch
-  convergence:
-    auto_converge: false
-    order_range: [5, 25]
-    qe_tolerance: 0.01
 ```
 
 meent는 `numpy` (backend=0), `jax` (backend=1), `torch` (backend=2)의 세 가지 백엔드를 지원합니다. JAX 백엔드는 XLA 컴파일을 활용하여 성능을 높일 수 있습니다. meent는 내부적으로 **나노미터**를 사용하며, COMPASS 어댑터가 마이크로미터에서의 변환을 처리합니다.
