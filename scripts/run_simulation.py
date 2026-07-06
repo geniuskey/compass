@@ -30,6 +30,12 @@ def main(cfg: DictConfig) -> None:
 
     config = OmegaConf.to_container(cfg, resolve=True)
 
+    # Validate the composed config before running: typos and invalid values
+    # fail fast here instead of being silently ignored downstream.
+    from compass.core import CompassConfig
+
+    CompassConfig.model_validate(config)
+
     from compass.runners.single_run import SingleRunner
 
     result = SingleRunner.run(config)
