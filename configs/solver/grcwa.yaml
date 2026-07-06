@@ -8,8 +8,3 @@ solver:
     dtype: "complex128"
     n_lens_slices: 30
     grid_multiplier: 3
-
-  convergence:
-    auto_converge: false
-    order_range: [5, 25]
-    qe_tolerance: 0.01

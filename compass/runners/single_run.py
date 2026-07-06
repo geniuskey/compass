@@ -1,6 +1,7 @@
 """Single simulation runner."""
 from __future__ import annotations
 
+import copy
 import logging
 
 from compass.core.types import SimulationResult
@@ -9,6 +10,10 @@ from compass.materials.database import MaterialDB
 from compass.solvers.base import SolverFactory
 
 logger = logging.getLogger(__name__)
+
+# dtype promotion used when energy conservation fails and
+# stability.energy_check.auto_retry_float64 is enabled.
+_RETRY_DTYPES = {"complex64": "complex128", "float32": "float64"}
 
 class SingleRunner:
     """Run a single simulation with given config."""
@@ -43,7 +48,31 @@ class SingleRunner:
         solver.setup_source(source_config)
         result = solver.run_timed()
 
-        # Validate
-        solver.validate_energy_balance(result)
+        # Energy conservation check (solver.stability.energy_check)
+        energy_cfg = solver_config.get("stability", {}).get("energy_check", {})
+        if not energy_cfg.get("enabled", True):
+            return result
+        tolerance = energy_cfg.get("tolerance", 0.01)
+        if solver.validate_energy_balance(result, tolerance=tolerance):
+            return result
+
+        # Optional retry at higher precision when the check fails
+        dtype = solver_config.get("params", {}).get("dtype")
+        retry_dtype = _RETRY_DTYPES.get(dtype)
+        if not energy_cfg.get("auto_retry_float64", False) or retry_dtype is None:
+            return result
+
+        logger.warning(
+            f"{solver_name}: energy conservation violated with dtype={dtype}; "
+            f"retrying with dtype={retry_dtype}"
+        )
+        retry_config = copy.deepcopy(solver_config)
+        retry_config["params"]["dtype"] = retry_dtype
+        solver = SolverFactory.create(solver_name, retry_config, device)
+        solver.setup_geometry(pixel_stack)
+        solver.setup_source(source_config)
+        result = solver.run_timed()
+        result.metadata["energy_retry_dtype"] = retry_dtype
+        solver.validate_energy_balance(result, tolerance=tolerance)
 
         return result

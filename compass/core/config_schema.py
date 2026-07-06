@@ -188,30 +188,19 @@ class EnergyCheckConfig(StrictModel):
 
 
 class StabilityConfig(StrictModel):
+    # precision_strategy and fourier_factorization are consumed by the
+    # diagnostics pre-simulation checks (compass.solvers.rcwa.stability);
+    # allow_tf32 is applied by PrecisionManager and the torcwa adapter.
     precision_strategy: Literal["float32", "float64", "mixed", "adaptive"] = "mixed"
     allow_tf32: bool = False
-    eigendecomp_device: Literal["cpu", "gpu", "cusolver"] = "cpu"
     fourier_factorization: Literal["naive", "li_inverse", "normal_vector"] = "li_inverse"
     energy_check: EnergyCheckConfig = Field(default_factory=EnergyCheckConfig)
-    eigenvalue_broadening: float = 1e-10
-    condition_number_warning: float = 1e12
-
-
-class ConvergenceConfig(StrictModel):
-    auto_converge: bool = False
-    order_range: tuple[int, int] = (5, 25)
-    qe_tolerance: float = 0.01
-    # FDTD grid-spacing sweep range in um (flaport, fdtdz, fdtdx).
-    spacing_range: tuple[float, float] | None = None
-    # FDTD resolution sweep range in pixels/um (meep).
-    resolution_range: tuple[float, float] | None = None
 
 
 class SolverConfig(StrictModel):
     name: str = "torcwa"
     type: Literal["rcwa", "fdtd", "tmm"] = "rcwa"
     params: dict = Field(default_factory=lambda: {"fourier_order": [9, 9], "dtype": "complex64"})
-    convergence: ConvergenceConfig = Field(default_factory=ConvergenceConfig)
     stability: StabilityConfig = Field(default_factory=StabilityConfig)
 
 

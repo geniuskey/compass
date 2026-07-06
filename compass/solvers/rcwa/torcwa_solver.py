@@ -93,9 +93,6 @@ class TorcwaSolver(SolverBase):
         n_lens_slices = params.get("n_lens_slices", 30)
         grid_multiplier = params.get("grid_multiplier", 3)
 
-        stability = self.config.get("stability", {})
-        precision_strategy = stability.get("precision_strategy", "mixed")
-
         lx, ly = self._pixel_stack.domain_size
         L = [lx, ly]  # Period in um
 
@@ -133,7 +130,6 @@ class TorcwaSolver(SolverBase):
                         layer_slices,
                         pol,
                         dtype,
-                        precision_strategy,
                     )
                     R_pol.append(result["R"])
                     T_pol.append(result["T"])
@@ -198,7 +194,6 @@ class TorcwaSolver(SolverBase):
         layer_slices,
         polarization: str,
         dtype,
-        precision_strategy: str,
     ) -> dict:
         """Run single wavelength, single polarization RCWA calculation."""
         freq = 1.0 / wavelength  # torcwa uses normalized frequency

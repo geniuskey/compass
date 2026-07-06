@@ -374,3 +374,93 @@ class TestROISweepRunner:
 
         for _key, val in results.items():
             assert isinstance(val, SimulationResult)
+
+
+# ---------------------------------------------------------------------------
+# SingleRunner energy-check / auto-retry tests
+# ---------------------------------------------------------------------------
+
+
+class TestSingleRunnerEnergyCheck:
+    """Tests for solver.stability.energy_check handling in SingleRunner."""
+
+    @staticmethod
+    def _config(enabled=True, tolerance=0.02, auto_retry=True, dtype="complex64"):
+        cfg = _base_config()
+        cfg["solver"]["params"] = {"dtype": dtype}
+        cfg["solver"]["stability"] = {
+            "energy_check": {
+                "enabled": enabled,
+                "tolerance": tolerance,
+                "auto_retry_float64": auto_retry,
+            }
+        }
+        return cfg
+
+    @patch("compass.runners.single_run.SolverFactory")
+    @patch("compass.runners.single_run.PixelStack")
+    @patch("compass.runners.single_run.MaterialDB")
+    def test_tolerance_from_config_is_used(self, mock_mat_db, mock_ps, mock_factory):
+        solver = _make_mock_solver()
+        mock_factory.create.return_value = solver
+
+        SingleRunner.run(self._config(tolerance=0.005))
+
+        solver.validate_energy_balance.assert_called_once()
+        assert solver.validate_energy_balance.call_args.kwargs["tolerance"] == 0.005
+
+    @patch("compass.runners.single_run.SolverFactory")
+    @patch("compass.runners.single_run.PixelStack")
+    @patch("compass.runners.single_run.MaterialDB")
+    def test_disabled_energy_check_skips_validation(self, mock_mat_db, mock_ps, mock_factory):
+        solver = _make_mock_solver()
+        mock_factory.create.return_value = solver
+
+        SingleRunner.run(self._config(enabled=False))
+
+        solver.validate_energy_balance.assert_not_called()
+
+    @patch("compass.runners.single_run.SolverFactory")
+    @patch("compass.runners.single_run.PixelStack")
+    @patch("compass.runners.single_run.MaterialDB")
+    def test_violation_retries_with_promoted_dtype(self, mock_mat_db, mock_ps, mock_factory):
+        failing = _make_mock_solver()
+        failing.validate_energy_balance.return_value = False
+        retry_result = _make_result()
+        retrying = _make_mock_solver(retry_result)
+        mock_factory.create.side_effect = [failing, retrying]
+
+        result = SingleRunner.run(self._config(dtype="complex64"))
+
+        assert mock_factory.create.call_count == 2
+        retry_solver_cfg = mock_factory.create.call_args_list[1][0][1]
+        assert retry_solver_cfg["params"]["dtype"] == "complex128"
+        assert result.metadata["energy_retry_dtype"] == "complex128"
+        retrying.setup_geometry.assert_called_once()
+        retrying.setup_source.assert_called_once()
+
+    @patch("compass.runners.single_run.SolverFactory")
+    @patch("compass.runners.single_run.PixelStack")
+    @patch("compass.runners.single_run.MaterialDB")
+    def test_no_retry_when_auto_retry_disabled(self, mock_mat_db, mock_ps, mock_factory):
+        failing = _make_mock_solver()
+        failing.validate_energy_balance.return_value = False
+        mock_factory.create.return_value = failing
+
+        result = SingleRunner.run(self._config(auto_retry=False))
+
+        assert mock_factory.create.call_count == 1
+        assert "energy_retry_dtype" not in result.metadata
+
+    @patch("compass.runners.single_run.SolverFactory")
+    @patch("compass.runners.single_run.PixelStack")
+    @patch("compass.runners.single_run.MaterialDB")
+    def test_no_retry_when_dtype_already_double(self, mock_mat_db, mock_ps, mock_factory):
+        failing = _make_mock_solver()
+        failing.validate_energy_balance.return_value = False
+        mock_factory.create.return_value = failing
+
+        result = SingleRunner.run(self._config(dtype="complex128"))
+
+        assert mock_factory.create.call_count == 1
+        assert "energy_retry_dtype" not in result.metadata
