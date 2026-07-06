@@ -217,6 +217,7 @@ class FlaportFdtdSolver(SolverBase):
             metadata={
                 "solver_name": "fdtd_flaport",
                 "grid_spacing": grid_spacing,
+                "qe_method": "eps_imag_weight",
                 "device": self.device,
                 **self._failure_metadata(),
             },

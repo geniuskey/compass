@@ -59,8 +59,23 @@ class GrcwaSolver(SolverBase):
             raise ImportError("grcwa is required. Install with: pip install grcwa") from err
 
         params = self.config.get("params", {})
-        fourier_order = params.get("fourier_order", [9, 9])
-        nG = fourier_order[0]  # grcwa uses single order
+        # grcwa truncates by TOTAL number of plane waves (nG), unlike the
+        # per-axis Fourier order [m, m] used by torcwa/meent/fmmax where the
+        # total count is (2m+1)^2. Configs should set params.nG explicitly;
+        # fourier_order[0] is accepted as a legacy fallback but is NOT
+        # equivalent to the same value in the other RCWA solvers.
+        fourier_order = params.get("fourier_order")
+        if "nG" in params:
+            nG = int(params["nG"])
+        elif fourier_order is not None:
+            nG = int(fourier_order[0])
+            logger.warning(
+                f"grcwa: params.nG not set; using fourier_order[0]={nG} as the total "
+                "plane-wave count. Note grcwa's nG is NOT a per-axis order — set "
+                "params.nG explicitly to silence this warning."
+            )
+        else:
+            nG = 9
         n_lens_slices = params.get("n_lens_slices", 30)
         grid_multiplier = params.get("grid_multiplier", 3)
 
@@ -188,7 +203,8 @@ class GrcwaSolver(SolverBase):
             absorption=result_arrays["absorption"],
             metadata={
                 "solver_name": "grcwa",
-                "fourier_order": fourier_order,
+                "nG": nG,
+                "qe_method": "eps_imag_weight",
                 "device": self.device,
                 **self._failure_metadata(),
             },

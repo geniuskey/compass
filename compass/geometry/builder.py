@@ -243,7 +243,7 @@ class GeometryBuilder:
         dx = np.abs((xx % period) - period / 2.0)
         dy = np.abs((yy % period) - period / 2.0)
         mask = (dx <= half_width) & (dy <= half_width)
-        return mask.astype(np.float64)
+        return np.asarray(mask, dtype=np.float64)
 
     @staticmethod
     def metal_grid(

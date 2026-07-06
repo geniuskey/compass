@@ -165,6 +165,7 @@ class MeentSolver(SolverBase):
                 "solver_name": "meent",
                 "backend": self._backend,
                 "fourier_order": fourier_order,
+                "qe_method": "eps_imag_weight",
                 **self._failure_metadata(),
             },
         )

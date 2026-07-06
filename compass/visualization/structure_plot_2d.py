@@ -145,7 +145,7 @@ def _plot_vertical_cross_section(
         ax.set_title("Empty pixel stack")
         return
 
-    rect_patches = []
+    rect_patches: list[mpatches.Patch] = []
     rect_colors = []
 
     for layer in layers:
@@ -228,11 +228,11 @@ def _plot_vertical_cross_section(
             rect_colors.append(face_color)
 
     # Draw patches
-    for rect, color in zip(rect_patches, rect_colors):
-        rect.set_facecolor(color)
-        rect.set_edgecolor("black")
-        rect.set_linewidth(0.5)
-        ax.add_patch(rect)
+    for patch, color in zip(rect_patches, rect_colors):
+        patch.set_facecolor(color)
+        patch.set_edgecolor("black")
+        patch.set_linewidth(0.5)
+        ax.add_patch(patch)
 
     # Draw layer boundary lines and annotations
     z_boundaries = set()

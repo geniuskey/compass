@@ -33,6 +33,7 @@ class TorcwaSolver(SolverBase):
         self._last_sim = None
         self._last_layer_info: list | None = None
         self._last_wavelength: float | None = None
+        self._qe_fallback_used = False
 
         # Configure precision
         self._setup_precision()
@@ -103,6 +104,7 @@ class TorcwaSolver(SolverBase):
         all_qe: dict[str, list[np.ndarray]] = {}
         all_R, all_T, all_A = [], [], []
         self._failed_runs = []
+        self._qe_fallback_used = False
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
             logger.debug(
@@ -179,6 +181,14 @@ class TorcwaSolver(SolverBase):
             metadata={
                 "solver_name": "torcwa",
                 "fourier_order": fourier_order,
+                # QE post-processing method actually used: cross-solver QE
+                # differences between field integration and the eps''-weight
+                # approximation are methodology, not solver accuracy.
+                "qe_method": (
+                    "eps_imag_weight_fallback"
+                    if self._qe_fallback_used
+                    else "field_integration"
+                ),
                 "device": self.device,
                 **self._failure_metadata(),
             },
@@ -293,6 +303,7 @@ class TorcwaSolver(SolverBase):
                 f"torcwa: field-based QE failed at λ={wavelength:.4f}um ({e}); "
                 "falling back to eps''-weight approximation"
             )
+            self._qe_fallback_used = True
             qe_per_pixel = self._compute_per_pixel_qe(sim, torch, layer_slices, wavelength, A)
 
         return {"R": R, "T": T, "A": A, "qe_per_pixel": qe_per_pixel}

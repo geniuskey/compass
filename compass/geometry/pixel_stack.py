@@ -492,7 +492,7 @@ class PixelStack:
         merged: dict = {}
         for key in (channel_name, color_code):
             raw = cf_cfg.get(key)
-            if hasattr(raw, "model_dump"):
+            if raw is not None and hasattr(raw, "model_dump"):
                 raw = raw.model_dump(exclude_none=True)
             if isinstance(raw, dict):
                 merged.update({k: v for k, v in raw.items() if v is not None})
@@ -550,7 +550,7 @@ class PixelStack:
             cf_t = max(spec["thickness"] for spec in self._color_filter_specs(cf_cfg).values())
         else:
             cf_t = max(0.0, float(cf_cfg.get("thickness", 0.6)))
-        return max(cf_t, grid_t)
+        return float(max(cf_t, grid_t))
 
     def _uses_color_filter_relief(self, cf_cfg: dict, layer: Layer) -> bool:
         """Whether the CF stack needs z-aware slices instead of one flat slab."""
@@ -750,7 +750,9 @@ class PixelStack:
         radius = min(corner_radius, inner_half)
         ex = np.maximum(dx - (inner_half - radius), 0.0)
         ey = np.maximum(dy - (inner_half - radius), 0.0)
-        return (dx <= inner_half) & (dy <= inner_half) & (ex * ex + ey * ey <= radius * radius)
+        return np.asarray(
+            (dx <= inner_half) & (dy <= inner_half) & (ex * ex + ey * ey <= radius * radius)
+        )
 
     def _build_silicon_slices(
         self,

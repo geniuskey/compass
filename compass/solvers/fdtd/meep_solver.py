@@ -255,6 +255,7 @@ class MeepSolver(SolverBase):
             absorption=result_arrays["absorption"],
             metadata={
                 "solver_name": "meep",
+                "qe_method": "field_integration",
                 "resolution": resolution,
                 "pml_thickness": pml_thickness,
                 "runtime_periods": runtime_periods,

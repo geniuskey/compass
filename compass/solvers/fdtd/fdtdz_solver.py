@@ -292,6 +292,7 @@ class FdtdzSolver(SolverBase):
             absorption=result_arrays["absorption"],
             metadata={
                 "solver_name": "fdtdz",
+                "qe_method": "field_integration",
                 "grid_spacing": grid_spacing,
                 "pml_layers": pml_layers,
                 "n_timesteps": n_timesteps,

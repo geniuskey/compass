@@ -306,6 +306,7 @@ class FdtdxSolver(SolverBase):
             absorption=result_arrays["absorption"],
             metadata={
                 "solver_name": "fdtdx",
+                "qe_method": "field_integration",
                 "grid_spacing": grid_spacing,
                 "pml_layers": pml_layers,
                 "time_steps": time_steps,

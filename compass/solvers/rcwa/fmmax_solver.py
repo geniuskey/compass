@@ -229,6 +229,7 @@ class FmmaxSolver(SolverBase):
                 "fmm_formulation": self._fmm_formulation,
                 "fourier_order": fourier_order,
                 "dtype": self._dtype_str,
+                "qe_method": "eps_imag_weight",
                 **self._failure_metadata(),
             },
         )

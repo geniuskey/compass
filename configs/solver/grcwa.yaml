@@ -4,7 +4,7 @@ solver:
   type: "rcwa"
 
   params:
-    fourier_order: [49, 49]
+    nG: 49                     # total plane-wave count (grcwa semantics, NOT per-axis order)
     dtype: "complex128"
     n_lens_slices: 30
     grid_multiplier: 3

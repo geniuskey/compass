@@ -144,6 +144,29 @@ def build_source_config_multi_wavelength(
     }
 
 
+def _rcwa_solver_config(
+    solver_name: str,
+    fourier_order: list[int],
+    n_lens_slices: int,
+    grid_multiplier: int,
+) -> dict:
+    """Build an RCWA solver config, mapping the order to solver semantics.
+
+    grcwa truncates by TOTAL plane-wave count (params.nG); torcwa/meent/fmmax
+    use a per-axis Fourier order (params.fourier_order = [m, m]).
+    """
+    params: dict = {
+        "dtype": "complex128",
+        "n_lens_slices": n_lens_slices,
+        "grid_multiplier": grid_multiplier,
+    }
+    if solver_name == "grcwa":
+        params["nG"] = fourier_order[0]
+    else:
+        params["fourier_order"] = fourier_order
+    return {"name": solver_name, "type": "rcwa", "params": params}
+
+
 def run_single_sim(
     solver_name: str,
     fourier_order: list[int],
@@ -168,16 +191,9 @@ def run_single_sim(
     material_db = MaterialDB()
     pixel_stack = PixelStack(pixel_config or PIXEL_CONFIG, material_db)
 
-    solver_config = {
-        "name": solver_name,
-        "type": "rcwa",
-        "params": {
-            "fourier_order": fourier_order,
-            "dtype": "complex128",
-            "n_lens_slices": n_lens_slices,
-            "grid_multiplier": grid_multiplier,
-        },
-    }
+    solver_config = _rcwa_solver_config(
+        solver_name, fourier_order, n_lens_slices, grid_multiplier
+    )
 
     solver = SolverFactory.create(solver_name, solver_config, "cpu")
     solver.setup_geometry(pixel_stack)
@@ -216,16 +232,9 @@ def run_spectrum_sim(
     material_db = MaterialDB()
     pixel_stack = PixelStack(PIXEL_CONFIG, material_db)
 
-    solver_config = {
-        "name": solver_name,
-        "type": "rcwa",
-        "params": {
-            "fourier_order": fourier_order,
-            "dtype": "complex128",
-            "n_lens_slices": n_lens_slices,
-            "grid_multiplier": grid_multiplier,
-        },
-    }
+    solver_config = _rcwa_solver_config(
+        solver_name, fourier_order, n_lens_slices, grid_multiplier
+    )
 
     solver = SolverFactory.create(solver_name, solver_config, "cpu")
     solver.setup_geometry(pixel_stack)
@@ -262,16 +271,9 @@ def run_sim_with_qe(
     material_db = MaterialDB()
     pixel_stack = PixelStack(pixel_config or PIXEL_CONFIG, material_db)
 
-    solver_config = {
-        "name": solver_name,
-        "type": "rcwa",
-        "params": {
-            "fourier_order": fourier_order,
-            "dtype": "complex128",
-            "n_lens_slices": n_lens_slices,
-            "grid_multiplier": grid_multiplier,
-        },
-    }
+    solver_config = _rcwa_solver_config(
+        solver_name, fourier_order, n_lens_slices, grid_multiplier
+    )
 
     solver = SolverFactory.create(solver_name, solver_config, "cpu")
     solver.setup_geometry(pixel_stack)
