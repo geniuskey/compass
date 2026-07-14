@@ -436,6 +436,13 @@ export default withMermaid(defineConfig({
   },
 
   head: [
+    // Google tag (gtag.js)
+    ['script', { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=G-DXE9T8VSVP' }],
+    ['script', {}, `window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-DXE9T8VSVP');`],
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/compass/favicon.svg' }],
     ['meta', { property: 'og:title', content: 'COMPASS' }],
     ['meta', { property: 'og:description', content: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation' }],
