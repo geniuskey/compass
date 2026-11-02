@@ -154,6 +154,17 @@ class TestSolverBaseAbstractMethods:
 class TestValidateEnergyBalance:
     """Tests for SolverBase.validate_energy_balance."""
 
+    @pytest.mark.parametrize("invalid", [np.nan, np.inf, -np.inf])
+    def test_nonfinite_spectrum_fails(self, invalid):
+        result = SimulationResult(
+            qe_per_pixel={},
+            wavelengths=np.array([0.55]),
+            reflection=np.array([invalid]),
+            transmission=np.array([0.3]),
+            absorption=np.array([0.5]),
+        )
+        assert MockSolver({}).validate_energy_balance(result) is False
+
     def test_perfect_conservation(self):
         """R + T + A = 1 exactly passes."""
         solver = MockSolver({})

@@ -125,7 +125,7 @@ Full documentation is available at [geniuskey.github.io/compass](https://geniusk
 or can be built locally:
 
 ```bash
-cd docs && npm install && npm run dev
+cd docs && npm install && npm run docs:dev
 ```
 
 ## Contributing

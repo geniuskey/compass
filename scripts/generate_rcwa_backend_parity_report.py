@@ -75,7 +75,7 @@ BACKENDS = [
             "name": "grcwa",
             "type": "rcwa",
             "params": {
-                "fourier_order": [3, 3],
+                "nG": 10,  # grcwa retains 9 waves on this square lattice.
                 "n_lens_slices": 4,
                 "grid_multiplier": 2,
             },
@@ -91,6 +91,7 @@ BACKENDS = [
             "params": {
                 "fourier_order": [1, 1],
                 "backend": "numpy",
+                "n_lens_slices": 4,
             },
         },
     ),
@@ -102,7 +103,8 @@ BACKENDS = [
             "name": "fmmax",
             "type": "rcwa",
             "params": {
-                "fourier_order": [3, 3],
+                "fourier_order": [1, 1],
+                "n_lens_slices": 4,
                 "fmm_formulation": "jones",
                 "dtype": "complex64",
             },
@@ -458,9 +460,9 @@ def write_reports(
             "energy-consistent R/T/A values in this smoke test.",
             f"- {len(passing)} of {len(results)} adapters met the parity target against "
             "`torcwa` (max R/T/A delta <= 0.05).",
-            "- Current result: `torcwa` is the usable reference path for patterned "
-            "PixelStack runs; the other adapters need normalization/API work before they "
-            "should be used for production pixel comparisons.",
+            "- Production pixel comparisons require converged R/T/A and independently "
+            "validated photodiode QE. Passing this low-order health gate establishes "
+            "neither condition.",
             "",
             "::: warning Low-order smoke test",
             "This report does not claim converged QE. It checks whether adapters can run "
@@ -538,9 +540,8 @@ def write_reports(
             "energy-consistent R/T/A 값을 냈다.",
             f"- {len(results)}개 중 {len(passing)}개가 `torcwa` 대비 parity target "
             "(max R/T/A delta <= 0.05)을 만족했다.",
-            "- 현재 결과에서 patterned PixelStack run의 usable reference path는 "
-            "`torcwa`다. 나머지 adapter는 production pixel comparison 전에 "
-            "normalization/API 보수가 필요하다.",
+            "- 설계용 픽셀 비교에는 수렴한 R/T/A와 별도로 검증한 photodiode QE가 "
+            "필요하다. 이 낮은 order의 실행 점검 통과만으로 두 조건을 충족하지 않는다.",
             "",
             "::: warning Low-order smoke test",
             "이 리포트는 converged QE를 주장하지 않는다. adapter가 같은 patterned stack을 "

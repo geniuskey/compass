@@ -21,10 +21,14 @@ class SingleRunner:
     @staticmethod
     def run(config: dict) -> SimulationResult:
         """Execute a single simulation from config dict."""
-        _pixel_config = config.get("pixel", config)
         solver_config = config.get("solver", {})
         source_config = config.get("source", {})
         compute_config = config.get("compute", {})
+
+        if source_config.get("type") == "cone_illumination":
+            from compass.runners.cone_runner import ConeIlluminationRunner
+
+            return ConeIlluminationRunner.run(config)
 
         # Determine device
         device = compute_config.get("backend", "cpu")

@@ -23,9 +23,11 @@ class _RecordingGrcwaObj:
     """Fake grcwa.obj that records the nG it was constructed with."""
 
     last_nG: int | None = None
+    last_angles: tuple[float, float] | None = None
 
     def __init__(self, nG, L1, L2, freq, theta, phi, verbose=0):
         type(self).last_nG = nG
+        type(self).last_angles = (theta, phi)
 
     def Add_LayerUniform(self, thickness, eps):
         pass
@@ -46,12 +48,12 @@ class _RecordingGrcwaObj:
         return 0.1, 0.3
 
 
-def _run(solver: GrcwaSolver):
+def _run(solver: GrcwaSolver, theta_deg=0.0, phi_deg=0.0):
     solver.setup_geometry(PixelStack({"pixel": {"pitch": 1.0, "unit_cell": [2, 2]}}))
     solver.setup_source(
         {
             "wavelength": {"mode": "single", "value": 0.55},
-            "angle": {"theta_deg": 0.0, "phi_deg": 0.0},
+            "angle": {"theta_deg": theta_deg, "phi_deg": phi_deg},
             "polarization": "TE",
         }
     )
@@ -66,6 +68,13 @@ def test_explicit_nG_param_is_used():
 
     assert _RecordingGrcwaObj.last_nG == 25
     assert result.metadata["nG"] == 25
+
+
+def test_incident_angles_are_converted_to_radians():
+    import math
+
+    _run(GrcwaSolver({"name": "grcwa", "params": {"nG": 9}}), 30.0, 45.0)
+    assert _RecordingGrcwaObj.last_angles == pytest.approx((math.pi / 6, math.pi / 4))
 
 
 def test_fourier_order_fallback_warns(caplog):
@@ -100,7 +109,7 @@ def test_shipped_grcwa_configs_use_nG():
 
     for name in ("grcwa", "grcwa_fast", "grcwa_converged"):
         cfg_path = Path(__file__).resolve().parents[2] / "configs" / "solver" / f"{name}.yaml"
-        params = yaml.safe_load(cfg_path.read_text())["solver"]["params"]
+        params = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))["solver"]["params"]
         assert "nG" in params, f"{name}.yaml must set params.nG"
         assert "fourier_order" not in params
 

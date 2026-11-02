@@ -128,6 +128,8 @@ class FdtdxSolver(SolverBase):
             source_config: Source configuration dictionary.
         """
         self._source = PlanewaveSource.from_config(source_config)
+        if self._source.theta_deg != 0.0:
+            raise NotImplementedError("fdtdx supports normal incidence only")
         if self._source.n_wavelengths == 0:
             raise ValueError("wavelengths array must not be empty")
         if np.any(self._source.wavelengths <= 0):

@@ -40,6 +40,8 @@ class ResultExporter:
             summary["reflection"] = result.reflection.tolist()
         if result.transmission is not None:
             summary["transmission"] = result.transmission.tolist()
+        if result.absorption is not None:
+            summary["absorption"] = result.absorption.tolist()
         with open(str(path), "w") as f:
             json.dump(summary, f, indent=2)
         logger.info(f"Exported summary to {filepath}")

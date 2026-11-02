@@ -18,8 +18,11 @@ from scipy.interpolate import CubicSpline, interp1d
 
 logger = logging.getLogger(__name__)
 
-# Default materials directory (relative to package root)
-_MATERIALS_DIR = Path(__file__).parent.parent.parent / "materials"
+# Wheels bundle the same CSV library inside the package. Source checkouts
+# retain the top-level directory used by report scripts and contributors.
+_MATERIALS_DIR = Path(__file__).parent / "data"
+if not _MATERIALS_DIR.is_dir():
+    _MATERIALS_DIR = Path(__file__).parent.parent.parent / "materials"
 
 
 @dataclass

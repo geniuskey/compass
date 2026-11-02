@@ -398,7 +398,8 @@ class PixelStack:
             # the microlens height map mirror-symmetric about pixel centers.
             x = (np.arange(nx) + 0.5) * (lx / nx)
             y = (np.arange(ny) + 0.5) * (ly / ny)
-            self._meshgrid_cache[cache_key] = np.meshgrid(x, y, indexing="xy")
+            xx, yy = np.meshgrid(x, y, indexing="xy")
+            self._meshgrid_cache[cache_key] = (xx, yy)
         return self._meshgrid_cache[cache_key]
 
     def _get_height_map(self, nx: int, ny: int) -> np.ndarray:

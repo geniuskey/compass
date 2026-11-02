@@ -138,15 +138,16 @@ class FmmaxSolver(SolverBase):
         nx = max(64, (2 * fourier_order[0] + 1) * 3)
         ny = max(64, (2 * fourier_order[1] + 1) * 3)
 
-        # Expansion for Fourier basis
-        expansion = basis.generate_expansion(
-            primitive_lattice_vectors=basis.LatticeVectors(
-                u=jnp.array([lx, 0.0]),
-                v=jnp.array([0.0, ly]),
-            ),
-            approximate_num_terms=max(fourier_order[0], fourier_order[1]),
-            truncation=basis.Truncation.CIRCULAR,
-        )
+        # Match the per-axis order convention of torcwa and meent exactly.
+        # generate_expansion's approximate_num_terms is a TOTAL count.
+        mx, my = fourier_order
+        coefficients = np.array([
+            (i, j) for i in range(-mx, mx + 1) for j in range(-my, my + 1)
+        ])
+        coefficients = coefficients[np.argsort(
+            np.sum(coefficients ** 2, axis=1), kind="stable",
+        )]
+        expansion = basis.Expansion(basis_coefficients=coefficients)
 
         pol_runs = self._source.get_polarization_runs()
         self._failed_runs = []
@@ -156,7 +157,9 @@ class FmmaxSolver(SolverBase):
         all_A: list[float] = []
 
         for _wl_idx, wavelength in enumerate(self._source.wavelengths):
-            layer_slices = self._pixel_stack.get_layer_slices(wavelength, nx, ny)
+            layer_slices = self._pixel_stack.get_layer_slices(
+                wavelength, nx, ny, n_lens_slices=params.get("n_lens_slices", 30),
+            )
 
             R_pol: list[float] = []
             T_pol: list[float] = []
@@ -228,6 +231,7 @@ class FmmaxSolver(SolverBase):
                 "solver_name": "fmmax",
                 "fmm_formulation": self._fmm_formulation,
                 "fourier_order": fourier_order,
+                "num_terms": expansion.num_terms,
                 "dtype": self._dtype_str,
                 "qe_method": "eps_imag_weight",
                 **self._failure_metadata(),
@@ -264,6 +268,8 @@ class FmmaxSolver(SolverBase):
         Returns:
             Tuple of (R, T, A) as floats.
         """
+        from fmmax import basis, fields, scattering
+
         # Convert wavelength from um to the unit used by fmmax
         # fmmax works in user-defined length units; we use um consistently
         in_plane_wavevector = jnp.zeros(2, dtype=float)
@@ -278,27 +284,25 @@ class FmmaxSolver(SolverBase):
                 ky = k0 * np.sin(theta_rad) * np.sin(phi_rad)
                 in_plane_wavevector = jnp.array([kx, ky])
 
-        # Set polarization amplitudes
-        if pol == "TE":
-            # s-polarization: E perpendicular to plane of incidence
-            s_amplitude = jnp.ones(1, dtype=jax_dtype)
-            p_amplitude = jnp.zeros(1, dtype=jax_dtype)
-        else:
-            # p-polarization: E in plane of incidence
-            s_amplitude = jnp.zeros(1, dtype=jax_dtype)
-            p_amplitude = jnp.ones(1, dtype=jax_dtype)
+        lattice = basis.LatticeVectors(
+            u=jnp.array([lx, 0.0]), v=jnp.array([0.0, ly]),
+        )
 
         # Build layer permittivities and thicknesses
         # fmmax layers are ordered from top (superstrate side) to bottom (substrate side)
         # COMPASS layer_slices are bottom-to-top, so we reverse
-        layer_thicknesses = []
-        layer_permittivities = []
+        layer_thicknesses = [0.0]
+        layer_permittivities = [jnp.ones((1, 1), dtype=jax_dtype)]
 
         for s in reversed(layer_slices):
             layer_thicknesses.append(s.thickness)
             # Convert numpy permittivity grid to JAX array
-            eps_jax = jnp.array(s.eps_grid, dtype=jax_dtype)
+            # fmmax uses [x, y], while COMPASS stores grids as [y, x].
+            eps_jax = jnp.array(s.eps_grid.T, dtype=jax_dtype)
             layer_permittivities.append(eps_jax)
+
+        layer_thicknesses.append(0.0)
+        layer_permittivities.append(jnp.ones((1, 1), dtype=jax_dtype))
 
         # Solve each layer eigenmode problem
         layer_solve_results = []
@@ -306,29 +310,43 @@ class FmmaxSolver(SolverBase):
             solve_result = fmm.eigensolve_isotropic_media(
                 wavelength=jnp.array(wavelength),
                 in_plane_wavevector=in_plane_wavevector,
-                primitive_lattice_vectors=expansion.primitive_lattice_vectors,
+                primitive_lattice_vectors=lattice,
                 permittivity=eps,
                 expansion=expansion,
                 formulation=formulation,
             )
             layer_solve_results.append(solve_result)
 
-        # Build S-matrix by cascading layers
-        s_matrix = layer_solve_results[0].s_matrix
-        for i in range(1, len(layer_solve_results)):
-            s_matrix = fmm.append_layer(
-                s_matrix=s_matrix,
-                layer_solve_result=layer_solve_results[i],
-                layer_thickness=jnp.array(layer_thicknesses[i]),
-            )
+        s_matrix = scattering.stack_s_matrix(
+            layer_solve_results, [jnp.array(d) for d in layer_thicknesses],
+        )
 
-        # Compute R and T power from S-matrix
-        # Total reflected and transmitted power
-        r_coeffs = s_matrix.s11 @ s_amplitude + s_matrix.s12 @ p_amplitude
-        t_coeffs = s_matrix.s21 @ s_amplitude + s_matrix.s22 @ p_amplitude
-
-        R = float(jnp.sum(jnp.abs(r_coeffs) ** 2))
-        T = float(jnp.sum(jnp.abs(t_coeffs) ** 2))
+        # The homogeneous air eigenvectors span Hx and Hy for each order.
+        # Excite only the zero diffraction order, rotated into the s/p basis.
+        n_terms = expansion.num_terms
+        zero_order = int(np.flatnonzero(
+            np.all(np.asarray(expansion.basis_coefficients) == 0, axis=1)
+        )[0])
+        phi = self._source.phi_rad if self._source is not None else 0.0
+        incident = np.zeros((2 * n_terms, 1), dtype=complex)
+        hx, hy = (np.cos(phi), np.sin(phi)) if pol == "TE" else (-np.sin(phi), np.cos(phi))
+        incident[zero_order, 0] = hx
+        incident[n_terms + zero_order, 0] = hy
+        forward = jnp.array(incident, dtype=jax_dtype)
+        zero = jnp.zeros(forward.shape, dtype=jax_dtype)
+        reflected = s_matrix.s21 @ forward
+        transmitted = s_matrix.s11 @ forward
+        incident_flux, reflected_flux = fields.amplitude_poynting_flux(
+            forward, reflected, layer_solve_results[0],
+        )
+        transmitted_flux, _ = fields.amplitude_poynting_flux(
+            transmitted, zero, layer_solve_results[-1],
+        )
+        power = float(jnp.sum(incident_flux))
+        if not np.isfinite(power) or power <= 0:
+            raise RuntimeError("fmmax incident power must be finite and positive")
+        R = -float(jnp.sum(reflected_flux)) / power
+        T = float(jnp.sum(transmitted_flux)) / power
         A = max(0.0, 1.0 - R - T)
 
         return R, T, A

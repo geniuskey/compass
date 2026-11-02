@@ -1,8 +1,9 @@
 name: CI
 
-# Disabled: re-enable when codebase is more stable.
-# To run on demand: Actions tab → CI → Run workflow.
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -28,6 +29,18 @@ jobs:
 
       - name: Run tests
         run: pytest tests/ -v --tb=short
+
+  solver-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install real RCWA backends
+        run: pip install -e ".[dev,rcwa]"
+      - name: Validate real adapters against analytical optics
+        run: pytest tests/integration/test_real_planar_solvers.py -v --tb=short
 
   typecheck:
     runs-on: ubuntu-latest

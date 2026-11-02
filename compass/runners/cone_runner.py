@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import logging
+import time
 
 import numpy as np
 
@@ -35,6 +36,7 @@ class ConeIlluminationRunner:
         Returns:
             SimulationResult with weighted-average R, T, A and QE.
         """
+        started = time.perf_counter()
         solver_config = config.get("solver", {})
         source_config = config.get("source", {})
         compute_config = config.get("compute", {})
@@ -82,6 +84,7 @@ class ConeIlluminationRunner:
         weighted_A: np.ndarray | None = None
         weighted_qe: dict[str, np.ndarray] = {}
         wavelengths: np.ndarray | None = None
+        failed_runs: list[dict] = []
 
         for i, (theta_deg, phi_deg, weight) in enumerate(points):
             logger.debug(
@@ -97,6 +100,13 @@ class ConeIlluminationRunner:
 
             solver.setup_source(angle_source_config)
             result = solver.run()
+            failed_runs.extend(
+                {**failure, "theta_deg": theta_deg, "phi_deg": phi_deg}
+                for failure in result.metadata.get("failed_runs", [])
+            )
+            energy_cfg = solver_config.get("stability", {}).get("energy_check", {})
+            if energy_cfg.get("enabled", True):
+                solver.validate_energy_balance(result, tolerance=energy_cfg.get("tolerance", 0.01))
 
             if wavelengths is None:
                 n_wl = len(result.wavelengths)
@@ -135,6 +145,7 @@ class ConeIlluminationRunner:
             absorption=weighted_A,
             metadata={
                 "solver_name": solver_name,
+                "runtime_seconds": time.perf_counter() - started,
                 "device": device,
                 "runner": "ConeIlluminationRunner",
                 "cone_f_number": cone.f_number,
@@ -142,5 +153,6 @@ class ConeIlluminationRunner:
                 "cone_n_points": len(points),
                 "cone_sampling": cone.sampling,
                 "cone_weighting": cone.weighting,
+                **({"failed_runs": failed_runs} if failed_runs else {}),
             },
         )

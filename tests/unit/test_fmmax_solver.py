@@ -73,11 +73,11 @@ def _make_fake_fmmax():
     fmmax_basis.Truncation = FakeTruncation()
 
     class FakeExpansion:
-        primitive_lattice_vectors = FakeLatticeVectors(
-            u=np.array([1.0, 0.0]), v=np.array([0.0, 1.0])
-        )
+        num_terms = 1
+        basis_coefficients = np.array([[0, 0]])
 
     fmmax_basis.generate_expansion = MagicMock(return_value=FakeExpansion())
+    fmmax_basis.Expansion = MagicMock(return_value=FakeExpansion())
 
     # fmm types
     class FakeFormulation:
@@ -90,21 +90,28 @@ def _make_fake_fmmax():
 
     # S-matrix mock
     class FakeSMatrix:
-        s11 = np.array([[0.1]])
-        s12 = np.array([[0.0]])
-        s21 = np.array([[0.8]])
-        s22 = np.array([[0.0]])
+        s11 = np.eye(2) * 0.8
+        s12 = np.eye(2) * 0.1
+        s21 = np.eye(2) * 0.1
+        s22 = np.eye(2) * 0.8
 
     class FakeSolveResult:
-        s_matrix = FakeSMatrix()
+        pass
 
     fmmax_fmm.eigensolve_isotropic_media = MagicMock(
         return_value=FakeSolveResult()
     )
-    fmmax_fmm.append_layer = MagicMock(return_value=FakeSMatrix())
+    fmmax_scattering = types.ModuleType("fmmax.scattering")
+    fmmax_scattering.stack_s_matrix = MagicMock(return_value=FakeSMatrix())
+    fmmax_fields = types.ModuleType("fmmax.fields")
+    fmmax_fields.amplitude_poynting_flux = lambda forward, backward, layer: (
+        np.abs(forward) ** 2, -np.abs(backward) ** 2,
+    )
 
     fmmax.basis = fmmax_basis
     fmmax.fmm = fmmax_fmm
+    fmmax.scattering = fmmax_scattering
+    fmmax.fields = fmmax_fields
 
     return fmmax, fmmax_basis, fmmax_fmm
 
@@ -415,6 +422,8 @@ class TestFmmaxRunWithMocks:
         assert len(result.reflection) == 3
         assert len(result.transmission) == 3
         assert len(result.absorption) == 3
+        assert not result.metadata.get("failed_runs")
+        assert np.all(np.isfinite(result.reflection))
 
     @pytest.mark.usefixtures("_patch_fmmax_imports")
     def test_run_metadata_contains_solver_info(

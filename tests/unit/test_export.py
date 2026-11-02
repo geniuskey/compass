@@ -160,6 +160,7 @@ class TestJSONExport:
             data = json.load(f)
         assert "reflection" in data
         assert "transmission" in data
+        assert data["absorption"] == pytest.approx(result.absorption.tolist())
 
     def test_json_excludes_rta_when_none(self, tmp_path):
         """Reflection/transmission are excluded when None."""
@@ -171,6 +172,7 @@ class TestJSONExport:
             data = json.load(f)
         assert "reflection" not in data
         assert "transmission" not in data
+        assert "absorption" not in data
 
     def test_json_metadata_as_strings(self, tmp_path):
         """Metadata values are converted to strings in JSON."""

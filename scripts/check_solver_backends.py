@@ -82,6 +82,7 @@ def check_torcwa() -> dict[str, Any]:
 
 def check_grcwa() -> dict[str, Any]:
     import grcwa
+    import numpy as np
 
     grcwa.set_backend("numpy")
     obj = grcwa.obj(
@@ -97,10 +98,16 @@ def check_grcwa() -> dict[str, Any]:
     obj.Add_LayerUniform(0.1, 2.25)
     obj.Add_LayerUniform(0, 1.0)
     obj.Init_Setup(Gmethod=0)
-    obj.MakeExcitationPlanewave(0, 1, 0, 0, order=0)
+    obj.MakeExcitationPlanewave(p_amp=0, s_amp=1, p_phase=0, s_phase=0, order=0)
     reflection, transmission = obj.RT_Solve(normalize=1)
     return {
-        "ok": True,
+        "ok": bool(
+            np.isfinite(reflection)
+            and np.isfinite(transmission)
+            and reflection >= 0
+            and transmission > 0
+            and np.isclose(reflection + transmission, 1.0, atol=1e-6)
+        ),
         "version": getattr(grcwa, "__version__", None),
         "reflection": float(reflection),
         "transmission": float(transmission),

@@ -40,6 +40,10 @@ docs/.vitepress/cache/
 # Coverage
 .coverage
 htmlcov/
+.cache/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 docs/package-lock.json
 docs/test-results/
 docs/playwright-report/

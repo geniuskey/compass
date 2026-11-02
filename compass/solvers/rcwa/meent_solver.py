@@ -71,7 +71,9 @@ class MeentSolver(SolverBase):
         all_R, all_T, all_A = [], [], []
 
         for _wl_idx, wavelength in enumerate(self._source.wavelengths):
-            layer_slices = self._pixel_stack.get_layer_slices(wavelength, nx, ny)
+            layer_slices = self._pixel_stack.get_layer_slices(
+                wavelength, nx, ny, n_lens_slices=params.get("n_lens_slices", 30),
+            )
 
             R_pol, T_pol, A_pol = [], [], []
             qe_pol_accum: dict[str, list[float]] = {}
@@ -86,8 +88,8 @@ class MeentSolver(SolverBase):
                         pol=0 if pol == "TE" else 1,
                         n_top=1.0,
                         n_bot=1.0,
-                        theta=self._source.theta_deg,
-                        phi=self._source.phi_deg,
+                        theta=self._source.theta_rad,
+                        phi=self._source.phi_rad,
                         fto=fourier_order,
                         period=[lx * 1000, ly * 1000],  # meent uses nm
                         wavelength=wavelength * 1000,  # meent uses nm
@@ -100,16 +102,15 @@ class MeentSolver(SolverBase):
                     for s in reversed(layer_slices):
                         ucell_list.append(s.eps_grid[np.newaxis, :, :])
 
-                    # meent ucell expects refractive index (n), not permittivity (eps)
-                    mee.ucell = np.sqrt(np.concatenate(ucell_list, axis=0))
+                    # meent uses n-ik for passive media; COMPASS uses n+ik.
+                    # Convert both the optical quantity and time convention.
+                    mee.ucell = np.conj(np.sqrt(np.concatenate(ucell_list, axis=0)))
                     result = mee.conv_solve()
                     de_ri = result.de_ri
                     de_ti = result.de_ti
 
                     R = float(np.sum(de_ri))
                     T = float(np.sum(de_ti))
-                    # meent 0.12.0 has numerical instability for multi-layer
-                    # 2D stacks where R+T > 1. Clamp to physical range.
                     if R + T > 1.0 + 0.01:
                         logger.warning(
                             f"meent: R+T={R + T:.4f} > 1 at λ={wavelength:.4f}um "

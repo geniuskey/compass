@@ -114,8 +114,8 @@ class GrcwaSolver(SolverBase):
                         L1=[lx, 0],
                         L2=[0, ly],
                         freq=freq,
-                        theta=self._source.theta_deg,
-                        phi=self._source.phi_deg,
+                        theta=self._source.theta_rad,
+                        phi=self._source.phi_rad,
                         verbose=0,
                     )
 
@@ -138,10 +138,7 @@ class GrcwaSolver(SolverBase):
                     obj.GridLayer_geteps(np.concatenate(grid_eps_list))
 
                     obj.MakeExcitationPlanewave(
-                        planewave["p_amp"],
-                        planewave["s_amp"],
-                        planewave["p_phase"],
-                        planewave["s_phase"],
+                        **planewave,
                         order=0,
                     )
                     R, T = obj.RT_Solve(normalize=1)

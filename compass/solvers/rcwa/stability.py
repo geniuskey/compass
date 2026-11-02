@@ -432,7 +432,7 @@ class EigenvalueStabilizer:
         Returns:
             Square roots with correct sign.
         """
-        sqrt_ev = np.sqrt(eigenvalues.astype(np.complex128))
+        sqrt_ev: np.ndarray = np.sqrt(eigenvalues.astype(np.complex128))
 
         # Fix sign: want Im(sqrt_ev) <= 0 for exp(-i*k*z) convention
         # or Re(sqrt_ev) >= 0 for propagating modes

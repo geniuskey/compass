@@ -21,7 +21,7 @@ SAMPLE_YAML_FILES = [
 
 def _load_yaml(name: str) -> dict:
     """Load a Hydra package-scoped pixel YAML and unwrap the `pixel:` block."""
-    raw = yaml.safe_load((CONFIG_DIR / name).read_text())
+    raw = yaml.safe_load((CONFIG_DIR / name).read_text(encoding="utf-8"))
     # Configs use `# @package _global_` so the YAML root is `pixel`.
     return raw
 

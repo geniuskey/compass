@@ -1,0 +1,103 @@
+COMPASS 프로젝트 리뷰 — 2026-11-02
+
+판정: 실행 경로와 솔버 연동에서 실제 오류를 찾아 수정했다. 그러나 모든
+픽셀 QE·크로스토크 출력의 물리적 정확성이 검증된 상태는 아니다.
+평면 구조에서의 R/T/A 검증과 패턴 픽셀의 수렴·수광 효율 검증은 구분해야 한다.
+
+우선순위가 높은 잔여 문제
+
+1. [P1] 공간 크로스토크 행렬의 입력 정보가 부족하다.
+   compass/analysis/crosstalk.py의 compute_matrix는 한 번의 QE 분포를
+   모든 입사 픽셀 행에 반복한다. 그래서 어떤 입사 픽셀을 선택하든
+   행이 동일해진다. 이것으로 픽셀 사이의 광 전달 행렬을 추정할 수 없다.
+   각 픽셀을 따로 조사한 결과를 받아 행렬을 구성하도록 API를 바꿔야 한다.
+   scripts/rcwa_fdtd_pixel_benchmark.py의 개별 scan 기반 접근을 참고할 수 있다.
+
+2. [P1] 여러 솔버의 per-pixel QE는 전자기장 적분 결과가 아니다.
+   grcwa/meent/fmmax/flaport는 전체 흡수를 PD 영역의 eps.imag 가중치로
+   나누는 근사를 사용한다. 흡수가 큰 CFA와 다른 손실층의 기생 흡수까지
+   PD 수광량에 배분될 수 있다. 렌즈 집광·DTI 효과의 설계 근거로 쓰려면
+   PD 내부의 eps.imag * |E|^2 적분과 입사 파워 정규화가 필요하다.
+   R+T+A=1 통과만으로 이 QE 근사가 정확하다고 판단할 수 없다.
+   갱신한 실제 패턴 픽셀 보고서에서 550 nm의 torcwa와 grcwa는
+   R/T/A가 약 1.7e-7 이내로 일치하지만 평균 QE는 각각 0.0057과
+   0.8958이다. 이 차이는 현재 QE 출력들을 서로 대체할 수 없다는 증거다.
+
+3. [P1] TMM의 QE를 실리콘 QE로 해석하면 안 된다.
+   compass/solvers/tmm/tmm_solver.py의 _build_d_layers는 맨 아래 실리콘을
+   반무한 기판으로 취급한다. _compute_approximate_qe는 내부 박막의 총
+   흡수 A를 모든 픽셀 QE에 복사한다. 유한 두께 실리콘 PD의 흡수와 다르다.
+   얇은막 R/T 비교에는 사용할 수 있으나 실제 PD QE 계산은 재설계가 필요하다.
+
+4. [P2] 지원되는 설정과 구현된 기능의 범위를 더 좁혀야 한다.
+   cone 설정의 elliptical pupil, 활성 ray_file 등의 옵션은 현재 runner에서
+   계산에 반영되지 않는다. 구현하거나 입력 단계에서 명확히 거부해야 한다.
+   이번에는 세 FDTD 어댑터의 미구현 경사입사를 명시적으로 거부하도록 수정했다.
+   fdtdx/fdtdz/meep 전체 계산 및 GPU 실행은 이번 환경에서 검증하지 못했다.
+
+수정한 결함
+
+- grcwa: 편광 인자 위치가 실제 API와 달라 TE 입사광이 0이 되는 문제 수정.
+  키워드 인자로 전달하고 backend 점검에서도 유한성·에너지·투과 파워를 검사한다.
+- grcwa/meent: 입사각을 degree에서 radian으로 변환해 전달한다.
+- meent: COMPASS n+ik와 backend n-ik 사이의 부호 규약을 변환한다.
+  흡수성 슬래브에서 기존에는 R+T>1로 나타났으며 수정 후 TMM과 일치한다.
+- fmmax: 존재하지 않는 Expansion 속성, layer.s_matrix, fmm.append_layer
+  호출을 제거하고 실제 scattering/fields API로 교체했다. 공기 경계층,
+  zero-order 편광 입사, Poynting flux 정규화, 배열 x/y 순서를 반영했다.
+  fourier_order를 총 항 수로 오인하던 문제도 고쳐 [mx,my]당
+  (2mx+1)*(2my+1)개 항을 사용한다. 기본 설정은 이전보다 계산량이 증가한다.
+- SingleRunner/CLI: cone_illumination을 실제 각도 평균 runner로 연결한다.
+  cone 실행 시간과 각도별 실패 기록도 보존한다.
+- 에너지 검사: NaN/Inf가 성공으로 처리되던 문제를 수정했다.
+- wheel: 소스 트리 밖의 재료 CSV가 배포에서 빠지던 문제를 수정했다.
+- JSON: absorption 스펙트럼 누락을 수정했다.
+- Windows: UTF-8 YAML을 cp949로 읽던 테스트 6개의 실패를 수정했다.
+- mypy 오류 2개, README의 잘못된 문서 실행 명령을 수정했다.
+
+정리한 항목
+
+- 하드코딩한 mock 결과끼리 비교하며 RCWA/FDTD 정확성을 주장하던 테스트를
+  삭제했다. 대신 실제 RCWA 4종과 TMM을 비교하는 회귀 테스트를 추가했다.
+- 실제 fmmax에 없는 API를 만들어 통과시키던 테스트 대역을 교체하고
+  failed_runs와 유한 출력도 검사하도록 강화했다.
+- 사용되지 않는 SingleRunner 지역 변수와 잘못된 meent 불안정성 설명을 제거했다.
+- 캐시 디렉터리를 Git 제외 목록에 추가했다.
+- 자동 실행이 꺼져 있던 Python CI를 push/PR에 연결하고 실제 RCWA 검증 job과
+  문서 수치 테스트 단계를 추가했다. 원격 CI 실행 결과는 아직 확인되지 않았다.
+- 기존 보고서·재료 데이터·노트북·호환 문서 경로는 사용 근거 없이 삭제하지 않았다.
+
+검증과 실행 기록
+
+- Python 전체 테스트와 실제 RCWA 슬래브 검증 결과는
+  outputs/review/pytest-verified.log 및 pytest-verified.xml에 저장한다.
+  최종 결과: 871 passed, 96 warnings. 경고는 fmmax/JAX 내부 dtype
+  변환의 DeprecationWarning이며 테스트 실패는 없다.
+- 실제 솔버 비교: grcwa, meent, torcwa, fmmax, 파장 450/550/650 nm,
+  정입사와 theta=30도/phi=45도, n=1.5 및 n=1.5+0.05i 슬래브.
+  R/T/A를 독립적인 TMM 기준과 절대 오차 5e-5로 비교한다.
+- TMM 기본 CLI, cone CLI, grcwa 기본 픽셀 CLI, flaport FDTD의 거친
+  격자 실행과 CSV/JSON 저장을 확인했다. FDTD 실행 성공은 수렴 검증이 아니다.
+- wheel을 빌드하고 별도 디렉터리에 풀어 소스 패키지 대신 import했다.
+  CSV 29개, 재료/alias 43개, silicon 550 nm의 n=4.08, k=0.028을 확인했다.
+- Ruff 및 mypy 실행 결과와 Git 공백 검사를 확인한다.
+- 실제 패턴 픽셀 보고서를 EN/KO와 이미지/JSON까지 다시 생성했다.
+  RCWA 4종 모두 유한하고 에너지가 보존되는 R/T/A를 반환했다.
+  torcwa 기준 최대 절대 차이 0.05 이내인 것은 torcwa와 grcwa 두 개다.
+  meent 약 0.0525, fmmax 약 0.0504로 경계를 벗어나며, 이 설정은
+  낮은 Fourier order의 실행 점검이므로 최종 설계용 수렴 결과가 아니다.
+- 문서 링크 검사: Markdown 266개에서 dead absolute link 없음.
+  이 검사는 상대 링크·실제 웹 화면 전체를 보증하지 않는다.
+- 문서 번역 대응 검사: EN 133개. KO 보고서 7개는 한국어 비율이 낮다.
+- VitePress 빌드와 Vitest는 Windows의 subprocess spawn EPERM으로 실행되지
+  않았다. native config loader로 재시도해도 Vite 경로 검사에서 동일하게 막혔다.
+  브라우저 테스트는 84개가 수집되지만 실제 화면 통과는 확인하지 못했다.
+- pytest는 기존 Python에 설치된 도구를 재사용해 Python 3.12 가상환경에서
+  실행했다. 샌드박스의 임시 디렉터리 ACL 문제 때문에 실행 harness에서만
+  mkdir 권한을 일반 디렉터리 권한으로 조정했다. 제품 코드에는 적용하지 않았다.
+- uv 의존성 동기화는 Python 패키지 서버 연결 실패로 완료하지 못했다.
+  기존에 설치된 수치 라이브러리와 솔버를 사용했다. Node 의존성은 복구했다.
+
+다음 개발에서는 새 솔버 추가보다 PD 장 적분, 조사 픽셀별 크로스토크 입력,
+실리콘 유한 두께 TMM 모델을 먼저 다루는 것이 좋다. 현재 평면 검증의 통과를
+패턴 구조의 수렴이나 실측 센서 일치로 확대 해석하지 않아야 한다.

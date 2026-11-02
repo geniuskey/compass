@@ -1,7 +1,6 @@
-"""Integration tests for RCWA vs FDTD cross-solver validation.
+"""Mock-based orchestration tests for cone averaging and solver sweeps.
 
-These tests require actual solver packages (grcwa, torcwa, fdtd).
-They are marked with pytest markers for selective execution.
+Real backend accuracy checks live in test_real_planar_solvers.py.
 """
 
 from unittest.mock import MagicMock, patch
@@ -21,61 +20,6 @@ def _make_result(n_wl=5, R=0.02, T=0.01, A=0.97):
         absorption=np.full(n_wl, A),
         metadata={"solver_name": "mock", "runtime_seconds": 1.0},
     )
-
-
-# ---------------------------------------------------------------------------
-# Test: grcwa vs flaport single wavelength
-# ---------------------------------------------------------------------------
-
-
-class TestGrcwaVsFlaportSingleWavelength:
-    """Mock-based test: grcwa vs flaport absorption at 550nm."""
-
-    @patch("compass.runners.single_run.SolverFactory")
-    @patch("compass.runners.single_run.PixelStack")
-    @patch("compass.runners.single_run.MaterialDB")
-    def test_grcwa_vs_flaport_absorption_agreement(self, mock_mdb, mock_ps, mock_factory):
-        """grcwa and fdtd_flaport absorption should agree within 10%."""
-        from compass.runners.single_run import SingleRunner
-
-        # Simulate grcwa result
-        grcwa_result = _make_result(n_wl=1, R=0.015, T=0.001, A=0.984)
-        # Simulate fdtd result
-        fdtd_result = _make_result(n_wl=1, R=0.03, T=0.02, A=0.95)
-
-        call_count = [0]
-
-        def create_solver(name, cfg, device):
-            solver = MagicMock()
-            solver.name = name
-            call_count[0] += 1
-            if name == "grcwa":
-                solver.run_timed.return_value = grcwa_result
-            else:
-                solver.run_timed.return_value = fdtd_result
-            solver.validate_energy_balance.return_value = True
-            return solver
-
-        mock_factory.create.side_effect = create_solver
-
-        grcwa_cfg = {
-            "pixel": {},
-            "solver": {"name": "grcwa"},
-            "source": {},
-            "compute": {"backend": "cpu"},
-        }
-        fdtd_cfg = {
-            "pixel": {},
-            "solver": {"name": "fdtd_flaport"},
-            "source": {},
-            "compute": {"backend": "cpu"},
-        }
-
-        r_grcwa = SingleRunner.run(grcwa_cfg)
-        r_fdtd = SingleRunner.run(fdtd_cfg)
-
-        dA = abs(r_grcwa.absorption[0] - r_fdtd.absorption[0])
-        assert dA < 0.10, f"|A_grcwa - A_fdtd| = {dA:.4f}, expected < 0.10"
 
 
 # ---------------------------------------------------------------------------

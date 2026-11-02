@@ -135,7 +135,7 @@ class SolverBase(ABC):
             total = result.reflection + result.transmission
 
         max_violation = np.max(np.abs(total - 1.0))
-        if max_violation > tolerance:
+        if not np.isfinite(max_violation) or max_violation > tolerance:
             logger.warning(
                 f"Energy conservation violation: max |R+T+A-1| = {max_violation:.4f} "
                 f"(tolerance: {tolerance})"

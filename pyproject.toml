@@ -59,6 +59,9 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["compass"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"materials" = "compass/materials/data"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --tb=short"
