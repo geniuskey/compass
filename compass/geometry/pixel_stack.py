@@ -1058,7 +1058,7 @@ class PixelStack:
             Complex permittivity array of shape (ny, nx, nz).
         """
         z_min, z_max = self.z_range
-        z = np.linspace(z_min, z_max, nz)
+        z = z_min + (np.arange(nz) + 0.5) * (z_max - z_min) / nz
 
         # Get all layer slices
         slices = self.get_layer_slices(wavelength, nx, ny)

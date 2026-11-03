@@ -1,18 +1,22 @@
 """fdtdz solver adapter for COMPASS.
 
-fdtdz is a JAX-based 3D FDTD solver optimized for TPU/GPU acceleration.
-It operates on permittivity volumes with PML on z and periodic boundaries on x/y.
+fdtdz is a JAX-wrapped CUDA FDTD kernel with a limited z extent.
+The native fdtdz_jax API has no material absorption or periodic-xy boundary
+interface; this legacy adapter requires a port before it can be used.
+The upstream kernel uses PML on z and absorbing transverse boundaries;
+this adapter cannot supply the periodic benchmark boundary conditions.
 
 fdtdz expects:
 - Permittivity as a 3D JAX array (eps_xx, eps_yy, eps_zz).
 - Sources injected as current density arrays.
 - Fields returned as JAX arrays that can be sliced for monitors.
 
-Reference: https://github.com/google/fdtdz
+Reference: https://github.com/spinsphotonics/fdtdz
 """
 
 from __future__ import annotations
 
+import contextlib
 import logging
 
 import numpy as np
@@ -33,20 +37,23 @@ try:
 except ImportError:
     pass
 
+_native_fdtdz = None
 try:
-    import fdtdz  # noqa: F401
-
-    _FDTDZ_AVAILABLE = True
+    import fdtdz as _native_fdtdz
 except ImportError:
-    pass
+    with contextlib.suppress(ImportError):
+        import fdtdz_jax as _native_fdtdz
+_FDTDZ_AVAILABLE = _native_fdtdz is not None
+
 
 
 class FdtdzSolver(SolverBase):
     """fdtdz JAX-based 3D FDTD solver adapter.
 
-    Converts PixelStack geometry to a 3D permittivity volume and uses fdtdz
-    to run time-domain simulations with PML on z and periodic boundaries
-    on x/y. Supports CUDA and TPU acceleration via JAX.
+    Legacy COMPASS interface retained for capability/error reporting.
+    The upstream fdtdz_jax kernel supports CUDA, real permittivity and
+    absorbing transverse boundaries. Its current native API is not
+    implemented here; unsupported simulations fail explicitly.
 
     Config params (under config["params"]):
         grid_spacing: Spatial discretization in um (default: 0.02).
@@ -153,7 +160,10 @@ class FdtdzSolver(SolverBase):
         if not _FDTDZ_AVAILABLE:
             raise ImportError("fdtdz is required. Install with: pip install fdtdz")
 
-        import fdtdz as fz
+        fz = _native_fdtdz
+
+        if not hasattr(fz, "simulate"):
+            raise NotImplementedError("Installed fdtdz native API requires an adapter port; simulate() is unavailable")
         import jax.numpy as jnp
 
         params = self.config.get("params", {})
@@ -345,7 +355,8 @@ class FdtdzSolver(SolverBase):
         # fdtdz uses real permittivity for the main simulation.
         # Imaginary part (loss) is handled separately.
         eps_real = np.real(eps_full).astype(np.float32)
-        _eps_imag = np.imag(eps_full).astype(np.float32)
+        if np.any(np.abs(np.imag(eps_full)) > 1e-12):
+            raise NotImplementedError("fdtdz adapter cannot propagate material absorption; refusing to drop Im(epsilon)")
 
         # Convert permittivity to JAX arrays.
         # fdtdz expects permittivity as (xx, yy, zz) diagonal tensor components.

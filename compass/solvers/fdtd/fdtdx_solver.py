@@ -153,7 +153,7 @@ class FdtdxSolver(SolverBase):
         4. Add planewave source and DFT monitors.
         5. Run FDTD time-stepping.
         6. Extract R, T from flux monitors and compute A = 1 - R - T.
-        7. Compute per-pixel QE from absorption in photodiode regions.
+        Regional QE is unavailable until volume absorption is independently calibrated.
 
         Returns:
             SimulationResult with R, T, A spectra and per-pixel QE.
@@ -168,447 +168,70 @@ class FdtdxSolver(SolverBase):
         if not _FDTDX_AVAILABLE:
             raise ImportError("fdtdx is required. Install with: pip install fdtdx")
 
-        import fdtdx as fx
-        import jax.numpy as jnp
+        from compass.solvers.fdtd.fdtdx_native import solve
 
-        grid_spacing = self._grid_spacing
-        pml_layers = self._pml_layers
-        time_steps = self._time_steps
-        courant_factor = self._courant_factor
-
+        params = self.config.get("params", {})
+        dx = self._grid_spacing
         lx, ly = self._pixel_stack.domain_size
-        z_min, z_max = self._pixel_stack.z_range
-        total_z = z_max - z_min
-
-        # Grid dimensions (interior, without PML)
-        nx = int(lx / grid_spacing) + 1
-        ny = int(ly / grid_spacing) + 1
-        nz_interior = int(total_z / grid_spacing) + 1
-        nz = nz_interior + 2 * pml_layers
-
-        logger.info(
-            f"fdtdx: grid size ({nx}, {ny}, {nz}), "
-            f"spacing={grid_spacing}um, PML={pml_layers}, "
-            f"timesteps={time_steps}"
+        lo, hi = self._pixel_stack.z_range
+        nx, ny, nz = round(lx / dx), round(ly / dx), max(1, round((hi - lo) / dx))
+        duration = float(
+            params.get("duration", self._time_steps * dx * self._courant_factor / np.sqrt(3))
         )
-
-        # Monitor positions (cell indices)
-        source_offset = 5
-        refl_z = pml_layers + source_offset + 2
-        trans_z = nz - pml_layers - source_offset - 2
-        source_z = pml_layers + source_offset
-
-        # Photodiode masks for QE computation
-        _, pd_masks = self._pixel_stack.get_photodiode_mask(nx, ny, nz_interior)
-
-        pol_runs = self._source.get_polarization_runs()
         self._failed_runs = []
-        all_qe: dict[str, list[float]] = {}
-        all_R: list[float] = []
-        all_T: list[float] = []
-        all_A: list[float] = []
-        all_fields: dict[str, FieldData] = {}
-
-        for wl_idx, wavelength in enumerate(self._source.wavelengths):
-            logger.debug(
-                f"fdtdx: wavelength {wavelength:.4f} um ({wl_idx + 1}/{self._source.n_wavelengths})"
-            )
-
-            # Build 3D permittivity for this wavelength
-            eps_3d_np = self._pixel_stack.get_permittivity_grid(wavelength, nx, ny, nz_interior)
-
-            # Embed interior permittivity into full grid (with PML padding = air)
-            eps_full = np.ones((ny, nx, nz), dtype=complex)
-            eps_full[:, :, pml_layers : pml_layers + nz_interior] = eps_3d_np
-
-            R_pol: list[float] = []
-            T_pol: list[float] = []
-            A_pol: list[float] = []
-            qe_pol_accum: dict[str, list[float]] = {}
-
-            for pol in pol_runs:
+        spectra = []
+        observed = None
+        for wl in self._source.wavelengths:
+            eps = self._pixel_stack.get_permittivity_grid(wl, nx, ny, nz)
+            values = []
+            for pol in self._source.get_polarization_runs():
                 try:
-                    R, T, A, fields = self._run_single_wavelength(
-                        fx,
-                        jnp,
-                        wavelength,
-                        eps_full,
-                        nx,
-                        ny,
-                        nz,
-                        grid_spacing,
-                        pml_layers,
-                        courant_factor,
-                        time_steps,
-                        source_z,
-                        refl_z,
-                        trans_z,
+                    R, T, A, observed = solve(
+                        eps,
+                        float(wl),
+                        dx,
+                        duration,
+                        self._pml_layers,
+                        self.device,
                         pol,
+                        courant_factor=self._courant_factor,
+                        precision="float32" if self._dtype_str == "float32" else "float64",
                     )
-                except Exception as e:
-                    logger.error(
-                        f"fdtdx: failed at lambda={wavelength:.4f}um, pol={pol}: {e}",
-                        exc_info=True,
-                    )
-                    self._record_failed_run(wavelength, pol, e)
-                    R = T = A = float("nan")
-                    fields = None
-
-                R_pol.append(R)
-                T_pol.append(T)
-                A_pol.append(A)
-
-                # Per-pixel QE from absorption in photodiode regions
-                if np.isnan(A):
-                    qe_this_pol = self._nan_pixel_qe()
-                else:
-                    qe_this_pol = self._compute_pixel_qe(
-                        fields,
-                        pd_masks,
-                        eps_3d_np,
-                        wavelength,
-                        grid_spacing,
-                        nx,
-                        ny,
-                        nz_interior,
-                        pml_layers,
-                        A,
-                    )
-                for k, v in qe_this_pol.items():
-                    qe_pol_accum.setdefault(k, []).append(v)
-
-            # Average over polarizations
-            n_pol = len(pol_runs)
-            all_R.append(sum(R_pol) / n_pol)
-            all_T.append(sum(T_pol) / n_pol)
-            all_A.append(sum(A_pol) / n_pol)
-
-            for k, vals in qe_pol_accum.items():
-                all_qe.setdefault(k, []).append(sum(vals) / n_pol)
-
-        self._last_fields = all_fields if all_fields else None
-
-        result_arrays = {
-            "reflection": np.array(all_R),
-            "transmission": np.array(all_T),
-            "absorption": np.array(all_A),
-        }
-
-        # NaN/Inf guard
-        for arr_name, arr in result_arrays.items():
-            if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
-                warnings.warn(f"fdtdx: NaN/Inf detected in {arr_name} output", stacklevel=2)
-
+                    if not np.isfinite([R, T, A]).all():
+                        raise RuntimeError("FDTDX returned NaN/Inf")
+                    values.append([R, T, A])
+                except Exception as exc:
+                    self._record_failed_run(wl, pol, exc)
+                    values.append([np.nan] * 3)
+            spectra.append(np.mean(values, axis=0))
+        spectra = np.asarray(spectra)
+        if not np.isfinite(spectra).all():
+            warnings.warn("fdtdx: NaN/Inf detected in R/T/A output", stacklevel=2)
+        # Regional QE requires a separately calibrated volume absorption monitor.
+        qe = {key: np.full(len(spectra), np.nan) for key in self._nan_pixel_qe()}
         return SimulationResult(
-            qe_per_pixel={k: np.array(v) for k, v in all_qe.items()},
+            qe_per_pixel=qe,
             wavelengths=self._source.wavelengths,
-            fields=self._last_fields,
-            reflection=result_arrays["reflection"],
-            transmission=result_arrays["transmission"],
-            absorption=result_arrays["absorption"],
+            reflection=spectra[:, 0],
+            transmission=spectra[:, 1],
+            absorption=spectra[:, 2],
             metadata={
                 "solver_name": "fdtdx",
-                "qe_method": "field_integration",
-                "grid_spacing": grid_spacing,
-                "pml_layers": pml_layers,
-                "time_steps": time_steps,
-                "courant_factor": courant_factor,
-                "grid_size": (nx, ny, nz),
+                "actual_device": observed,
+                "qe_method": "unavailable",
+                "grid_spacing": dx,
+                "pml_layers": self._pml_layers,
+                "interior_grid_size": [nx, ny, nz],
+                "grid_size": [nx, ny, nz + 2 * (max(2, round(0.8 / dx)) + self._pml_layers)],
+                "air_padding_um": max(2, round(0.8 / dx)) * dx,
+                "duration": duration,
+                "time_steps": round(duration / (dx * self._courant_factor / np.sqrt(3))),
+                "courant_factor": self._courant_factor,
                 "device": self.device,
+                "api": "place_objects/run_fdtd/PhasorPoyntingFluxDetector",
                 **self._failure_metadata(),
             },
         )
-
-    def _run_single_wavelength(
-        self,
-        fx,
-        jnp,
-        wavelength: float,
-        eps_full: np.ndarray,
-        nx: int,
-        ny: int,
-        nz: int,
-        grid_spacing: float,
-        pml_layers: int,
-        courant_factor: float,
-        time_steps: int,
-        source_z: int,
-        refl_z: int,
-        trans_z: int,
-        polarization: str,
-    ) -> tuple[float, float, float, FieldData | None]:
-        """Run a single-wavelength, single-polarization FDTDX simulation.
-
-        Sets up a 3D Yee grid simulation with:
-        - The permittivity distribution from PixelStack
-        - A planewave source injected as a current sheet
-        - PML absorbing boundaries on z, periodic on x/y
-        - DFT monitors for flux extraction
-
-        Args:
-            fx: The fdtdx module.
-            jnp: JAX numpy module.
-            wavelength: Wavelength in um.
-            eps_full: 3D permittivity array (ny, nx, nz) with PML padding.
-            nx, ny, nz: Grid dimensions.
-            grid_spacing: Grid spacing in um.
-            pml_layers: Number of PML cells.
-            courant_factor: Courant number for time step stability.
-            time_steps: Number of time steps.
-            source_z: Source injection z-index.
-            refl_z: Reflection monitor z-index.
-            trans_z: Transmission monitor z-index.
-            polarization: "TE" or "TM".
-
-        Returns:
-            Tuple of (R, T, A, FieldData or None).
-        """
-        # Use real part for the main simulation; imaginary part for loss
-        eps_real = np.real(eps_full).astype(np.float32)
-        _eps_imag = np.imag(eps_full).astype(np.float32)
-
-        # Convert to JAX arrays (fdtdx expects (nz, ny, nx) ordering)
-        eps_jax = jnp.array(eps_real.transpose(2, 0, 1))
-
-        # Wavelength in grid cells for FDTDX internal use
-        wavelength_cells = wavelength / grid_spacing
-
-        # Build planewave source: a planar current sheet at source_z
-        # For TE polarization: Jx source; for TM: Jy source
-        src = np.zeros((nz, ny, nx), dtype=np.float32)
-        src[source_z, :, :] = 1.0
-        src_jax = jnp.array(src)
-
-        # Build PML conductivity profile
-        pml_sigma = self._build_pml_profile(nz, pml_layers, grid_spacing, wavelength)
-        _pml_sigma_jax = jnp.array(pml_sigma.astype(np.float32))
-
-        # Run FDTDX simulation
-        # FDTDX provides a simulate function or similar entry point
-        result = fx.simulate(
-            epsilon=eps_jax,
-            source=src_jax,
-            wavelength=wavelength_cells,
-            pml_widths=(pml_layers, pml_layers),
-            num_steps=time_steps,
-            courant_number=courant_factor,
-        )
-
-        # Extract fields from FDTDX result
-        # FDTDX can return fields in various formats; handle each case
-        if hasattr(result, "ex"):
-            ex = np.array(result.ex)
-            ey = np.array(result.ey)
-            ez = np.array(result.ez)
-            hx = np.array(result.hx)
-            hy = np.array(result.hy)
-            _hz = np.array(result.hz)
-        elif isinstance(result, tuple) and len(result) >= 2:
-            # result = (E, H) where E and H are (3, nz, ny, nx) arrays
-            E = np.array(result[0])
-            H = np.array(result[1])
-            ex, ey, ez = E[0], E[1], E[2]
-            hx, hy, _hz = H[0], H[1], H[2]
-        elif isinstance(result, dict):
-            ex = np.array(result.get("ex", np.zeros((nz, ny, nx))))
-            ey = np.array(result.get("ey", np.zeros((nz, ny, nx))))
-            ez = np.array(result.get("ez", np.zeros((nz, ny, nx))))
-            hx = np.array(result.get("hx", np.zeros((nz, ny, nx))))
-            hy = np.array(result.get("hy", np.zeros((nz, ny, nx))))
-            _hz = np.array(result.get("hz", np.zeros((nz, ny, nx))))
-        else:
-            # Fallback: try to treat result as an array
-            fields_arr = np.array(result)
-            if fields_arr.ndim == 4 and fields_arr.shape[0] == 6:
-                ex, ey, ez = fields_arr[0], fields_arr[1], fields_arr[2]
-                hx, hy, _hz = fields_arr[3], fields_arr[4], fields_arr[5]
-            else:
-                logger.warning(
-                    f"fdtdx: unexpected result shape {fields_arr.shape}, using zeros for fields"
-                )
-                ex = ey = ez = np.zeros((nz, ny, nx))
-                hx = hy = _hz = np.zeros((nz, ny, nx))
-
-        # Compute Poynting flux Sz = 0.5 * Re(Ex*Hy* - Ey*Hx*)
-        # At reflection monitor (light propagates in -z direction)
-        sz_refl = 0.5 * np.real(ex[refl_z] * np.conj(hy[refl_z]) - ey[refl_z] * np.conj(hx[refl_z]))
-        P_refl = np.sum(sz_refl) * grid_spacing**2
-
-        # At transmission monitor
-        sz_trans = 0.5 * np.real(
-            ex[trans_z] * np.conj(hy[trans_z]) - ey[trans_z] * np.conj(hx[trans_z])
-        )
-        P_trans = np.sum(sz_trans) * grid_spacing**2
-
-        # Source power (injected power)
-        sz_src = 0.5 * np.real(
-            ex[source_z + 1] * np.conj(hy[source_z + 1])
-            - ey[source_z + 1] * np.conj(hx[source_z + 1])
-        )
-        P_source = np.sum(sz_src) * grid_spacing**2
-
-        # Normalize to get R, T, A
-        if abs(P_source) > 1e-30:
-            R = float(np.clip(abs(P_refl) / abs(P_source), 0.0, 1.0))
-            T = float(np.clip(abs(P_trans) / abs(P_source), 0.0, 1.0))
-        else:
-            logger.warning("fdtdx: source power is near zero, defaulting R=T=0")
-            R, T = 0.0, 0.0
-
-        A = float(np.clip(1.0 - R - T, 0.0, 1.0))
-
-        # Store field data (transpose back from (nz, ny, nx) to (ny, nx, nz))
-        if self._pixel_stack is None:
-            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        z_coords = np.linspace(
-            self._pixel_stack.z_range[0],
-            self._pixel_stack.z_range[1],
-            nz,
-        )
-        lx_domain, ly_domain = self._pixel_stack.domain_size
-        x_coords = np.linspace(0, lx_domain, nx, endpoint=False)
-        y_coords = np.linspace(0, ly_domain, ny, endpoint=False)
-
-        field_data = FieldData(
-            Ex=ex.transpose(1, 2, 0),  # (ny, nx, nz)
-            Ey=ey.transpose(1, 2, 0),
-            Ez=ez.transpose(1, 2, 0),
-            x=x_coords,
-            y=y_coords,
-            z=z_coords,
-        )
-
-        logger.debug(
-            f"fdtdx: lambda={wavelength:.4f}um, pol={polarization}, R={R:.4f}, T={T:.4f}, A={A:.4f}"
-        )
-
-        return R, T, A, field_data
-
-    def _build_pml_profile(
-        self,
-        nz: int,
-        pml_layers: int,
-        grid_spacing: float,
-        wavelength: float,
-    ) -> np.ndarray:
-        """Build graded PML conductivity profile along z.
-
-        Uses a polynomial grading for the PML conductivity sigma(z).
-
-        Args:
-            nz: Total grid size in z.
-            pml_layers: Number of PML cells.
-            grid_spacing: Grid spacing in um.
-            wavelength: Wavelength in um (for optimal sigma_max).
-
-        Returns:
-            1D conductivity array of length nz.
-        """
-        sigma = np.zeros(nz, dtype=np.float32)
-        pml_order = 3  # polynomial order
-        # Optimal sigma_max for reflection coefficient ~1e-6
-        sigma_max = 0.8 * (pml_order + 1) / (grid_spacing * np.sqrt(1.0))
-
-        for i in range(pml_layers):
-            depth = (pml_layers - i) / pml_layers
-            sigma_val = sigma_max * depth**pml_order
-            sigma[i] = sigma_val
-            sigma[nz - 1 - i] = sigma_val
-
-        return sigma
-
-    def _compute_pixel_qe(
-        self,
-        fields: FieldData | None,
-        pd_masks: dict[str, np.ndarray],
-        eps_3d: np.ndarray,
-        wavelength: float,
-        grid_spacing: float,
-        nx: int,
-        ny: int,
-        nz_interior: int,
-        pml_layers: int,
-        total_absorption: float = 0.0,
-    ) -> dict[str, float]:
-        """Compute per-pixel quantum efficiency from volume absorption.
-
-        QE for each pixel is proportional to the power absorbed in its
-        photodiode region:
-
-            P_abs = 0.5 * omega * eps_0 * Im(eps) * |E|^2 * dV
-
-        Normalized by the total absorbed power.
-
-        Args:
-            fields: FieldData from the simulation (or None on failure).
-            pd_masks: Per-pixel 3D boolean masks from PixelStack.
-            eps_3d: Interior permittivity array (ny, nx, nz_interior).
-            wavelength: Wavelength in um.
-            grid_spacing: Grid spacing in um.
-            nx, ny, nz_interior: Interior grid dimensions.
-            pml_layers: PML cell count (for field array indexing).
-
-        Returns:
-            Dict mapping pixel key (e.g. "R_0_0") to QE value.
-        """
-        qe_per_pixel: dict[str, float] = {}
-        if self._pixel_stack is None:
-            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        bayer = self._pixel_stack.bayer_map
-
-        if fields is None or fields.Ex is None:
-            # Fallback: no field data available, return zeros
-            for r in range(self._pixel_stack.unit_cell[0]):
-                for c in range(self._pixel_stack.unit_cell[1]):
-                    color = bayer[r][c]
-                    key = f"{color}_{r}_{c}"
-                    qe_per_pixel[key] = 0.0
-            return qe_per_pixel
-
-        # |E|^2 in the interior region (strip PML layers from field arrays)
-        if fields.Ey is None or fields.Ez is None:
-            raise ValueError("FieldData is missing Ey or Ez components")
-        ex_int = fields.Ex[:, :, pml_layers : pml_layers + nz_interior]
-        ey_int = fields.Ey[:, :, pml_layers : pml_layers + nz_interior]
-        ez_int = fields.Ez[:, :, pml_layers : pml_layers + nz_interior]
-        E_sq = np.abs(ex_int) ** 2 + np.abs(ey_int) ** 2 + np.abs(ez_int) ** 2
-
-        # Imaginary part of permittivity (absorption coefficient)
-        eps_imag = np.imag(eps_3d)
-
-        # Volume absorption density: proportional to Im(eps) * |E|^2
-        abs_density = eps_imag * E_sq
-        dV = grid_spacing**3
-        total_absorbed = np.sum(abs_density) * dV
-
-        if total_absorbed < 1e-30:
-            # No measurable absorption
-            for r in range(self._pixel_stack.unit_cell[0]):
-                for c in range(self._pixel_stack.unit_cell[1]):
-                    color = bayer[r][c]
-                    qe_per_pixel[f"{color}_{r}_{c}"] = 0.0
-            return qe_per_pixel
-
-        # Per-pixel QE: the field gives relative absorbed-power shares; scale
-        # by the flux-monitor absorption A = 1-R-T to make them absolute, and
-        # normalize per pixel area (QE convention: absorbed power / power
-        # incident on that pixel, shared with the RCWA solvers).
-        n_rows, n_cols = self._pixel_stack.unit_cell
-        n_pixels = max(1, n_rows * n_cols)
-        for key, mask in pd_masks.items():
-            pixel_abs = np.sum(abs_density * mask) * dV
-            share = float(pixel_abs / total_absorbed) if total_absorbed > 0 else 0.0
-            qe_per_pixel[key] = min(1.0, share * total_absorption * n_pixels)
-
-        # Fill in any missing pixels with zero
-        for r in range(self._pixel_stack.unit_cell[0]):
-            for c in range(self._pixel_stack.unit_cell[1]):
-                color = bayer[r][c]
-                key = f"{color}_{r}_{c}"
-                if key not in qe_per_pixel:
-                    qe_per_pixel[key] = 0.0
-
-        return qe_per_pixel
 
     def get_field_distribution(
         self,

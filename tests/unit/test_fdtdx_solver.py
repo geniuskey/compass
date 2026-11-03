@@ -213,6 +213,7 @@ def _patch_fdtdx_imports():
     with patch.dict(sys.modules, modules), \
          patch("compass.solvers.fdtd.fdtdx_solver._JAX_AVAILABLE", True), \
          patch("compass.solvers.fdtd.fdtdx_solver._FDTDX_AVAILABLE", True), \
+         patch("compass.solvers.fdtd.fdtdx_native.solve", return_value=(.2,.7,.1,"cpu")), \
          patch(
              "compass.geometry.pixel_stack.PixelStack.get_photodiode_mask",
              side_effect=lambda nx, ny, nz: _mock_get_photodiode_mask(nx, ny, nz),
@@ -569,56 +570,19 @@ class TestFdtdxNanInfGuard:
         when the source region has a valid non-zero power but the monitor
         regions produce NaN from field computations.
         """
-        jax, jnp = _make_fake_jax()
+        from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
 
-        fdtdx_mod = types.ModuleType("fdtdx")
-
-        def _simulate_nan(**kwargs):
-            eps = kwargs.get("epsilon")
-            shape = eps.shape
-            # Create fields where the source region is valid (non-zero)
-            # but monitor regions have NaN, so NaN propagates to R/T
-            ex = np.ones(shape, dtype=np.float32) * 0.5
-            hy = np.ones(shape, dtype=np.float32) * 0.5
-            # Inject NaN at reflection and transmission monitor planes
-            # The reflection monitor is at pml_layers + source_offset + 2
-            # = 3 + 5 + 2 = 10; transmission is at nz - pml - offset - 2
-            ex[10, :, :] = np.nan
-            hy[10, :, :] = np.nan
-            fields = {
-                "ex": ex,
-                "ey": np.zeros(shape, dtype=np.float32),
-                "ez": np.zeros(shape, dtype=np.float32),
-                "hx": np.zeros(shape, dtype=np.float32),
-                "hy": hy,
-                "hz": np.zeros(shape, dtype=np.float32),
-            }
-            return fields
-
-        fdtdx_mod.simulate = _simulate_nan
-
-        modules = {
-            "jax": jax,
-            "jax.numpy": jnp,
-            "fdtdx": fdtdx_mod,
-        }
-        with patch.dict(sys.modules, modules), \
-             patch("compass.solvers.fdtd.fdtdx_solver._JAX_AVAILABLE", True), \
+        with patch("compass.solvers.fdtd.fdtdx_solver._JAX_AVAILABLE", True), \
              patch("compass.solvers.fdtd.fdtdx_solver._FDTDX_AVAILABLE", True), \
-             patch(
-                 "compass.geometry.pixel_stack.PixelStack.get_photodiode_mask",
-                 side_effect=lambda nx, ny, nz: _mock_get_photodiode_mask(nx, ny, nz),
-             ):
-            from compass.geometry.pixel_stack import PixelStack
-            from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
-
+             patch("compass.solvers.fdtd.fdtdx_native.solve", return_value=(np.nan,.7,np.nan,"cpu")):
             solver = FdtdxSolver(fdtdx_config)
-            ps = PixelStack(simple_pixel_config)
-            solver.setup_geometry(ps)
+            solver.setup_geometry(PixelStack(simple_pixel_config))
             solver.setup_source(source_config_te)
-
             with pytest.warns(UserWarning, match="NaN/Inf detected"):
-                solver.run()
+                result = solver.run()
+            assert np.isnan(result.reflection).all()
+            assert result.metadata["failed_runs"]
 
 
 # ---------------------------------------------------------------------------

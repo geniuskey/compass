@@ -116,8 +116,9 @@ class FmmaxSolver(SolverBase):
             ) from err
 
         # Configure JAX device
-        if self.device == "cpu":
-            jax.config.update("jax_platform_name", "cpu")
+        target = "gpu" if self.device.startswith("cuda") else "cpu"
+        selected = jax.devices(target)[0]
+        jax.config.update("jax_default_device", selected)
 
         params = self.config.get("params", {})
         fourier_order = params.get("fourier_order", [9, 9])
@@ -134,9 +135,10 @@ class FmmaxSolver(SolverBase):
         jax_dtype = dtype_map.get(self._dtype_str, jnp.complex64)
 
         lx, ly = self._pixel_stack.domain_size
-        # Grid resolution: at least 64, or 3x the Fourier order
-        nx = max(64, (2 * fourier_order[0] + 1) * 3)
-        ny = max(64, (2 * fourier_order[1] + 1) * 3)
+        # Zero disables automatic oversampling for independent grid/order studies.
+        grid_multiplier = params.get("grid_multiplier", 3)
+        nx = max(int(params.get("epsilon_grid", 64)), (2 * fourier_order[0] + 1) * grid_multiplier)
+        ny = max(int(params.get("epsilon_grid", 64)), (2 * fourier_order[1] + 1) * grid_multiplier)
 
         # Match the per-axis order convention of torcwa and meent exactly.
         # generate_expansion's approximate_num_terms is a TOTAL count.
@@ -231,6 +233,9 @@ class FmmaxSolver(SolverBase):
                 "solver_name": "fmmax",
                 "fmm_formulation": self._fmm_formulation,
                 "fourier_order": fourier_order,
+                "epsilon_grid_requested": int(params.get("epsilon_grid", 64)),
+                "epsilon_grid_shape_yx": [ny, nx],
+                "grid_multiplier": grid_multiplier,
                 "num_terms": expansion.num_terms,
                 "dtype": self._dtype_str,
                 "qe_method": "eps_imag_weight",
@@ -347,7 +352,7 @@ class FmmaxSolver(SolverBase):
             raise RuntimeError("fmmax incident power must be finite and positive")
         R = -float(jnp.sum(reflected_flux)) / power
         T = float(jnp.sum(transmitted_flux)) / power
-        A = max(0.0, 1.0 - R - T)
+        A = 1.0 - R - T
 
         return R, T, A
 
@@ -469,12 +474,12 @@ class FmmaxSolver(SolverBase):
             field_2d = np.zeros((nx_out, nz))
             for zi, s in enumerate(layer_info):
                 eps = s.eps_grid
-                ny_s = eps.shape[1]
+                ny_s = eps.shape[0]
                 y_idx = max(
                     0,
                     min(ny_s - 1, int(((position + ly / 2) / ly) * ny_s)),
                 )
-                col = eps[:, y_idx]
+                col = eps[y_idx, :]
                 x_orig = np.linspace(0, 1, len(col))
                 x_new = np.linspace(0, 1, nx_out)
                 field_2d[:, zi] = np.interp(x_new, x_orig, np.abs(np.imag(col)) + 1e-10)

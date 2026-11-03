@@ -47,3 +47,6 @@ htmlcov/
 docs/package-lock.json
 docs/test-results/
 docs/playwright-report/
+
+# Linux environment alongside the Windows environment
+.venv-wsl/

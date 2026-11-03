@@ -1,0 +1,50 @@
+{
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "cpu": "x86_64",
+  "cpu_count": 12,
+  "torch": "2.15.0+cu132",
+  "torch_cuda": "13.2",
+  "torch_cuda_available": true,
+  "jax": "0.12.0.1",
+  "jax_devices": [
+    "cuda:0"
+  ],
+  "packages": {
+    "torch": "2.15.0",
+    "jax": "0.12.0.1",
+    "jaxlib": "0.12.0.1",
+    "jax-cuda12-plugin": "0.12.0.1",
+    "numpy": "2.4.6",
+    "torcwa": "0.1.4.2",
+    "grcwa": "0.1.2",
+    "meent": "0.13.2",
+    "fmmax": "1.7.1",
+    "fdtd": "0.3.5",
+    "fdtdz": null,
+    "fdtdx": "0.6.3",
+    "optax": "0.2.8"
+  },
+  "nvidia_smi": "Mon Nov  2 22:50:40 2026       \n+-----------------------------------------------------------------------------------------+\n| NVIDIA-SMI 610.57.01              KMD Version: 610.88        CUDA UMD Version: 13.3     |\n+-----------------------------------------+------------------------+----------------------+\n| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |\n|                                         |                        |               MIG M. |\n|=========================================+========================+======================|\n|   0  NVIDIA GeForce RTX 4060 Ti     On  |   00000000:01:00.0  On |                  N/A |\n|  0%   45C    P2             20W /  165W |    1031MiB /  16380MiB |      7%      Default |\n|                                         |                        |                  N/A |\n+-----------------------------------------+------------------------+----------------------+\n\n+-----------------------------------------------------------------------------------------+\n| Processes:                                                                              |\n|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |\n|        ID   ID                                                               Usage      |\n|=========================================================================================|\n|  No running processes found                                                             |\n+-----------------------------------------------------------------------------------------+\n",
+  "torch_test": {
+    "device": "cuda:0",
+    "sum": 8575959040.0
+  },
+  "gpu_name": "NVIDIA GeForce RTX 4060 Ti",
+  "jax_test": {
+    "device": "cuda:0",
+    "sum": 8575959040.0
+  },
+  "cpu_model": "12th Gen Intel(R) Core(TM) i5-12400F",
+  "benchmark_controls": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "torch_num_threads": 1,
+    "JAX_ENABLE_X64": "true",
+    "XLA_PYTHON_CLIENT_PREALLOCATE": "false"
+  },
+  "meep_prefix": "/home/edwin/.local/share/compass-miniconda/envs/meep",
+  "meep_version": "1.35.0",
+  "meep_python": "3.12.16"
+}

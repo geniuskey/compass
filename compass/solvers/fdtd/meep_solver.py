@@ -48,9 +48,9 @@ class MeepSolver(SolverBase):
     Config params (under config["params"]):
         resolution: Grid points per um (default: 50, i.e. 20nm spacing).
         pml_thickness: PML thickness in um (default: 0.5).
-        runtime_periods: Number of optical periods to run (default: 100).
-        decay_threshold: DFT field decay threshold for auto-stop (default: 1e-5).
-        use_dispersive: Enable Lorentz-Drude dispersive materials (default: True).
+        runtime_periods: Fixed post-source optical periods (default: 100).
+        decay_threshold: Legacy setting; fixed-duration runs do not auto-stop.
+        use_dispersive: Allow Drude fits for negative epsilon; dielectric loss is always retained.
     """
 
     def __init__(self, config: dict, device: str = "cpu"):
@@ -136,22 +136,27 @@ class MeepSolver(SolverBase):
         resolution = params.get("resolution", 50)  # grid points per um
         pml_thickness = params.get("pml_thickness", 0.5)  # um
         runtime_periods = params.get("runtime_periods", 100)
-        decay_threshold = params.get("decay_threshold", 1e-5)
+        decay_threshold = params.get("decay_threshold", 1e-5)  # legacy; fixed runtime below
         use_dispersive = params.get("use_dispersive", True)
 
         lx, ly = self._pixel_stack.domain_size
         z_min, z_max = self._pixel_stack.z_range
         total_z = z_max - z_min
 
-        # Simulation cell: domain + PML on z (top and bottom)
-        sz = total_z + 2 * pml_thickness
+        if self.device != "cpu":
+            raise ValueError("Meep supports CPU execution only")
+        padding = float(params.get("air_padding", 0.8))
+        if padding <= 0:
+            raise ValueError("air_padding must be positive")
+        # Keep the source and flux planes in homogeneous air outside PML.
+        sz = total_z + 2 * (padding + pml_thickness)
         cell_size = mp.Vector3(lx, ly, sz)
 
         # Source and monitor positions (z coordinates, centered)
         z_center = (z_min + z_max) / 2.0
-        src_z = z_max - z_center + pml_thickness * 0.3  # near top PML
-        refl_z = z_max - z_center + pml_thickness * 0.1  # just below source
-        trans_z = z_min - z_center - pml_thickness * 0.1  # just above bottom PML
+        src_z = z_max - z_center + padding * 0.7
+        refl_z = z_max - z_center + padding * 0.35
+        trans_z = z_min - z_center - padding * 0.35
 
         logger.info(
             f"meep: cell_size=({lx:.2f}, {ly:.2f}, {sz:.2f})um, "
@@ -255,11 +260,13 @@ class MeepSolver(SolverBase):
             absorption=result_arrays["absorption"],
             metadata={
                 "solver_name": "meep",
-                "qe_method": "field_integration",
+                "qe_method": "incident_power_field_integration",
                 "resolution": resolution,
                 "pml_thickness": pml_thickness,
                 "runtime_periods": runtime_periods,
-                "device": self.device,
+                "device": "cpu",
+                "air_padding": padding,
+                "termination": "fixed post-source duration: runtime_periods * wavelength",
                 **self._failure_metadata(),
             },
         )
@@ -312,6 +319,10 @@ class MeepSolver(SolverBase):
         Returns:
             Tuple of (R, T, A, simulation_object or None).
         """
+        if self._last_sim is not None:
+            self._last_sim.reset_meep()
+            self._last_sim = None
+
         # Frequency width for the CW source (narrow Gaussian pulse)
         fwidth = 0.1 * fcen
 
@@ -332,9 +343,9 @@ class MeepSolver(SolverBase):
 
         # Source polarization
         if polarization == "TE":
-            src_component = mp.Ex
-        else:
             src_component = mp.Ey
+        else:
+            src_component = mp.Ex
 
         sources = [
             mp.Source(
@@ -378,14 +389,7 @@ class MeepSolver(SolverBase):
 
         # Run reference until fields decay
         max_time = runtime_periods / fcen
-        sim_ref.run(
-            until_after_sources=mp.stop_when_fields_decayed(
-                dt=max_time * 0.1,
-                c=src_component,
-                pt=mp.Vector3(0, 0, trans_z),
-                decay_by=decay_threshold,
-            ),
-        )
+        sim_ref.run(until_after_sources=max_time)
 
         # Save reference reflection flux data (for subtracting later)
         refl_flux_data = sim_ref.get_flux_data(refl_fr_ref)
@@ -454,14 +458,7 @@ class MeepSolver(SolverBase):
             )
 
         # Run structure simulation until decay
-        sim.run(
-            until_after_sources=mp.stop_when_fields_decayed(
-                dt=max_time * 0.1,
-                c=src_component,
-                pt=mp.Vector3(0, 0, trans_z),
-                decay_by=decay_threshold,
-            ),
-        )
+        sim.run(until_after_sources=max_time)
 
         # Extract flux values
         refl_flux = mp.get_fluxes(refl_fr)
@@ -469,13 +466,12 @@ class MeepSolver(SolverBase):
 
         # Compute R, T
         if len(input_flux) > 0 and abs(input_flux[0]) > 1e-30:
-            R = float(np.clip(-refl_flux[0] / input_flux[0], 0.0, 1.0))
-            T = float(np.clip(trans_flux[0] / input_flux[0], 0.0, 1.0))
+            R = float(-refl_flux[0] / input_flux[0])
+            T = float(trans_flux[0] / input_flux[0])
         else:
-            logger.warning("meep: input flux is near zero, defaulting R=T=0")
-            R, T = 0.0, 0.0
+            raise RuntimeError("Meep reference incident flux is zero")
 
-        A = float(np.clip(1.0 - R - T, 0.0, 1.0))
+        A = float(1.0 - R - T)
 
         logger.debug(
             f"meep: lambda={wavelength:.4f}um, pol={polarization}, R={R:.4f}, T={T:.4f}, A={A:.4f}"
@@ -485,8 +481,9 @@ class MeepSolver(SolverBase):
         self._last_sim = sim
         self._last_dft_fields = dft_vol
 
-        sim.reset_meep()
-
+        self._incident_power = abs(float(input_flux[0]))
+        # Keep fields alive for QE and subsequent field queries. The next run
+        # releases the preceding simulation after its fields have been read.
         return R, T, A, dft_vol
 
     def _build_meep_geometry(
@@ -591,7 +588,7 @@ class MeepSolver(SolverBase):
             elif layer.name == "silicon":
                 # Silicon bulk block
                 si_cfg = self._pixel_stack._layer_configs.get("silicon", {})
-                si_mat_name = si_cfg.get("material", "silicon")
+                si_mat_name = si_cfg.get("material", layer.base_material)
                 si_meep_mat = self._get_meep_material(mp, si_mat_name, wavelength, use_dispersive)
 
                 geometry.append(
@@ -723,43 +720,25 @@ class MeepSolver(SolverBase):
         mat_db = self._pixel_stack.material_db
 
         if not mat_db.has_material(mat_name):
-            logger.warning(f"meep: unknown material '{mat_name}', using air")
-            return mp.Medium(epsilon=1.0)
+            raise ValueError(f"Unknown Meep material: {mat_name}")
 
         n, k = mat_db.get_nk(mat_name, wavelength)
 
-        if use_dispersive and k > 0.01:
-            # Create a Lorentz-Drude model for absorbing/metallic materials.
-            # Single Lorentz oscillator fit at the target wavelength.
-            fcen = 1.0 / wavelength  # meep frequency units
-            eps_real = n**2 - k**2
-            eps_imag = 2 * n * k
-
-            # Lorentz parameters: eps_inf + sigma * omega0^2 / (omega0^2 - omega^2 - i*gamma*omega)
-            # At resonance omega = omega0: contribution = sigma * omega0 / (i*gamma)
-            # For a broadband fit, use a wide Lorentz oscillator
-            omega0 = fcen  # center frequency
-            gamma = 0.5 * fcen  # broad linewidth
-            # sigma chosen to match Im(eps) at the target frequency
-            # Im(contribution) = sigma * omega0^2 * gamma * omega /
-            #                     ((omega0^2 - omega^2)^2 + gamma^2*omega^2)
-            # At omega = omega0: Im = sigma * omega0 / gamma
-            sigma = eps_imag * gamma / omega0 if omega0 > 0 else 0.0
-
-            lorentzian = mp.LorentzianSusceptibility(
-                frequency=omega0,
-                gamma=gamma,
-                sigma=sigma,
-            )
-
-            return mp.Medium(
-                epsilon=max(eps_real, 1.0),
-                E_susceptibilities=[lorentzian],
-            )
-        else:
-            # Simple non-dispersive dielectric
-            eps = n**2 - k**2
-            return mp.Medium(epsilon=max(eps, 1.0))
+        eps = complex(n, k) ** 2
+        fcen = 1.0 / wavelength
+        if eps.real > 0:
+            # Single-frequency match, including arbitrarily weak absorption.
+            return mp.Medium(epsilon=eps.real,
+                             D_conductivity=2 * np.pi * fcen * eps.imag / eps.real)
+        if not use_dispersive:
+            raise ValueError("Negative permittivity requires a dispersive material")
+        # Stable passive Drude medium matching this frequency, without clamping eps'.
+        eps_inf = 1.0
+        gamma = fcen * eps.imag / (eps_inf - eps.real)
+        sigma = (eps_inf - eps.real) * (fcen**2 + gamma**2) / fcen**2
+        return mp.Medium(epsilon=eps_inf, E_susceptibilities=[
+            mp.DrudeSusceptibility(frequency=fcen, gamma=gamma, sigma=sigma),
+        ])
 
     def _compute_pixel_qe(
         self,
@@ -793,12 +772,14 @@ class MeepSolver(SolverBase):
         bayer = self._pixel_stack.bayer_map
         _n_pixels = self._pixel_stack.unit_cell[0] * self._pixel_stack.unit_cell[1]
 
+        if not self._pixel_stack.photodiodes:
+            return {}
         if dft_vol is None or self._last_sim is None:
-            # Fallback: no DFT data available, return zeros
+            # Regional absorption is unavailable without DFT fields.
             for r in range(self._pixel_stack.unit_cell[0]):
                 for c in range(self._pixel_stack.unit_cell[1]):
                     color = bayer[r][c]
-                    qe_per_pixel[f"{color}_{r}_{c}"] = 0.0
+                    qe_per_pixel[f"{color}_{r}_{c}"] = float("nan")
             return qe_per_pixel
 
         try:
@@ -843,8 +824,10 @@ class MeepSolver(SolverBase):
 
             # Volume absorption: Im(eps) * |E|^2
             abs_density = eps_imag_si * E_sq
-            dV = (1.0 / resolution) ** 3
-            total_absorbed = np.sum(abs_density) * dV
+            x_arr, y_arr, z_arr, weights = sim.get_array_metadata(dft_cell=dft_vol)
+            # DFT fields and fluxes share the same Fourier normalization.
+            abs_density = (2 * np.pi / wavelength) * abs_density
+            total_absorbed = np.sum(abs_density * weights)
 
             if total_absorbed < 1e-30:
                 for r in range(self._pixel_stack.unit_cell[0]):
@@ -854,14 +837,6 @@ class MeepSolver(SolverBase):
                 return qe_per_pixel
 
             # Build pixel masks on the DFT grid
-            nfx, nfy, nfz = field_shape
-            x_arr = np.linspace(-lx / 2.0, lx / 2.0, nfx, endpoint=False)
-            y_arr = np.linspace(-ly / 2.0, ly / 2.0, nfy, endpoint=False)
-            z_arr = np.linspace(
-                si_layer.z_start - z_center,
-                si_layer.z_end - z_center,
-                nfz,
-            )
             xx, yy, zz = np.meshgrid(x_arr, y_arr, z_arr, indexing="ij")
 
             for pd in self._pixel_stack.photodiodes:
@@ -876,20 +851,21 @@ class MeepSolver(SolverBase):
 
                 # Rectangular photodiode mask
                 mask = (
-                    (np.abs(xx - pd_cx) < pd.size[0] / 2.0)
-                    & (np.abs(yy - pd_cy) < pd.size[1] / 2.0)
-                    & (np.abs(zz - pd_cz) < pd.size[2] / 2.0)
+                    (np.abs(xx - pd_cx) <= pd.size[0] / 2.0 + 1e-12)
+                    & (np.abs(yy - pd_cy) <= pd.size[1] / 2.0 + 1e-12)
+                    & (np.abs(zz - pd_cz) <= pd.size[2] / 2.0 + 1e-12)
                 )
 
-                pixel_abs = np.sum(abs_density * mask.astype(float)) * dV
-                qe_per_pixel[key] = float(pixel_abs / total_absorbed)
+                pixel_abs = np.sum(abs_density * mask * weights)
+                # Incident power per pixel area, consistent with COMPASS QE.
+                qe_per_pixel[key] = float(pixel_abs * _n_pixels / self._incident_power)
 
         except Exception as e:
-            logger.warning(f"meep: QE computation failed: {e}, using fallback")
+            logger.warning(f"meep: QE computation failed: {e}; returning NaN")
             for r in range(self._pixel_stack.unit_cell[0]):
                 for c in range(self._pixel_stack.unit_cell[1]):
                     color = bayer[r][c]
-                    qe_per_pixel[f"{color}_{r}_{c}"] = 0.0
+                    qe_per_pixel[f"{color}_{r}_{c}"] = float("nan")
 
         # Fill in any missing pixels
         for r in range(self._pixel_stack.unit_cell[0]):

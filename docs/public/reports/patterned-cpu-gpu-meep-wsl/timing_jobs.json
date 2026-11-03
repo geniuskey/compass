@@ -1,0 +1,116 @@
+[
+  {
+    "label": "torcwa_cpu_n9_g128_timed",
+    "solver": "torcwa",
+    "device": "cpu",
+    "order": 9,
+    "grid": 128,
+    "repeats": 3,
+    "timing_label": "isolated"
+  },
+  {
+    "label": "torcwa_cuda_n9_g128_timed",
+    "solver": "torcwa",
+    "device": "cuda",
+    "order": 9,
+    "grid": 128,
+    "repeats": 3,
+    "timing_label": "isolated"
+  },
+  {
+    "label": "grcwa_cpu_n9_g128_timed",
+    "solver": "grcwa",
+    "device": "cpu",
+    "order": 9,
+    "grid": 128,
+    "repeats": 3,
+    "timing_label": "isolated"
+  },
+  {
+    "label": "meent_numpy_cpu_n9_g128_timed",
+    "solver": "meent_numpy",
+    "device": "cpu",
+    "order": 9,
+    "grid": 128,
+    "repeats": 3,
+    "timing_label": "isolated"
+  },
+  {
+    "label": "meent_torch_cpu_n9_g128_timed",
+    "solver": "meent_torch",
+    "device": "cpu",
+    "order": 9,
+    "grid": 128,
+    "repeats": 3,
+    "timing_label": "isolated"
+  },
+  {
+    "label": "meent_torch_cuda_n9_g128_timed",
+    "solver": "meent_torch",
+    "device": "cuda",
+    "order": 9,
+    "grid": 128,
+    "repeats": 3,
+    "timing_label": "isolated"
+  },
+  {
+    "label": "fmmax_cpu_n9_g128_timed",
+    "solver": "fmmax",
+    "device": "cpu",
+    "order": 9,
+    "grid": 128,
+    "repeats": 3,
+    "timing_label": "isolated"
+  },
+  {
+    "label": "fmmax_cuda_n9_g128_timed",
+    "solver": "fmmax",
+    "device": "cuda",
+    "order": 9,
+    "grid": 128,
+    "repeats": 3,
+    "timing_label": "isolated"
+  },
+  {
+    "label": "meent_jax_cpu_n9_g128_timed",
+    "solver": "meent_jax",
+    "device": "cpu",
+    "order": 9,
+    "grid": 128,
+    "repeats": 3,
+    "timing_label": "isolated"
+  },
+  {
+    "label": "meent_jax_cuda_n9_g128_timed",
+    "solver": "meent_jax",
+    "device": "cuda",
+    "order": 9,
+    "grid": 128,
+    "repeats": 3,
+    "timing_label": "isolated"
+  },
+  {
+    "label": "fdtdx_cpu_dx025_timed",
+    "solver": "fdtdx",
+    "device": "cpu",
+    "order": 0,
+    "grid": 64,
+    "repeats": 3,
+    "spacing": 0.025,
+    "pml_layers": 14,
+    "duration": 80,
+    "timing_label": "isolated"
+  },
+  {
+    "label": "fdtdx_cuda_dx025_timed",
+    "solver": "fdtdx",
+    "device": "cuda",
+    "order": 0,
+    "grid": 64,
+    "repeats": 3,
+    "spacing": 0.025,
+    "pml_layers": 14,
+    "duration": 80,
+    "timing_label": "isolated"
+  }
+]

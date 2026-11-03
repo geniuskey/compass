@@ -97,8 +97,8 @@ class TorcwaSolver(SolverBase):
         lx, ly = self._pixel_stack.domain_size
         L = [lx, ly]  # Period in um
 
-        nx = max(64, (2 * fourier_order[0] + 1) * grid_multiplier)
-        ny = max(64, (2 * fourier_order[1] + 1) * grid_multiplier)
+        nx = max(int(params.get("epsilon_grid", 64)), (2 * fourier_order[0] + 1) * grid_multiplier)
+        ny = max(int(params.get("epsilon_grid", 64)), (2 * fourier_order[1] + 1) * grid_multiplier)
 
         pol_runs = self._source.get_polarization_runs()
         all_qe: dict[str, list[np.ndarray]] = {}
@@ -230,7 +230,8 @@ class TorcwaSolver(SolverBase):
         # Track layers for per-pixel QE and field extraction
         layer_info = []
         for s in reversed(layer_slices):
-            eps_tensor = torch.tensor(s.eps_grid, dtype=dtype, device=self.device)
+            # LayerSlice is [y, x]; torcwa's Fourier convolution is [x, y].
+            eps_tensor = torch.tensor(s.eps_grid.T.copy(), dtype=dtype, device=self.device)
             sim.add_layer(thickness=s.thickness, eps=eps_tensor)
             layer_info.append(s)
 
@@ -280,12 +281,15 @@ class TorcwaSolver(SolverBase):
             # Legacy: S_parameters is an object with R, T attributes
             R = float(sim.S_parameters.R.real)
             T = float(sim.S_parameters.T.real)
-        A = max(0.0, 1.0 - R - T)
+        A = 1.0 - R - T
 
         # Store sim reference for field extraction
         self._last_sim = sim
         self._last_layer_info = layer_info
         self._last_wavelength = wavelength
+
+        if not self._pixel_stack.photodiodes:
+            return {"R": R, "T": T, "A": A, "qe_per_pixel": {}}
 
         # Per-pixel QE: integrate the absorbed power density eps'' |E|^2 in
         # the silicon under each photodiode footprint. Falls back to the
@@ -364,15 +368,15 @@ class TorcwaSolver(SolverBase):
                 grid_shape = (n0, n1)
             # Sample fields at the torcwa positions of the eps grid samples
             # (eps_grid[a, b] sits at (a*lx/n0, b*ly/n1) in torcwa's lattice).
-            x_axis = torch.arange(n0, device=self.device, dtype=torch.float32) * (lx / n0)
-            y_axis = torch.arange(n1, device=self.device, dtype=torch.float32) * (ly / n1)
+            x_axis = torch.arange(n1, device=self.device, dtype=torch.float64) * (lx / n1)
+            y_axis = torch.arange(n0, device=self.device, dtype=torch.float64) * (ly / n0)
             nz = int(np.clip(round(s.thickness / 0.05), 8, 64))
             dz = s.thickness / nz
             e2_sum = torch.zeros((n0, n1), device=self.device, dtype=torch.float32)
             for kz in range(nz):
                 z_prop = (kz + 0.5) * dz
                 E, _H = sim.field_xy(li, x_axis, y_axis, z_prop=z_prop)
-                e2_sum += sum(torch.abs(c) ** 2 for c in E)
+                e2_sum += sum(torch.abs(c) ** 2 for c in E).T
             density = e2_sum.cpu().numpy() * eps_imag * dz  # eps''|E|^2 integrated in z
             cell_area = (lx / n0) * (ly / n1)
             total_field_abs += norm * float(density.sum()) * cell_area
@@ -633,10 +637,10 @@ class TorcwaSolver(SolverBase):
             field_2d = np.zeros((nx_out, nz))
             for zi, s in enumerate(layer_info):
                 eps = s.eps_grid
-                ny_s = eps.shape[1]
+                ny_s = eps.shape[0]
                 y_idx = min(int(((position + ly / 2) / ly) * ny_s), ny_s - 1)
                 y_idx = max(0, y_idx)
-                col = eps[:, y_idx]
+                col = eps[y_idx, :]
                 # Resample to nx_out
                 x_orig = np.linspace(0, 1, len(col))
                 x_new = np.linspace(0, 1, nx_out)
@@ -660,10 +664,10 @@ class TorcwaSolver(SolverBase):
             field_2d = np.zeros((ny_out, nz))
             for zi, s in enumerate(layer_info):
                 eps = s.eps_grid
-                nx_s = eps.shape[0]
+                nx_s = eps.shape[1]
                 x_idx = min(int(((position + lx / 2) / lx) * nx_s), nx_s - 1)
                 x_idx = max(0, x_idx)
-                col = eps[x_idx, :]
+                col = eps[:, x_idx]
                 y_orig = np.linspace(0, 1, len(col))
                 y_new = np.linspace(0, 1, ny_out)
                 field_2d[:, zi] = np.interp(y_new, y_orig, np.abs(np.imag(col)) + 1e-10)

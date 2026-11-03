@@ -1,0 +1,355 @@
+{
+  "status": "finished_by_user_scope",
+  "reason": "User requested a reasonable closeout; additional convergence runs stopped without substituting measurements.",
+  "stopped_processes": [
+    {
+      "pid": 3915,
+      "kind": "controller",
+      "command": [
+        ".venv-wsl/bin/python",
+        "scripts/profile_torch_solver_devices.py"
+      ]
+    },
+    {
+      "pid": 4431,
+      "kind": "controller",
+      "command": [
+        ".venv-wsl/bin/python",
+        "scripts/finish_wsl_benchmarks.py"
+      ]
+    },
+    {
+      "pid": 4717,
+      "kind": "controller",
+      "command": [
+        ".venv-wsl/bin/python",
+        "scripts/profile_jax_solver_device.py"
+      ]
+    },
+    {
+      "pid": 5899,
+      "kind": "controller",
+      "command": [
+        ".venv-wsl/bin/python",
+        "scripts/check_meep_pml_convergence.py"
+      ]
+    },
+    {
+      "pid": 7723,
+      "kind": "controller",
+      "command": [
+        "/mnt/d/git/geniuskey/compass/.venv-wsl/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_meent_cfs.py"
+      ]
+    },
+    {
+      "pid": 7994,
+      "kind": "controller",
+      "command": [
+        "/mnt/d/git/geniuskey/compass/.venv-wsl/bin/python",
+        "scripts/check_fdtdx_time_convergence.py"
+      ]
+    },
+    {
+      "pid": 9725,
+      "kind": "worker",
+      "command": [
+        "/mnt/d/git/geniuskey/compass/.venv-wsl/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_wsl_solvers.py",
+        "--solver",
+        "fdtdx",
+        "--device",
+        "cuda",
+        "--spacing",
+        "0.005",
+        "--duration",
+        "160",
+        "--pml-layers",
+        "70",
+        "--order",
+        "0",
+        "--grid",
+        "64",
+        "--repeats",
+        "0",
+        "--output",
+        "/mnt/d/git/geniuskey/compass/outputs/patterned_cpu_gpu/wsl/fdtdx_cuda_pattern_dx0.005_t160.json"
+      ]
+    },
+    {
+      "pid": 9934,
+      "kind": "worker",
+      "command": [
+        "/home/edwin/.local/share/compass-miniconda/envs/meep/bin/mpirun",
+        "-np",
+        "8",
+        "/home/edwin/.local/share/compass-miniconda/envs/meep/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_meep_reference.py",
+        "--resolution",
+        "200",
+        "--padding",
+        ".4",
+        "--pml",
+        ".35",
+        "--duration",
+        "185",
+        "--checkpoints",
+        "20",
+        "35",
+        "55",
+        "80",
+        "110",
+        "145",
+        "--adaptive-time",
+        "--fwidth-factor",
+        ".15",
+        "--output",
+        "/mnt/d/git/geniuskey/compass/outputs/patterned_cpu_gpu/wsl/meep_reference_r200.json"
+      ]
+    },
+    {
+      "pid": 9936,
+      "kind": "worker",
+      "command": [
+        "/home/edwin/.local/share/compass-miniconda/envs/meep/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_meep_reference.py",
+        "--resolution",
+        "200",
+        "--padding",
+        ".4",
+        "--pml",
+        ".35",
+        "--duration",
+        "185",
+        "--checkpoints",
+        "20",
+        "35",
+        "55",
+        "80",
+        "110",
+        "145",
+        "--adaptive-time",
+        "--fwidth-factor",
+        ".15",
+        "--output",
+        "/mnt/d/git/geniuskey/compass/outputs/patterned_cpu_gpu/wsl/meep_reference_r200.json"
+      ]
+    },
+    {
+      "pid": 9937,
+      "kind": "worker",
+      "command": [
+        "/home/edwin/.local/share/compass-miniconda/envs/meep/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_meep_reference.py",
+        "--resolution",
+        "200",
+        "--padding",
+        ".4",
+        "--pml",
+        ".35",
+        "--duration",
+        "185",
+        "--checkpoints",
+        "20",
+        "35",
+        "55",
+        "80",
+        "110",
+        "145",
+        "--adaptive-time",
+        "--fwidth-factor",
+        ".15",
+        "--output",
+        "/mnt/d/git/geniuskey/compass/outputs/patterned_cpu_gpu/wsl/meep_reference_r200.json"
+      ]
+    },
+    {
+      "pid": 9938,
+      "kind": "worker",
+      "command": [
+        "/home/edwin/.local/share/compass-miniconda/envs/meep/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_meep_reference.py",
+        "--resolution",
+        "200",
+        "--padding",
+        ".4",
+        "--pml",
+        ".35",
+        "--duration",
+        "185",
+        "--checkpoints",
+        "20",
+        "35",
+        "55",
+        "80",
+        "110",
+        "145",
+        "--adaptive-time",
+        "--fwidth-factor",
+        ".15",
+        "--output",
+        "/mnt/d/git/geniuskey/compass/outputs/patterned_cpu_gpu/wsl/meep_reference_r200.json"
+      ]
+    },
+    {
+      "pid": 9939,
+      "kind": "worker",
+      "command": [
+        "/home/edwin/.local/share/compass-miniconda/envs/meep/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_meep_reference.py",
+        "--resolution",
+        "200",
+        "--padding",
+        ".4",
+        "--pml",
+        ".35",
+        "--duration",
+        "185",
+        "--checkpoints",
+        "20",
+        "35",
+        "55",
+        "80",
+        "110",
+        "145",
+        "--adaptive-time",
+        "--fwidth-factor",
+        ".15",
+        "--output",
+        "/mnt/d/git/geniuskey/compass/outputs/patterned_cpu_gpu/wsl/meep_reference_r200.json"
+      ]
+    },
+    {
+      "pid": 9940,
+      "kind": "worker",
+      "command": [
+        "/home/edwin/.local/share/compass-miniconda/envs/meep/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_meep_reference.py",
+        "--resolution",
+        "200",
+        "--padding",
+        ".4",
+        "--pml",
+        ".35",
+        "--duration",
+        "185",
+        "--checkpoints",
+        "20",
+        "35",
+        "55",
+        "80",
+        "110",
+        "145",
+        "--adaptive-time",
+        "--fwidth-factor",
+        ".15",
+        "--output",
+        "/mnt/d/git/geniuskey/compass/outputs/patterned_cpu_gpu/wsl/meep_reference_r200.json"
+      ]
+    },
+    {
+      "pid": 9941,
+      "kind": "worker",
+      "command": [
+        "/home/edwin/.local/share/compass-miniconda/envs/meep/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_meep_reference.py",
+        "--resolution",
+        "200",
+        "--padding",
+        ".4",
+        "--pml",
+        ".35",
+        "--duration",
+        "185",
+        "--checkpoints",
+        "20",
+        "35",
+        "55",
+        "80",
+        "110",
+        "145",
+        "--adaptive-time",
+        "--fwidth-factor",
+        ".15",
+        "--output",
+        "/mnt/d/git/geniuskey/compass/outputs/patterned_cpu_gpu/wsl/meep_reference_r200.json"
+      ]
+    },
+    {
+      "pid": 9942,
+      "kind": "worker",
+      "command": [
+        "/home/edwin/.local/share/compass-miniconda/envs/meep/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_meep_reference.py",
+        "--resolution",
+        "200",
+        "--padding",
+        ".4",
+        "--pml",
+        ".35",
+        "--duration",
+        "185",
+        "--checkpoints",
+        "20",
+        "35",
+        "55",
+        "80",
+        "110",
+        "145",
+        "--adaptive-time",
+        "--fwidth-factor",
+        ".15",
+        "--output",
+        "/mnt/d/git/geniuskey/compass/outputs/patterned_cpu_gpu/wsl/meep_reference_r200.json"
+      ]
+    },
+    {
+      "pid": 9943,
+      "kind": "worker",
+      "command": [
+        "/home/edwin/.local/share/compass-miniconda/envs/meep/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_meep_reference.py",
+        "--resolution",
+        "200",
+        "--padding",
+        ".4",
+        "--pml",
+        ".35",
+        "--duration",
+        "185",
+        "--checkpoints",
+        "20",
+        "35",
+        "55",
+        "80",
+        "110",
+        "145",
+        "--adaptive-time",
+        "--fwidth-factor",
+        ".15",
+        "--output",
+        "/mnt/d/git/geniuskey/compass/outputs/patterned_cpu_gpu/wsl/meep_reference_r200.json"
+      ]
+    },
+    {
+      "pid": 10299,
+      "kind": "worker",
+      "command": [
+        "/mnt/d/git/geniuskey/compass/.venv-wsl/bin/python",
+        "/mnt/d/git/geniuskey/compass/scripts/benchmark_wsl_solvers.py",
+        "--solver",
+        "grcwa",
+        "--device",
+        "cpu",
+        "--order",
+        "25",
+        "--grid",
+        "256",
+        "--repeats",
+        "0",
+        "--output",
+        "/mnt/d/git/geniuskey/compass/outputs/patterned_cpu_gpu/wsl/grcwa_cpu_n25_g256_convergence.json"
+      ]
+    }
+  ]
+}

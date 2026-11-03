@@ -1,0 +1,9 @@
+{
+  "status": "stopped_by_scope",
+  "solver_variant": "meent_torch_cfs",
+  "accuracy_context": "GPU serialized; CPU accuracy jobs may run concurrently",
+  "timing_repeats": 0,
+  "checks": [],
+  "runs": [],
+  "error": "User requested a reasonable closeout; additional convergence runs stopped without substituting measurements."
+}

@@ -58,6 +58,8 @@ class GrcwaSolver(SolverBase):
         except ImportError as err:
             raise ImportError("grcwa is required. Install with: pip install grcwa") from err
 
+        if self.device != "cpu":
+            raise ValueError("grcwa supports CPU execution only")
         params = self.config.get("params", {})
         # grcwa truncates by TOTAL number of plane waves (nG), unlike the
         # per-axis Fourier order [m, m] used by torcwa/meent/fmmax where the
@@ -80,8 +82,8 @@ class GrcwaSolver(SolverBase):
         grid_multiplier = params.get("grid_multiplier", 3)
 
         lx, ly = self._pixel_stack.domain_size
-        nx = max(64, (2 * nG + 1) * grid_multiplier)
-        ny = max(64, (2 * nG + 1) * grid_multiplier)
+        nx = max(int(params.get("epsilon_grid", 64)), (2 * nG + 1) * grid_multiplier)
+        ny = max(int(params.get("epsilon_grid", 64)), (2 * nG + 1) * grid_multiplier)
 
         pol_runs = self._source.get_polarization_runs()
         all_qe: dict[str, list[float]] = {}
@@ -126,7 +128,8 @@ class GrcwaSolver(SolverBase):
                     grid_eps_list = []
                     for s in reversed(layer_slices):
                         obj.Add_LayerGrid(s.thickness, nx, ny)
-                        grid_eps_list.append(s.eps_grid.flatten())
+                        # grcwa reshapes to (Nx, Ny), while LayerSlice is [y, x].
+                        grid_eps_list.append(s.eps_grid.T.flatten())
 
                     # Output layer (semi-infinite air)
                     obj.Add_LayerUniform(0, 1.0)
@@ -144,7 +147,7 @@ class GrcwaSolver(SolverBase):
                     R, T = obj.RT_Solve(normalize=1)
                     R = float(np.real(R))
                     T = float(np.real(T))
-                    A = max(0.0, 1.0 - R - T)
+                    A = 1.0 - R - T
 
                     if R > 1.0 or R < 0.0:
                         logger.warning(
@@ -303,9 +306,9 @@ class GrcwaSolver(SolverBase):
             k0 = 2 * np.pi / wl
             for zi, s in enumerate(layer_info):
                 eps = s.eps_grid
-                ny_s = eps.shape[1]
+                ny_s = eps.shape[0]
                 y_idx = max(0, min(ny_s - 1, int(((position + ly / 2) / ly) * ny_s)))
-                col = eps[:, y_idx]
+                col = eps[y_idx, :]
                 x_orig = np.linspace(0, 1, len(col))
                 x_new = np.linspace(0, 1, nx_out)
                 field_2d[:, zi] = np.interp(x_new, x_orig, np.abs(np.imag(col)) + 1e-10)
@@ -325,9 +328,9 @@ class GrcwaSolver(SolverBase):
             k0 = 2 * np.pi / wl
             for zi, s in enumerate(layer_info):
                 eps = s.eps_grid
-                nx_s = eps.shape[0]
+                nx_s = eps.shape[1]
                 x_idx = max(0, min(nx_s - 1, int(((position + lx / 2) / lx) * nx_s)))
-                col = eps[x_idx, :]
+                col = eps[:, x_idx]
                 y_orig = np.linspace(0, 1, len(col))
                 y_new = np.linspace(0, 1, ny_out)
                 field_2d[:, zi] = np.interp(y_new, y_orig, np.abs(np.imag(col)) + 1e-10)

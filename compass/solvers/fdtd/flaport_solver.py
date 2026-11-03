@@ -166,11 +166,11 @@ class FlaportFdtdSolver(SolverBase):
                     # --- Compute R, T, A using reference normalization ---
                     if P_inc > 0:
                         # Excess upward flux compared to reference = reflection
-                        R = float(np.clip((Sz_above - Sz_ref_above) / P_inc, 0.0, 1.0))
-                        T = float(np.clip(abs(Sz_trans) / P_inc, 0.0, 1.0))
+                        R = float((Sz_above - Sz_ref_above) / P_inc)
+                        T = float(abs(Sz_trans) / P_inc)
                     else:
                         R, T = 0.0, 0.0
-                    A = float(np.clip(1.0 - R - T, 0.0, 1.0))
+                    A = float(1.0 - R - T)
 
                 except Exception as e:
                     logger.error(f"fdtd_flaport failed at λ={wavelength:.4f}um: {e}")
@@ -269,13 +269,13 @@ class FlaportFdtdSolver(SolverBase):
         if eps_3d is not None:
             import torch
 
-            eps_real = np.real(eps_3d)
+            eps_real = np.real(eps_3d).transpose(1, 0, 2)
             eps_real_safe = np.where(np.abs(eps_real) > 1e-30, eps_real, 1.0)
-            inv_eps = torch.tensor(1.0 / eps_real_safe, dtype=torch.float64).unsqueeze(-1)
+            inv_eps = torch.tensor(1.0 / eps_real_safe, dtype=grid.E.dtype, device=grid.E.device).unsqueeze(-1)
             grid.inverse_permittivity[:, :, pml_layers:-pml_layers] = inv_eps
 
             # Compute per-voxel damping for material absorption
-            eps_imag = np.imag(eps_3d)
+            eps_imag = np.imag(eps_3d).transpose(1, 0, 2)
             if np.any(np.abs(eps_imag) > 1e-30):
                 omega = 2 * np.pi * 3e8 / wavelength_m
                 sigma = omega * 8.854e-12 * np.abs(eps_imag)  # equivalent conductivity (S/m)
@@ -284,7 +284,7 @@ class FlaportFdtdSolver(SolverBase):
                 damping = (1.0 - alpha) / (1.0 + alpha)
                 # Expand to (nx, ny, nz_struct, 3) matching E-field components
                 damping_3d = np.stack([damping, damping, damping], axis=-1)
-                damping_tensor = torch.tensor(damping_3d, dtype=torch.float64)
+                damping_tensor = torch.tensor(damping_3d, dtype=grid.E.dtype, device=grid.E.device)
 
         # Source — placed in air region near top PML (light propagates -z: air→silicon)
         grid[:, :, nz - pml_layers - 3] = fdtd.PlaneSource(
@@ -338,27 +338,25 @@ class FlaportFdtdSolver(SolverBase):
                 grid.E[:, :, pml_layers:-pml_layers] *= damping_tensor
 
             if step >= snap_start:
-                E = grid.E
-                H = grid.H
-                if hasattr(E, "detach"):
-                    E_np = E.detach().cpu().numpy()
-                    H_np = H.detach().cpu().numpy()
-                else:
-                    E_np = np.array(E)
-                    H_np = np.array(H)
-
                 for z, snaps in [
                     (z_above, Sz_above_snaps),
                     (z_below, Sz_below_snaps),
                     (z_trans, Sz_trans_snaps),
                 ]:
-                    Sz = E_np[:, :, z, 0] * H_np[:, :, z, 1] - E_np[:, :, z, 1] * H_np[:, :, z, 0]
-                    snaps.append(float(np.mean(Sz)))
+                    E, H = grid.E[:, :, z], grid.H[:, :, z]
+                    power = (E[..., 0] * H[..., 1] - E[..., 1] * H[..., 0]).mean()
+                    snaps.append(power)
+
+        def mean_power(samples):
+            if not samples:
+                return 0.0
+            value = sum(samples) / len(samples)
+            return float(value.item() if hasattr(value, "item") else value)
 
         return (
-            float(np.mean(Sz_above_snaps)) if Sz_above_snaps else 0.0,
-            float(np.mean(Sz_below_snaps)) if Sz_below_snaps else 0.0,
-            float(np.mean(Sz_trans_snaps)) if Sz_trans_snaps else 0.0,
+            mean_power(Sz_above_snaps),
+            mean_power(Sz_below_snaps),
+            mean_power(Sz_trans_snaps),
         )
 
     @staticmethod

@@ -17,6 +17,15 @@ from compass.sources.planewave import PlanewaveSource
 logger = logging.getLogger(__name__)
 
 
+def _dfs_work_grid_shape(shape_yx, fourier_order, enhanced_dfs):
+    """Installed meent raster-DFS repeat rule, before the three Fourier transforms."""
+    result = []
+    for size, order in zip(shape_yx, reversed(fourier_order), strict=True):
+        minimum = (4 * order + 1) * size if enhanced_dfs else 4 * order + 1
+        result.append(size * (minimum // size + 1) if size < minimum else size)
+    return result
+
+
 class MeentSolver(SolverBase):
     """meent RCWA solver adapter.
 
@@ -58,12 +67,28 @@ class MeentSolver(SolverBase):
         except ImportError as err:
             raise ImportError("meent is required. Install with: pip install meent") from err
 
+        if self._backend == "numpy" and self.device != "cpu":
+            raise ValueError("meent/numpy supports CPU execution only")
+        if self._backend == "jax":
+            import jax
+
+            target = "gpu" if self.device.startswith("cuda") else "cpu"
+            jax.config.update("jax_default_device", jax.devices(target)[0])
+
         params = self.config.get("params", {})
         fourier_order = params.get("fourier_order", [9, 9])
+        fourier_type = params.get("fourier_type", 0)
+        if fourier_type not in (0, 1):
+            raise ValueError("meent fourier_type must be 0 (DFS) or 1 (CFS)")
+        enhanced_dfs = params.get("enhanced_dfs", True)
+        if not isinstance(enhanced_dfs, bool):
+            raise ValueError("meent enhanced_dfs must be a boolean")
 
         lx, ly = self._pixel_stack.domain_size
-        nx = max(64, (2 * fourier_order[0] + 1) * 3)
-        ny = max(64, (2 * fourier_order[1] + 1) * 3)
+        # Zero disables automatic oversampling for independent grid/order studies.
+        grid_multiplier = params.get("grid_multiplier", 3)
+        nx = max(int(params.get("epsilon_grid", 64)), (2 * fourier_order[0] + 1) * grid_multiplier)
+        ny = max(int(params.get("epsilon_grid", 64)), (2 * fourier_order[1] + 1) * grid_multiplier)
 
         pol_runs = self._source.get_polarization_runs()
         self._failed_runs = []
@@ -82,15 +107,25 @@ class MeentSolver(SolverBase):
                 try:
                     # meent backend selection
                     backend_id = {"numpy": 0, "jax": 1, "torch": 2}.get(self._backend, 0)
+                    device_kwargs = {}
+                    if backend_id == 1:
+                        device_kwargs["device"] = 1 if self.device.startswith("cuda") else 0
+                    if backend_id == 2:
+                        import torch
+
+                        device_kwargs["device"] = torch.device(self.device)
 
                     mee = meent.call_mee(
                         backend=backend_id,
+                        **device_kwargs,
                         pol=0 if pol == "TE" else 1,
                         n_top=1.0,
                         n_bot=1.0,
                         theta=self._source.theta_rad,
                         phi=self._source.phi_rad,
                         fto=fourier_order,
+                        fourier_type=fourier_type,
+                        enhanced_dfs=enhanced_dfs,
                         period=[lx * 1000, ly * 1000],  # meent uses nm
                         wavelength=wavelength * 1000,  # meent uses nm
                         thickness=[s.thickness * 1000 for s in reversed(layer_slices)],
@@ -108,6 +143,11 @@ class MeentSolver(SolverBase):
                     result = mee.conv_solve()
                     de_ri = result.de_ri
                     de_ti = result.de_ti
+                    if backend_id == 2:
+                        # NumPy reductions cannot operate directly on torch tensors,
+                        # including tensors resident on a CUDA device.
+                        de_ri = de_ri.detach().cpu().numpy()
+                        de_ti = de_ti.detach().cpu().numpy()
 
                     R = float(np.sum(de_ri))
                     T = float(np.sum(de_ti))
@@ -116,7 +156,7 @@ class MeentSolver(SolverBase):
                             f"meent: R+T={R + T:.4f} > 1 at λ={wavelength:.4f}um "
                             f"(numerical instability for multi-layer 2D stack)"
                         )
-                    A = max(0.0, 1.0 - R - T)
+                    A = 1.0 - R - T
 
                 except Exception as e:
                     logger.error(f"meent failed at λ={wavelength:.4f}um: {e}")
@@ -166,6 +206,19 @@ class MeentSolver(SolverBase):
                 "solver_name": "meent",
                 "backend": self._backend,
                 "fourier_order": fourier_order,
+                "epsilon_grid_requested": int(params.get("epsilon_grid", 64)),
+                "epsilon_grid_shape_yx": [ny, nx],
+                "grid_multiplier": grid_multiplier,
+                "fourier_type": fourier_type,
+                "fourier_algorithm": "raster_dfs" if fourier_type == 0 else "raster_cfs",
+                "enhanced_dfs": enhanced_dfs,
+                "fourier_work_grid_shape_yx": (
+                    _dfs_work_grid_shape([ny, nx], fourier_order, enhanced_dfs)
+                    if fourier_type == 0 else None
+                ),
+                "fourier_work_grid_shape_source": (
+                    "derived from meent raster DFS repeat rule; CFS has no FFT work grid"
+                ),
                 "qe_method": "eps_imag_weight",
                 **self._failure_metadata(),
             },
@@ -267,9 +320,9 @@ class MeentSolver(SolverBase):
             field_2d = np.zeros((nx_out, nz))
             for zi, s in enumerate(layer_info):
                 eps = s.eps_grid
-                ny_s = eps.shape[1]
+                ny_s = eps.shape[0]
                 y_idx = max(0, min(ny_s - 1, int(((position + ly / 2) / ly) * ny_s)))
-                col = eps[:, y_idx]
+                col = eps[y_idx, :]
                 x_orig = np.linspace(0, 1, len(col))
                 x_new = np.linspace(0, 1, nx_out)
                 field_2d[:, zi] = np.interp(x_new, x_orig, np.abs(np.imag(col)) + 1e-10)
