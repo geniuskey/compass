@@ -146,8 +146,8 @@ Returns names of all registered solvers.
 | `grcwa` | `compass.solvers.rcwa.grcwa_solver` | RCWA | JAX/NumPy RCWA. Cross-validation reference. **Critical** -- never remove. |
 | `meent` | `compass.solvers.rcwa.meent_solver` | RCWA | Multi-backend RCWA with analytic eigendecomposition. |
 | `fmmax` | `compass.solvers.rcwa.fmmax_solver` | RCWA | JAX FMM with 4 selectable vector formulations. |
-| `fdtd_flaport` | `compass.solvers.fdtd.flaport_solver` | FDTD | PyTorch 2.5D FDTD, GPU + autograd. |
-| `fdtdz` | `compass.solvers.fdtd.fdtdz_solver` | FDTD | JAX 2D FDTD (z-invariant); fast for 2D cross-sections. |
+| `fdtd_flaport` | `compass.solvers.fdtd.flaport_solver` | FDTD | PyTorch 3D FDTD (normal incidence), soft CW source, field-integrated QE. |
+| `fdtdz` | `compass.solvers.fdtd.fdtdz_solver` | FDTD | Experimental: needs a native simulate() API current fdtdz releases lack; no absorbing media (run() raises NotImplementedError). |
 | `fdtdx` | `compass.solvers.fdtd.fdtdx_solver` | FDTD | JAX 3D FDTD, multi-GPU, fully differentiable, MIT license. |
 | `meep` | `compass.solvers.fdtd.meep_solver` | FDTD | C++/Python 3D FDTD with subpixel averaging and adjoint gradients. |
 | `tmm` | `compass.solvers.tmm.tmm_solver` | TMM | 1D planar stacks only, ~1000x faster than RCWA. |

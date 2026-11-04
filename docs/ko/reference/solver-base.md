@@ -146,8 +146,8 @@ def list_solvers(cls) -> list:
 | `grcwa` | `compass.solvers.rcwa.grcwa_solver` | RCWA | JAX/NumPy RCWA. 교차 검증 기준점. **핵심** -- 제거 금지. |
 | `meent` | `compass.solvers.rcwa.meent_solver` | RCWA | 다중 백엔드 RCWA, 해석적 고유값 분해 지원. |
 | `fmmax` | `compass.solvers.rcwa.fmmax_solver` | RCWA | 4가지 정식화 선택 가능한 JAX 벡터 FMM. |
-| `fdtd_flaport` | `compass.solvers.fdtd.flaport_solver` | FDTD | PyTorch 2.5D FDTD, GPU + autograd. |
-| `fdtdz` | `compass.solvers.fdtd.fdtdz_solver` | FDTD | JAX 2D FDTD (z-불변); 2D 단면에 매우 빠름. |
+| `fdtd_flaport` | `compass.solvers.fdtd.flaport_solver` | FDTD | PyTorch 3D FDTD (수직 입사), soft CW 소스, 필드 적분 QE. |
+| `fdtdz` | `compass.solvers.fdtd.fdtdz_solver` | FDTD | 실험적: 현재 fdtdz 배포판에 없는 native simulate() API가 필요하고 흡수 매질을 지원하지 않음 (run()이 NotImplementedError 발생). |
 | `fdtdx` | `compass.solvers.fdtd.fdtdx_solver` | FDTD | JAX 3D FDTD, 멀티 GPU, 완전 미분 가능, MIT 라이선스. |
 | `meep` | `compass.solvers.fdtd.meep_solver` | FDTD | C++/Python 3D FDTD, 서브픽셀 평균화 및 수반(adjoint) 그래디언트 지원. |
 | `tmm` | `compass.solvers.tmm.tmm_solver` | TMM | 1D 평면 스택 전용, RCWA 대비 ~1000배 빠름. |
