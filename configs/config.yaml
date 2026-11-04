@@ -2,7 +2,7 @@ defaults:
   - pixel: default_bsi_1um
   - solver: torcwa
   - source: planewave
-  - compute: cuda
+  - compute: auto
   - _self_
 
 experiment_name: "default"

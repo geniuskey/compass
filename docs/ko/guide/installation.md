@@ -2,7 +2,7 @@
 
 ## 요구 사항
 
-- Python 3.10 이상
+- Python 3.11 이상
 - RCWA 솔버(Solver)에는 CUDA 지원 GPU를 권장하지만 필수는 아닙니다
 
 ## 소스에서 설치
@@ -85,18 +85,21 @@ solver:
 
 ## Apple Silicon (MPS)
 
-PyTorch는 M1/M2/M3 Mac에서 Apple Metal Performance Shaders를 지원합니다. COMPASS는 MPS를 컴퓨트 백엔드(Compute Backend)로 사용할 수 있습니다:
+Apple Silicon용 PyTorch macOS 빌드를 사용하므로 CUDA나 NVIDIA GPU가
+필요하지 않습니다. COMPASS 시뮬레이션은 CPU 백엔드로 실행할 수 있습니다:
 
-```yaml
-compute:
-  backend: "mps"
+```bash
+brew install uv
+uv python install 3.12
+uv sync --extra rcwa
+uv run python scripts/run_simulation.py solver=torcwa compute=auto
 ```
 
-**제한 사항:**
-- 일부 PyTorch 버전에서 복소수 지원이 불완전합니다
-- 고유값 분해(Eigendecomposition)가 자동으로 CPU로 폴백될 수 있습니다
-- RCWA 워크로드에서 성능은 일반적으로 CUDA보다 느립니다
-- MPS 관련 오류가 발생하면 먼저 `compute.backend: "cpu"`로 테스트하십시오
+`compute=auto`는 CUDA를 사용할 수 있으면 CUDA를 선택하고, 그 외에는 CPU를
+선택합니다. 현재 RCWA 어댑터는 PyTorch MPS 백엔드에서 지원되지 않는 복소수
+고유값 분해를 사용하며 MPS는 double 정밀도 텐서도 지원하지 않습니다.
+따라서 `compute=mps`는 안전하게 CPU로 폴백합니다. JAX 기반 솔버도 macOS에서는
+CPU를 사용합니다.
 
 ## CPU 폴백
 

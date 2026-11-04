@@ -44,8 +44,9 @@ class TorcwaSolver(SolverBase):
             import torch
 
             stability = self.config.get("stability", {})
-            torch.backends.cuda.matmul.allow_tf32 = stability.get("allow_tf32", False)
-            torch.backends.cudnn.allow_tf32 = stability.get("allow_tf32", False)
+            if torch.cuda.is_available():
+                torch.backends.cuda.matmul.allow_tf32 = stability.get("allow_tf32", False)
+                torch.backends.cudnn.allow_tf32 = stability.get("allow_tf32", False)
         except ImportError:
             pass
 

@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+from compass.compute import resolve_compute_device
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 
@@ -189,6 +190,8 @@ class SolverFactory:
                 f"Make sure the solver package is installed."
             )
 
+        if device in ("auto", "mps"):
+            device = resolve_compute_device(device, solver_name=name)
         solver: SolverBase = cls._registry[name](config, device)
         return solver
 

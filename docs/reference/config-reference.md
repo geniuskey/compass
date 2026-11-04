@@ -233,6 +233,7 @@ configs/
     wavelength_sweep.yaml
     cone_illumination.yaml
   compute/
+    auto.yaml
     cuda.yaml
     cpu.yaml
     mps.yaml

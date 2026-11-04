@@ -1,9 +1,11 @@
 """Single simulation runner."""
+
 from __future__ import annotations
 
 import copy
 import logging
 
+from compass.compute import resolve_compute_device
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.materials.database import MaterialDB
@@ -15,6 +17,7 @@ logger = logging.getLogger(__name__)
 # stability.energy_check.auto_retry_float64 is enabled.
 _RETRY_DTYPES = {"complex64": "complex128", "float32": "float64"}
 
+
 class SingleRunner:
     """Run a single simulation with given config."""
 
@@ -25,23 +28,19 @@ class SingleRunner:
         solver_config = config.get("solver", {})
         source_config = config.get("source", {})
         compute_config = config.get("compute", {})
+        solver_name = solver_config.get("name", "torcwa")
 
-        # Determine device
-        device = compute_config.get("backend", "cpu")
-        if device == "auto":
-            try:
-                import torch
-                device = "cuda" if torch.cuda.is_available() else "cpu"
-            except ImportError:
-                device = "cpu"
+        device = resolve_compute_device(
+            compute_config.get("backend", "auto"), solver_name=solver_name
+        )
 
         # Build pixel stack
         material_db = MaterialDB()
         pixel_stack = PixelStack(config, material_db)
 
         # Create solver
-        solver_name = solver_config.get("name", "torcwa")
         solver = SolverFactory.create(solver_name, solver_config, device)
+        device = solver.device
 
         # Setup and run
         solver.setup_geometry(pixel_stack)
