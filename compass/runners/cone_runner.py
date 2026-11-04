@@ -8,6 +8,7 @@ import time
 
 import numpy as np
 
+from compass.compute import resolve_compute_device
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.materials.database import MaterialDB
@@ -40,6 +41,7 @@ class ConeIlluminationRunner:
         solver_config = config.get("solver", {})
         source_config = config.get("source", {})
         compute_config = config.get("compute", {})
+        solver_name = solver_config.get("name", "torcwa")
         cone_config = source_config.get("cone", {})
 
         # Build ConeIllumination from config
@@ -52,22 +54,15 @@ class ConeIlluminationRunner:
             weighting=cone_config.get("weighting", "cosine"),
         )
 
-        # Determine device
-        device = compute_config.get("backend", "cpu")
-        if device == "auto":
-            try:
-                import torch
-
-                device = "cuda" if torch.cuda.is_available() else "cpu"
-            except ImportError:
-                device = "cpu"
+        device = resolve_compute_device(
+            compute_config.get("backend", "auto"), solver_name=solver_name
+        )
 
         # Build pixel stack
         material_db = MaterialDB()
         pixel_stack = PixelStack(config, material_db)
 
         # Create solver
-        solver_name = solver_config.get("name", "torcwa")
         solver = SolverFactory.create(solver_name, solver_config, device)
         solver.setup_geometry(pixel_stack)
 

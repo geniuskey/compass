@@ -85,18 +85,21 @@ solver:
 
 ## Apple Silicon (MPS)
 
-PyTorch supports Apple Metal Performance Shaders on M1/M2/M3 Macs. COMPASS can use MPS as a compute backend:
+PyTorch includes a macOS build on Apple Silicon, so CUDA and an NVIDIA GPU are
+not required. Use the CPU backend for COMPASS simulations:
 
-```yaml
-compute:
-  backend: "mps"
+```bash
+brew install uv
+uv python install 3.12
+uv sync --extra rcwa
+uv run python scripts/run_simulation.py solver=torcwa compute=auto
 ```
 
-**Limitations:**
-- Complex number support on MPS is incomplete in some PyTorch versions
-- Eigendecomposition may fall back to CPU automatically
-- Performance is generally slower than CUDA for RCWA workloads
-- Test with `compute.backend: "cpu"` first if you encounter MPS-related errors
+`compute=auto` selects CUDA when it is available and CPU otherwise. The
+current RCWA adapter uses complex eigendecomposition, which PyTorch's MPS
+backend does not implement, and MPS also lacks double-precision tensors.
+Consequently `compute=mps` safely falls back to CPU. JAX-based solvers also
+use CPU on macOS.
 
 ## CPU fallback
 

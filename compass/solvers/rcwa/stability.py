@@ -67,7 +67,9 @@ class PrecisionManager:
 
         stability = config.get("stability", {})
 
-        # TF32 must be disabled for RCWA
+        # TF32 only applies to CUDA. CPU and MPS builds do not need these flags.
+        if not torch.cuda.is_available():
+            return
         torch.backends.cuda.matmul.allow_tf32 = stability.get("allow_tf32", False)
         torch.backends.cudnn.allow_tf32 = stability.get("allow_tf32", False)
 
@@ -501,12 +503,16 @@ class AdaptivePrecisionRunner:
         Returns:
             Simulation result dict.
         """
-        strategies = [
-            {"dtype": "complex64", "device": "cuda", "label": "GPU-f32"},
-            {"dtype": "complex128", "device": "cuda", "label": "GPU-f64-cuSOLVER"},
-            {"dtype": "complex128", "device": "cuda", "label": "GPU-f64"},
-            {"dtype": "complex128", "device": "cpu", "label": "CPU-f64"},
-        ]
+        strategies = []
+        if HAS_TORCH and torch.cuda.is_available():
+            strategies.extend(
+                [
+                    {"dtype": "complex64", "device": "cuda", "label": "GPU-f32"},
+                    {"dtype": "complex128", "device": "cuda", "label": "GPU-f64-cuSOLVER"},
+                    {"dtype": "complex128", "device": "cuda", "label": "GPU-f64"},
+                ]
+            )
+        strategies.append({"dtype": "complex128", "device": "cpu", "label": "CPU-f64"})
 
         for strategy in strategies:
             try:
@@ -588,7 +594,7 @@ class StabilityDiagnostics:
                 )
 
         # 3. TF32 check
-        if HAS_TORCH and torch.backends.cuda.matmul.allow_tf32:
+        if HAS_TORCH and torch.cuda.is_available() and torch.backends.cuda.matmul.allow_tf32:
             warnings.append("TF32 is ENABLED. Set allow_tf32: false for RCWA stability.")
 
         # 4. Check Fourier factorization for patterned layers

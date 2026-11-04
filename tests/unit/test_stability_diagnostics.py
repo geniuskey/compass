@@ -258,6 +258,12 @@ class TestPostSimulationCheck:
 class TestAdaptivePrecisionRunner:
     """Tests for AdaptivePrecisionRunner.run_with_fallback."""
 
+    @staticmethod
+    def _enable_cuda(monkeypatch):
+        import torch
+
+        monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+
     def test_first_strategy_succeeds(self):
         """Returns result from first strategy when energy is conserved."""
         runner = AdaptivePrecisionRunner(tolerance=0.02)
@@ -269,8 +275,9 @@ class TestAdaptivePrecisionRunner:
         assert result["data"] == "ok"
         assert mock_solver.run_single_wavelength.call_count == 1
 
-    def test_falls_back_on_energy_violation(self):
+    def test_falls_back_on_energy_violation(self, monkeypatch):
         """Falls back to next strategy when energy conservation fails."""
+        self._enable_cuda(monkeypatch)
         runner = AdaptivePrecisionRunner(tolerance=0.02)
         mock_solver = MagicMock()
         # First call: energy violation
@@ -285,8 +292,9 @@ class TestAdaptivePrecisionRunner:
         assert result["data"] == "fallback"
         assert mock_solver.run_single_wavelength.call_count == 2
 
-    def test_falls_back_on_exception(self):
+    def test_falls_back_on_exception(self, monkeypatch):
         """Falls back when solver raises an exception."""
+        self._enable_cuda(monkeypatch)
         runner = AdaptivePrecisionRunner(tolerance=0.02)
         mock_solver = MagicMock()
         mock_solver.run_single_wavelength.side_effect = [
@@ -298,8 +306,9 @@ class TestAdaptivePrecisionRunner:
 
         assert result["data"] == "cpu_result"
 
-    def test_raises_when_all_strategies_fail(self):
+    def test_raises_when_all_strategies_fail(self, monkeypatch):
         """Raises RuntimeError when all four strategies fail."""
+        self._enable_cuda(monkeypatch)
         runner = AdaptivePrecisionRunner(tolerance=0.02)
         mock_solver = MagicMock()
         mock_solver.run_single_wavelength.side_effect = RuntimeError("fail")
@@ -320,8 +329,9 @@ class TestAdaptivePrecisionRunner:
         runner.run_with_fallback(mock_solver, 0.55, {})
         assert mock_solver.run_single_wavelength.call_count == 1
 
-    def test_strategy_order(self):
+    def test_strategy_order(self, monkeypatch):
         """Strategies are tried in order: GPU-f32, GPU-f64-cuSOLVER, GPU-f64, CPU-f64."""
+        self._enable_cuda(monkeypatch)
         runner = AdaptivePrecisionRunner(tolerance=0.02)
         mock_solver = MagicMock()
 
@@ -343,6 +353,23 @@ class TestAdaptivePrecisionRunner:
         assert call_params[2]["device"] == "cuda"
         assert call_params[3]["dtype"] == "complex128"
         assert call_params[3]["device"] == "cpu"
+
+    def test_uses_cpu_strategy_when_cuda_is_unavailable(self, monkeypatch):
+        """Mac and other CPU-only systems skip GPU fallback attempts."""
+        import torch
+
+        monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+        runner = AdaptivePrecisionRunner(tolerance=0.02)
+        mock_solver = MagicMock()
+        mock_solver.run_single_wavelength.return_value = {"R": 0.3, "T": 0.7}
+
+        runner.run_with_fallback(mock_solver, 0.55, {})
+
+        mock_solver.run_single_wavelength.assert_called_once_with(
+            wavelength=0.55,
+            dtype="complex128",
+            device="cpu",
+        )
 
 
 # ---------------------------------------------------------------------------

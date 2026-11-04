@@ -55,6 +55,25 @@ pip install -e ".[dev]"    # pytest, mypy, ruff
 meep is conda-only (`conda install -c conda-forge pymeep`); fdtdz and fdtdx
 follow their upstream install instructions.
 
+### macOS
+
+Use a supported Python version (3.11 or newer) and install the optional RCWA
+solvers:
+
+```bash
+brew install uv
+uv python install 3.12
+uv sync --extra rcwa
+uv run python scripts/run_simulation.py solver=torcwa compute=auto
+```
+
+The standard PyTorch package installs a macOS build; no CUDA toolkit or NVIDIA
+GPU is required. `compute=auto` uses CUDA when available and otherwise runs on
+CPU. The current solver adapters rely on operations that are not fully
+supported by PyTorch's MPS backend (including complex eigendecomposition in
+torcwa), so `compute=mps` also falls back to CPU on Apple Silicon. JAX-based
+solvers run on CPU on macOS. CPU simulations may take longer than CUDA runs.
+
 ## Quick Start
 
 Run the default pixel stack with the lightweight TMM solver:

@@ -120,8 +120,11 @@ class TestSingleRunner:
     @patch("compass.runners.single_run.SolverFactory")
     @patch("compass.runners.single_run.PixelStack")
     @patch("compass.runners.single_run.MaterialDB")
-    def test_run_uses_device_from_compute_config(self, mock_mat_db, mock_ps, mock_factory):
+    def test_run_uses_device_from_compute_config(
+        self, mock_mat_db, mock_ps, mock_factory, monkeypatch
+    ):
         """Device is read from compute.backend config key."""
+        monkeypatch.setattr("compass.compute._torch_cuda_available", lambda: True)
         mock_factory.create.return_value = _make_mock_solver()
         cfg = _base_config()
         cfg["compute"]["backend"] = "cuda"
