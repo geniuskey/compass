@@ -100,7 +100,7 @@ class FdtdxSolver(SolverBase):
         if params.get("duration") is not None:
             return float(params["duration"])
         if params.get("time_steps") is not None:
-            return float(params["time_steps"]) * dx * self._courant_factor / np.sqrt(3)
+            return float(float(params["time_steps"]) * dx * self._courant_factor / np.sqrt(3))
         return float(6.0 * path + 40.0 * wl_max)
 
     def __init__(self, config: dict, device: str = "cpu"):

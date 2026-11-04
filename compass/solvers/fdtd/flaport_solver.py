@@ -95,16 +95,16 @@ class FlaportFdtdSolver(SolverBase):
         if target <= 0:
             raise ValueError(f"grid_spacing must be positive, got {target}")
         lx, ly = self._pixel_stack.domain_size
-        n_x = max(2, int(round(lx / target)))
+        n_x = max(2, round(lx / target))
         gs = lx / n_x
-        n_y = max(2, int(round(ly / gs)))
+        n_y = max(2, round(ly / gs))
         if abs(n_y * gs - ly) > 1e-6 * ly:
             raise ValueError(
                 f"domain {lx} x {ly} um has no common cell size near {target} um; "
                 "fdtd_flaport needs ly / lx to be a ratio of integers at this spacing"
             )
         z_min, z_max = self._pixel_stack.z_range
-        n_z = max(1, int(round((z_max - z_min) / gs)))
+        n_z = max(1, round((z_max - z_min) / gs))
         return gs, n_x, n_y, n_z
 
     def run(self) -> SimulationResult:
@@ -272,9 +272,9 @@ class FlaportFdtdSolver(SolverBase):
                 )
 
         comp = 1 if pol == "TE" else 0  # TE: E along y (s-pol for phi=0)
-        n_steps = int(round(runtime_fs * 1e-15 / dt))
+        n_steps = round(runtime_fs * 1e-15 / dt)
         period_steps = 2 * np.pi / omega / dt
-        n_dft = int(round(dft_periods * period_steps))
+        n_dft = round(dft_periods * period_steps)
         if n_steps < n_dft + 4 * period_steps:
             raise ValueError(
                 f"runtime {runtime_fs} fs is too short for a {dft_periods}-period DFT window"
