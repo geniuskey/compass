@@ -204,17 +204,17 @@ class FdtdxSolver(SolverBase):
                     self._record_failed_run(wl, pol, exc)
                     values.append([np.nan] * 3)
             spectra.append(np.mean(values, axis=0))
-        spectra = np.asarray(spectra)
-        if not np.isfinite(spectra).all():
+        rta = np.asarray(spectra)
+        if not np.isfinite(rta).all():
             warnings.warn("fdtdx: NaN/Inf detected in R/T/A output", stacklevel=2)
         # Regional QE requires a separately calibrated volume absorption monitor.
-        qe = {key: np.full(len(spectra), np.nan) for key in self._nan_pixel_qe()}
+        qe = {key: np.full(len(rta), np.nan) for key in self._nan_pixel_qe()}
         return SimulationResult(
             qe_per_pixel=qe,
             wavelengths=self._source.wavelengths,
-            reflection=spectra[:, 0],
-            transmission=spectra[:, 1],
-            absorption=spectra[:, 2],
+            reflection=rta[:, 0],
+            transmission=rta[:, 1],
+            absorption=rta[:, 2],
             metadata={
                 "solver_name": "fdtdx",
                 "actual_device": observed,

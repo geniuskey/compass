@@ -16,8 +16,9 @@ Reference: https://github.com/spinsphotonics/fdtdz
 
 from __future__ import annotations
 
-import contextlib
+import importlib
 import logging
+from typing import Any
 
 import numpy as np
 
@@ -37,12 +38,13 @@ try:
 except ImportError:
     pass
 
-_native_fdtdz = None
-try:
-    import fdtdz as _native_fdtdz
-except ImportError:
-    with contextlib.suppress(ImportError):
-        import fdtdz_jax as _native_fdtdz
+_native_fdtdz: Any = None
+for _module_name in ("fdtdz", "fdtdz_jax"):
+    try:
+        _native_fdtdz = importlib.import_module(_module_name)
+        break
+    except ImportError:
+        continue
 _FDTDZ_AVAILABLE = _native_fdtdz is not None
 
 

@@ -14,6 +14,7 @@ Reference: https://meep.readthedocs.io/
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import numpy as np
 
@@ -62,7 +63,7 @@ class MeepSolver(SolverBase):
             )
         super().__init__(config, device)
         self._source: PlanewaveSource | None = None
-        self._last_sim: object = None  # Store last mp.Simulation for field extraction
+        self._last_sim: Any = None  # Store last mp.Simulation for field extraction
         self._last_fields: dict[str, FieldData] | None = None
         self._last_dft_fields: object = None
 

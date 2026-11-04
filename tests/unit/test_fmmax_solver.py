@@ -49,6 +49,7 @@ def _make_fake_jax():
 
     jax.numpy = jnp
     jax.config = MagicMock()
+    jax.devices = lambda backend=None: [MagicMock(name=f"{backend}:0")]
     # scipy's array_api_compat checks for jax.Array; provide a dummy
     jax.Array = type("Array", (), {})
     return jax, jnp

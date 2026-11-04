@@ -289,6 +289,8 @@ class TorcwaSolver(SolverBase):
         self._last_layer_info = layer_info
         self._last_wavelength = wavelength
 
+        if self._pixel_stack is None:
+            raise RuntimeError("Call setup_geometry() before run()")
         if not self._pixel_stack.photodiodes:
             return {"R": R, "T": T, "A": A, "qe_per_pixel": {}}
 

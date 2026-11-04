@@ -6,6 +6,7 @@ Wraps the meent library (multi-backend RCWA: NumPy, JAX, PyTorch).
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import numpy as np
 
@@ -107,7 +108,7 @@ class MeentSolver(SolverBase):
                 try:
                     # meent backend selection
                     backend_id = {"numpy": 0, "jax": 1, "torch": 2}.get(self._backend, 0)
-                    device_kwargs = {}
+                    device_kwargs: dict[str, Any] = {}
                     if backend_id == 1:
                         device_kwargs["device"] = 1 if self.device.startswith("cuda") else 0
                     if backend_id == 2:
