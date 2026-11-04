@@ -161,7 +161,7 @@ solver:
 normal-vector 규칙으로 유전율을 분해하므로 절단된 E 급수가 금속·DTI 경계에서
 크게 진동합니다. 따라서 `E = D/ε(r)`로 재구성하고, 각 슬라이스의 흡수량은
 정확한 Fourier 공간 Poynting 플럭스 차로 고정하여 면내 분포만 실공간 필드에서
-가져옵니다. fdtd_flaport는 아직 기하학적 `eps_imag_weight` 근사를 사용합니다.
+가져옵니다. fdtd_flaport도 정상 상태 DFT 페이저로 실리콘 내 포토다이오드 영역의 `k0·ε''·|E|²`를 적분하여 `field_integration`을 기록합니다.
 
 ### solver.stability: StabilityConfig
 

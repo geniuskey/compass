@@ -163,7 +163,7 @@ Li's inverse / normal-vector rules, under which the truncated E series rings
 at metal and DTI interfaces; they therefore reconstruct `E = D/ε(r)` and pin
 each slice's absorbed power to the exact Fourier-space Poynting flux difference,
 so only the in-plane distribution comes from the real-space field.
-fdtd_flaport still uses the geometric `eps_imag_weight` approximation.
+fdtd_flaport also reports `field_integration`: it integrates `k0·ε''·|E|²` from steady-state DFT phasors over each photodiode footprint in silicon.
 
 ### solver.stability: StabilityConfig
 

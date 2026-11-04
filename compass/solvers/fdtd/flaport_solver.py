@@ -1,6 +1,27 @@
 """flaport/fdtd solver adapter for COMPASS.
 
-Wraps the flaport fdtd library (Python-native 3D FDTD with PyTorch backend).
+Wraps the flaport fdtd library (Python-native 3D FDTD with a PyTorch
+backend). The simulation is a periodic unit cell excited by a CW plane
+wave at normal incidence; steady-state phasors are extracted by a running
+DFT over the last ``dft_periods`` optical periods.
+
+Grid layout along z (index increasing upward, light travelling -z)::
+
+    [PML | gap (T monitor) | pixel stack (Si bottom ... top air) |
+     R monitor, soft source | PML]
+
+* The source is *soft* (added to E), so reflected light passes through it
+  into the upper PML instead of being trapped by a hard (assigned) source.
+* R and T come from field phasors with the vacuum reference run's
+  incident field subtracted, so they contain no source/reflection
+  interference terms.
+* QE integrates the absorbed power density ``k0 eps'' |E|^2`` over each
+  photodiode footprint and the full silicon depth, normalized by the
+  incident flux, i.e. the same definition as the RCWA adapters
+  (:func:`compass.solvers.rcwa.fields.integrate_photodiode_qe`).
+
+Fields use the library's units, where H is scaled so a plane wave has
+``|H| = |E|``; flux ``Re(E x H*)`` and ``k0 eps'' |E|^2`` share those units.
 """
 
 from __future__ import annotations
@@ -12,22 +33,37 @@ import numpy as np
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
+from compass.solvers.rcwa.fields import approximate_field, validate_field_request
 from compass.sources.planewave import PlanewaveSource
 
 logger = logging.getLogger(__name__)
 
+_C = 299_792_458.0
+_EPS0 = 8.8541878128e-12
+#: Vacuum cells between the stack and each PML (monitors and source live here).
+_GAP_BOTTOM = 6
+_GAP_TOP = 8
+
 
 class FlaportFdtdSolver(SolverBase):
-    """flaport/fdtd 3D FDTD solver adapter.
+    """flaport/fdtd 3D FDTD solver adapter (normal incidence).
 
-    Converts PixelStack to fdtd.Grid with objects, sources, and detectors.
+    Config params:
+        grid_spacing: Target cell size in um (adjusted so the lateral period
+            is an integer number of cells). Default 0.02.
+        runtime: Simulated time in fs. Default 200.
+        pml_layers: PML thickness in cells. Default 15.
+        courant_number: Courant number (None = library default 0.99/sqrt(3)).
+        dtype: "float32" or "float64". Default "float64".
+        dft_periods: Optical periods in the steady-state DFT window. Default 8.
     """
 
     def __init__(self, config: dict, device: str = "cpu"):
         super().__init__(config, device)
         self._source: PlanewaveSource | None = None
-        self._last_grid: object = None
-        self._last_eps_3d: np.ndarray | None = None
+        self._last_E: np.ndarray | None = None  # (nx, ny, nz_stack, 3) phasor
+        self._last_grid_spacing: float | None = None
+        self._last_wavelength: float | None = None
 
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
         if pixel_stack is None:
@@ -48,6 +84,29 @@ class FlaportFdtdSolver(SolverBase):
         self._source_config = source_config
         logger.info(f"fdtd_flaport: source setup - {self._source.n_wavelengths} wavelengths")
 
+    # ------------------------------------------------------------------ grid
+
+    def _grid_dims(self) -> tuple[float, int, int, int]:
+        """(spacing um, x cells per period, y cells per period, z cells in stack)."""
+        if self._pixel_stack is None:
+            raise RuntimeError("Call setup_geometry() before run()")
+        params = self.config.get("params", {})
+        target = float(params.get("grid_spacing", 0.02))
+        if target <= 0:
+            raise ValueError(f"grid_spacing must be positive, got {target}")
+        lx, ly = self._pixel_stack.domain_size
+        n_x = max(2, int(round(lx / target)))
+        gs = lx / n_x
+        n_y = max(2, int(round(ly / gs)))
+        if abs(n_y * gs - ly) > 1e-6 * ly:
+            raise ValueError(
+                f"domain {lx} x {ly} um has no common cell size near {target} um; "
+                "fdtd_flaport needs ly / lx to be a ratio of integers at this spacing"
+            )
+        z_min, z_max = self._pixel_stack.z_range
+        n_z = max(1, int(round((z_max - z_min) / gs)))
+        return gs, n_x, n_y, n_z
+
     def run(self) -> SimulationResult:
         if self._pixel_stack is None:
             raise RuntimeError("Call setup_geometry() before run()")
@@ -60,27 +119,17 @@ class FlaportFdtdSolver(SolverBase):
             raise ImportError("fdtd is required. Install with: pip install fdtd") from err
 
         params = self.config.get("params", {})
-        grid_spacing = params.get("grid_spacing", 0.015)  # um
-        runtime = params.get("runtime", 500)  # femtoseconds
-        pml_layers = params.get("pml_layers", 20)
+        dtype = str(params.get("dtype", "float64"))
+        if dtype not in ("float32", "float64"):
+            raise ValueError(f"fdtd_flaport dtype must be float32 or float64, got {dtype!r}")
+        backend = "torch.cuda" if self.device.startswith("cuda") else "torch"
+        fdtd.set_backend(f"{backend}.{dtype}")
 
-        # Set backend
-        if self.device == "cuda":
-            fdtd.set_backend("torch.cuda")
-        elif self.device == "cpu":
-            fdtd.set_backend("torch")
-        else:
-            fdtd.set_backend("numpy")
-
-        lx, ly = self._pixel_stack.domain_size
-        z_min, z_max = self._pixel_stack.z_range
-        total_z = z_max - z_min
-
-        # Grid dimensions
-        grid_spacing_m = grid_spacing * 1e-6  # convert to meters
-        nx = int(lx / grid_spacing) + 1
-        ny = int(ly / grid_spacing) + 1
-        nz = int(total_z / grid_spacing) + 1 + 2 * pml_layers
+        gs, n_x, n_y, n_z = self._grid_dims()
+        pml = int(params.get("pml_layers", 15))
+        runtime_fs = float(params.get("runtime", 200))
+        courant = params.get("courant_number")
+        dft_periods = int(params.get("dft_periods", 8))
 
         pol_runs = self._source.get_polarization_runs()
         self._failed_runs = []
@@ -89,114 +138,41 @@ class FlaportFdtdSolver(SolverBase):
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
             logger.debug(
-                f"fdtd_flaport: wavelength {wavelength:.4f} um ({wl_idx + 1}/{self._source.n_wavelengths})"
+                f"fdtd_flaport: wavelength {wavelength:.4f} um "
+                f"({wl_idx + 1}/{self._source.n_wavelengths})"
             )
-
             R_pol, T_pol, A_pol = [], [], []
-            qe_pol_accum: dict[str, list[float]] = {}
-
+            qe_pol: dict[str, list[float]] = {}
+            eps_3d = self._pixel_stack.get_permittivity_grid(wavelength, n_x, n_y, n_z)
             for pol in pol_runs:
-                eps_3d = None
                 try:
-                    wavelength_m = wavelength * 1e-6
-                    n_steps = int(runtime * 1e-15 / (grid_spacing_m / 3e8 / 2))
-
-                    # Source near top (air side); three Poynting monitors
-                    src_z = nz - pml_layers - 3
-                    z_above = src_z + 2  # above source (upward flux)
-                    z_below = src_z - 4  # below source, above structure (downward flux)
-                    z_trans = pml_layers + 5  # below structure (transmitted flux)
-                    snap_start = n_steps - n_steps // 3
-
-                    # --- Pass 1: Vacuum reference run (no structure) ---
-                    grid_ref, _ = self._build_grid(
-                        fdtd,
-                        nx,
-                        ny,
-                        nz,
-                        grid_spacing_m,
-                        pml_layers,
-                        wavelength_m,
-                        pol,
-                        eps_3d=None,
+                    common = dict(
+                        fdtd=fdtd, gs=gs, n_x=n_x, n_y=n_y, n_z=n_z, pml=pml,
+                        wavelength=float(wavelength), pol=pol, runtime_fs=runtime_fs,
+                        courant=courant, dft_periods=dft_periods,
                     )
-                    Sz_ref_above, Sz_ref_below, _ = self._run_and_poynting(
-                        grid_ref,
-                        n_steps,
-                        snap_start,
-                        z_above,
-                        z_below,
-                        z_trans,
-                        damping_tensor=None,
-                        pml_layers=pml_layers,
-                    )
-                    P_inc = abs(Sz_ref_below)
-
-                    # --- Pass 2: Structure run with material absorption ---
-                    eps_3d = self._pixel_stack.get_permittivity_grid(
-                        wavelength, nx, ny, nz - 2 * pml_layers
-                    )
-                    grid, damping_tensor = self._build_grid(
-                        fdtd,
-                        nx,
-                        ny,
-                        nz,
-                        grid_spacing_m,
-                        pml_layers,
-                        wavelength_m,
-                        pol,
-                        eps_3d=eps_3d,
-                    )
-
-                    # Store for field extraction
-                    self._last_grid = grid
-                    self._last_eps_3d = eps_3d
-
-                    Sz_above, _Sz_below, Sz_trans = self._run_and_poynting(
-                        grid,
-                        n_steps,
-                        snap_start,
-                        z_above,
-                        z_below,
-                        z_trans,
-                        damping_tensor=damping_tensor,
-                        pml_layers=pml_layers,
-                    )
-
-                    # --- Compute R, T, A using reference normalization ---
-                    if P_inc > 0:
-                        # Excess upward flux compared to reference = reflection
-                        R = float((Sz_above - Sz_ref_above) / P_inc)
-                        T = float(abs(Sz_trans) / P_inc)
-                    else:
-                        R, T = 0.0, 0.0
-                    A = float(1.0 - R - T)
-
+                    ref = self._simulate(eps_3d=None, **common)
+                    tot = self._simulate(eps_3d=eps_3d, **common)
+                    R, T, A, qe = self._reduce(ref, tot, eps_3d, gs, float(wavelength))
+                    self._last_E = tot["E_stack"]
+                    self._last_grid_spacing = gs
+                    self._last_wavelength = float(wavelength)
                 except Exception as e:
                     logger.error(f"fdtd_flaport failed at λ={wavelength:.4f}um: {e}")
                     self._record_failed_run(wavelength, pol, e)
                     R = T = A = float("nan")
-
+                    qe = self._nan_pixel_qe()
                 R_pol.append(R)
                 T_pol.append(T)
                 A_pol.append(A)
-
-                # Per-pixel QE via eps_imag weighting in PD regions
-                if np.isnan(A):
-                    pixel_qe = self._nan_pixel_qe()
-                elif eps_3d is not None:
-                    pixel_qe = self._compute_per_pixel_qe(eps_3d, wavelength, A)
-                else:
-                    pixel_qe = {}
-                for key, val in pixel_qe.items():
-                    qe_pol_accum.setdefault(key, []).append(val)
+                for key, val in qe.items():
+                    qe_pol.setdefault(key, []).append(val)
 
             n_pol = len(pol_runs)
             all_R.append(sum(R_pol) / n_pol)
             all_T.append(sum(T_pol) / n_pol)
             all_A.append(sum(A_pol) / n_pol)
-
-            for k, vals in qe_pol_accum.items():
+            for k, vals in qe_pol.items():
                 all_qe.setdefault(k, []).append(sum(vals) / n_pol)
 
         result_arrays = {
@@ -205,7 +181,7 @@ class FlaportFdtdSolver(SolverBase):
             "absorption": np.array(all_A),
         }
         for arr_name, arr in result_arrays.items():
-            if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
+            if np.any(~np.isfinite(arr)):
                 import warnings
 
                 warnings.warn(f"fdtd_flaport: NaN/Inf detected in {arr_name} output", stacklevel=2)
@@ -218,240 +194,201 @@ class FlaportFdtdSolver(SolverBase):
             absorption=result_arrays["absorption"],
             metadata={
                 "solver_name": "fdtd_flaport",
-                "grid_spacing": grid_spacing,
-                "qe_method": "eps_imag_weight",
+                "grid_spacing": gs,
+                "grid_cells_xyz": [n_x, n_y, n_z],
+                "qe_method": "field_integration",
                 "device": self.device,
                 **self._failure_metadata(),
             },
         )
 
-    def _build_grid(
+    # ------------------------------------------------------------ simulation
+
+    def _simulate(
         self,
         fdtd,
-        nx: int,
-        ny: int,
-        nz: int,
-        grid_spacing_m: float,
-        pml_layers: int,
-        wavelength_m: float,
+        gs: float,
+        n_x: int,
+        n_y: int,
+        n_z: int,
+        pml: int,
+        wavelength: float,
         pol: str,
-        eps_3d: np.ndarray | None = None,
-    ) -> tuple:
-        """Build an fdtd.Grid with boundaries, source, and detectors.
-
-        Args:
-            fdtd: The fdtd module.
-            nx, ny, nz: Grid dimensions.
-            grid_spacing_m: Grid spacing in meters.
-            pml_layers: Number of PML layers.
-            wavelength_m: Source wavelength in meters.
-            pol: Polarization ("TE" or "TM").
-            eps_3d: 3D permittivity array. None for vacuum reference run.
+        runtime_fs: float,
+        courant,
+        dft_periods: int,
+        eps_3d: np.ndarray | None,
+    ) -> dict:
+        """Run one CW simulation and return steady-state phasors.
 
         Returns:
-            Tuple of (grid, damping_tensor). damping_tensor is None for vacuum runs.
+            dict with "E_R"/"H_R" and "E_T"/"H_T" (monitor planes, (nx, ny, 3)
+            colocated phasors) and "E_stack" ((nx, ny, n_z, 3) E phasor over
+            the pixel stack, or None for the reference run).
         """
-        grid = fdtd.Grid(
-            shape=(nx, ny, nz),
-            grid_spacing=grid_spacing_m,
-            permittivity=1.0,
-        )
+        import torch
 
-        # Boundaries: PML on z (slice indexing required by fdtd 0.3.5), periodic on x,y
+        z0 = pml + _GAP_BOTTOM  # first stack cell
+        k_T = pml + _GAP_BOTTOM // 2
+        k_R = z0 + n_z + 2
+        k_src = z0 + n_z + 5
+        nz = z0 + n_z + _GAP_TOP + pml
+        # fdtd's PeriodicBoundary identifies cell 0 with cell n-1, so a period
+        # of n_x cells needs n_x + 1 grid points.
+        kwargs = {"courant_number": float(courant)} if courant is not None else {}
+        grid = fdtd.Grid(
+            shape=(n_x + 1, n_y + 1, nz), grid_spacing=gs * 1e-6, permittivity=1.0, **kwargs
+        )
         grid[0, :, :] = fdtd.PeriodicBoundary(name="x_boundary")
         grid[:, 0, :] = fdtd.PeriodicBoundary(name="y_boundary")
-        grid[:, :, 0:pml_layers] = fdtd.PML(name="z_pml_low")
-        grid[:, :, -pml_layers:] = fdtd.PML(name="z_pml_high")
+        grid[:, :, 0:pml] = fdtd.PML(name="z_pml_low")
+        grid[:, :, -pml:] = fdtd.PML(name="z_pml_high")
 
-        damping_tensor = None
+        E = grid.E
+        dev, rdtype = E.device, E.dtype
+        cdtype = torch.complex128 if rdtype == torch.float64 else torch.complex64
+        omega = 2 * np.pi * _C / (wavelength * 1e-6)
+        dt = float(grid.time_step)
 
-        # Set permittivity if structure run — inverse_permittivity is 4D torch tensor (nx,ny,nz,3)
+        damping = None
         if eps_3d is not None:
-            import torch
+            eps_xyz = np.transpose(eps_3d, (1, 0, 2))  # [y, x, z] -> [x, y, z]
+            eps_xyz = np.concatenate([eps_xyz, eps_xyz[:1]], axis=0)  # wrap point
+            eps_xyz = np.concatenate([eps_xyz, eps_xyz[:, :1]], axis=1)
+            eps_r = np.real(eps_xyz)
+            if np.any(eps_r < 1.0 - 1e-9):
+                raise ValueError(
+                    "fdtd_flaport models loss as a conductivity on Re(eps) and cannot "
+                    f"represent Re(eps) < 1 (min {eps_r.min():.3g}, e.g. metals); "
+                    "use meep or an RCWA solver"
+                )
+            inv = torch.tensor(1.0 / eps_r, dtype=rdtype, device=dev).unsqueeze(-1)
+            grid.inverse_permittivity[:, :, z0 : z0 + n_z] = inv
+            sigma = omega * _EPS0 * np.maximum(np.imag(eps_xyz), 0.0)
+            if np.any(sigma > 0):
+                alpha = sigma * dt / (2.0 * _EPS0 * eps_r)
+                damping = torch.tensor(
+                    ((1.0 - alpha) / (1.0 + alpha))[..., None], dtype=rdtype, device=dev
+                )
 
-            eps_real = np.real(eps_3d).transpose(1, 0, 2)
-            eps_real_safe = np.where(np.abs(eps_real) > 1e-30, eps_real, 1.0)
-            inv_eps = torch.tensor(1.0 / eps_real_safe, dtype=grid.E.dtype, device=grid.E.device).unsqueeze(-1)
-            grid.inverse_permittivity[:, :, pml_layers:-pml_layers] = inv_eps
+        comp = 1 if pol == "TE" else 0  # TE: E along y (s-pol for phi=0)
+        n_steps = int(round(runtime_fs * 1e-15 / dt))
+        period_steps = 2 * np.pi / omega / dt
+        n_dft = int(round(dft_periods * period_steps))
+        if n_steps < n_dft + 4 * period_steps:
+            raise ValueError(
+                f"runtime {runtime_fs} fs is too short for a {dft_periods}-period DFT window"
+            )
+        dft_start = n_steps - n_dft
+        t_ramp = 3.0 * 2 * np.pi / omega
 
-            # Compute per-voxel damping for material absorption
-            eps_imag = np.imag(eps_3d).transpose(1, 0, 2)
-            if np.any(np.abs(eps_imag) > 1e-30):
-                omega = 2 * np.pi * 3e8 / wavelength_m
-                sigma = omega * 8.854e-12 * np.abs(eps_imag)  # equivalent conductivity (S/m)
-                dt = grid.time_step
-                alpha = sigma * dt / (2.0 * 8.854e-12 * eps_real_safe)
-                damping = (1.0 - alpha) / (1.0 + alpha)
-                # Expand to (nx, ny, nz_struct, 3) matching E-field components
-                damping_3d = np.stack([damping, damping, damping], axis=-1)
-                damping_tensor = torch.tensor(damping_3d, dtype=grid.E.dtype, device=grid.E.device)
+        acc: dict[str, torch.Tensor] = {}
 
-        # Source — placed in air region near top PML (light propagates -z: air→silicon)
-        grid[:, :, nz - pml_layers - 3] = fdtd.PlaneSource(
-            period=wavelength_m / 3e8,
-            polarization="x" if pol == "TE" else "y",
-            name="source",
-        )
+        def add(name, field, phase):
+            val = field.to(cdtype) * phase
+            acc[name] = acc[name] + val if name in acc else val.clone()
 
-        return grid, damping_tensor
+        for n in range(n_steps):
+            grid.update_E()
+            t_e = (n + 1) * dt
+            ramp = 1.0 if t_e >= t_ramp else 0.5 * (1.0 - np.cos(np.pi * t_e / t_ramp))
+            grid.E[:, :, k_src, comp] += ramp * np.sin(omega * t_e)
+            if damping is not None:
+                grid.E[:, :, z0 : z0 + n_z] *= damping
+            grid.update_H()
+            grid.time_steps_passed += 1
+            if n >= dft_start:
+                pe = complex(np.exp(1j * omega * t_e))
+                ph = complex(np.exp(1j * omega * (t_e + 0.5 * dt)))
+                for name, k in (("R", k_R), ("T", k_T)):
+                    add(f"E_{name}", grid.E[:-1, :-1, k], pe)
+                    # Hx, Hy sit half a cell above E; average to colocate.
+                    add(f"H_{name}", 0.5 * (grid.H[:-1, :-1, k] + grid.H[:-1, :-1, k - 1]), ph)
+                if eps_3d is not None:
+                    add("E_stack", grid.E[:-1, :-1, z0 : z0 + n_z], pe)
 
-    @staticmethod
-    def _run_and_poynting(
-        grid,
-        n_steps: int,
-        snap_start: int,
-        z_above: int,
-        z_below: int,
-        z_trans: int,
-        damping_tensor=None,
-        pml_layers: int = 0,
-    ) -> tuple[float, float, float]:
-        """Step the grid and compute time-averaged Poynting flux at three z-planes.
+        scale = 2.0 / n_dft
 
-        Uses Sz = Ex*Hy - Ey*Hx for power flux. Collects from snap_start
-        onward to capture steady-state behavior. Applies per-voxel damping
-        after each timestep to model material absorption.
+        def out(name):
+            return None if name not in acc else (acc[name] * scale).cpu().numpy()
 
-        Args:
-            grid: The fdtd.Grid to step.
-            n_steps: Total number of timesteps.
-            snap_start: Timestep to start collecting.
-            z_above: Z-index above source (measures upward flux).
-            z_below: Z-index below source, above structure (measures downward flux).
-            z_trans: Z-index below structure (measures transmitted flux).
-            damping_tensor: Per-voxel E-field damping (shape: nx, ny, nz_struct, 3).
-                None for lossless (vacuum) runs.
-            pml_layers: Number of PML layers (needed to index structure region).
-
-        Returns:
-            Tuple of (Sz_above, Sz_below, Sz_trans) time-and-space-averaged values.
-        """
-        Sz_above_snaps: list[float] = []
-        Sz_below_snaps: list[float] = []
-        Sz_trans_snaps: list[float] = []
-
-        for step in range(n_steps):
-            grid.step()
-
-            # Apply material absorption damping to E-field in structure region
-            if damping_tensor is not None:
-                grid.E[:, :, pml_layers:-pml_layers] *= damping_tensor
-
-            if step >= snap_start:
-                for z, snaps in [
-                    (z_above, Sz_above_snaps),
-                    (z_below, Sz_below_snaps),
-                    (z_trans, Sz_trans_snaps),
-                ]:
-                    E, H = grid.E[:, :, z], grid.H[:, :, z]
-                    power = (E[..., 0] * H[..., 1] - E[..., 1] * H[..., 0]).mean()
-                    snaps.append(power)
-
-        def mean_power(samples):
-            if not samples:
-                return 0.0
-            value = sum(samples) / len(samples)
-            return float(value.item() if hasattr(value, "item") else value)
-
-        return (
-            mean_power(Sz_above_snaps),
-            mean_power(Sz_below_snaps),
-            mean_power(Sz_trans_snaps),
-        )
+        return {
+            "E_R": out("E_R"), "H_R": out("H_R"), "E_T": out("E_T"), "H_T": out("H_T"),
+            "E_stack": out("E_stack"),
+        }
 
     @staticmethod
-    def _time_avg_intensity(E: np.ndarray) -> float:
-        """Compute time-averaged |E|^2 over the last 1/3 of timesteps.
+    def _flux_up(E: np.ndarray, H: np.ndarray) -> float:
+        """Plane-averaged Re(E x H*)_z (positive upward)."""
+        sz = np.real(E[..., 0] * np.conj(H[..., 1]) - E[..., 1] * np.conj(H[..., 0]))
+        return float(np.mean(sz))
 
-        Args:
-            E: Detector E-field array with time as the first axis.
-
-        Returns:
-            Spatially and temporally averaged intensity.
-        """
-        n_t = E.shape[0]
-        start = max(0, n_t - n_t // 3)
-        E_steady = E[start:]
-        intensity = np.mean(np.sum(np.abs(E_steady) ** 2, axis=-1))
-        return float(intensity)
-
-    def _compute_per_pixel_qe(
-        self,
-        eps_3d: np.ndarray,
-        wavelength: float,
-        total_absorption: float,
-    ) -> dict:
-        """Compute per-pixel QE from volume absorption in photodiode regions.
-
-        Uses eps_imag to weight the absorption distribution among pixels.
-        """
+    def _reduce(self, ref: dict, tot: dict, eps_3d: np.ndarray, gs: float, wavelength: float):
+        """R, T, A and per-pixel QE from the reference and structure runs."""
         if self._pixel_stack is None:
             raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        bayer = self._pixel_stack.bayer_map
-        n_rows, n_cols = self._pixel_stack.unit_cell
-        n_pixels = n_rows * n_cols
-        if n_pixels == 0:
+        p_inc = -self._flux_up(ref["E_R"], ref["H_R"])  # downward incident flux
+        if not np.isfinite(p_inc) or p_inc <= 0:
+            raise RuntimeError(f"non-positive incident flux {p_inc}")
+        R = self._flux_up(tot["E_R"] - ref["E_R"], tot["H_R"] - ref["H_R"]) / p_inc
+        T = -self._flux_up(tot["E_T"], tot["H_T"]) / p_inc
+        A = 1.0 - R - T
+        qe = self._field_qe(tot["E_stack"], eps_3d, gs, wavelength, p_inc, A)
+        return float(R), float(T), float(A), qe
+
+    def _field_qe(
+        self,
+        E_stack: np.ndarray,
+        eps_3d: np.ndarray,
+        gs: float,
+        wavelength: float,
+        p_inc: float,
+        total_absorption: float,
+    ) -> dict[str, float]:
+        """QE_pd = k0 * sum_{PD footprint, Si} eps''|E|^2 dV / (P_inc * A_pixel)."""
+        stack = self._pixel_stack
+        if stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
+        if not stack.photodiodes:
             return {}
-        lx, ly = self._pixel_stack.domain_size
-        z_min, z_max = self._pixel_stack.z_range
-        # eps_3d is indexed [row=y, col=x, z] (shape (ny, nx, nz))
-        ny, nx, nz = eps_3d.shape
-
-        pixel_weights = {}
-        total_weight = 0.0
-
-        pitch = self._pixel_stack.pitch
-        si_z_end = max(
-            (layer.z_end for layer in self._pixel_stack.layers if layer.name == "silicon"),
-            default=0.0,
-        )
-        for pd in self._pixel_stack.photodiodes:
-            r, c = pd.pixel_index
-            color = pd.color
-            key = f"{color}_{r}_{c}"
-
-            # PhotodiodeSpec.position is the offset from the pixel center;
-            # convert to absolute domain coordinates ([0, lx) x [0, ly)).
-            pd_cx = (c + 0.5) * pitch + pd.position[0]
-            pd_cy = (r + 0.5) * pitch + pd.position[1]
-
-            # Map PD bounds to grid indices
-            ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx))
-            ix_max = min(nx, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx)))
-            iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny))
-            iy_max = min(ny, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny)))
-            # position[2] is the PD-center depth below the silicon top surface
-            pd_cz = si_z_end - pd.position[2]
-            iz_min = max(0, int(((pd_cz - pd.size[2] / 2 - z_min) / (z_max - z_min)) * nz))
-            iz_max = min(
-                nz, int(np.ceil(((pd_cz + pd.size[2] / 2 - z_min) / (z_max - z_min)) * nz))
+        k0 = 2 * np.pi / wavelength
+        density = np.sum(np.abs(E_stack) ** 2, axis=-1) * np.maximum(
+            np.imag(np.transpose(eps_3d, (1, 0, 2))), 0.0
+        )  # [x, y, z]
+        n_x, n_y, n_z = density.shape
+        z_min = stack.z_range[0]
+        z_c = z_min + (np.arange(n_z) + 0.5) * gs
+        si_mask = np.zeros(n_z, dtype=bool)
+        for layer in stack.layers:
+            if layer.name == "silicon":
+                si_mask |= (z_c >= layer.z_start) & (z_c < layer.z_end)
+        dv = gs**3
+        total_field = k0 * float(density.sum()) * dv / (p_inc * n_x * n_y * gs * gs)
+        if total_absorption > 0.02 and abs(total_field - total_absorption) > 0.1:
+            logger.warning(
+                f"fdtd_flaport: field-integrated absorption {total_field:.3f} deviates from "
+                f"1-R-T = {total_absorption:.3f} at λ={wavelength:.4f}um "
+                "(refine grid_spacing or lengthen runtime)"
             )
+        si_density = density[:, :, si_mask].sum(axis=2)  # [x, y]
+        n_rows, n_cols = stack.unit_cell
+        lx, ly = stack.domain_size
+        a_pixel = (lx / n_cols) * (ly / n_rows)
+        pitch = stack.pitch
+        qe: dict[str, float] = {}
+        for pd in stack.photodiodes:
+            r, c = pd.pixel_index
+            x_c = (c + 0.5) * pitch + pd.position[0]
+            y_c = (r + 0.5) * pitch + pd.position[1]
+            ix0 = max(0, int(np.floor((x_c - pd.size[0] / 2) / gs)))
+            ix1 = min(n_x, int(np.ceil((x_c + pd.size[0] / 2) / gs)))
+            iy0 = max(0, int(np.floor((y_c - pd.size[1] / 2) / gs)))
+            iy1 = min(n_y, int(np.ceil((y_c + pd.size[1] / 2) / gs)))
+            val = k0 * float(si_density[ix0:ix1, iy0:iy1].sum()) * dv / (p_inc * a_pixel)
+            qe[f"{pd.color}_{r}_{c}"] = float(np.clip(val, 0.0, 1.0))
+        return qe
 
-            if ix_max <= ix_min or iy_max <= iy_min or iz_max <= iz_min:
-                pixel_weights[key] = 0.0
-                continue
-
-            region = eps_3d[iy_min:iy_max, ix_min:ix_max, iz_min:iz_max]
-            weight = float(np.sum(np.imag(region)))
-            weight = max(weight, 0.0)
-            pixel_weights[key] = weight
-            total_weight += weight
-
-        # Per-pixel QE convention: absorbed power normalized by the power
-        # incident on that pixel's own area (shared with the torcwa solver).
-        qe_per_pixel = {}
-        if total_weight > 0:
-            for key, w in pixel_weights.items():
-                qe_per_pixel[key] = min(1.0, total_absorption * (w / total_weight) * n_pixels)
-        else:
-            # Uniform stack: every pixel sees the cell-average absorption
-            for r in range(n_rows):
-                for c in range(n_cols):
-                    color = bayer[r][c]
-                    key = f"{color}_{r}_{c}"
-                    qe_per_pixel[key] = total_absorption
-
-        return qe_per_pixel
+    # ---------------------------------------------------------------- fields
 
     def get_field_distribution(
         self,
@@ -459,119 +396,54 @@ class FlaportFdtdSolver(SolverBase):
         plane: str = "xz",
         position: float = 0.0,
     ) -> np.ndarray:
-        """Extract 2D field slice from last FDTD simulation.
+        """Time-averaged field slice from the last (wavelength, polarization) run.
 
-        When the grid is available from the last run, extracts the E-field
-        distribution. Otherwise builds an approximate field from the
-        permittivity profile using Beer-Lambert absorption modeling.
-
-        Args:
-            component: Field component ("Ex", "Ey", "Ez", "|E|2").
-            plane: Slice plane ("xy", "xz", "yz").
-            position: Position along the normal axis in um.
+        Coordinates follow the other adapters: x, y in ``[0, lx) x [0, ly)``,
+        z up from the stack bottom. Values are ``|E_c|^2`` / ``|E|^2`` of the
+        steady-state phasor (incident amplitude set by the soft source, not
+        normalized to 1).
 
         Returns:
-            2D field array.
+            ``(nx, ny)`` for "xy", ``(nx, nz)`` for "xz", ``(ny, nz)`` for "yz",
+            at the FDTD grid resolution.
+
+        Raises:
+            ValueError: Unknown component/plane, ``Sz`` (not recorded), or a
+                position outside the stack.
         """
-        # Try extracting from last grid
-        if self._last_grid is not None:
-            try:
-                grid = self._last_grid
-                E = grid.E  # type: ignore[attr-defined]
-                if E is not None:
-                    E_np = np.array(E)  # (nx, ny, nz, 3)
-                    return self._slice_field(E_np, component, plane, position)
-            except Exception as e:
-                logger.warning(
-                    f"fdtd_flaport: grid field extraction failed ({e}); falling back "
-                    "to a permittivity-based approximation, not a solved field"
-                )
-
-        # Fallback: approximate from permittivity
-        if self._last_eps_3d is not None:
-            return self._approximate_field_from_eps(self._last_eps_3d, component, plane, position)
-
-        logger.warning("fdtd_flaport: no simulation data, returning zeros")
-        return np.zeros((64, 64))
-
-    def _slice_field(
-        self,
-        E: np.ndarray,
-        component: str,
-        plane: str,
-        position: float,
-    ) -> np.ndarray:
-        """Slice a 4D field array (nx, ny, nz, 3) along the given plane."""
+        validate_field_request(component, plane)
+        if component == "Sz":
+            raise ValueError("fdtd_flaport records E phasors only; Sz is not available")
         if self._pixel_stack is None:
             raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        nx, ny, nz = E.shape[:3]
-        lx, ly = self._pixel_stack.domain_size
-        z_min, z_max = self._pixel_stack.z_range
+        if self._last_E is None or self._last_grid_spacing is None:
+            logger.warning(
+                "fdtd_flaport: no solved field available; returning a "
+                "permittivity-based approximation, not a solved field"
+            )
+            wl = self._last_wavelength or 0.55
+            return approximate_field(
+                self._pixel_stack,
+                self._pixel_stack.get_layer_slices(wl, 64, 64),
+                wl, component, plane, position,
+            )
 
+        E = self._last_E
+        gs = self._last_grid_spacing
         if component == "|E|2":
             field = np.sum(np.abs(E) ** 2, axis=-1)
-        elif component == "Ex":
-            field = np.abs(E[..., 0]) ** 2
-        elif component == "Ey":
-            field = np.abs(E[..., 1]) ** 2
-        elif component == "Ez":
-            field = np.abs(E[..., 2]) ** 2
         else:
-            field = np.sum(np.abs(E) ** 2, axis=-1)
-
+            field = np.abs(E[..., "xyz".index(component[1])]) ** 2
+        n_x, n_y, n_z = field.shape
+        z_min, z_max = self._pixel_stack.z_range
         if plane == "xy":
-            z_idx = int(((position - z_min) / (z_max - z_min)) * nz)
-            z_idx = max(0, min(nz - 1, z_idx))
-            return np.asarray(field[:, :, z_idx])
-        elif plane == "xz":
-            y_idx = int(((position + ly / 2) / ly) * ny)
-            y_idx = max(0, min(ny - 1, y_idx))
-            return np.asarray(field[:, y_idx, :])
-        elif plane == "yz":
-            x_idx = int(((position + lx / 2) / lx) * nx)
-            x_idx = max(0, min(nx - 1, x_idx))
-            return np.asarray(field[x_idx, :, :])
-        return np.zeros((64, 64))
-
-    def _approximate_field_from_eps(
-        self,
-        eps_3d: np.ndarray,
-        component: str,
-        plane: str,
-        position: float,
-    ) -> np.ndarray:
-        """Approximate field from permittivity using Beer-Lambert decay."""
-        if self._pixel_stack is None:
-            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        nx, ny, nz = eps_3d.shape
-        lx, ly = self._pixel_stack.domain_size
-
-        if component == "|E|2" or component in ("Ex", "Ey", "Ez"):
-            # Model intensity as exponential decay through absorbing layers
-            k0 = 2 * np.pi / 0.55  # Default wavelength
-            alpha = 2 * k0 * np.abs(np.imag(eps_3d))
-            intensity = np.ones_like(alpha, dtype=float)
-            dz = (self._pixel_stack.z_range[1] - self._pixel_stack.z_range[0]) / nz
-            for zi in range(1, nz):
-                intensity[:, :, zi] = intensity[:, :, zi - 1] * np.exp(-alpha[:, :, zi] * dz)
-        else:
-            intensity = np.real(eps_3d)
-
-        if plane == "xy":
-            z_idx = int(
-                position / ((self._pixel_stack.z_range[1] - self._pixel_stack.z_range[0]) / nz)
-            )
-            z_idx = max(0, min(nz - 1, z_idx))
-            return np.asarray(intensity[:, :, z_idx])
-        elif plane == "xz":
-            y_idx = int(((position + ly / 2) / ly) * ny)
-            y_idx = max(0, min(ny - 1, y_idx))
-            return np.asarray(intensity[:, y_idx, :])
-        elif plane == "yz":
-            x_idx = int(((position + lx / 2) / lx) * nx)
-            x_idx = max(0, min(nx - 1, x_idx))
-            return np.asarray(intensity[x_idx, :, :])
-        return np.zeros((64, 64))
+            if not z_min <= position <= z_max:
+                raise ValueError(f"xy-plane position z={position} um is outside the stack")
+            k = min(n_z - 1, int((position - z_min) / gs))
+            return np.asarray(field[:, :, k])
+        n_axis = n_y if plane == "xz" else n_x
+        idx = int(np.floor(position / gs)) % n_axis
+        return np.asarray(field[:, idx, :] if plane == "xz" else field[idx, :, :])
 
 
 SolverFactory.register("fdtd_flaport", FlaportFdtdSolver)

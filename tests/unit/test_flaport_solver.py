@@ -1,261 +1,126 @@
 """Unit tests for the flaport FDTD solver adapter."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+from compass.core.types import Layer, PhotodiodeSpec
+from compass.geometry.pixel_stack import PixelStack
+from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
 
 
-def _make_pixel_stack_mock():
-    """Create a mock PixelStack with minimal attributes."""
-    ps = MagicMock()
-    ps.layers = [MagicMock()]
-    ps.unit_cell = (2, 2)
-    ps.domain_size = (2.0, 2.0)
-    ps.z_range = (0.0, 5.0)
-    ps.bayer_map = [["R", "G"], ["G", "B"]]
-    ps.photodiodes = []
-    ps.get_permittivity_grid.return_value = np.ones((51, 51, 51), dtype=complex) * 1.5
-    return ps
+def _solver(params=None):
+    return FlaportFdtdSolver({"name": "fdtd_flaport", "params": params or {}}, device="cpu")
 
 
-def _make_source_config(wavelength: float = 0.55):
-    """Create a minimal source config."""
-    return {
-        "wavelength": {"mode": "single", "value": wavelength},
-        "angle": {"theta_deg": 0.0, "phi_deg": 0.0},
-        "polarization": "TE",
-    }
-
-
-def _make_fdtd_mock():
-    """Build a comprehensive fdtd module mock for solver tests."""
-    fdtd = MagicMock()
-
-    # Grid mock — supports item assignment for boundaries/source
-    # inverse_permittivity is a MagicMock to avoid shape mismatch errors
-    grid = MagicMock()
-
-    fdtd.Grid.return_value = grid
-    fdtd.PeriodicBoundary.return_value = MagicMock()
-    fdtd.PML.return_value = MagicMock()
-    fdtd.PlaneSource.return_value = MagicMock()
-
-    return fdtd, grid
-
-
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
-
-
-class TestFlaportPMLSliceIndexing:
-    """Verify PML uses slice indexing, not integer indexing."""
-
-    @patch.dict("sys.modules", {"fdtd": MagicMock()})
-    def test_pml_slice_indexing_no_exception(self):
-        """_build_grid should use slice indexing for PML (no TypeError)."""
-        import sys
-
-        fdtd_mod = sys.modules["fdtd"]
-        fdtd_mod.Grid.return_value = MagicMock()
-        fdtd_mod.PeriodicBoundary.return_value = MagicMock()
-        fdtd_mod.PML.return_value = MagicMock()
-        fdtd_mod.PlaneSource.return_value = MagicMock()
-        fdtd_mod.BlockDetector.return_value = MagicMock()
-
-        from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
-
-        solver = FlaportFdtdSolver({"params": {}}, device="cpu")
-        # Should not raise — slice PML indexing
-        grid, damping = solver._build_grid(
-            fdtd_mod,
-            nx=51,
-            ny=51,
-            nz=81,
-            grid_spacing_m=2e-8,
-            pml_layers=15,
-            wavelength_m=5.5e-7,
-            pol="TE",
-            eps_3d=None,
-        )
-        assert grid is not None
-        assert damping is None  # No damping for vacuum run
-
-    @patch.dict("sys.modules", {"fdtd": MagicMock()})
-    def test_pml_called_twice(self):
-        """PML is created for both z_low and z_high."""
-        import sys
-
-        fdtd_mod = sys.modules["fdtd"]
-        fdtd_mod.Grid.return_value = MagicMock()
-        fdtd_mod.PeriodicBoundary.return_value = MagicMock()
-        fdtd_mod.PML.return_value = MagicMock()
-        fdtd_mod.PlaneSource.return_value = MagicMock()
-        fdtd_mod.BlockDetector.return_value = MagicMock()
-
-        from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
-
-        solver = FlaportFdtdSolver({"params": {}}, device="cpu")
-        solver._build_grid(
-            fdtd_mod,
-            nx=51,
-            ny=51,
-            nz=81,
-            grid_spacing_m=2e-8,
-            pml_layers=15,
-            wavelength_m=5.5e-7,
-            pol="TE",
-            eps_3d=None,
-        )
-        assert fdtd_mod.PML.call_count == 2
-
-
-class TestFlaportVacuumEnergyConservation:
-    """Vacuum run should give T~1, R~0, A~0."""
-
-    def test_vacuum_energy_conservation(self):
-        """With vacuum (no absorption), R~0, T~1, A~0."""
-        fdtd_mod, _grid = _make_fdtd_mock()
-
-        # Two-pass normalization: both reference and structure runs return same fluxes
-        # Sz_above = +0.1 (small upward), Sz_below = -0.5 (downward), Sz_trans = -0.5
-        # Reference: P_inc = abs(Sz_ref_below) = 0.5
-        # Structure (vacuum): R = (0.1 - 0.1) / 0.5 = 0.0, T = 0.5/0.5 = 1.0, A = 0.0
-        poynting_vacuum = (0.1, -0.5, -0.5)
-
-        with patch.dict("sys.modules", {"fdtd": fdtd_mod}):
-            from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
-
-            solver = FlaportFdtdSolver(
-                {"params": {"grid_spacing": 0.04, "runtime": 100, "pml_layers": 10}},
-                device="cpu",
-            )
-            ps = _make_pixel_stack_mock()
-            ps.get_permittivity_grid.return_value = np.ones((26, 26, 26), dtype=complex)
-
-            solver.setup_geometry(ps)
-            solver.setup_source(_make_source_config())
-
-            with patch.object(
-                FlaportFdtdSolver, "_build_grid", return_value=(MagicMock(), None)
-            ), patch.object(
-                FlaportFdtdSolver,
-                "_run_and_poynting",
-                return_value=poynting_vacuum,
-            ):
-                result = solver.run()
-
-        assert result.reflection is not None
-        assert result.transmission is not None
-        assert result.absorption is not None
-        np.testing.assert_allclose(result.reflection[0], 0.0, atol=0.01)
-        np.testing.assert_allclose(result.transmission[0], 1.0, atol=0.01)
-        np.testing.assert_allclose(result.absorption[0], 0.0, atol=0.02)
-
-
-class TestFlaportEnergyBalance:
-    """R + T + A should be close to 1.0 for structure runs."""
-
-    def test_energy_balance(self):
-        """R + T + A should be within 2% of 1.0."""
-        fdtd_mod, _grid = _make_fdtd_mock()
-
-        # Two-pass normalization:
-        # Reference run: Sz_ref_above=0.1, Sz_ref_below=-0.5 → P_inc = 0.5
-        # Structure run: Sz_above=0.15, Sz_below=-0.40, Sz_trans=-0.22
-        # R = (0.15 - 0.1) / 0.5 = 0.10
-        # T = 0.22 / 0.5 = 0.44
-        # A = 1 - 0.10 - 0.44 = 0.46
-        poynting_ref = (0.1, -0.5, -0.5)
-        poynting_structure = (0.15, -0.40, -0.22)
-
-        with patch.dict("sys.modules", {"fdtd": fdtd_mod}):
-            from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
-
-            solver = FlaportFdtdSolver(
-                {"params": {"grid_spacing": 0.04, "runtime": 100, "pml_layers": 10}},
-                device="cpu",
-            )
-            ps = _make_pixel_stack_mock()
-            solver.setup_geometry(ps)
-            solver.setup_source(_make_source_config())
-
-            with patch.object(
-                FlaportFdtdSolver, "_build_grid", return_value=(MagicMock(), None)
-            ), patch.object(
-                FlaportFdtdSolver,
-                "_run_and_poynting",
-                side_effect=[poynting_ref, poynting_structure],
-            ):
-                result = solver.run()
-
-        R = result.reflection[0]
-        T = result.transmission[0]
-        A = result.absorption[0]
-        total = R + T + A
-        assert abs(total - 1.0) < 0.02, f"R+T+A = {total:.4f}, expected ~1.0"
-
-
-class TestFlaportTimeAvgIntensity:
-    """Tests for the _time_avg_intensity static method."""
-
-    def test_time_avg_uses_last_third(self):
-        """Averaging uses only the last 1/3 of timesteps."""
-        from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
-
-        E = np.zeros((90, 5, 5, 3))
-        # First 60 timesteps: value 0
-        # Last 30 timesteps: value 1
-        E[60:, :, :, :] = 1.0
-
-        intensity = FlaportFdtdSolver._time_avg_intensity(E)
-        # Last 30 out of 90 → all 1.0 → |E|² = 3.0 per point
-        expected = 3.0
-        np.testing.assert_allclose(intensity, expected, atol=0.01)
-
-    def test_time_avg_zero_field(self):
-        """Zero field should give zero intensity."""
-        from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
-
-        E = np.zeros((30, 5, 5, 3))
-        assert FlaportFdtdSolver._time_avg_intensity(E) == pytest.approx(0.0)
-
-
-class TestFlaportSolverSetup:
-    """Basic setup and error handling tests."""
-
+class TestSetup:
     def test_setup_geometry_rejects_none(self):
-        from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
-
-        solver = FlaportFdtdSolver({"params": {}}, device="cpu")
         with pytest.raises(ValueError, match="must not be None"):
-            solver.setup_geometry(None)
+            _solver().setup_geometry(None)
 
     def test_setup_geometry_rejects_empty_layers(self):
-        from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
-
         ps = MagicMock()
         ps.layers = []
-        solver = FlaportFdtdSolver({"params": {}}, device="cpu")
         with pytest.raises(ValueError, match="at least one layer"):
-            solver.setup_geometry(ps)
+            _solver().setup_geometry(ps)
 
     def test_run_without_setup_raises(self):
-        from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
-
-        solver = FlaportFdtdSolver({"params": {}}, device="cpu")
         with pytest.raises(RuntimeError, match="setup_geometry"):
-            solver.run()
+            _solver().run()
 
-    def test_run_without_source_raises(self):
-        from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
+    def test_oblique_incidence_rejected(self):
+        with pytest.raises(NotImplementedError):
+            _solver().setup_source({
+                "wavelength": {"mode": "single", "value": 0.55},
+                "angle": {"theta_deg": 10.0},
+            })
 
-        solver = FlaportFdtdSolver({"params": {}}, device="cpu")
-        solver._pixel_stack = _make_pixel_stack_mock()
-        with pytest.raises(RuntimeError, match="setup_source"):
-            solver.run()
+
+class TestGridDims:
+    def test_lateral_period_is_exact(self):
+        """The grid period equals the domain (old code: (int(l/gs)+1) cells)."""
+        solver = _solver({"grid_spacing": 0.015})
+        solver.setup_geometry(PixelStack({"pixel": {"pitch": 1.0, "unit_cell": [2, 2]}}))
+        gs, n_x, n_y, _ = solver._grid_dims()
+        assert n_x * gs == pytest.approx(2.0) and n_y * gs == pytest.approx(2.0)
+        assert gs == pytest.approx(0.015, rel=0.01)
+
+    def test_incommensurate_domain_raises(self):
+        solver = _solver({"grid_spacing": 0.3})
+        stack = MagicMock()
+        stack.layers = [MagicMock()]
+        stack.domain_size = (1.0, 1.1)
+        stack.z_range = (0.0, 1.0)
+        solver.setup_geometry(stack)
+        with pytest.raises(ValueError, match="common cell size"):
+            solver._grid_dims()
+
+
+class TestFieldQE:
+    def test_absorption_maps_to_absorbing_pixel(self):
+        """QE uses the field in silicon under each PD footprint, [x, y] order."""
+        stack = PixelStack({"pixel": {"pitch": 1.0, "unit_cell": [1, 2],
+                                      "bayer_map": [["R", "G"]]}})
+        stack.layers = [Layer("silicon", 0.0, 0.5, 0.5, "silicon")]
+        stack.photodiodes = [
+            PhotodiodeSpec((0.0, 0.0, 0.25), (1.0, 1.0, 0.5), (0, c), "RG"[c]) for c in range(2)
+        ]
+        solver = _solver()
+        solver.setup_geometry(stack)
+        gs, nx, ny, nz = 0.1, 20, 10, 5
+        eps = np.full((ny, nx, nz), 12.0 + 0.0j)
+        eps[:, :10, :] += 0.5j  # only the left (R) pixel absorbs
+        E = np.ones((nx, ny, nz, 3), complex) / np.sqrt(3)  # |E|^2 = 1
+        qe = solver._field_qe(E, eps, gs, 0.55, p_inc=1.0, total_absorption=0.5)
+        k0 = 2 * np.pi / 0.55
+        assert qe["R_0_0"] == pytest.approx(min(1.0, k0 * 0.5 * 0.5))
+        assert qe["G_0_1"] == 0.0
+
+
+class TestRealBackend:
+    """Run the real fdtd library on tiny cells (skipped if not installed)."""
+
+    @pytest.fixture(autouse=True)
+    def _need_fdtd(self):
+        pytest.importorskip("fdtd")
+        pytest.importorskip("torch")
+
+    @staticmethod
+    def _slab_stack(material=("glass", 1.5, 0.05)):
+        stack = PixelStack({"pixel": {"pitch": 0.04, "unit_cell": [1, 1]}})
+        name, n, k = material
+        stack.material_db.register_constant(name, n=n, k=k)
+        stack.layers = [
+            Layer("air_b", 0.0, 0.1, 0.1, "air"),
+            Layer("slab", 0.1, 0.4, 0.3, name),
+            Layer("air", 0.4, 0.6, 0.2, "air"),
+        ]
+        return stack
+
+    def test_slab_matches_tmm(self):
+        """Soft source + field subtraction: R is no longer pinned to 0."""
+        from compass.solvers.tmm.tmm_core import transfer_matrix_1d
+
+        solver = _solver({"grid_spacing": 0.01, "runtime": 100, "pml_layers": 10})
+        solver.setup_geometry(self._slab_stack())
+        solver.setup_source({"wavelength": {"mode": "single", "value": 0.55},
+                             "polarization": "TE"})
+        result = solver.run()
+        n = np.array([1.0, 1.5 + 0.05j, 1.0])
+        d = np.array([np.inf, 0.3, np.inf])
+        R, T, _ = transfer_matrix_1d(n, d, 0.55)
+        assert result.reflection[0] == pytest.approx(R, abs=0.01)
+        assert result.transmission[0] == pytest.approx(T, abs=0.01)
+        assert result.metadata["qe_method"] == "field_integration"
+        xz = solver.get_field_distribution("|E|2", "xz", 0.02)
+        assert xz.shape[1] == round(0.6 / 0.01) and np.all(np.isfinite(xz))
+
+    def test_metal_permittivity_is_rejected(self):
+        solver = _solver({"grid_spacing": 0.01, "runtime": 100, "pml_layers": 10})
+        solver.setup_geometry(self._slab_stack(("metal", 0.5, 3.0)))
+        solver.setup_source({"wavelength": {"mode": "single", "value": 0.55},
+                             "polarization": "TE"})
+        result = solver.run()
+        assert np.isnan(result.reflection[0])
+        assert "Re(eps) < 1" in result.metadata["failed_runs"][0]["error"]

@@ -15,7 +15,6 @@ import pytest
 
 from compass.core.types import LayerSlice
 from compass.geometry.pixel_stack import PixelStack
-from compass.solvers.fdtd.flaport_solver import FlaportFdtdSolver
 from compass.solvers.rcwa.fmmax_solver import FmmaxSolver
 from compass.solvers.rcwa.grcwa_solver import GrcwaSolver
 from compass.solvers.rcwa.meent_solver import MeentSolver
@@ -80,24 +79,6 @@ def test_torcwa_fallback_qe_maps_absorption_to_correct_pixel(pixel_stack_1x2):
     qe = solver._compute_per_pixel_qe(
         None, None, layer_slices, wavelength=0.55, total_absorption=0.4
     )
-
-    assert qe["R_0_0"] > 0.5
-    assert qe["G_0_1"] == pytest.approx(0.0, abs=1e-12)
-
-
-def test_flaport_volume_qe_maps_absorption_to_correct_pixel(pixel_stack_1x2):
-    solver = FlaportFdtdSolver({"name": "fdtd_flaport"})
-    solver.setup_geometry(pixel_stack_1x2)
-    stack = pixel_stack_1x2
-
-    lx, _ly = stack.domain_size
-    nz = 32
-    eps_3d = np.full((NY, NX, nz), 1.5 + 0j, dtype=complex)
-    ix0 = int(0.15 / lx * NX)
-    ix1 = int(np.ceil(0.85 / lx * NX))
-    eps_3d[:, ix0:ix1, :] += 0.5j  # absorb over the full z-column of the left PD
-
-    qe = solver._compute_per_pixel_qe(eps_3d, wavelength=0.55, total_absorption=0.4)
 
     assert qe["R_0_0"] > 0.5
     assert qe["G_0_1"] == pytest.approx(0.0, abs=1e-12)

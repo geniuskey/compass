@@ -9,3 +9,4 @@ solver:
     pml_layers: 15
     courant_number: null
     dtype: "float64"
+    dft_periods: 8          # optical periods in the steady-state DFT window
