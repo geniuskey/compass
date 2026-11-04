@@ -80,7 +80,8 @@ class TestExtraction:
         # first column is the stack bottom (torcwa depth 1.0), last the top (depth 0)
         assert captured["z"][0] == pytest.approx(1.0)
         assert captured["z"][-1] == pytest.approx(0.0)
-        assert captured["y"] == 0.25
+        # COMPASS samples eps at cell centres; torcwa at cell corners (8x8 grid)
+        assert captured["y"] == pytest.approx(0.25 - 0.5 / 8)
 
     def test_failure_falls_back_to_approximation(self, caplog):
         solver = _solver_with_state()

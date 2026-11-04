@@ -15,6 +15,7 @@ from compass.solvers.base import SolverBase, SolverFactory
 from compass.solvers.rcwa.fields import (
     FIELD_N_XY,
     approximate_field,
+    backend_grid_shift,
     check_xy_position,
     column_heights,
     component_from_field,
@@ -441,18 +442,19 @@ class GrcwaSolver(SolverBase):
         sampler = self._last_sampler
         layer_info = self._last_layer_info
         lx, ly = self._pixel_stack.domain_size
+        dx, dy = backend_grid_shift(self._pixel_stack, layer_info)
         u = np.arange(FIELD_N_XY) / FIELD_N_XY
 
         if plane == "xy":
             li, depth = locate_slice(layer_info, position)
-            X, Y = np.meshgrid(u * lx, u * ly, indexing="ij")
+            X, Y = np.meshgrid(u * lx - dx, u * ly - dy, indexing="ij")
             E, H = sampler.at_points(li, depth, X, Y)
             return component_from_field(E, H, component)
 
         heights = column_heights(layer_info)
         line = u * (lx if plane == "xz" else ly)
-        x = line if plane == "xz" else np.full_like(line, position)
-        y = np.full_like(line, position) if plane == "xz" else line
+        x = line - dx if plane == "xz" else np.full_like(line, position - dx)
+        y = np.full_like(line, position - dy) if plane == "xz" else line - dy
         out = np.zeros((FIELD_N_XY, len(heights)))
         for zi, z in enumerate(heights):
             li, depth = locate_slice(layer_info, float(z))

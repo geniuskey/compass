@@ -58,6 +58,18 @@ def check_xy_position(layer_info: Sequence[LayerSlice], position: float) -> None
         )
 
 
+def backend_grid_shift(pixel_stack, layer_info: Sequence[LayerSlice]) -> tuple[float, float]:
+    """(dx, dy) in um from COMPASS to an FFT backend's eps-sample frame.
+
+    PixelStack samples eps at cell centres, ``(b + 0.5) * lx / n``, while
+    torcwa and grcwa take sample ``b`` of the grid to sit at ``b * lx / n``.
+    A COMPASS position ``x`` therefore maps to backend ``x - dx``.
+    """
+    lx, ly = pixel_stack.domain_size
+    n0, n1 = layer_info[0].eps_grid.shape
+    return 0.5 * lx / n1, 0.5 * ly / n0
+
+
 def locate_slice(layer_info: Sequence[LayerSlice], z: float) -> tuple[int, float]:
     """Find the slice containing COMPASS height ``z``.
 

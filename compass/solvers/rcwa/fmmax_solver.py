@@ -653,7 +653,7 @@ class FmmaxSolver(SolverBase):
             raise RuntimeError("no simulation data")
         layer_info = self._last_layer_info
         lx, ly = self._pixel_stack.domain_size
-        u = (np.arange(FIELD_N_XY) + 0.5) / FIELD_N_XY
+        u = np.arange(FIELD_N_XY) / FIELD_N_XY
 
         if plane == "xy":
             li, depth = locate_slice(layer_info, position)

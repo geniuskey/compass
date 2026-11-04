@@ -19,6 +19,7 @@ from compass.solvers.rcwa.fields import (
     FIELD_N_Z,
     FIELD_PLANES,
     approximate_field,
+    backend_grid_shift,
     check_xy_position,
     column_heights,
     component_from_field,
@@ -483,20 +484,22 @@ class TorcwaSolver(SolverBase):
         sim.source_planewave(amplitude=self._last_source_amp, direction="forward", notation="ps")
 
         lx, ly = self._pixel_stack.domain_size
+        dx, dy = backend_grid_shift(self._pixel_stack, layer_info)
         f64 = torch.float64
         dev = self.device
         xy_axis = torch.arange(FIELD_N_XY, device=dev, dtype=f64) / FIELD_N_XY
+        x_axis, y_axis = xy_axis * lx - dx, xy_axis * ly - dy
 
         if plane == "xy":
             li, depth = locate_slice(layer_info, position)
-            E, H = sim.field_xy(li, xy_axis * lx, xy_axis * ly, z_prop=depth)
+            E, H = sim.field_xy(li, x_axis, y_axis, z_prop=depth)
         else:
             z_top = stack_z_range(layer_info)[1]
             z_axis = torch.tensor(z_top - column_heights(layer_info), device=dev, dtype=f64)
             if plane == "xz":
-                E, H = sim.field_xz(xy_axis * lx, z_axis, float(position))
+                E, H = sim.field_xz(x_axis, z_axis, float(position) - dy)
             else:
-                E, H = sim.field_yz(xy_axis * ly, z_axis, float(position))
+                E, H = sim.field_yz(y_axis, z_axis, float(position) - dx)
 
         E_np = [c.detach().cpu().numpy() for c in E]
         H_np = [c.detach().cpu().numpy() for c in H]
