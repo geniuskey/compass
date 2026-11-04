@@ -1,0 +1,1772 @@
+{
+  "environment": {
+    "python": "3.12.12 (main, Jan 14 2026, 19:30:21) [MSC v.1944 64 bit (AMD64)]",
+    "torch": "2.11.0+cpu",
+    "torch_cuda_build": null,
+    "torch_cuda_available": false,
+    "jax": "0.10.0",
+    "jax_devices": [
+      "cpu:0"
+    ],
+    "timing": "perf_counter around run(); 1 cold + 3 repeats; torch synchronized; outputs materialized to numpy; torch threads=1",
+    "scope": "0.1 um n=1.5 slab in air, k=0/0.05, normal TE, 450/550/650 nm; not a patterned-pixel convergence benchmark",
+    "packages": {
+      "torcwa": "0.1.4.2",
+      "grcwa": "0.1.2",
+      "meent": "0.12.0",
+      "fmmax": "1.7.1",
+      "fdtd": "0.3.5",
+      "fdtdz": null,
+      "fdtdx": null,
+      "meep": null
+    }
+  },
+  "runs": [
+    {
+      "solver": "torcwa",
+      "requested_device": "cpu",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [
+        {
+          "k": 0.0,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.11520737335035872,
+              0.8847926266496416,
+              0.0
+            ],
+            [
+              0.14536844803530696,
+              0.854631551964693,
+              0.0
+            ],
+            [
+              0.146093715613804,
+              0.853906284386196,
+              0.0
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.11520737327188943,
+              0.8847926267281103,
+              2.220446049250313e-16
+            ],
+            [
+              0.1453684480158206,
+              0.8546315519841796,
+              0.0
+            ],
+            [
+              0.14609371562778625,
+              0.8539062843722135,
+              2.220446049250313e-16
+            ]
+          ],
+          "max_abs_error_vs_tmm": 7.846928662402775e-11,
+          "cold_s": 0.043389599999500206,
+          "repeat_s": [
+            0.013511499999367516,
+            0.013712899999518413,
+            0.014300700000603683
+          ],
+          "warm_median_s": 0.013712899999518413,
+          "metadata": {
+            "solver_name": "torcwa",
+            "fourier_order": [
+              1,
+              1
+            ],
+            "qe_method": "eps_imag_weight_fallback",
+            "device": "cpu"
+          }
+        },
+        {
+          "k": 0.05,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.1033359142110385,
+              0.7812356224339556,
+              0.1154284633550059
+            ],
+            [
+              0.1328376030361265,
+              0.7712081363424937,
+              0.0959542606213798
+            ],
+            [
+              0.13482951098676013,
+              0.7789719291827756,
+              0.08619855983046432
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.103335914136773,
+              0.781235622466782,
+              0.11542846339644497
+            ],
+            [
+              0.1328376030153317,
+              0.771208136340695,
+              0.09595426064397328
+            ],
+            [
+              0.13482951099748505,
+              0.7789719291564626,
+              0.08619855984605229
+            ]
+          ],
+          "max_abs_error_vs_tmm": 7.426549653022363e-11,
+          "cold_s": 0.07717260000026727,
+          "repeat_s": [
+            0.07500880000043253,
+            0.08287790000031237,
+            0.09028670000043348
+          ],
+          "warm_median_s": 0.08287790000031237,
+          "metadata": {
+            "solver_name": "torcwa",
+            "fourier_order": [
+              1,
+              1
+            ],
+            "qe_method": "eps_imag_weight_fallback",
+            "device": "cpu"
+          }
+        }
+      ],
+      "observations": [
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        }
+      ],
+      "status": "ok"
+    },
+    {
+      "solver": "torcwa",
+      "requested_device": "cuda",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [],
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 78, in worker\n    raise RuntimeError(f\"Invalid solver result: {result.metadata}\")\nRuntimeError: Invalid solver result: {'solver_name': 'torcwa', 'fourier_order': [1, 1], 'qe_method': 'field_integration', 'device': 'cuda', 'failed_runs': [{'wavelength': 0.45, 'polarization': 'TE', 'error': 'Torch not compiled with CUDA enabled'}, {'wavelength': 0.55, 'polarization': 'TE', 'error': 'Torch not compiled with CUDA enabled'}, {'wavelength': 0.65, 'polarization': 'TE', 'error': 'Torch not compiled with CUDA enabled'}]}\n"
+    },
+    {
+      "solver": "grcwa",
+      "requested_device": "cpu",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [
+        {
+          "k": 0.0,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.11520737327188947,
+              0.8847926267281111,
+              0.0
+            ],
+            [
+              0.1453684480158204,
+              0.8546315519841793,
+              3.3306690738754696e-16
+            ],
+            [
+              0.1460937156277863,
+              0.853906284372214,
+              0.0
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.11520737327188943,
+              0.8847926267281103,
+              2.220446049250313e-16
+            ],
+            [
+              0.1453684480158206,
+              0.8546315519841796,
+              0.0
+            ],
+            [
+              0.14609371562778625,
+              0.8539062843722135,
+              2.220446049250313e-16
+            ]
+          ],
+          "max_abs_error_vs_tmm": 7.771561172376096e-16,
+          "cold_s": 0.01865920000091137,
+          "repeat_s": [
+            0.0020689000011770986,
+            0.002498100000593695,
+            0.0019498999990901211
+          ],
+          "warm_median_s": 0.0020689000011770986,
+          "metadata": {
+            "solver_name": "grcwa",
+            "nG": 10,
+            "qe_method": "eps_imag_weight",
+            "device": "cpu"
+          }
+        },
+        {
+          "k": 0.05,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.10333591413677314,
+              0.7812356224667824,
+              0.11542846339644453
+            ],
+            [
+              0.13283760301533157,
+              0.7712081363406945,
+              0.09595426064397394
+            ],
+            [
+              0.13482951099748505,
+              0.7789719291564623,
+              0.08619855984605262
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.103335914136773,
+              0.781235622466782,
+              0.11542846339644497
+            ],
+            [
+              0.1328376030153317,
+              0.771208136340695,
+              0.09595426064397328
+            ],
+            [
+              0.13482951099748505,
+              0.7789719291564626,
+              0.08619855984605229
+            ]
+          ],
+          "max_abs_error_vs_tmm": 6.661338147750939e-16,
+          "cold_s": 0.002831499999956577,
+          "repeat_s": [
+            0.003431799999816576,
+            0.0022301999997580424,
+            0.0021024999987275805
+          ],
+          "warm_median_s": 0.0022301999997580424,
+          "metadata": {
+            "solver_name": "grcwa",
+            "nG": 10,
+            "qe_method": "eps_imag_weight",
+            "device": "cpu"
+          }
+        }
+      ],
+      "observations": [],
+      "status": "ok"
+    },
+    {
+      "solver": "grcwa",
+      "requested_device": "cuda",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [
+        {
+          "k": 0.0,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.11520737327188947,
+              0.8847926267281111,
+              0.0
+            ],
+            [
+              0.1453684480158204,
+              0.8546315519841793,
+              3.3306690738754696e-16
+            ],
+            [
+              0.1460937156277863,
+              0.853906284372214,
+              0.0
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.11520737327188943,
+              0.8847926267281103,
+              2.220446049250313e-16
+            ],
+            [
+              0.1453684480158206,
+              0.8546315519841796,
+              0.0
+            ],
+            [
+              0.14609371562778625,
+              0.8539062843722135,
+              2.220446049250313e-16
+            ]
+          ],
+          "max_abs_error_vs_tmm": 7.771561172376096e-16,
+          "cold_s": 0.015507199999774457,
+          "repeat_s": [
+            0.0027727000015147496,
+            0.002255499999591848,
+            0.0020301000004110392
+          ],
+          "warm_median_s": 0.002255499999591848,
+          "metadata": {
+            "solver_name": "grcwa",
+            "nG": 10,
+            "qe_method": "eps_imag_weight",
+            "device": "cuda"
+          }
+        },
+        {
+          "k": 0.05,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.10333591413677314,
+              0.7812356224667824,
+              0.11542846339644453
+            ],
+            [
+              0.13283760301533157,
+              0.7712081363406945,
+              0.09595426064397394
+            ],
+            [
+              0.13482951099748505,
+              0.7789719291564623,
+              0.08619855984605262
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.103335914136773,
+              0.781235622466782,
+              0.11542846339644497
+            ],
+            [
+              0.1328376030153317,
+              0.771208136340695,
+              0.09595426064397328
+            ],
+            [
+              0.13482951099748505,
+              0.7789719291564626,
+              0.08619855984605229
+            ]
+          ],
+          "max_abs_error_vs_tmm": 6.661338147750939e-16,
+          "cold_s": 0.0024503999993612524,
+          "repeat_s": [
+            0.002018500001213397,
+            0.002613700000438257,
+            0.0022501999992528
+          ],
+          "warm_median_s": 0.0022501999992528,
+          "metadata": {
+            "solver_name": "grcwa",
+            "nG": 10,
+            "qe_method": "eps_imag_weight",
+            "device": "cuda"
+          }
+        }
+      ],
+      "observations": [],
+      "status": "ok"
+    },
+    {
+      "solver": "meent",
+      "requested_device": "cpu",
+      "backend": "numpy",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "numpy",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [
+        {
+          "k": 0.0,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.11520737327188942,
+              0.8847926267281108,
+              0.0
+            ],
+            [
+              0.14536844801582047,
+              0.8546315519841797,
+              0.0
+            ],
+            [
+              0.1460937156277863,
+              0.8539062843722138,
+              0.0
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.11520737327188943,
+              0.8847926267281103,
+              2.220446049250313e-16
+            ],
+            [
+              0.1453684480158206,
+              0.8546315519841796,
+              0.0
+            ],
+            [
+              0.14609371562778625,
+              0.8539062843722135,
+              2.220446049250313e-16
+            ]
+          ],
+          "max_abs_error_vs_tmm": 4.440892098500626e-16,
+          "cold_s": 0.04735399999844958,
+          "repeat_s": [
+            0.0440216999995755,
+            0.04083779999928083,
+            0.040943600000900915
+          ],
+          "warm_median_s": 0.040943600000900915,
+          "metadata": {
+            "solver_name": "meent",
+            "backend": "numpy",
+            "fourier_order": [
+              1,
+              1
+            ],
+            "qe_method": "eps_imag_weight"
+          }
+        },
+        {
+          "k": 0.05,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.10333591413677311,
+              0.7812356224667825,
+              0.11542846339644441
+            ],
+            [
+              0.13283760301533173,
+              0.771208136340695,
+              0.09595426064397328
+            ],
+            [
+              0.13482951099748527,
+              0.7789719291564624,
+              0.08619855984605229
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.103335914136773,
+              0.781235622466782,
+              0.11542846339644497
+            ],
+            [
+              0.1328376030153317,
+              0.771208136340695,
+              0.09595426064397328
+            ],
+            [
+              0.13482951099748505,
+              0.7789719291564626,
+              0.08619855984605229
+            ]
+          ],
+          "max_abs_error_vs_tmm": 5.551115123125783e-16,
+          "cold_s": 0.04213479999998526,
+          "repeat_s": [
+            0.04112680000071123,
+            0.04178690000117058,
+            0.04371519999949669
+          ],
+          "warm_median_s": 0.04178690000117058,
+          "metadata": {
+            "solver_name": "meent",
+            "backend": "numpy",
+            "fourier_order": [
+              1,
+              1
+            ],
+            "qe_method": "eps_imag_weight"
+          }
+        }
+      ],
+      "observations": [
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        }
+      ],
+      "status": "ok"
+    },
+    {
+      "solver": "meent",
+      "requested_device": "cuda",
+      "backend": "numpy",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "numpy",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [
+        {
+          "k": 0.0,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.11520737327188942,
+              0.8847926267281108,
+              0.0
+            ],
+            [
+              0.14536844801582047,
+              0.8546315519841797,
+              0.0
+            ],
+            [
+              0.1460937156277863,
+              0.8539062843722138,
+              0.0
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.11520737327188943,
+              0.8847926267281103,
+              2.220446049250313e-16
+            ],
+            [
+              0.1453684480158206,
+              0.8546315519841796,
+              0.0
+            ],
+            [
+              0.14609371562778625,
+              0.8539062843722135,
+              2.220446049250313e-16
+            ]
+          ],
+          "max_abs_error_vs_tmm": 4.440892098500626e-16,
+          "cold_s": 0.04814219999934721,
+          "repeat_s": [
+            0.04415870000048017,
+            0.040774600000077044,
+            0.04241419999925711
+          ],
+          "warm_median_s": 0.04241419999925711,
+          "metadata": {
+            "solver_name": "meent",
+            "backend": "numpy",
+            "fourier_order": [
+              1,
+              1
+            ],
+            "qe_method": "eps_imag_weight"
+          }
+        },
+        {
+          "k": 0.05,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.10333591413677311,
+              0.7812356224667825,
+              0.11542846339644441
+            ],
+            [
+              0.13283760301533173,
+              0.771208136340695,
+              0.09595426064397328
+            ],
+            [
+              0.13482951099748527,
+              0.7789719291564624,
+              0.08619855984605229
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.103335914136773,
+              0.781235622466782,
+              0.11542846339644497
+            ],
+            [
+              0.1328376030153317,
+              0.771208136340695,
+              0.09595426064397328
+            ],
+            [
+              0.13482951099748505,
+              0.7789719291564626,
+              0.08619855984605229
+            ]
+          ],
+          "max_abs_error_vs_tmm": 5.551115123125783e-16,
+          "cold_s": 0.04068820000065898,
+          "repeat_s": [
+            0.04282669999884092,
+            0.040912399999797344,
+            0.04131779999988794
+          ],
+          "warm_median_s": 0.04131779999988794,
+          "metadata": {
+            "solver_name": "meent",
+            "backend": "numpy",
+            "fourier_order": [
+              1,
+              1
+            ],
+            "qe_method": "eps_imag_weight"
+          }
+        }
+      ],
+      "observations": [
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        },
+        {
+          "backend_id": 0,
+          "device": "0"
+        }
+      ],
+      "status": "ok"
+    },
+    {
+      "solver": "meent",
+      "requested_device": "cpu",
+      "backend": "torch",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "torch",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [
+        {
+          "backend_id": 2,
+          "device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "backend_id": 2,
+          "device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "backend_id": 2,
+          "device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        }
+      ],
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 78, in worker\n    raise RuntimeError(f\"Invalid solver result: {result.metadata}\")\nRuntimeError: Invalid solver result: {'solver_name': 'meent', 'backend': 'torch', 'fourier_order': [1, 1], 'qe_method': 'eps_imag_weight', 'failed_runs': [{'wavelength': 0.45, 'polarization': 'TE', 'error': \"sum() received an invalid combination of arguments - got (axis=NoneType, out=NoneType, ), but expected one of:\\n * (*, torch.dtype dtype = None)\\n      didn't match because some of the keywords were incorrect: axis, out\\n * (tuple of ints dim, bool keepdim = False, *, torch.dtype dtype = None)\\n * (tuple of names dim, bool keepdim = False, *, torch.dtype dtype = None)\\n\"}, {'wavelength': 0.55, 'polarization': 'TE', 'error': \"sum() received an invalid combination of arguments - got (axis=NoneType, out=NoneType, ), but expected one of:\\n * (*, torch.dtype dtype = None)\\n      didn't match because some of the keywords were incorrect: axis, out\\n * (tuple of ints dim, bool keepdim = False, *, torch.dtype dtype = None)\\n * (tuple of names dim, bool keepdim = False, *, torch.dtype dtype = None)\\n\"}, {'wavelength': 0.65, 'polarization': 'TE', 'error': \"sum() received an invalid combination of arguments - got (axis=NoneType, out=NoneType, ), but expected one of:\\n * (*, torch.dtype dtype = None)\\n      didn't match because some of the keywords were incorrect: axis, out\\n * (tuple of ints dim, bool keepdim = False, *, torch.dtype dtype = None)\\n * (tuple of names dim, bool keepdim = False, *, torch.dtype dtype = None)\\n\"}]}\n"
+    },
+    {
+      "solver": "meent",
+      "requested_device": "cuda",
+      "backend": "torch",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "torch",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [
+        {
+          "backend_id": 2,
+          "device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "backend_id": 2,
+          "device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        },
+        {
+          "backend_id": 2,
+          "device": "cpu"
+        },
+        {
+          "torch_eig_device": "cpu"
+        }
+      ],
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 78, in worker\n    raise RuntimeError(f\"Invalid solver result: {result.metadata}\")\nRuntimeError: Invalid solver result: {'solver_name': 'meent', 'backend': 'torch', 'fourier_order': [1, 1], 'qe_method': 'eps_imag_weight', 'failed_runs': [{'wavelength': 0.45, 'polarization': 'TE', 'error': \"sum() received an invalid combination of arguments - got (axis=NoneType, out=NoneType, ), but expected one of:\\n * (*, torch.dtype dtype = None)\\n      didn't match because some of the keywords were incorrect: axis, out\\n * (tuple of ints dim, bool keepdim = False, *, torch.dtype dtype = None)\\n * (tuple of names dim, bool keepdim = False, *, torch.dtype dtype = None)\\n\"}, {'wavelength': 0.55, 'polarization': 'TE', 'error': \"sum() received an invalid combination of arguments - got (axis=NoneType, out=NoneType, ), but expected one of:\\n * (*, torch.dtype dtype = None)\\n      didn't match because some of the keywords were incorrect: axis, out\\n * (tuple of ints dim, bool keepdim = False, *, torch.dtype dtype = None)\\n * (tuple of names dim, bool keepdim = False, *, torch.dtype dtype = None)\\n\"}, {'wavelength': 0.65, 'polarization': 'TE', 'error': \"sum() received an invalid combination of arguments - got (axis=NoneType, out=NoneType, ), but expected one of:\\n * (*, torch.dtype dtype = None)\\n      didn't match because some of the keywords were incorrect: axis, out\\n * (tuple of ints dim, bool keepdim = False, *, torch.dtype dtype = None)\\n * (tuple of names dim, bool keepdim = False, *, torch.dtype dtype = None)\\n\"}]}\n"
+    },
+    {
+      "solver": "meent",
+      "requested_device": "cpu",
+      "backend": "jax",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "jax",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [],
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 78, in worker\n    raise RuntimeError(f\"Invalid solver result: {result.metadata}\")\nRuntimeError: Invalid solver result: {'solver_name': 'meent', 'backend': 'jax', 'fourier_order': [1, 1], 'qe_method': 'eps_imag_weight', 'failed_runs': [{'wavelength': 0.45, 'polarization': 'TE', 'error': \"No module named 'optax'\"}, {'wavelength': 0.55, 'polarization': 'TE', 'error': \"No module named 'optax'\"}, {'wavelength': 0.65, 'polarization': 'TE', 'error': \"No module named 'optax'\"}]}\n",
+      "jax_devices": [
+        "cpu:0"
+      ],
+      "jax_array_device": "cpu:0"
+    },
+    {
+      "solver": "meent",
+      "requested_device": "cuda",
+      "backend": "jax",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "jax",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [],
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 78, in worker\n    raise RuntimeError(f\"Invalid solver result: {result.metadata}\")\nRuntimeError: Invalid solver result: {'solver_name': 'meent', 'backend': 'jax', 'fourier_order': [1, 1], 'qe_method': 'eps_imag_weight', 'failed_runs': [{'wavelength': 0.45, 'polarization': 'TE', 'error': \"No module named 'optax'\"}, {'wavelength': 0.55, 'polarization': 'TE', 'error': \"No module named 'optax'\"}, {'wavelength': 0.65, 'polarization': 'TE', 'error': \"No module named 'optax'\"}]}\n",
+      "jax_devices": [
+        "cpu:0"
+      ],
+      "jax_array_device": "cpu:0"
+    },
+    {
+      "solver": "fmmax",
+      "requested_device": "cpu",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [
+        {
+          "k": 0.0,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.11520737327188942,
+              0.884792626728111,
+              0.0
+            ],
+            [
+              0.14536844801582047,
+              0.8546315519841795,
+              0.0
+            ],
+            [
+              0.14609371562778634,
+              0.8539062843722139,
+              0.0
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.11520737327188943,
+              0.8847926267281103,
+              2.220446049250313e-16
+            ],
+            [
+              0.1453684480158206,
+              0.8546315519841796,
+              0.0
+            ],
+            [
+              0.14609371562778625,
+              0.8539062843722135,
+              2.220446049250313e-16
+            ]
+          ],
+          "max_abs_error_vs_tmm": 6.661338147750939e-16,
+          "cold_s": 8.351928500000213,
+          "repeat_s": [
+            2.9389757000008103,
+            3.2378160000007483,
+            2.9107196999993903
+          ],
+          "warm_median_s": 2.9389757000008103,
+          "metadata": {
+            "solver_name": "fmmax",
+            "fmm_formulation": "jones",
+            "fourier_order": [
+              1,
+              1
+            ],
+            "num_terms": 9,
+            "dtype": "complex128",
+            "qe_method": "eps_imag_weight"
+          }
+        },
+        {
+          "k": 0.05,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.10333591413677311,
+              0.7812356224667826,
+              0.1154284633964443
+            ],
+            [
+              0.1328376030153316,
+              0.7712081363406947,
+              0.09595426064397372
+            ],
+            [
+              0.1348295109974851,
+              0.7789719291564624,
+              0.08619855984605251
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.103335914136773,
+              0.781235622466782,
+              0.11542846339644497
+            ],
+            [
+              0.1328376030153317,
+              0.771208136340695,
+              0.09595426064397328
+            ],
+            [
+              0.13482951099748505,
+              0.7789719291564626,
+              0.08619855984605229
+            ]
+          ],
+          "max_abs_error_vs_tmm": 6.661338147750939e-16,
+          "cold_s": 2.939224199999444,
+          "repeat_s": [
+            2.9216025000005175,
+            3.030187800000931,
+            3.0358281999997416
+          ],
+          "warm_median_s": 3.030187800000931,
+          "metadata": {
+            "solver_name": "fmmax",
+            "fmm_formulation": "jones",
+            "fourier_order": [
+              1,
+              1
+            ],
+            "num_terms": 9,
+            "dtype": "complex128",
+            "qe_method": "eps_imag_weight"
+          }
+        }
+      ],
+      "observations": [],
+      "status": "ok",
+      "jax_devices": [
+        "cpu:0"
+      ],
+      "jax_array_device": "cpu:0"
+    },
+    {
+      "solver": "fmmax",
+      "requested_device": "cuda",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [
+        {
+          "k": 0.0,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.11520737327188942,
+              0.884792626728111,
+              0.0
+            ],
+            [
+              0.14536844801582047,
+              0.8546315519841795,
+              0.0
+            ],
+            [
+              0.14609371562778634,
+              0.8539062843722139,
+              0.0
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.11520737327188943,
+              0.8847926267281103,
+              2.220446049250313e-16
+            ],
+            [
+              0.1453684480158206,
+              0.8546315519841796,
+              0.0
+            ],
+            [
+              0.14609371562778625,
+              0.8539062843722135,
+              2.220446049250313e-16
+            ]
+          ],
+          "max_abs_error_vs_tmm": 6.661338147750939e-16,
+          "cold_s": 8.367899299999408,
+          "repeat_s": [
+            2.9066980999996304,
+            2.9081292999999278,
+            3.0431238999990455
+          ],
+          "warm_median_s": 2.9081292999999278,
+          "metadata": {
+            "solver_name": "fmmax",
+            "fmm_formulation": "jones",
+            "fourier_order": [
+              1,
+              1
+            ],
+            "num_terms": 9,
+            "dtype": "complex128",
+            "qe_method": "eps_imag_weight"
+          }
+        },
+        {
+          "k": 0.05,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.10333591413677311,
+              0.7812356224667826,
+              0.1154284633964443
+            ],
+            [
+              0.1328376030153316,
+              0.7712081363406947,
+              0.09595426064397372
+            ],
+            [
+              0.1348295109974851,
+              0.7789719291564624,
+              0.08619855984605251
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.103335914136773,
+              0.781235622466782,
+              0.11542846339644497
+            ],
+            [
+              0.1328376030153317,
+              0.771208136340695,
+              0.09595426064397328
+            ],
+            [
+              0.13482951099748505,
+              0.7789719291564626,
+              0.08619855984605229
+            ]
+          ],
+          "max_abs_error_vs_tmm": 6.661338147750939e-16,
+          "cold_s": 3.1822881999996753,
+          "repeat_s": [
+            2.9668409999994765,
+            2.996578899999804,
+            2.9368427000008523
+          ],
+          "warm_median_s": 2.9668409999994765,
+          "metadata": {
+            "solver_name": "fmmax",
+            "fmm_formulation": "jones",
+            "fourier_order": [
+              1,
+              1
+            ],
+            "num_terms": 9,
+            "dtype": "complex128",
+            "qe_method": "eps_imag_weight"
+          }
+        }
+      ],
+      "observations": [],
+      "status": "ok",
+      "jax_devices": [
+        "cpu:0"
+      ],
+      "jax_array_device": "cpu:0"
+    },
+    {
+      "solver": "fdtd_flaport",
+      "requested_device": "cpu",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [
+        {
+          "k": 0.0,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.0,
+              0.7310023313052056,
+              0.26899766869479436
+            ],
+            [
+              0.0,
+              0.48728139609926857,
+              0.5127186039007314
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.11520737327188943,
+              0.8847926267281103,
+              2.220446049250313e-16
+            ],
+            [
+              0.1453684480158206,
+              0.8546315519841796,
+              0.0
+            ],
+            [
+              0.14609371562778625,
+              0.8539062843722135,
+              2.220446049250313e-16
+            ]
+          ],
+          "max_abs_error_vs_tmm": 0.5127186039007314,
+          "cold_s": 8.484012800001437,
+          "repeat_s": [
+            7.869229500000074,
+            7.514693199998874,
+            7.929184100001294
+          ],
+          "warm_median_s": 7.869229500000074,
+          "metadata": {
+            "solver_name": "fdtd_flaport",
+            "grid_spacing": 0.025,
+            "qe_method": "eps_imag_weight",
+            "device": "cpu"
+          }
+        },
+        {
+          "k": 0.05,
+          "wavelength_um": [
+            0.45,
+            0.55,
+            0.65
+          ],
+          "RTA": [
+            [
+              0.0,
+              0.66490496675175,
+              0.33509503324824996
+            ],
+            [
+              0.0,
+              0.44338338606245736,
+              0.5566166139375426
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ]
+          ],
+          "TMM_RTA": [
+            [
+              0.103335914136773,
+              0.781235622466782,
+              0.11542846339644497
+            ],
+            [
+              0.1328376030153317,
+              0.771208136340695,
+              0.09595426064397328
+            ],
+            [
+              0.13482951099748505,
+              0.7789719291564626,
+              0.08619855984605229
+            ]
+          ],
+          "max_abs_error_vs_tmm": 0.4606623532935693,
+          "cold_s": 8.786569500000041,
+          "repeat_s": [
+            7.825382299999546,
+            8.387168100000054,
+            8.423233800000162
+          ],
+          "warm_median_s": 8.387168100000054,
+          "metadata": {
+            "solver_name": "fdtd_flaport",
+            "grid_spacing": 0.025,
+            "qe_method": "eps_imag_weight",
+            "device": "cpu"
+          }
+        }
+      ],
+      "observations": [
+        {
+          "fdtd_field_device": "cpu"
+        },
+        {
+          "fdtd_field_device": "cpu"
+        }
+      ],
+      "air_buffer_um_per_side": 0.4,
+      "status": "ok"
+    },
+    {
+      "solver": "fdtd_flaport",
+      "requested_device": "cuda",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [],
+      "air_buffer_um_per_side": 0.4,
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 106, in worker\n    result = solver.run()\n             ^^^^^^^^^^^^\n  File \"D:\\git\\geniuskey\\compass\\compass\\solvers\\fdtd\\flaport_solver.py\", line 69, in run\n    fdtd.set_backend(\"torch.cuda\")\n  File \"D:\\git\\geniuskey\\compass\\.venv\\Lib\\site-packages\\fdtd\\backend.py\", line 394, in set_backend\n    raise RuntimeError(\nRuntimeError: Torch cuda backend is not available.\nDo you have a GPU on your computer?\nIs PyTorch with cuda support installed?\n"
+    },
+    {
+      "solver": "fdtdz",
+      "requested_device": "cpu",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [],
+      "air_buffer_um_per_side": 0.4,
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 106, in worker\n    result = solver.run()\n             ^^^^^^^^^^^^\n  File \"D:\\git\\geniuskey\\compass\\compass\\solvers\\fdtd\\fdtdz_solver.py\", line 154, in run\n    raise ImportError(\"fdtdz is required. Install with: pip install fdtdz\")\nImportError: fdtdz is required. Install with: pip install fdtdz\n",
+      "jax_devices": [
+        "cpu:0"
+      ],
+      "jax_array_device": "cpu:0"
+    },
+    {
+      "solver": "fdtdz",
+      "requested_device": "cuda",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [],
+      "air_buffer_um_per_side": 0.4,
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 106, in worker\n    result = solver.run()\n             ^^^^^^^^^^^^\n  File \"D:\\git\\geniuskey\\compass\\compass\\solvers\\fdtd\\fdtdz_solver.py\", line 154, in run\n    raise ImportError(\"fdtdz is required. Install with: pip install fdtdz\")\nImportError: fdtdz is required. Install with: pip install fdtdz\n",
+      "jax_device_error": "Unknown backend: 'gpu' requested, but no platforms that are instances of gpu are present. Platforms present are: cpu"
+    },
+    {
+      "solver": "fdtdx",
+      "requested_device": "cpu",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [],
+      "air_buffer_um_per_side": 0.4,
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 106, in worker\n    result = solver.run()\n             ^^^^^^^^^^^^\n  File \"D:\\git\\geniuskey\\compass\\compass\\solvers\\fdtd\\fdtdx_solver.py\", line 169, in run\n    raise ImportError(\"fdtdx is required. Install with: pip install fdtdx\")\nImportError: fdtdx is required. Install with: pip install fdtdx\n",
+      "jax_devices": [
+        "cpu:0"
+      ],
+      "jax_array_device": "cpu:0"
+    },
+    {
+      "solver": "fdtdx",
+      "requested_device": "cuda",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [],
+      "air_buffer_um_per_side": 0.4,
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 106, in worker\n    result = solver.run()\n             ^^^^^^^^^^^^\n  File \"D:\\git\\geniuskey\\compass\\compass\\solvers\\fdtd\\fdtdx_solver.py\", line 169, in run\n    raise ImportError(\"fdtdx is required. Install with: pip install fdtdx\")\nImportError: fdtdx is required. Install with: pip install fdtdx\n",
+      "jax_device_error": "Unknown backend: 'gpu' requested, but no platforms that are instances of gpu are present. Platforms present are: cpu"
+    },
+    {
+      "solver": "meep",
+      "requested_device": "cpu",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [],
+      "air_buffer_um_per_side": 0.4,
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 106, in worker\n    result = solver.run()\n             ^^^^^^^^^^^^\n  File \"D:\\git\\geniuskey\\compass\\compass\\solvers\\fdtd\\meep_solver.py\", line 127, in run\n    raise ImportError(\nImportError: MIT photonics Meep Python API is required. Install with conda/mamba from conda-forge as pymeep; the PyPI package named 'meep' is a different task runner.\n"
+    },
+    {
+      "solver": "meep",
+      "requested_device": "cuda",
+      "backend": "default",
+      "params": {
+        "fourier_order": [
+          1,
+          1
+        ],
+        "nG": 10,
+        "dtype": "complex128",
+        "backend": "default",
+        "grid_spacing": 0.025,
+        "runtime": 20,
+        "pml_layers": 12,
+        "resolution": 40,
+        "runtime_periods": 50
+      },
+      "cases": [],
+      "observations": [],
+      "air_buffer_um_per_side": 0.4,
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"D:\\git\\geniuskey\\compass\\scripts\\audit_solver_execution.py\", line 106, in worker\n    result = solver.run()\n             ^^^^^^^^^^^^\n  File \"D:\\git\\geniuskey\\compass\\compass\\solvers\\fdtd\\meep_solver.py\", line 127, in run\n    raise ImportError(\nImportError: MIT photonics Meep Python API is required. Install with conda/mamba from conda-forge as pymeep; the PyPI package named 'meep' is a different task runner.\n"
+    }
+  ]
+}

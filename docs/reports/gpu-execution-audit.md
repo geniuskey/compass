@@ -12,7 +12,7 @@
 - `fdtdz`, `fdtdx`, MIT Meep 미설치. Meep 실행 결과가 저장소에 있는지도 검색했으나 실제 Meep 수치 데이터는 찾지 못했다.
 - CUDA PyTorch 설치를 위한 인덱스 연결은 네트워크 터널 연결 거부로 실패했다. WSL 배포판 조회는 `E_ACCESSDENIED`, Docker Linux 엔진은 실행되지 않은 상태였다. 기존 환경의 패키지는 변경하지 않았다.
 - 재현: `.venv/Scripts/python.exe scripts/audit_solver_execution.py`.
-- 원시 결과: [metrics.json](../../outputs/gpu_solver_audit/metrics.json). 각 요청별 JSON과 오류 로그도 같은 디렉터리에 있다. `outputs`는 Git 추적 대상에서 제외되어 있다.
+- 원시 결과: [metrics.json](../public/reports/gpu-execution-audit/metrics.json). 그림·종합 지표·추가 수렴 자료는 공개 경로에 보존했다. 개별 요청 JSON과 오류 로그는 로컬 `outputs/gpu_solver_audit/`에 있다.
 
 ## 실제 장치와 실행 가능 여부
 
@@ -76,9 +76,9 @@ fdtdz와 fdtdx의 실행 가능성은 이번에 라이브러리를 설치해 검
 | 12.5 | 20 | 0.000000000 | 0.475135597 | 0.524864403 |
 | 12.5 | 60 | 0.000000000 | 0.476146911 | 0.523853089 |
 
-격자를 절반으로 줄이고 시간을 3배로 늘려도 무손실 흡수가 약 0.52로 남는다. 이 범위에서는 단순히 시간을 늘리는 것으로 정확성이 회복되지 않았다. 이 추가 확인은 각 조건 1회 실행이며 성능 중앙값 표에는 포함하지 않았다. 원시 자료: [flaport_convergence.json](../../outputs/gpu_solver_audit/flaport_convergence.json).
+격자를 절반으로 줄이고 시간을 3배로 늘려도 무손실 흡수가 약 0.52로 남는다. 이 범위에서는 단순히 시간을 늘리는 것으로 정확성이 회복되지 않았다. 이 추가 확인은 각 조건 1회 실행이며 성능 중앙값 표에는 포함하지 않았다. 원시 자료: [flaport_convergence.json](../public/reports/gpu-execution-audit/flaport_convergence.json).
 
-![CPU timing and accuracy](../../outputs/gpu_solver_audit/comparison.png)
+![CPU timing and accuracy](../public/reports/gpu-execution-audit/comparison.png)
 
 ## Meep 결과를 기준값으로 쓰기 전에 필요한 수정
 

@@ -1,0 +1,62 @@
+[
+  {
+    "grid_spacing_um": 0.025,
+    "runtime_fs": 60,
+    "elapsed_s": 8.341395100000227,
+    "R": [
+      0.0
+    ],
+    "T": [
+      0.5073166997842287
+    ],
+    "A": [
+      0.49268330021577134
+    ],
+    "metadata": {
+      "solver_name": "fdtd_flaport",
+      "grid_spacing": 0.025,
+      "qe_method": "eps_imag_weight",
+      "device": "cpu"
+    }
+  },
+  {
+    "grid_spacing_um": 0.0125,
+    "runtime_fs": 20,
+    "elapsed_s": 23.68123099999866,
+    "R": [
+      0.0
+    ],
+    "T": [
+      0.47513559727854465
+    ],
+    "A": [
+      0.5248644027214553
+    ],
+    "metadata": {
+      "solver_name": "fdtd_flaport",
+      "grid_spacing": 0.0125,
+      "qe_method": "eps_imag_weight",
+      "device": "cpu"
+    }
+  },
+  {
+    "grid_spacing_um": 0.0125,
+    "runtime_fs": 60,
+    "elapsed_s": 79.30058009999993,
+    "R": [
+      0.0
+    ],
+    "T": [
+      0.47614691125792746
+    ],
+    "A": [
+      0.5238530887420725
+    ],
+    "metadata": {
+      "solver_name": "fdtd_flaport",
+      "grid_spacing": 0.0125,
+      "qe_method": "eps_imag_weight",
+      "device": "cpu"
+    }
+  }
+]

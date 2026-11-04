@@ -316,7 +316,7 @@ Meep 재현: `python scripts/finish_wsl_benchmarks.py`가 conda 환경의 mpirun
 - [동일 조건 반복 측정 manifest](../../public/reports/patterned-cpu-gpu-meep-wsl/timing_jobs.json)
 - [Linux pip 패키지 고정 목록](../../public/reports/patterned-cpu-gpu-meep-wsl/linux_requirements_freeze.txt)
 - [Meep conda explicit 목록](../../public/reports/patterned-cpu-gpu-meep-wsl/meep_conda_explicit.txt), [fdtdz conda explicit 목록](../../public/reports/patterned-cpu-gpu-meep-wsl/fdtdz_conda_explicit.txt)
-- [측정 스크립트](../../../scripts/benchmark_wsl_solvers.py), [native Meep](../../../scripts/benchmark_meep_reference.py)
+- [측정 스크립트](https://github.com/geniuskey/compass/blob/main/scripts/benchmark_wsl_solvers.py), [native Meep](https://github.com/geniuskey/compass/blob/main/scripts/benchmark_meep_reference.py)
 - [이전 Windows 검토](../../reports/gpu-execution-audit.md) (과거 환경 기록)
 
 ![Measured spectra](../../public/reports/patterned-cpu-gpu-meep-wsl/spectra.png)
