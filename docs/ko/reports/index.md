@@ -8,6 +8,7 @@ Python benchmark 산출물과 geometry 감사 스크립트에서 생성한 publi
 
 ## 리포트 목록
 
+- [Meep 기준 CPU/GPU 비교](./patterned-cpu-gpu-meep-comparison.md) — R/T/A·속도 실측 완료, Meep 기준값 수렴은 미확정.
 - [TMM vs RCWA 평면 스택 검증](./tmm-rcwa-planar-validation.md) (생성일 2026-06-11)
 - [RCWA Backend Parity](./rcwa-backend-parity.md) (생성일 2026-06-11)
 - [CRA Cone Illumination Sweep](./cra-cone-illumination-sweep.md) (생성일 2026-06-11)

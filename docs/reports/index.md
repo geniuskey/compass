@@ -8,6 +8,7 @@ Publication-style reports generated from Python benchmark artifacts and geometry
 
 ## Available reports
 
+- [Meep CPU/GPU Comparison](./patterned-cpu-gpu-meep-comparison.md) — measured R/T/A and timing; Meep reference convergence remains unconfirmed.
 - [TMM vs RCWA Planar Stack Validation](./tmm-rcwa-planar-validation.md) (generated 2026-06-11)
 - [RCWA Backend Parity](./rcwa-backend-parity.md) (generated 2026-06-11)
 - [CRA Cone Illumination Sweep](./cra-cone-illumination-sweep.md) (generated 2026-06-11)

@@ -133,6 +133,7 @@ const reportsSidebar = [
   ]},
   { text: 'Solver Validation', collapsed: false, items: [
     { text: 'TMM/RCWA Planar Validation', link: '/reports/tmm-rcwa-planar-validation' },
+    { text: 'Meep CPU/GPU Comparison', link: '/reports/patterned-cpu-gpu-meep-comparison' },
     { text: 'RCWA Backend Parity', link: '/reports/rcwa-backend-parity' },
     { text: 'RCWA/FDTD Convergence', link: '/reports/convergence-analysis' },
   ]},
@@ -301,6 +302,7 @@ const reportsSidebarKo = [
   ]},
   { text: '솔버 검증', collapsed: false, items: [
     { text: 'TMM/RCWA 평면 검증', link: '/ko/reports/tmm-rcwa-planar-validation' },
+    { text: 'Meep CPU/GPU 비교', link: '/ko/reports/patterned-cpu-gpu-meep-comparison' },
     { text: 'RCWA Backend Parity', link: '/ko/reports/rcwa-backend-parity' },
     { text: 'RCWA/FDTD 수렴', link: '/ko/reports/convergence-analysis' },
   ]},

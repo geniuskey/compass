@@ -397,11 +397,40 @@ def write_report():
         "pml_delta": pml_delta,
         "pml_time_delta": pml_time_delta,
     }
+    def gate_label(value, limit):
+        if value is None:
+            return "미측정"
+        return f"{value:.6g} / {'통과' if value <= limit else '기준 미충족'}"
+
+    time_pair = (
+        max(time_delta, coarse_time_delta)
+        if time_delta is not None and coarse_time_delta is not None
+        else None
+    )
     lines = [
         "# WSL 실제 CPU/GPU 및 Meep 기준 전자기 솔버 비교",
         "",
         f"Meep 기준값 수렴 판정: **{'통과' if accepted else '미확정 / 수렴 기준을 아직 충족하지 않음'}**. "
         "이 문서는 `outputs/patterned_cpu_gpu/wsl/`의 새 실행만 사용한다. 이전 Windows 결과는 별도 보존하며 성능 표에 섞지 않는다.",
+        "",
+        "## 비교 실험의 결론",
+        "",
+        "실제 Meep 계산과 CPU/GPU 솔버 비교는 수행했다. 아래 판정은 계산 실행 성공과 기준값의 수렴을 구분한다. "
+        "Meep 기준값이 승인되기 전까지 솔버 간 차이는 잠정 비교이며 정확도 순위를 확정할 수 없다.",
+        "",
+        "| 검증 항목 | 실측 / 판정 | 통과 기준 |",
+        "|---|---|---|",
+        f"| 패턴 시간 수렴 (선택·이전 격자) | {gate_label(time_pair, 0.0005)} | 최대 ΔRTA ≤ 0.0005 |",
+        f"| 패턴 공간 격자 수렴 | {gate_label(grid_delta, 0.005)} | 최대 ΔRTA ≤ 0.005 |",
+        f"| PML 독립 검증 | {gate_label(pml_delta, 0.001)}; {'승인' if pml_accepted else '미승인'} | 최대 ΔRTA ≤ 0.001 및 양쪽 시간 수렴 |",
+        f"| Meep 패턴 기준값 최종 승인 | {'통과' if accepted else '미확정'} | 위 조건 모두 통과 |",
+        "",
+        "ΔRTA는 세 파장의 R/T/A 중 최대 절대 차이다. 예를 들어 0.01825는 약 1.83%p이며 상대 오차 1.83%를 뜻하지 않는다. "
+        "박막의 TMM 검증은 아래에 별도로 제시하며 패턴의 격자·PML 수렴을 대신하지 않는다. 이번 비교에는 photodiode QE 검증이 포함되지 않는다.",
+        "",
+        "[Meep 격자·시간 검증](#meep-convergence) · "
+        "[CPU/GPU 성능 비교](#cpu-gpu-comparison) · "
+        "[파장별 R/T/A](#measured-rta)",
         "",
         "## 환경과 측정 범위",
         "",
@@ -471,7 +500,7 @@ def write_report():
             )
     lines += [
         "",
-        "## Meep 패턴 격자·시간 수렴",
+        "## Meep 패턴 격자·시간 수렴 {#meep-convergence}",
         "",
         "PML 밖 공기에 소스/면 모니터를 놓고 동일 셀의 빈 공간 계산에서 얻은 DFT 필드를 반사 모니터에서 뺀다. 입사 플럭스는 -z 방향의 음수, 반사 플럭스는 양수다. 전도도는 파장마다 다시 계산한다. 전체 셀 면적의 DFT 플럭스를 적분하므로 회절차수를 빠뜨리지 않는다.",
         "펄스 폭과 air/PML 크기를 바꾼 탐색 계산은 원시 자료에 보존한다. 최종 격자 비교는 동일한 좁은 펄스와 air/PML 설정만 사용하며 PML 폭의 독립 수렴 시험으로 대체하지 않는다. 광펄스 종료 후 시간의 누적 DFT 결과를 저장하며, 격자 판정은 인접 최고 해상도 변화 ≤0.005, 시간 판정은 마지막 두 시간 변화 각각 ≤0.0005이다. PML 판정은 동일한 최고 격자·소스·시간 설정에서 인접 PML 폭 변화 ≤0.001이다. 기본 0.35→0.7 µm가 실패하면 더 넓은 인접 PML 쌍과 선택한 PML의 낮은 해상도를 추가 검증한 뒤 기준을 변경한다. 이전 PML의 결과를 새 설정의 수렴 증거로 대신하지 않는다. 이 변화 기준은 엄밀한 오차 상계가 아니다.",
@@ -535,7 +564,7 @@ def write_report():
         lines.append("| 미측정 / 진행 중 | — |")
     lines += [
         "",
-        "## CPU/GPU 동일 조건의 성능과 결과 차이",
+        "## CPU/GPU 동일 조건의 성능과 결과 차이 {#cpu-gpu-comparison}",
         "",
         "| 솔버 | N / 격자 | 실제 모드 | CPU cold / warm (s) | GPU cold / warm (s) | 가속률 | CPU↔GPU 최대 ΔRTA | Meep 최대 ΔRTA | GPU allocator peak (MiB) |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
@@ -717,7 +746,7 @@ def write_report():
                 lines.append(f"| {spacing} | {ta}→{tb} | {delta(a['rta'], b['rta']):.6g} |")
     lines += [
         "",
-        "## 실측 R/T/A (최고 측정 차수; 수렴 판정과 별개)",
+        "## 실측 R/T/A (최고 측정 차수; 수렴 판정과 별개) {#measured-rta}",
         "",
         "| 솔버 | N / 격자 | λ (nm) | R | T | A |",
         "|---|---:|---:|---:|---:|---:|",
@@ -1028,6 +1057,11 @@ def write_report():
             f"../public/reports/patterned-cpu-gpu-meep-wsl/{name}",
         )
     REPORT.write_text(body)
+    korean_report = ROOT / "docs/ko/reports" / REPORT.name
+    korean_body = body.replace("../public/reports/", "../../public/reports/")
+    korean_body = korean_body.replace("../../scripts/", "../../../scripts/")
+    korean_body = korean_body.replace("(gpu-execution-audit.md)", "(../../reports/gpu-execution-audit.md)")
+    korean_report.write_text(korean_body)
     print(REPORT)
 
 
