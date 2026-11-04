@@ -16,6 +16,29 @@ from compass.sources.planewave import PlanewaveSource
 
 logger = logging.getLogger(__name__)
 
+#: Relative |Im(q)|/|q| below which a layer eigenmode is treated as propagating.
+_PROPAGATING_REL_TOL = 1e-8
+
+
+def fix_propagation_branch(q: np.ndarray, rel_tol: float = _PROPAGATING_REL_TOL) -> np.ndarray:
+    """Choose the forward branch of layer eigenvalues q = sqrt(eig).
+
+    grcwa picks the branch with ``Im(q) >= 0`` only. For lossless (or nearly
+    lossless) layers the eigensolver returns propagating modes with
+    round-off imaginary parts of either sign (~1e-17), so roughly half of
+    them get flipped to ``Re(q) < 0`` -- a backward wave labelled as
+    forward. The S-matrix then mixes forward/backward amplitudes and R/T
+    can diverge (observed R ~ 1e60 at oblique incidence on Bayer pixels).
+
+    Rule: modes with ``|Im(q)| <= rel_tol * |q|`` are propagating and get
+    ``Re(q) > 0``; all others are evanescent/lossy and get ``Im(q) > 0``.
+    Flipping the sign of q keeps the eigenvector valid (same q**2).
+    """
+    q = np.asarray(q)
+    near_real = np.abs(np.imag(q)) <= rel_tol * np.abs(q)
+    flip = np.where(near_real, np.real(q) < 0, np.imag(q) < 0)
+    return np.where(flip, -q, q)
+
 
 class GrcwaSolver(SolverBase):
     """grcwa RCWA solver adapter.
@@ -139,6 +162,13 @@ class GrcwaSolver(SolverBase):
 
                     # Set permittivity for all grid layers (single concatenated call)
                     obj.GridLayer_geteps(np.concatenate(grid_eps_list))
+                    # Repair grcwa's Im(q)>=0-only branch choice (see
+                    # fix_propagation_branch) before any S-matrix is built.
+                    q_list = getattr(obj, "q_list", None)
+                    if q_list is not None:
+                        obj.q_list = [
+                            None if q is None else fix_propagation_branch(q) for q in q_list
+                        ]
 
                     obj.MakeExcitationPlanewave(
                         **planewave,
@@ -152,8 +182,8 @@ class GrcwaSolver(SolverBase):
                     if R > 1.0 or R < 0.0:
                         logger.warning(
                             f"grcwa: unphysical R={R:.4f} at λ={wavelength:.4f}um, "
-                            f"pol={pol}, nG={nG}. TM polarization S-matrix may be "
-                            f"numerically unstable at this nG. Try adjusting nG ±10."
+                            f"pol={pol}, nG={nG}. Check convergence in nG and "
+                            "epsilon_grid; eigenmode branches are already repaired."
                         )
 
                 except Exception as e:
