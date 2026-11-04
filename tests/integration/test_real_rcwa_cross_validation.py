@@ -48,6 +48,11 @@ def test_torcwa_grcwa_agree_on_bsi_pixel(theta_deg):
     np.testing.assert_allclose(g.reflection, t.reflection, atol=0.01)
     np.testing.assert_allclose(g.transmission, t.transmission, atol=0.01)
     np.testing.assert_allclose(g.absorption, t.absorption, atol=0.01)
+    # Both use field-integrated QE; residual differences come from the
+    # different (circular vs. rectangular) Fourier truncation.
+    assert g.metadata["qe_method"] == t.metadata["qe_method"] == "field_integration"
+    for key in t.qe_per_pixel:
+        np.testing.assert_allclose(g.qe_per_pixel[key], t.qe_per_pixel[key], atol=0.04)
 
 
 @pytest.mark.parametrize("grid", [63, 297])

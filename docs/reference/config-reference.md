@@ -152,8 +152,13 @@ solver-specific. The most important difference:
 - **FDTD solvers** use `grid_spacing` (um) or `resolution` (pixels/um, meep).
 
 Every result records `metadata["qe_method"]` (`field_integration`,
-`eps_imag_weight`, `tmm_1d_analytic`) so cross-solver QE differences can be
-attributed to post-processing methodology rather than solver accuracy.
+`eps_imag_weight`, `eps_imag_weight_fallback`, `tmm_1d_analytic`) so
+cross-solver QE differences can be attributed to post-processing methodology
+rather than solver accuracy. **torcwa** and **grcwa** integrate
+`k0·ε''·|E|²` over each photodiode volume (`field_integration`, shared
+implementation in `compass/solvers/rcwa/fields.py`) and report
+`eps_imag_weight_fallback` only if field reconstruction fails; meent, fmmax and
+fdtd_flaport still use the geometric `eps_imag_weight` approximation.
 
 ### solver.stability: StabilityConfig
 

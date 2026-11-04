@@ -12,6 +12,16 @@ import numpy as np
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
+from compass.solvers.rcwa.fields import (
+    FIELD_N_XY,
+    check_xy_position,
+    column_heights,
+    component_from_field,
+    integrate_photodiode_qe,
+    locate_slice,
+    slice_depth_samples,
+    validate_field_request,
+)
 from compass.sources.planewave import PlanewaveSource
 
 logger = logging.getLogger(__name__)
@@ -40,6 +50,69 @@ def fix_propagation_branch(q: np.ndarray, rel_tol: float = _PROPAGATING_REL_TOL)
     return np.where(flip, -q, q)
 
 
+class _GrcwaFieldSampler:
+    """Fast field evaluation on a solved grcwa object.
+
+    grcwa recomputes the full interior S-matrices on every
+    ``GetAmplitudes`` call and its ``get_ifft`` allocates one full grid per
+    plane wave, which is prohibitive for depth-resolved QE integration.
+    This caches the un-translated mode amplitudes per layer and evaluates
+    the Fourier series directly. grcwa's z axis points down from the top
+    of each layer (like torcwa's), with the incident amplitude |E0| = 1.
+
+    Layer index convention: ``layer_info[i]`` is grcwa layer ``i + 1``
+    (layer 0 is the semi-infinite input medium).
+    """
+
+    def __init__(self, obj):
+        import grcwa.rcwa as rc
+
+        self._rc = rc
+        self.obj = obj
+        self._amps: dict[int, tuple] = {}
+        obj.GetAmplitudes = self._get_amplitudes  # used by Solve_FieldFourier
+
+    def _get_amplitudes(self, which_layer: int, z_offset: float):
+        obj, rc = self.obj, self._rc
+        if which_layer not in self._amps:
+            self._amps[which_layer] = rc.SolveInterior(
+                which_layer, obj.a0, obj.bN, obj.q_list, obj.phi_list,
+                obj.kp_list, obj.thickness_list,
+            )
+        ai, bi = self._amps[which_layer]
+        return rc.TranslateAmplitudes(
+            obj.q_list[which_layer], obj.thickness_list[which_layer], z_offset, ai, bi
+        )
+
+    def fourier(self, slice_index: int, depth: float):
+        """Fourier coefficients ([ex, ey, ez], [hx, hy, hz]) inside a slice."""
+        return self.obj.Solve_FieldFourier(slice_index + 1, depth)
+
+    def e2_on_grid(self, slice_index: int, depth: float, nx: int, ny: int) -> np.ndarray:
+        """|E|^2 on the (nx, ny) lattice grid, indexed [x, y]."""
+        fe, _ = self.fourier(slice_index, depth)
+        G = self.obj.G
+        out = np.zeros((nx, ny))
+        for coeffs in fe:
+            grid = np.zeros((nx, ny), dtype=complex)
+            np.add.at(grid, (G[:, 0] % nx, G[:, 1] % ny), np.asarray(coeffs))
+            out += np.abs(np.fft.ifft2(grid) * (nx * ny)) ** 2
+        return out
+
+    def at_points(self, slice_index: int, depth: float, x: np.ndarray, y: np.ndarray):
+        """Fields at points (x, y) (broadcastable arrays, um), Bloch phase included."""
+        fe, fh = self.fourier(slice_index, depth)
+        kx = np.asarray(self.obj.kx).reshape((-1,) + (1,) * np.ndim(x))
+        ky = np.asarray(self.obj.ky).reshape((-1,) + (1,) * np.ndim(x))
+        phase = np.exp(1j * (kx * x + ky * y))
+
+        def series(c):
+            c = np.asarray(c).reshape((-1,) + (1,) * np.ndim(x))
+            return np.sum(c * phase, axis=0)
+
+        return [series(c) for c in fe], [series(c) for c in fh]
+
+
 class GrcwaSolver(SolverBase):
     """grcwa RCWA solver adapter.
 
@@ -51,6 +124,9 @@ class GrcwaSolver(SolverBase):
         super().__init__(config, device)
         self._source: PlanewaveSource | None = None
         self._last_layer_slices: list | None = None
+        self._last_layer_info: list | None = None
+        self._last_sampler: _GrcwaFieldSampler | None = None
+        self._qe_fallback_used = False
         self._last_wavelength: float | None = None
 
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
@@ -112,6 +188,7 @@ class GrcwaSolver(SolverBase):
         all_qe: dict[str, list[float]] = {}
         all_R, all_T, all_A = [], [], []
         self._failed_runs = []
+        self._qe_fallback_used = False
 
         for _wl_idx, wavelength in enumerate(self._source.wavelengths):
             freq = 1.0 / wavelength  # normalized frequency
@@ -178,6 +255,7 @@ class GrcwaSolver(SolverBase):
                     R = float(np.real(R))
                     T = float(np.real(T))
                     A = 1.0 - R - T
+                    sampler = _GrcwaFieldSampler(obj)
 
                     if R > 1.0 or R < 0.0:
                         logger.warning(
@@ -190,19 +268,23 @@ class GrcwaSolver(SolverBase):
                     logger.error(f"grcwa failed at λ={wavelength:.4f}um: {e}")
                     self._record_failed_run(wavelength, pol, e)
                     R = T = A = float("nan")
+                    sampler = None
 
                 R_pol.append(R)
                 T_pol.append(T)
                 A_pol.append(A)
 
                 self._last_layer_slices = layer_slices
+                self._last_layer_info = list(reversed(layer_slices))
                 self._last_wavelength = wavelength
+                self._last_sampler = sampler
 
-                # Per-pixel QE via eps_imag weighting in PD regions
-                if np.isnan(A):
+                if np.isnan(A) or sampler is None:
                     pixel_qe = self._nan_pixel_qe()
+                elif not self._pixel_stack.photodiodes:
+                    pixel_qe = {}
                 else:
-                    pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
+                    pixel_qe = self._compute_qe_with_fallback(sampler, layer_slices, wavelength, A)
                 for key, val in pixel_qe.items():
                     qe_pol_accum.setdefault(key, []).append(val)
 
@@ -234,10 +316,66 @@ class GrcwaSolver(SolverBase):
             metadata={
                 "solver_name": "grcwa",
                 "nG": nG,
-                "qe_method": "eps_imag_weight",
+                # Field integration vs. the eps''-weight approximation is a
+                # QE methodology difference, not solver accuracy.
+                "qe_method": (
+                    "eps_imag_weight_fallback" if self._qe_fallback_used else "field_integration"
+                ),
                 "device": self.device,
                 **self._failure_metadata(),
             },
+        )
+
+    def _compute_qe_with_fallback(
+        self,
+        sampler: _GrcwaFieldSampler,
+        layer_slices,
+        wavelength: float,
+        total_absorption: float,
+    ) -> dict:
+        """Field-integrated QE, falling back to eps''-weighting on failure."""
+        try:
+            return self._compute_per_pixel_qe_fields(sampler, wavelength, total_absorption)
+        except Exception as e:
+            logger.warning(
+                f"grcwa: field-based QE failed at λ={wavelength:.4f}um ({e}); "
+                "falling back to eps''-weight approximation"
+            )
+            self._qe_fallback_used = True
+            return self._compute_per_pixel_qe(layer_slices, wavelength, total_absorption)
+
+    def _compute_per_pixel_qe_fields(
+        self,
+        sampler: _GrcwaFieldSampler,
+        wavelength: float,
+        total_absorption: float,
+    ) -> dict:
+        """Per-pixel QE by integrating eps'' |E|^2 over photodiode volumes.
+
+        Uses the QE definition shared with torcwa
+        (:func:`compass.solvers.rcwa.fields.integrate_photodiode_qe`).
+        """
+        if self._pixel_stack is None or self._source is None:
+            raise RuntimeError("Call setup_geometry() and setup_source() before run()")
+        if self._last_layer_info is None:
+            raise RuntimeError("no layer data recorded")
+
+        def e2_dz(li: int, s) -> np.ndarray:
+            n0, n1 = s.eps_grid.shape  # [y, x]; grcwa grids are [x, y]
+            depths, dz = slice_depth_samples(s.thickness)
+            acc = np.zeros((n1, n0))
+            for depth in depths:
+                acc += sampler.e2_on_grid(li, float(depth), n1, n0)
+            return acc.T * dz
+
+        return integrate_photodiode_qe(
+            self._pixel_stack,
+            self._last_layer_info,
+            wavelength,
+            self._source.theta_rad,
+            e2_dz,
+            total_absorption,
+            "grcwa",
         )
 
     def _compute_per_pixel_qe(
@@ -318,9 +456,77 @@ class GrcwaSolver(SolverBase):
         plane: str = "xz",
         position: float = 0.0,
     ) -> np.ndarray:
-        """Extract approximate 2D field from permittivity profile."""
-        if self._last_layer_slices is None:
+        """Extract a 2D solved-field slice from the last simulation.
+
+        Same conventions as the torcwa adapter: x, y in ``[0, lx) x [0, ly)``,
+        z up from the stack bottom, |E0| = 1, and ``Sz`` the Poynting
+        z-component (negative for downward flow; incident flux
+        ``cos(theta)``). Fields belong to the last polarization run.
+
+        Args:
+            component: "Ex", "Ey", "Ez" (each |E_c|^2), "|E|2", or "Sz".
+            plane: "xy" (position = z), "xz" (position = y) or
+                "yz" (position = x), all in um.
+            position: Position along the normal axis in um.
+
+        Returns:
+            2D array: ``(nx, ny)`` for "xy", ``(nx, nz)`` for "xz",
+            ``(ny, nz)`` for "yz", with z increasing upward.
+
+        Raises:
+            ValueError: Unknown component/plane, or an "xy" position outside
+                the simulated stack.
+        """
+        validate_field_request(component, plane)
+        if self._last_sampler is None or self._last_layer_info is None:
             logger.warning("grcwa: no simulation data, returning zeros")
+            return np.zeros((FIELD_N_XY, FIELD_N_XY))
+        if plane == "xy":
+            check_xy_position(self._last_layer_info, position)
+        try:
+            return self._solved_field(component, plane, position)
+        except Exception as e:
+            logger.warning(
+                f"grcwa: field reconstruction failed ({e}); returning a "
+                "permittivity-based approximation, not a solved field"
+            )
+        return self._approximate_field(component, plane, position)
+
+    def _solved_field(self, component: str, plane: str, position: float) -> np.ndarray:
+        if self._pixel_stack is None or self._last_sampler is None:
+            raise RuntimeError("no simulation data")
+        if self._last_layer_info is None:
+            raise RuntimeError("no layer data recorded")
+        sampler = self._last_sampler
+        layer_info = self._last_layer_info
+        lx, ly = self._pixel_stack.domain_size
+        u = np.arange(FIELD_N_XY) / FIELD_N_XY
+
+        if plane == "xy":
+            li, depth = locate_slice(layer_info, position)
+            X, Y = np.meshgrid(u * lx, u * ly, indexing="ij")
+            E, H = sampler.at_points(li, depth, X, Y)
+            return component_from_field(E, H, component)
+
+        heights = column_heights(layer_info)
+        line = u * (lx if plane == "xz" else ly)
+        x = line if plane == "xz" else np.full_like(line, position)
+        y = np.full_like(line, position) if plane == "xz" else line
+        out = np.zeros((FIELD_N_XY, len(heights)))
+        for zi, z in enumerate(heights):
+            li, depth = locate_slice(layer_info, float(z))
+            E, H = sampler.at_points(li, depth, x, y)
+            out[:, zi] = component_from_field(E, H, component)
+        return out
+
+    def _approximate_field(
+        self,
+        component: str,
+        plane: str,
+        position: float,
+    ) -> np.ndarray:
+        """Approximate 2D field map from the permittivity profile (fallback)."""
+        if self._last_layer_slices is None:
             return np.zeros((64, 64))
 
         if self._pixel_stack is None:

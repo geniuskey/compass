@@ -152,8 +152,12 @@ solver:
 - **FDTD 솔버**: `grid_spacing`(um) 또는 `resolution`(pixels/um, meep) 사용.
 
 모든 결과에는 `metadata["qe_method"]`(`field_integration`, `eps_imag_weight`,
-`tmm_1d_analytic`)가 기록되므로, 솔버 간 QE 차이가 솔버 정확도 차이인지
-후처리 방법 차이인지 구분할 수 있습니다.
+`eps_imag_weight_fallback`, `tmm_1d_analytic`)가 기록되므로, 솔버 간 QE 차이가
+솔버 정확도 차이인지 후처리 방법 차이인지 구분할 수 있습니다. **torcwa**와
+**grcwa**는 포토다이오드 체적에서 `k0·ε''·|E|²`를 적분하며(`field_integration`,
+공통 구현 `compass/solvers/rcwa/fields.py`), 필드 재구성이 실패한 경우에만
+`eps_imag_weight_fallback`을 기록합니다. meent, fmmax, fdtd_flaport는 아직
+기하학적 `eps_imag_weight` 근사를 사용합니다.
 
 ### solver.stability: StabilityConfig
 

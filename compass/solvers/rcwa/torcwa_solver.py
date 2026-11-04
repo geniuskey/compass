@@ -13,6 +13,20 @@ import numpy as np
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
+from compass.solvers.rcwa.fields import (
+    FIELD_COMPONENTS,
+    FIELD_N_XY,
+    FIELD_N_Z,
+    FIELD_PLANES,
+    check_xy_position,
+    column_heights,
+    component_from_field,
+    integrate_photodiode_qe,
+    locate_slice,
+    slice_depth_samples,
+    stack_z_range,
+    validate_field_request,
+)
 from compass.sources.planewave import PlanewaveSource
 
 logger = logging.getLogger(__name__)
@@ -319,19 +333,10 @@ class TorcwaSolver(SolverBase):
         wavelength: float,
         total_absorption: float,
     ) -> dict:
-        """Per-pixel QE from field reconstruction.
+        """Per-pixel QE from torcwa field reconstruction.
 
-        The absorbed power density is p(r) = (omega eps0 / 2) eps''(r) |E(r)|^2.
-        Normalized by the incident power (n_in cos(theta) A_cell / 2) sqrt(eps0/mu0)
-        |E0|^2 this gives, in COMPASS units (lengths in um, |E0| = 1):
-
-            QE_pd = k0 * sum_PD eps'' |E|^2 dV / (n_in cos(theta) A_cell)
-
-        QE counts absorption in silicon slices only (parasitic absorption in
-        color filters / metal grid is excluded), integrated over the photodiode
-        xy footprint and the full silicon depth. Per-pixel QE follows the
-        standard definition: absorbed power normalized by the power incident
-        on THAT pixel's area (pitch^2), not on the whole unit cell.
+        See :func:`compass.solvers.rcwa.fields.integrate_photodiode_qe` for
+        the QE definition shared with the other RCWA adapters.
 
         Args:
             sim: torcwa rcwa object (solved, with a planewave source set).
@@ -349,75 +354,28 @@ class TorcwaSolver(SolverBase):
             raise RuntimeError("source is not set; call setup_source() first")
 
         lx, ly = self._pixel_stack.domain_size
-        pitch = self._pixel_stack.pitch
-        k0 = 2.0 * np.pi / wavelength
-        cos_theta = float(np.cos(self._source.theta_rad))
-        norm = k0 / (cos_theta * lx * ly)  # n_in = 1 (air)
 
-        # Integrate eps'' |E|^2 per absorbing slice; keep silicon separately.
-        si_density = None  # accumulated eps''|E|^2 dz on the xy grid
-        total_field_abs = 0.0
-        grid_shape = None
-
-        for li, s in enumerate(layer_info):
-            eps_imag = np.imag(s.eps_grid)
-            if float(eps_imag.max()) < 1e-9:
-                continue
+        def e2_dz(li: int, s) -> np.ndarray:
+            # Sample at the torcwa lattice positions of the eps grid samples.
             n0, n1 = s.eps_grid.shape
-            if grid_shape is None:
-                grid_shape = (n0, n1)
-            # Sample fields at the torcwa positions of the eps grid samples
-            # (eps_grid[a, b] sits at (a*lx/n0, b*ly/n1) in torcwa's lattice).
             x_axis = torch.arange(n1, device=self.device, dtype=torch.float64) * (lx / n1)
             y_axis = torch.arange(n0, device=self.device, dtype=torch.float64) * (ly / n0)
-            nz = int(np.clip(round(s.thickness / 0.05), 8, 64))
-            dz = s.thickness / nz
+            depths, dz = slice_depth_samples(s.thickness)
             e2_sum = torch.zeros((n0, n1), device=self.device, dtype=torch.float32)
-            for kz in range(nz):
-                z_prop = (kz + 0.5) * dz
-                E, _H = sim.field_xy(li, x_axis, y_axis, z_prop=z_prop)
+            for z_prop in depths:
+                E, _H = sim.field_xy(li, x_axis, y_axis, z_prop=float(z_prop))
                 e2_sum += sum(torch.abs(c) ** 2 for c in E).T
-            density = e2_sum.cpu().numpy() * eps_imag * dz  # eps''|E|^2 integrated in z
-            cell_area = (lx / n0) * (ly / n1)
-            total_field_abs += norm * float(density.sum()) * cell_area
-            if s.name.startswith("silicon"):
-                si_density = density if si_density is None else si_density + density
+            return np.asarray(e2_sum.cpu().numpy() * dz)
 
-        if si_density is None or grid_shape is None:
-            raise RuntimeError("no absorbing silicon slice found for QE integration")
-
-        if total_absorption > 0.02 and abs(total_field_abs - total_absorption) > 0.1:
-            logger.warning(
-                f"torcwa: field-integrated absorption {total_field_abs:.3f} deviates "
-                f"from 1-R-T = {total_absorption:.3f} at λ={wavelength:.4f}um "
-                "(increase fourier_order / grid resolution)"
-            )
-
-        # Photodiode xy footprints. PhotodiodeSpec.position is the offset from
-        # the pixel center; convert to absolute domain coordinates per pixel.
-        n0, n1 = grid_shape
-        cell_area = (lx / n0) * (ly / n1)
-        n_rows, n_cols = self._pixel_stack.unit_cell
-        pixel_area = (lx / n_cols) * (ly / n_rows)
-        norm_pixel = k0 / (cos_theta * pixel_area)
-        qe_per_pixel: dict[str, float] = {}
-        for pd in self._pixel_stack.photodiodes:
-            r, c = pd.pixel_index
-            x_c = (c + 0.5) * pitch + pd.position[0]
-            y_c = (r + 0.5) * pitch + pd.position[1]
-            # eps grids are indexed [row=y, col=x] on cell centers
-            iy0 = max(0, int(np.floor((y_c - pd.size[1] / 2) / ly * n0)))
-            iy1 = min(n0, int(np.ceil((y_c + pd.size[1] / 2) / ly * n0)))
-            ix0 = max(0, int(np.floor((x_c - pd.size[0] / 2) / lx * n1)))
-            ix1 = min(n1, int(np.ceil((x_c + pd.size[0] / 2) / lx * n1)))
-            key = f"{pd.color}_{r}_{c}"
-            if ix1 <= ix0 or iy1 <= iy0:
-                qe_per_pixel[key] = 0.0
-                continue
-            qe = norm_pixel * float(si_density[iy0:iy1, ix0:ix1].sum()) * cell_area
-            qe_per_pixel[key] = float(np.clip(qe, 0.0, 1.0))
-
-        return qe_per_pixel
+        return integrate_photodiode_qe(
+            self._pixel_stack,
+            layer_info,
+            wavelength,
+            self._source.theta_rad,
+            e2_dz,
+            total_absorption,
+            "torcwa",
+        )
 
     def _compute_per_pixel_qe(
         self,
@@ -516,12 +474,10 @@ class TorcwaSolver(SolverBase):
 
         return qe_per_pixel
 
-    #: Supported field components and slice planes.
-    FIELD_COMPONENTS = ("Ex", "Ey", "Ez", "|E|2", "Sz")
-    FIELD_PLANES = ("xy", "xz", "yz")
-    #: Samples per in-plane axis and along z for solved-field slices.
-    FIELD_N_XY = 64
-    FIELD_N_Z = 128
+    FIELD_COMPONENTS = FIELD_COMPONENTS
+    FIELD_PLANES = FIELD_PLANES
+    FIELD_N_XY = FIELD_N_XY
+    FIELD_N_Z = FIELD_N_Z
 
     def get_field_distribution(
         self,
@@ -559,36 +515,24 @@ class TorcwaSolver(SolverBase):
             ValueError: Unknown component/plane, or an "xy" position outside
                 the simulated stack.
         """
-        if component not in self.FIELD_COMPONENTS:
-            raise ValueError(
-                f"Unknown field component {component!r}; expected one of {self.FIELD_COMPONENTS}"
-            )
-        if plane not in self.FIELD_PLANES:
-            raise ValueError(f"Unknown plane {plane!r}; expected one of {self.FIELD_PLANES}")
-
+        validate_field_request(component, plane)
         if self._last_sim is None or self._last_layer_info is None:
             logger.warning("torcwa: no simulation data, returning zeros")
-            return np.zeros((self.FIELD_N_XY, self.FIELD_N_XY))
+            return np.zeros((FIELD_N_XY, FIELD_N_XY))
 
-        sim = self._last_sim
         layer_info = self._last_layer_info
-
         if plane == "xy":
-            z_lo = min(s.z_start for s in layer_info)
-            z_hi = max(s.z_end for s in layer_info)
-            if not z_lo <= position <= z_hi:
-                raise ValueError(
-                    f"xy-plane position z={position} um is outside the stack [{z_lo}, {z_hi}]"
-                )
+            check_xy_position(layer_info, position)
 
         try:
-            return self._extract_field_from_sim(sim, layer_info, component, plane, position)
+            return self._extract_field_from_sim(
+                self._last_sim, layer_info, component, plane, position
+            )
         except Exception as e:
             logger.warning(
                 f"torcwa: field reconstruction failed ({e}); returning a "
                 "permittivity-based approximation, not a solved field"
             )
-
         return self._approximate_field(layer_info, component, plane, position)
 
     def _extract_field_from_sim(
@@ -617,34 +561,24 @@ class TorcwaSolver(SolverBase):
         sim.source_planewave(amplitude=self._last_source_amp, direction="forward", notation="ps")
 
         lx, ly = self._pixel_stack.domain_size
-        n_xy = self.FIELD_N_XY
         f64 = torch.float64
         dev = self.device
-        z_top = max(s.z_end for s in layer_info)
-        z_bot = min(s.z_start for s in layer_info)
+        xy_axis = torch.arange(FIELD_N_XY, device=dev, dtype=f64) / FIELD_N_XY
 
         if plane == "xy":
-            # layer_info is ordered top (torcwa layer 0) to bottom.
-            li = next(
-                i for i, s in enumerate(layer_info) if s.z_start <= position <= s.z_end
-            )
-            s = layer_info[li]
-            x_axis = torch.arange(n_xy, device=dev, dtype=f64) * (lx / n_xy)
-            y_axis = torch.arange(n_xy, device=dev, dtype=f64) * (ly / n_xy)
-            E, H = sim.field_xy(li, x_axis, y_axis, z_prop=float(s.z_end - position))
+            li, depth = locate_slice(layer_info, position)
+            E, H = sim.field_xy(li, xy_axis * lx, xy_axis * ly, z_prop=depth)
         else:
-            z_compass = np.linspace(z_bot, z_top, self.FIELD_N_Z)
-            z_axis = torch.tensor(z_top - z_compass, device=dev, dtype=f64)
+            z_top = stack_z_range(layer_info)[1]
+            z_axis = torch.tensor(z_top - column_heights(layer_info), device=dev, dtype=f64)
             if plane == "xz":
-                in_plane = torch.arange(n_xy, device=dev, dtype=f64) * (lx / n_xy)
-                E, H = sim.field_xz(in_plane, z_axis, float(position))
+                E, H = sim.field_xz(xy_axis * lx, z_axis, float(position))
             else:
-                in_plane = torch.arange(n_xy, device=dev, dtype=f64) * (ly / n_xy)
-                E, H = sim.field_yz(in_plane, z_axis, float(position))
+                E, H = sim.field_yz(xy_axis * ly, z_axis, float(position))
 
         E_np = [c.detach().cpu().numpy() for c in E]
         H_np = [c.detach().cpu().numpy() for c in H]
-        return self._component_from_field(E_np, H_np, component)
+        return component_from_field(E_np, H_np, component)
 
     def _approximate_field(
         self,
@@ -743,19 +677,8 @@ class TorcwaSolver(SolverBase):
 
     @staticmethod
     def _component_from_field(E: list, H: list, component: str) -> np.ndarray:
-        """Reduce torcwa [Ex, Ey, Ez] / [Hx, Hy, Hz] arrays to one quantity.
-
-        torcwa's z axis points down (into the stack); ``Sz`` is returned in
-        the COMPASS frame (z up), so downward power flow is negative.
-        """
-        if component in ("Ex", "Ey", "Ez"):
-            return np.asarray(np.abs(E["xyz".index(component[1])]) ** 2)
-        if component == "|E|2":
-            return np.asarray(sum(np.abs(c) ** 2 for c in E))
-        if component == "Sz":
-            s_down = np.real(E[0] * np.conj(H[1]) - E[1] * np.conj(H[0]))
-            return np.asarray(-s_down)
-        raise ValueError(f"Unknown field component {component!r}")
+        """Backward-compatible alias of :func:`fields.component_from_field`."""
+        return component_from_field(E, H, component)
 
 
 # Register with factory

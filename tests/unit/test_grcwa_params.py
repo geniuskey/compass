@@ -96,9 +96,11 @@ def test_explicit_nG_wins_over_fourier_order():
 
 
 def test_qe_method_recorded_in_metadata():
+    # The recording mock has no field API, so field-integrated QE must fall
+    # back to the eps''-weight approximation and say so in the metadata.
     result = _run(GrcwaSolver({"name": "grcwa", "params": {"nG": 9}}))
 
-    assert result.metadata["qe_method"] == "eps_imag_weight"
+    assert result.metadata["qe_method"] == "eps_imag_weight_fallback"
 
 
 def test_shipped_grcwa_configs_use_nG():
