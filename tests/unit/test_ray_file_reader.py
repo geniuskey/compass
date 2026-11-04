@@ -148,15 +148,14 @@ class TestEdgeCases:
         data = RayFileReader.read_json(str(filepath))
         assert data == {}
 
-    def test_single_row_csv_raises(self, tmp_path):
-        """CSV with a single data row triggers IndexError (numpy 1-D array edge case)."""
+    def test_single_row_csv(self, tmp_path):
+        """A CSV with a single data row loads as one-element lists."""
         content = "image_height,cra_deg,mra_deg,f_number\n0.5,12.0,6.0,2.0\n"
         filepath = tmp_path / "single.csv"
         filepath.write_text(content)
-        # Known limitation: np.loadtxt returns 1-D array for single row,
-        # causing data[:, 0] to fail with IndexError.
-        with pytest.raises(IndexError):
-            RayFileReader.read_csv(str(filepath))
+        data = RayFileReader.read_csv(str(filepath))
+        assert data["image_height"] == [0.5]
+        assert data["cra_deg"] == [12.0]
 
     def test_json_with_extra_fields(self, tmp_path):
         """JSON with extra fields preserves them."""

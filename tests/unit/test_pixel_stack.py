@@ -396,6 +396,22 @@ class TestSnellCRAShift:
             }
         }
 
+    def test_shift_points_against_the_chief_ray(self, cra_config):
+        """CRA > 0 (kx > 0, light going -z) lands at +x, so the lens moves to -x."""
+        cra_config["pixel"]["layers"]["microlens"]["shift"]["cra_deg"] = 20.0
+        ps = PixelStack(cra_config)
+        assert all(ml.shift_x < 0 for ml in ps.microlenses)
+
+    def test_shift_traces_silicon_to_photodiode_depth(self, cra_config):
+        """photodiode.position[2] is the depth below the Si top."""
+        layers = cra_config["pixel"]["layers"]
+        layers["microlens"]["shift"]["cra_deg"] = 20.0
+        layers["silicon"]["photodiode"]["position"] = [0.0, 0.0, 0.5]
+        shallow = -PixelStack(cra_config).microlenses[0].shift_x
+        layers["silicon"]["photodiode"]["position"] = [0.0, 0.0, 2.0]
+        deep = -PixelStack(cra_config).microlenses[0].shift_x
+        assert deep > shallow
+
     def test_zero_cra_zero_shift(self, cra_config):
         """CRA=0 should produce zero shift."""
         cra_config["pixel"]["layers"]["microlens"]["shift"]["cra_deg"] = 0.0
@@ -409,7 +425,7 @@ class TestSnellCRAShift:
         cra_deg = 5.0
         cra_config["pixel"]["layers"]["microlens"]["shift"]["cra_deg"] = cra_deg
         ps = PixelStack(cra_config)
-        snell_shift = ps.microlenses[0].shift_x
+        snell_shift = -ps.microlenses[0].shift_x  # lens moves toward -x
 
         # Simple tan approximation: tan(CRA) * total_height * 0.5
         cra_rad = np.deg2rad(cra_deg)
@@ -429,7 +445,7 @@ class TestSnellCRAShift:
         cra_deg = 30.0
         cra_config["pixel"]["layers"]["microlens"]["shift"]["cra_deg"] = cra_deg
         ps = PixelStack(cra_config)
-        snell_shift = ps.microlenses[0].shift_x
+        snell_shift = -ps.microlenses[0].shift_x  # lens moves toward -x
 
         # In each layer, n > 1 causes sin(theta_layer) < sin(CRA), so tan(theta) < tan(CRA).
         # But the total Snell shift sums over all layers down to PD, which is a longer path
@@ -447,7 +463,7 @@ class TestSnellCRAShift:
         for cra_deg in [0, 5, 10, 15, 20, 25, 30]:
             cra_config["pixel"]["layers"]["microlens"]["shift"]["cra_deg"] = float(cra_deg)
             ps = PixelStack(cra_config)
-            shifts.append(ps.microlenses[0].shift_x)
+            shifts.append(-ps.microlenses[0].shift_x)
 
         for i in range(1, len(shifts)):
             assert shifts[i] >= shifts[i - 1], (
@@ -461,11 +477,11 @@ class TestSnellCRAShift:
 
         cra_config["pixel"]["layers"]["microlens"]["shift"]["ref_wavelength"] = 0.45
         ps_blue = PixelStack(cra_config)
-        shift_blue = ps_blue.microlenses[0].shift_x
+        shift_blue = -ps_blue.microlenses[0].shift_x  # lens moves toward -x
 
         cra_config["pixel"]["layers"]["microlens"]["shift"]["ref_wavelength"] = 0.65
         ps_red = PixelStack(cra_config)
-        shift_red = ps_red.microlenses[0].shift_x
+        shift_red = -ps_red.microlenses[0].shift_x  # lens moves toward -x
 
         # Silicon has very different n at blue vs red wavelengths,
         # so shifts should differ
@@ -510,7 +526,7 @@ class TestSnellCRAShiftEdgeCases:
             }
         }
         ps = PixelStack(config)
-        shift = ps.microlenses[0].shift_x
+        shift = -ps.microlenses[0].shift_x  # lens moves toward -x
         assert shift > 0, "Shift should be positive even without BARL"
 
         # Compare with config that has BARL
@@ -549,7 +565,7 @@ class TestSnellCRAShiftEdgeCases:
             }
         }
         ps_with = PixelStack(config_with_barl)
-        shift_with = ps_with.microlenses[0].shift_x
+        shift_with = -ps_with.microlenses[0].shift_x  # lens moves toward -x
         # Adding BARL layers adds extra path → more shift
         assert shift_with > shift, "Adding BARL layers should increase total shift"
 
@@ -606,7 +622,7 @@ class TestSnellCRAShiftEdgeCases:
             }
         }
         ps = PixelStack(config)
-        shift = ps.microlenses[0].shift_x
+        shift = -ps.microlenses[0].shift_x  # lens moves toward -x
         assert np.isfinite(shift), f"Shift should be finite at extreme CRA, got {shift}"
         assert shift > 0, "Shift should be positive at extreme CRA"
 
@@ -641,7 +657,7 @@ class TestSnellCRAShiftEdgeCases:
             }
         }
         ps = PixelStack(config)
-        shift = ps.microlenses[0].shift_x
+        shift = -ps.microlenses[0].shift_x  # lens moves toward -x
         assert shift > 0
 
     def test_default_ref_wavelength_without_key(self):
@@ -706,7 +722,7 @@ class TestSnellCRAShiftAnalytical:
         ref_wl = 0.55
         plan_t = 0.5
         si_t = 3.0
-        pd_z = 0.5  # PD position from bottom
+        pd_z = 0.5  # PD-centre depth below the Si top
 
         config = {
             "pixel": {
@@ -743,7 +759,7 @@ class TestSnellCRAShiftAnalytical:
         }
 
         ps = PixelStack(config)
-        computed_shift = ps.microlenses[0].shift_x
+        computed_shift = -ps.microlenses[0].shift_x  # lens moves toward -x
 
         # Compute expected shift analytically
         db = MaterialDB()
@@ -770,7 +786,7 @@ class TestSnellCRAShiftAnalytical:
         n_si, _ = db.get_nk("silicon", ref_wl)
         sin_si = sin_cra / n_si
         cos_si = np.sqrt(1.0 - sin_si**2)
-        si_to_pd = si_t - pd_z
+        si_to_pd = pd_z
         expected_shift += si_to_pd * sin_si / cos_si
 
         assert computed_shift == pytest.approx(expected_shift, rel=1e-10), (

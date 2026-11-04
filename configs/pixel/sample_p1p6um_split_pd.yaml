@@ -81,7 +81,7 @@ pixel:
       photodiode:
         # Larger lateral footprint and deeper z-extent because pixel transistors
         # have moved off this substrate layer (split-substrate architecture).
-        position: [0.0, 0.0, 0.3]
+        position: [0.0, 0.0, 2.0]  # PD-centre depth below Si top
         size: [1.40, 1.40, 3.4]
       dti:
         enabled: true

@@ -103,7 +103,7 @@ barl:
 |------|------|--------|------|
 | `thickness` | float | `3.0` | 실리콘 두께 (um) |
 | `material` | str | `"silicon"` | 기판 재료 |
-| `photodiode.position` | [float, float, float] | `[0, 0, 0.5]` | PD 오프셋 (x, y, z) um |
+| `photodiode.position` | [float, float, float] | `[0, 0, 1.5]` | PD 중심: (x, y)는 픽셀 중심 기준 오프셋, z는 Si 상면 아래 깊이 (um) |
 | `photodiode.size` | [float, float, float] | `[0.7, 0.7, 2.0]` | PD 크기 (dx, dy, dz) um |
 | `dti.enabled` | bool | `true` | DTI 활성화 |
 | `dti.mode` | str | `"fdti"` | `"fdti"`(전체) 또는 `"bdti"`(후면 부분) |

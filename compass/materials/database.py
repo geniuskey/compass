@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
-from scipy.interpolate import CubicSpline, interp1d
+from scipy.interpolate import PchipInterpolator, interp1d
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +56,11 @@ class MaterialData:
         if self.wavelengths is None:
             return
         if self.interpolation == "cubic_spline" and len(self.wavelengths) >= 4:
-            self._n_interp = CubicSpline(self.wavelengths, self.n_data, extrapolate=True)
-            self._k_interp = CubicSpline(self.wavelengths, self.k_data, extrapolate=True)
+            # Shape-preserving cubic (PCHIP): a natural cubic spline rings at
+            # absorption edges, inventing sub-bandgap k (e.g. InP at 0.97 um)
+            # and overshooting n between nodes.
+            self._n_interp = PchipInterpolator(self.wavelengths, self.n_data, extrapolate=True)
+            self._k_interp = PchipInterpolator(self.wavelengths, self.k_data, extrapolate=True)
         else:
             self._n_interp = interp1d(
                 self.wavelengths,
@@ -119,7 +122,14 @@ class MaterialData:
             n2 = 1.0
             if self.sellmeier_B is None or self.sellmeier_C is None:
                 raise ValueError(f"Material '{self.name}': Sellmeier B and C coefficients are required")
-            for B, C in zip(self.sellmeier_B, self.sellmeier_C):
+            for B, C in zip(self.sellmeier_B, self.sellmeier_C, strict=True):
+                if B == 0.0:
+                    continue
+                if abs(lam2 - C) < 1e-12:
+                    raise ValueError(
+                        f"Material '{self.name}': wavelength {wavelength} um sits on a "
+                        f"Sellmeier pole (C = {C})"
+                    )
                 n2 += B * lam2 / (lam2 - C)
             result = (float(np.sqrt(max(n2, 1.0))), 0.0)
 
@@ -173,8 +183,8 @@ class MaterialDB:
         # Si3N4 (approximate Sellmeier)
         self.register_sellmeier(
             "si3n4",
-            B=[2.8939, 0.0],
-            C=[0.13967**2, 1.0],
+            B=[2.8939],
+            C=[0.13967**2],
         )
 
         # TiO2 (approximate Cauchy for anatase)
@@ -505,31 +515,31 @@ class MaterialDB:
 
     def register_constant(self, name: str, n: float, k: float = 0.0) -> None:
         """Register a material with constant n, k."""
-        self._materials[name] = MaterialData(
+        self._set_material(name, MaterialData(
             name=name,
             mat_type="constant",
             n_const=n,
             k_const=k,
-        )
+        ))
 
     def register_cauchy(self, name: str, A: float, B: float = 0.0, C: float = 0.0) -> None:
         """Register a material with Cauchy dispersion model: n(λ) = A + B/λ² + C/λ⁴."""
-        self._materials[name] = MaterialData(
+        self._set_material(name, MaterialData(
             name=name,
             mat_type="cauchy",
             cauchy_A=A,
             cauchy_B=B,
             cauchy_C=C,
-        )
+        ))
 
     def register_sellmeier(self, name: str, B: list[float], C: list[float]) -> None:
         """Register a material with Sellmeier dispersion model."""
-        self._materials[name] = MaterialData(
+        self._set_material(name, MaterialData(
             name=name,
             mat_type="sellmeier",
             sellmeier_B=B,
             sellmeier_C=C,
-        )
+        ))
 
     def load_csv(self, name: str, filepath: str, interpolation: str = "cubic_spline") -> None:
         """Load tabulated material from CSV file.
@@ -558,7 +568,21 @@ class MaterialDB:
             interpolation=interpolation,
         )
         mat._build_interpolators()
+        self._set_material(name, mat)
+
+    def _set_material(self, name: str, mat: MaterialData) -> None:
+        """Register ``mat`` under ``name``, keeping aliases and caches coherent.
+
+        Aliases that pointed at the replaced material follow the new one, and
+        the epsilon cache is cleared so stale permittivities are not served.
+        """
+        old = self._materials.get(name)
+        if old is not None:
+            for key, value in list(self._materials.items()):
+                if value is old:
+                    self._materials[key] = mat
         self._materials[name] = mat
+        self._epsilon_cache.clear()
 
     def get_nk(self, name: str, wavelength: float) -> tuple[float, float]:
         """Get (n, k) for a material at a given wavelength (um)."""

@@ -74,7 +74,7 @@ n, k = mat_db.get_nk("my_dielectric", 0.55)
 
 ### Tabulated (표 형식)
 
-이산 데이터 점으로부터의 파장 의존적 $n(\lambda)$ 및 $k(\lambda)$입니다. COMPASS는 4개 이상의 데이터 점이 있을 때 **큐빅 스플라인 보간(Cubic Spline Interpolation)**을, 더 적은 점에서는 **선형 보간(Linear Interpolation)**을 사용합니다.
+이산 데이터 점으로부터의 파장 의존적 $n(\lambda)$ 및 $k(\lambda)$입니다. COMPASS는 4개 이상의 데이터 점이 있을 때 **형상 보존 3차 보간(PCHIP)**(급격한 흡수 경계에서 링잉이나 가짜 밴드갭 이하 흡수가 생기지 않음)을, 더 적은 점에서는 **선형 보간(Linear Interpolation)**을 사용합니다.
 
 ```python
 # Internally, tabulated materials build scipy interpolators:

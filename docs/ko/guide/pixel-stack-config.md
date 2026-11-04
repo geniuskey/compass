@@ -333,7 +333,7 @@ silicon:
   thickness: 3.0
   material: "silicon"
   photodiode:
-    position: [0.0, 0.0, 0.5]   # PD 중심 배치 [x offset, y offset, z] in um
+    position: [0.0, 0.0, 1.5]   # PD 중심 [x offset, y offset, Si 상면 아래 깊이] in um
     size: [0.7, 0.7, 2.0]        # Photodiode extent [dx, dy, dz] in um
   dti:
     enabled: true
@@ -347,7 +347,7 @@ silicon:
 |-----------------------|-------------------------|------------------|----------------------------------------------|
 | `thickness`           | float                   | `3.0`            | 전체 실리콘 두께(um).                           |
 | `material`            | str                     | `"silicon"`      | 기판 재료.                                     |
-| `photodiode.position` | [float, float, float]   | `[0, 0, 0.5]`   | PD 중심 배치. x/y는 각 픽셀 중심에 대한 횡방향 오프셋이고, z 값은 실리콘 내부의 수직 배치를 제어합니다. 수집 window를 의도적으로 이동시키는 경우가 아니라면 기본값을 유지하세요. |
+| `photodiode.position` | [float, float, float]   | `[0, 0, 1.5]`   | PD 중심 배치. x/y는 각 픽셀 중심에 대한 횡방향 오프셋이고, z는 실리콘 상면에서 PD 중심까지의 깊이입니다. PD는 `z ± size[2]/2` 범위를 차지하며 실리콘 안에 들어가야 합니다(벗어나면 경고와 함께 잘립니다). 수집 window를 의도적으로 이동시키는 경우가 아니라면 기본값을 유지하세요. |
 | `photodiode.size`     | [float, float, float]   | `[0.7, 0.7, 2.0]` | PD 크기 (dx, dy, dz)(um).                   |
 | `dti.enabled`         | bool                    | `true`           | DTI 활성화.                                    |
 | `dti.mode`            | str                     | `"fdti"`         | 트렌치 방향 모델: `"fdti"` 또는 `"bdti"`.       |

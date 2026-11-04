@@ -31,6 +31,10 @@ class PlanewaveSource:
     polarization: Literal["TE", "TM", "unpolarized"] = "unpolarized"
 
     def __post_init__(self) -> None:
+        if self.polarization not in ("TE", "TM", "unpolarized"):
+            raise ValueError(
+                f"polarization must be 'TE', 'TM' or 'unpolarized', got {self.polarization!r}"
+            )
         if len(self.wavelengths) == 0:
             raise ValueError("wavelengths array must not be empty")
         if np.any(self.wavelengths <= 0):
@@ -53,29 +57,36 @@ class PlanewaveSource:
         Returns:
             PlanewaveSource instance.
         """
-        wl_cfg = source_config.get("wavelength", {})
-        mode = wl_cfg.get("mode", "single")
+        # `or {}`: schema-dumped configs carry present-but-None sections.
+        wl_cfg = source_config.get("wavelength") or {}
+        mode = wl_cfg.get("mode") or "single"
 
         if mode == "single":
-            wavelengths = np.array([wl_cfg.get("value", 0.55)])
+            value = wl_cfg.get("value")
+            wavelengths = np.array([0.55 if value is None else value], dtype=float)
         elif mode == "sweep":
-            sweep = wl_cfg.get("sweep", {})
+            sweep = wl_cfg.get("sweep") or {}
             start = sweep.get("start", 0.38)
             stop = sweep.get("stop", 0.78)
             step = sweep.get("step", 0.01)
+            if step is None or step <= 0:
+                raise ValueError(f"wavelength sweep step must be positive, got {step}")
             wavelengths = np.arange(start, stop + step / 2, step)
         elif mode == "list":
-            wavelengths = np.array(wl_cfg.get("values", [0.55]))
+            values = wl_cfg.get("values")
+            if not values:
+                raise ValueError("wavelengths array must not be empty (mode 'list' needs 'values')")
+            wavelengths = np.atleast_1d(np.asarray(values, dtype=float))
         else:
             raise ValueError(f"Unknown wavelength mode: {mode}")
 
-        angle_cfg = source_config.get("angle", {})
+        angle_cfg = source_config.get("angle") or {}
 
         return cls(
             wavelengths=wavelengths,
             theta_deg=angle_cfg.get("theta_deg", 0.0),
             phi_deg=angle_cfg.get("phi_deg", 0.0),
-            polarization=source_config.get("polarization", "unpolarized"),
+            polarization=source_config.get("polarization") or "unpolarized",
         )
 
     @property

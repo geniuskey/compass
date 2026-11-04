@@ -85,7 +85,7 @@ pixel:
       thickness: 2.0
       material: "silicon"
       photodiode:
-        position: [0.0, 0.0, 0.4]
+        position: [0.0, 0.0, 1.1]  # PD-centre depth below Si top
         size: [0.40, 0.40, 1.4]
       dti:
         enabled: true

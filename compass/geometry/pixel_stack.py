@@ -102,17 +102,33 @@ class PixelStack:
 
         # Build photodiode specs
         pd_cfg = si_cfg.get("photodiode", {})
-        bayer_cfg = pixel_cfg.get("bayer_map", [["R", "G"], ["G", "B"]])
+        # An explicit bayer_map wins; otherwise build it from
+        # color_filter.pattern (previously the RGGB default always won, so
+        # e.g. quad_bayer was ignored). Tile it to the full unit cell so
+        # every consumer can index bayer_map[r][c].
+        bayer_cfg = pixel_cfg.get("bayer_map")
         pattern_type = layers_cfg.get("color_filter", {}).get("pattern", "bayer_rggb")
-        self.bayer_map = (
+        base_map = (
             bayer_cfg if bayer_cfg else GeometryBuilder.bayer_pattern(self.unit_cell, pattern_type)
         )
+        self.bayer_map = [
+            [base_map[r % len(base_map)][c % len(base_map[0])] for c in range(self.unit_cell[1])]
+            for r in range(self.unit_cell[0])
+        ]
 
-        pd_pos = tuple(pd_cfg.get("position", [0.0, 0.0, 0.5]))
+        pd_pos = tuple(pd_cfg.get("position", [0.0, 0.0, 1.5]))
         pd_size = tuple(pd_cfg.get("size", [0.7, 0.7, 2.0]))
+        pd_top = pd_pos[2] - pd_size[2] / 2  # depth below the Si top
+        pd_bottom = pd_pos[2] + pd_size[2] / 2
+        if pd_top < -1e-9 or pd_bottom > si_thickness + 1e-9:
+            logger.warning(
+                f"photodiode depth range [{pd_top:.3f}, {pd_bottom:.3f}] um below the Si "
+                f"top extends outside the {si_thickness} um silicon; it is clipped to the "
+                "silicon (position[2] is the PD-centre depth below the Si top)"
+            )
         for r in range(self.unit_cell[0]):
             for c in range(self.unit_cell[1]):
-                color = self.bayer_map[r % len(self.bayer_map)][c % len(self.bayer_map[0])]
+                color = self.bayer_map[r][c]
                 self.photodiodes.append(
                     PhotodiodeSpec(
                         position=pd_pos,
@@ -183,7 +199,10 @@ class PixelStack:
                 shift_y = shift_cfg.get("shift_y", 0.0)
             elif shift_cfg.get("mode") == "auto_cra":
                 ref_wl = shift_cfg.get("ref_wavelength", 0.55)
-                shift_x = self._compute_snell_shift(
+                # The chief ray (kx > 0 for CRA > 0, phi = 0) drifts toward +x
+                # on its way down to the photodiode, so the lens moves toward
+                # -x (the optical axis) by the traced lateral displacement.
+                shift_x = -self._compute_snell_shift(
                     shift_cfg.get("cra_deg", 0.0), layers_cfg, ref_wl
                 )
                 shift_y = 0.0
@@ -211,6 +230,10 @@ class PixelStack:
 
             # Place one MicrolensSpec per N x N group, anchored at group center.
             rows, cols = self.unit_cell
+            if rows % sharing or cols % sharing:
+                raise ValueError(
+                    f"microlens.sharing={sharing} must divide unit_cell {list(self.unit_cell)}"
+                )
             for _r0 in range(0, rows, sharing):
                 for _c0 in range(0, cols, sharing):
                     self.microlenses.append(
@@ -303,16 +326,17 @@ class PixelStack:
 
         # Silicon down to photodiode center
         si_cfg = layers_cfg.get("silicon", {})
-        pd_z = si_cfg.get("photodiode", {}).get("position", [0.0, 0.0, 0.5])
+        pd_z = si_cfg.get("photodiode", {}).get("position", [0.0, 0.0, 1.5])
         if isinstance(pd_z, (list, tuple)):
             pd_depth = pd_z[2]
         else:
-            pd_depth = 0.5
+            pd_depth = 1.5
         si_mat = si_cfg.get("material", "silicon")
         n_si, _ = self.material_db.get_nk(si_mat, ref_wavelength)
         si_thickness = si_cfg.get("thickness", 3.0)
-        # PD center is at pd_depth from bottom, so distance from Si top = thickness - pd_depth
-        si_to_pd = si_thickness - pd_depth
+        # PhotodiodeSpec.position[2] is the PD-centre depth below the Si top
+        # (as in GeometryBuilder.photodiode_mask and the QE integrators).
+        si_to_pd = min(max(pd_depth, 0.0), si_thickness)
         layer_entries.append((si_to_pd, n_si))
 
         # Accumulate lateral displacement: Snell's law at each layer
@@ -433,6 +457,7 @@ class PixelStack:
                     alpha=ml.alpha_param,
                     shift_x=ml.shift_x,
                     shift_y=ml.shift_y,
+                    period=self.domain_size,
                 )
                 height_map = np.maximum(height_map, h)
             self._height_map_cache[cache_key] = height_map
@@ -810,6 +835,24 @@ class PixelStack:
             )
         return slices
 
+    @staticmethod
+    def _dti_span(dti_cfg: dict, thickness: float) -> tuple[float, float]:
+        """(z0, z1) of the DTI trench in Si-local z (0 = Si bottom).
+
+        Shared by the plain and z-resolved slicing paths: FDTI (full-depth
+        DTI) always runs the full silicon thickness; BDTI (partial backside
+        DTI) spans ``depth`` below the light-entrance top. Previously the
+        z-resolved path (liner / taper / texture) applied ``depth`` to FDTI
+        too, so enabling a liner silently changed the trench depth.
+        """
+        mode = str(dti_cfg.get("mode", "fdti")).lower()
+        if mode not in {"fdti", "bdti"}:
+            raise ValueError(f"Unsupported DTI mode '{mode}'. Expected 'fdti' or 'bdti'.")
+        if mode == "fdti":
+            return 0.0, thickness
+        depth = float(np.clip(dti_cfg.get("depth", thickness), 0.0, thickness))
+        return thickness - depth, thickness
+
     def _silicon_slice_breaks(self, layer: Layer, si_cfg: dict) -> list[float]:
         """Local z breakpoints (from Si bottom) for DTI taper and texture."""
         thickness = layer.thickness
@@ -817,13 +860,12 @@ class PixelStack:
 
         dti_cfg = si_cfg.get("dti", {}) or {}
         if dti_cfg.get("enabled", False):
-            depth = float(np.clip(dti_cfg.get("depth", thickness), 0.0, thickness))
-            dti_start = thickness - depth
+            dti_start, dti_end = self._dti_span(dti_cfg, thickness)
             if 0.0 < dti_start < thickness:
                 points.add(dti_start)
-            if depth > 0.0 and float(dti_cfg.get("taper_angle", 90.0)) < 89.999:
+            if dti_end > dti_start and float(dti_cfg.get("taper_angle", 90.0)) < 89.999:
                 n = max(1, int(dti_cfg.get("n_slices", 6)))
-                points.update(np.linspace(dti_start, thickness, n + 1))
+                points.update(np.linspace(dti_start, dti_end, n + 1))
 
         tex_cfg = si_cfg.get("surface_texture", {}) or {}
         if tex_cfg.get("enabled", False):
@@ -863,9 +905,12 @@ class PixelStack:
 
         dti_cfg = si_cfg.get("dti", {}) or {}
         if dti_cfg.get("enabled", False):
-            si_thickness = si_cfg.get("thickness", 3.0)
-            depth = float(np.clip(dti_cfg.get("depth", si_thickness), 0.0, si_thickness))
-            if 0.0 <= depth_from_top <= depth:
+            si_thickness = float(si_cfg.get("thickness", 3.0))
+            z_local = si_thickness - depth_from_top
+            z0, z1 = self._dti_span(dti_cfg, si_thickness)
+            if z0 <= z_local <= z1:
+                # Both trenches are etched from the backside (light-entrance
+                # top) in a BSI flow, so the taper narrows with depth.
                 self._apply_dti_at_depth(eps_grid, wavelength, nx, ny, dti_cfg, depth_from_top)
 
         tex_cfg = si_cfg.get("surface_texture", {}) or {}
@@ -881,12 +926,16 @@ class PixelStack:
         nx: int,
         ny: int,
         dti_cfg: dict,
-        depth_from_top: float,
+        depth_from_opening: float,
     ) -> None:
-        """Stamp a tapered, optionally lined DTI trench into ``eps_grid``."""
+        """Stamp a tapered, optionally lined DTI trench into ``eps_grid``.
+
+        ``depth_from_opening`` is the distance from the trench's etch opening,
+        where it has its full ``width``.
+        """
         width = float(dti_cfg.get("width", 0.1))
         taper = float(dti_cfg.get("taper_angle", 90.0))
-        outer_half = width / 2.0 - self._taper_inset(depth_from_top, taper)
+        outer_half = width / 2.0 - self._taper_inset(depth_from_opening, taper)
         if outer_half <= 0.0:
             return
 
@@ -1103,7 +1152,7 @@ class PixelStack:
             nz,
             self.pitch,
             self.unit_cell,
-            tuple(pd_cfg.get("position", [0.0, 0.0, 0.5])),
+            tuple(pd_cfg.get("position", [0.0, 0.0, 1.5])),
             tuple(pd_cfg.get("size", [0.7, 0.7, 2.0])),
             si_layer.z_start,
             si_layer.z_end,

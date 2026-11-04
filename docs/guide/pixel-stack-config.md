@@ -333,7 +333,7 @@ silicon:
   thickness: 3.0
   material: "silicon"
   photodiode:
-    position: [0.0, 0.0, 0.5]   # PD center placement [x offset, y offset, z] in um
+    position: [0.0, 0.0, 1.5]   # PD center [x offset, y offset, depth below Si top] in um
     size: [0.7, 0.7, 2.0]        # Photodiode extent [dx, dy, dz] in um
   dti:
     enabled: true
@@ -347,7 +347,7 @@ silicon:
 |-----------------------|-------------------------|------------------|----------------------------------------------|
 | `thickness`           | float                   | `3.0`            | Total silicon thickness in um.               |
 | `material`            | str                     | `"silicon"`      | Substrate material.                          |
-| `photodiode.position` | [float, float, float]   | `[0, 0, 0.5]`   | PD center placement. x/y are lateral offsets from each pixel center; the z value controls vertical placement in silicon. Leave this at the default unless you are intentionally shifting the collection window. |
+| `photodiode.position` | [float, float, float]   | `[0, 0, 1.5]`   | PD center placement. x/y are lateral offsets from each pixel center; z is the depth of the PD center below the silicon top surface, so the PD spans `z ± size[2]/2` and must fit inside the silicon (it is clipped, with a warning, otherwise). Leave this at the default unless you are intentionally shifting the collection window. |
 | `photodiode.size`     | [float, float, float]   | `[0.7, 0.7, 2.0]` | PD extent (dx, dy, dz) in um.              |
 | `dti.enabled`         | bool                    | `true`           | Enable deep trench isolation.                |
 | `dti.mode`            | str                     | `"fdti"`         | Trench direction model: `"fdti"` or `"bdti"`. |

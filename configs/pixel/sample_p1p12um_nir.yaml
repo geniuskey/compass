@@ -78,7 +78,7 @@ pixel:
       thickness: 4.0              # deep Si for NIR capture
       material: "silicon"
       photodiode:
-        position: [0.0, 0.0, 0.3]
+        position: [0.0, 0.0, 1.8]  # PD-centre depth below Si top
         size: [0.85, 0.85, 3.0]
       dti:
         enabled: true

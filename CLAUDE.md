@@ -105,7 +105,7 @@ Override any parameter from CLI: `python scripts/run_simulation.py pixel.pitch=0
 
 ### Materials
 
-**MaterialDB** (`compass/materials/database.py`): Supports constant, tabulated CSV (cubic spline interpolation), Cauchy, and Sellmeier models. 32+ built-in materials loaded from `materials/` CSV directory (metals, dielectrics, polymers, semiconductors). Epsilon cache keyed by `(name, rounded_wavelength)`.
+**MaterialDB** (`compass/materials/database.py`): Supports constant, tabulated CSV (shape-preserving PCHIP interpolation), Cauchy, and Sellmeier models. 32+ built-in materials loaded from `materials/` CSV directory (metals, dielectrics, polymers, semiconductors). Epsilon cache keyed by `(name, rounded_wavelength)`.
 
 ### Optimization
 

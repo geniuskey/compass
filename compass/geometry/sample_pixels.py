@@ -301,17 +301,17 @@ def derive_parameters(
     if headline.get("split_pd"):
         pd_xy = round(p * 0.88, 3)
         pd_z = round(si_t * 0.85, 3)
-        pd_z_pos = round(si_t * 0.075, 3)
+        pd_z_pos = round(si_t * (0.075 + 0.85 / 2), 3)  # PD centre below Si top
     elif headline.get("lofic"):
         # LOFIC capacitor consumes part of the in-pixel Si: PD smaller
         # (~ 65% area).
         pd_xy = round(p * 0.65, 3)
         pd_z = round(si_t * 0.67, 3)
-        pd_z_pos = round(si_t * 0.17, 3)
+        pd_z_pos = round(si_t * (0.17 + 0.67 / 2), 3)  # PD centre below Si top
     else:
         pd_xy = round(p * 0.70, 3)
         pd_z = round(si_t * 0.67, 3)
-        pd_z_pos = round(si_t * 0.17, 3)
+        pd_z_pos = round(si_t * (0.17 + 0.67 / 2), 3)  # PD centre below Si top
 
     # Bayer map: build group-binned RGGB super-tile.
     tile = [["R", "G"], ["G", "B"]]

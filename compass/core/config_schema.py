@@ -91,7 +91,7 @@ class BarlConfig(StrictModel):
 
 
 class PhotodiodeConfig(StrictModel):
-    position: tuple[float, float, float] = (0.0, 0.0, 0.5)
+    position: tuple[float, float, float] = (0.0, 0.0, 1.5)  # z: PD-centre depth below Si top
     size: tuple[float, float, float] = (0.7, 0.7, 2.0)
 
 

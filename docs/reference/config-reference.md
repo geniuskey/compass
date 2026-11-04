@@ -103,7 +103,7 @@ List of `{thickness, material}` pairs, ordered top to bottom.
 |-------|------|---------|-------------|
 | `thickness` | float | `3.0` | Silicon thickness (um) |
 | `material` | str | `"silicon"` | Substrate material |
-| `photodiode.position` | [float, float, float] | `[0, 0, 0.5]` | PD offset (x, y, z) um |
+| `photodiode.position` | [float, float, float] | `[0, 0, 1.5]` | PD center: (x, y) offset from the pixel center, z = depth below the Si top (um) |
 | `photodiode.size` | [float, float, float] | `[0.7, 0.7, 2.0]` | PD extent (dx, dy, dz) um |
 | `dti.enabled` | bool | `true` | Enable DTI |
 | `dti.mode` | str | `"fdti"` | `"fdti"` (full) or `"bdti"` (backside partial) |

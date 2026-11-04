@@ -21,6 +21,7 @@ class GeometryBuilder:
         alpha: float = 1.0,
         shift_x: float = 0.0,
         shift_y: float = 0.0,
+        period: tuple[float, float] | None = None,
     ) -> np.ndarray:
         """Generate superellipse microlens height map.
 
@@ -39,12 +40,20 @@ class GeometryBuilder:
             alpha: Curvature parameter.
             shift_x: CRA offset in x (um).
             shift_y: CRA offset in y (um).
+            period: Optional (lx, ly) of the periodic simulation cell. When
+                given, offsets use the minimum-image convention so a lens
+                shifted across the cell boundary wraps around instead of
+                being cut off.
 
         Returns:
             2D height map array.
         """
         dx = x - (center_x + shift_x)
         dy = y - (center_y + shift_y)
+        if period is not None:
+            lx, ly = period
+            dx = (dx + lx / 2.0) % lx - lx / 2.0
+            dy = (dy + ly / 2.0) % ly - ly / 2.0
 
         # Avoid division by zero
         rx_safe = max(rx, 1e-10)

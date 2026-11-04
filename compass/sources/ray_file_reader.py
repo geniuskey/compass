@@ -22,7 +22,7 @@ class RayFileReader:
     @staticmethod
     def read_csv(filepath: str) -> dict:
         """Read CSV with columns: image_height, cra_deg, mra_deg, f_number."""
-        data = np.loadtxt(filepath, delimiter=",", skiprows=1)
+        data = np.loadtxt(filepath, delimiter=",", skiprows=1, ndmin=2)
         return {
             "image_height": data[:, 0].tolist(),
             "cra_deg": data[:, 1].tolist(),

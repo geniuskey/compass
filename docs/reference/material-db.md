@@ -126,7 +126,7 @@ Load tabulated material data from a CSV file. The CSV format is:
 ...
 ```
 
-Lines starting with `#` are treated as comments. Data is automatically sorted by wavelength. Interpolation uses cubic splines (requires >= 4 data points) or linear interpolation as fallback.
+Lines starting with `#` are treated as comments. Data is automatically sorted by wavelength. Interpolation uses shape-preserving cubic (PCHIP) interpolation, which does not overshoot at absorption edges (requires >= 4 data points) or linear interpolation as fallback.
 
 **Parameters:**
 - `name` -- Material name for registration.

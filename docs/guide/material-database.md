@@ -74,7 +74,7 @@ n, k = mat_db.get_nk("my_dielectric", 0.55)
 
 ### Tabulated
 
-Wavelength-dependent $n(\lambda)$ and $k(\lambda)$ from discrete data points. COMPASS interpolates between points using **cubic spline interpolation** when 4 or more data points are available, or **linear interpolation** for fewer points.
+Wavelength-dependent $n(\lambda)$ and $k(\lambda)$ from discrete data points. COMPASS interpolates between points using **shape-preserving cubic (PCHIP) interpolation** — no spurious ringing or sub-bandgap absorption at sharp edges — when 4 or more data points are available, or **linear interpolation** for fewer points.
 
 ```python
 # Internally, tabulated materials build scipy interpolators:
