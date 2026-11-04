@@ -10,6 +10,7 @@ from typing import Any
 
 import numpy as np
 
+from compass.compute import cuda_device_index
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
@@ -74,7 +75,9 @@ class MeentSolver(SolverBase):
             import jax
 
             target = "gpu" if self.device.startswith("cuda") else "cpu"
-            jax.config.update("jax_default_device", jax.devices(target)[0])
+            jax.config.update(
+                "jax_default_device", jax.devices(target)[cuda_device_index(self.device)]
+            )
 
         params = self.config.get("params", {})
         fourier_order = params.get("fourier_order", [9, 9])

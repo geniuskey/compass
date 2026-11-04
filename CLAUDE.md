@@ -14,11 +14,11 @@ python scripts/run_simulation.py
 python scripts/run_simulation.py solver=torcwa pixel=default_bsi_1um source=wavelength_sweep
 
 # Run all tests
-PYTHONPATH=. python3.11 -m pytest tests/ -v
+PYTHONPATH=. uv run python -m pytest tests/ -v
 
 # Run single test file / single test
-PYTHONPATH=. python3.11 -m pytest tests/unit/test_tmm.py -v
-PYTHONPATH=. python3.11 -m pytest tests/unit/test_tmm.py::TestTMMSolverAdapter::test_full_run -v
+PYTHONPATH=. uv run python -m pytest tests/unit/test_tmm.py -v
+PYTHONPATH=. uv run python -m pytest tests/unit/test_tmm.py::TestTMMSolverAdapter::test_full_run -v
 
 # Lint and format
 ruff check compass/ --fix
@@ -126,7 +126,7 @@ Override any parameter from CLI: `python scripts/run_simulation.py pixel.pitch=0
 - RCWA stability: S-matrix only (no T-matrix), mixed precision eigendecomp on CPU
 
 ### Code
-- Python 3.10+, type hints required, Google-style docstrings
+- Python 3.11+, type hints required, Google-style docstrings
 - Pydantic for config validation, numpy for arrays, torch for GPU tensors
 - Ruff: line length 100, physics variable names allowed (R, T, A, E, etc. — see `ruff.toml` for ignore list)
 - No TF32 in RCWA: `torch.backends.cuda.matmul.allow_tf32 = False`

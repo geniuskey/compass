@@ -89,7 +89,7 @@ class FdtdxSolver(SolverBase):
         if not _JAX_AVAILABLE:
             return
         try:
-            if self.device == "cuda":
+            if self.device.startswith("cuda"):
                 jax.config.update("jax_platform_name", "gpu")
                 logger.info("fdtdx: configured JAX for GPU")
             elif self.device == "tpu":

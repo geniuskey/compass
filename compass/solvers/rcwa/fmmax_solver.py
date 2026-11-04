@@ -12,6 +12,7 @@ import warnings
 
 import numpy as np
 
+from compass.compute import cuda_device_index
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
@@ -117,7 +118,7 @@ class FmmaxSolver(SolverBase):
 
         # Configure JAX device
         target = "gpu" if self.device.startswith("cuda") else "cpu"
-        selected = jax.devices(target)[0]
+        selected = jax.devices(target)[cuda_device_index(self.device)]
         jax.config.update("jax_default_device", selected)
 
         params = self.config.get("params", {})

@@ -1,4 +1,5 @@
 """Multi-solver comparison runner."""
+
 from __future__ import annotations
 
 import logging
@@ -9,6 +10,7 @@ from compass.core.types import SimulationResult
 from compass.runners.single_run import SingleRunner
 
 logger = logging.getLogger(__name__)
+
 
 class ComparisonRunner:
     """Run same simulation with multiple solvers and compare."""
@@ -45,9 +47,7 @@ class ComparisonRunner:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_idx = {}
             for idx, sc in enumerate(solver_configs):
-                future = executor.submit(
-                    ComparisonRunner._run_single_solver, config, sc
-                )
+                future = executor.submit(ComparisonRunner._run_single_solver, config, sc)
                 future_to_idx[future] = idx
 
             for future in as_completed(future_to_idx):

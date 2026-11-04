@@ -205,8 +205,8 @@ compute:
 | 필드 | 타입 | 기본값 | 설명 |
 |------|------|--------|------|
 | `backend` | str | `"auto"` | `"auto"`, `"cuda"`, `"cpu"`, `"mps"` |
-| `gpu_id` | int | `0` | GPU 장치 인덱스 |
-| `num_workers` | int | `4` | 병렬 작업용 워커 스레드 수 |
+| `gpu_id` | int | `0` | CUDA 사용 시(`auto` 또는 `cuda`) 선택할 GPU 인덱스 |
+| `num_workers` | int | `4` | 향후 병렬 실행용 예약 값; 현재 사용되지 않음 |
 
 ## Hydra 설정 구조
 

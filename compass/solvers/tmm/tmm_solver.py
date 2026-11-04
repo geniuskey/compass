@@ -133,7 +133,8 @@ class TMMSolver(SolverBase):
         Returns:
             Array of complex n + ik for each layer.
         """
-        assert self._pixel_stack is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
         material_db = self._pixel_stack.material_db
 
         n_complex = np.zeros(len(self._layer_materials), dtype=complex)
@@ -254,8 +255,10 @@ class TMMSolver(SolverBase):
         Returns:
             Dictionary mapping pixel name to QE spectrum.
         """
-        assert self._pixel_stack is not None
-        assert self._source is not None
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
+        if self._source is None:
+            raise RuntimeError("source is not set; call setup_source() first")
 
         bayer = self._pixel_stack.bayer_map
         n_rows, n_cols = self._pixel_stack.unit_cell

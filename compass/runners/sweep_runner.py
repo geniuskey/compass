@@ -1,4 +1,5 @@
 """Wavelength sweep runner."""
+
 from __future__ import annotations
 
 import logging
@@ -7,6 +8,7 @@ from compass.core.types import SimulationResult
 from compass.runners.single_run import SingleRunner
 
 logger = logging.getLogger(__name__)
+
 
 class SweepRunner:
     """Run wavelength sweep simulations."""

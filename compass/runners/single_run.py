@@ -35,7 +35,9 @@ class SingleRunner:
             return ConeIlluminationRunner.run(config)
 
         device = resolve_compute_device(
-            compute_config.get("backend", "auto"), solver_name=solver_name
+            compute_config.get("backend", "auto"),
+            solver_name=solver_name,
+            gpu_id=int(compute_config.get("gpu_id", 0)),
         )
 
         # Build pixel stack

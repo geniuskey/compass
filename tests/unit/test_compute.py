@@ -73,3 +73,29 @@ class TestSolverFactoryDevice:
     def test_cpu_passes_through(self, cuda_available):
         solver = SolverFactory.create("_recording", {}, "cpu")
         assert solver.device == "cpu"
+
+
+class TestGpuId:
+    def test_gpu_zero_is_plain_cuda(self, cuda_available):
+        assert resolve_compute_device("cuda", gpu_id=0) == "cuda"
+
+    def test_gpu_id_selects_indexed_device(self, monkeypatch, cuda_available):
+        monkeypatch.setattr(compute, "_torch_cuda_device_count", lambda: 2)
+        assert resolve_compute_device("cuda", gpu_id=1) == "cuda:1"
+        assert resolve_compute_device("auto", gpu_id=1) == "cuda:1"
+
+    def test_gpu_id_out_of_range_raises(self, monkeypatch, cuda_available):
+        monkeypatch.setattr(compute, "_torch_cuda_device_count", lambda: 1)
+        with pytest.raises(RuntimeError, match="gpu_id=1"):
+            resolve_compute_device("cuda", gpu_id=1)
+
+    def test_negative_gpu_id_raises(self, cuda_available):
+        with pytest.raises(ValueError, match="gpu_id"):
+            resolve_compute_device("cuda", gpu_id=-1)
+
+    def test_gpu_id_ignored_on_cpu(self, cuda_unavailable):
+        assert resolve_compute_device("auto", gpu_id=3) == "cpu"
+
+    @pytest.mark.parametrize(("device", "index"), [("cuda", 0), ("cuda:2", 2), ("cpu", 0)])
+    def test_cuda_device_index(self, device, index):
+        assert compute.cuda_device_index(device) == index

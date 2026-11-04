@@ -1,4 +1,5 @@
 """ROI sweep runner — sweep across sensor image plane."""
+
 from __future__ import annotations
 
 import logging
@@ -10,6 +11,7 @@ from compass.core.types import SimulationResult
 from compass.runners.single_run import SingleRunner
 
 logger = logging.getLogger(__name__)
+
 
 class ROISweepRunner:
     """Run simulations at different sensor ROI positions."""
@@ -83,9 +85,7 @@ class ROISweepRunner:
             future_to_ih = {}
             for ih in image_heights:
                 cra = ROISweepRunner._interpolate_cra(ih, cra_table)
-                future = executor.submit(
-                    ROISweepRunner._run_single_roi, config, ih, cra
-                )
+                future = executor.submit(ROISweepRunner._run_single_roi, config, ih, cra)
                 future_to_ih[future] = ih
 
             for future in as_completed(future_to_ih):

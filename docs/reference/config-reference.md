@@ -205,8 +205,8 @@ compute:
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `backend` | str | `"auto"` | `"auto"`, `"cuda"`, `"cpu"`, `"mps"` |
-| `gpu_id` | int | `0` | GPU device index |
-| `num_workers` | int | `4` | Worker threads for parallel tasks |
+| `gpu_id` | int | `0` | CUDA device index used when CUDA is selected (`auto` or `cuda`) |
+| `num_workers` | int | `4` | Reserved for future parallel execution; currently unused |
 
 ## Hydra config structure
 

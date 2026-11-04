@@ -90,7 +90,8 @@ class MaterialData:
         if self.mat_type == "tabulated":
             if self._n_interp is None:
                 self._build_interpolators()
-            assert self.wavelengths is not None
+            if self.wavelengths is None:
+                raise RuntimeError(f"Material '{self.name}': tabulated data has no wavelengths")
             wl_clamped = np.clip(
                 wavelength,
                 self.wavelengths.min(),
@@ -102,8 +103,8 @@ class MaterialData:
                     f"outside data range [{self.wavelengths.min():.4f}, "
                     f"{self.wavelengths.max():.4f}], clamping."
                 )
-            assert self._n_interp is not None and callable(self._n_interp)
-            assert self._k_interp is not None and callable(self._k_interp)
+            if not (callable(self._n_interp) and callable(self._k_interp)):
+                raise RuntimeError(f"Material '{self.name}': n/k interpolators were not built")
             n = float(self._n_interp(wl_clamped))
             k = float(self._k_interp(wl_clamped))
             result = (n, max(k, 0.0))
@@ -116,8 +117,8 @@ class MaterialData:
         elif self.mat_type == "sellmeier":
             lam2 = wavelength**2
             n2 = 1.0
-            assert self.sellmeier_B is not None
-            assert self.sellmeier_C is not None
+            if self.sellmeier_B is None or self.sellmeier_C is None:
+                raise ValueError(f"Material '{self.name}': Sellmeier B and C coefficients are required")
             for B, C in zip(self.sellmeier_B, self.sellmeier_C):
                 n2 += B * lam2 / (lam2 - C)
             result = (float(np.sqrt(max(n2, 1.0))), 0.0)

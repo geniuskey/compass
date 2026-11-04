@@ -55,7 +55,9 @@ class ConeIlluminationRunner:
         )
 
         device = resolve_compute_device(
-            compute_config.get("backend", "auto"), solver_name=solver_name
+            compute_config.get("backend", "auto"),
+            solver_name=solver_name,
+            gpu_id=int(compute_config.get("gpu_id", 0)),
         )
 
         # Build pixel stack
@@ -110,11 +112,7 @@ class ConeIlluminationRunner:
                 weighted_T = np.zeros(n_wl)
                 weighted_A = np.zeros(n_wl)
 
-            if (
-                weighted_R is None
-                or weighted_T is None
-                or weighted_A is None
-            ):
+            if weighted_R is None or weighted_T is None or weighted_A is None:
                 raise RuntimeError("Weighted accumulators not initialized")
 
             if result.reflection is not None:

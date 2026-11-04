@@ -39,16 +39,10 @@ class TorcwaSolver(SolverBase):
         self._setup_precision()
 
     def _setup_precision(self) -> None:
-        """Configure numerical precision settings."""
-        try:
-            import torch
+        """Configure numerical precision settings (TF32 off on CUDA)."""
+        from compass.solvers.rcwa.stability import PrecisionManager
 
-            stability = self.config.get("stability", {})
-            if torch.cuda.is_available():
-                torch.backends.cuda.matmul.allow_tf32 = stability.get("allow_tf32", False)
-                torch.backends.cudnn.allow_tf32 = stability.get("allow_tf32", False)
-        except ImportError:
-            pass
+        PrecisionManager.configure(self.config)
 
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
         """Convert PixelStack to torcwa layer structure."""
@@ -349,7 +343,8 @@ class TorcwaSolver(SolverBase):
         """
         if self._pixel_stack is None:
             raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        assert self._source is not None
+        if self._source is None:
+            raise RuntimeError("source is not set; call setup_source() first")
 
         lx, ly = self._pixel_stack.domain_size
         pitch = self._pixel_stack.pitch
@@ -550,7 +545,10 @@ class TorcwaSolver(SolverBase):
         try:
             return self._extract_field_from_sim(sim, layer_info, component, plane, position)
         except Exception as e:
-            logger.debug(f"torcwa field reconstruction failed: {e}")
+            logger.warning(
+                f"torcwa: field reconstruction failed ({e}); returning a "
+                "permittivity-based approximation, not a solved field"
+            )
 
         # Fallback: build approximate field from permittivity
         return self._approximate_field(layer_info, component, plane, position)

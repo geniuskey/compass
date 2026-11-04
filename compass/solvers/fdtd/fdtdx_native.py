@@ -10,6 +10,8 @@ from functools import lru_cache
 
 import numpy as np
 
+from compass.compute import cuda_device_index
+
 
 @lru_cache(maxsize=16)
 def _template(
@@ -21,7 +23,7 @@ def _template(
 
     if precision != "float32":
         jax.config.update("jax_enable_x64", True)
-    target = jax.devices("gpu" if device.startswith("cuda") else "cpu")[0]
+    target = jax.devices("gpu" if device.startswith("cuda") else "cpu")[cuda_device_index(device)]
     jax.config.update("jax_default_device", target)
     config = fx.SimulationConfig(
         time=duration * 1e-6 / 299792458,

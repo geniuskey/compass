@@ -482,7 +482,10 @@ class FlaportFdtdSolver(SolverBase):
                     E_np = np.array(E)  # (nx, ny, nz, 3)
                     return self._slice_field(E_np, component, plane, position)
             except Exception as e:
-                logger.debug(f"fdtd_flaport: grid field extraction failed: {e}")
+                logger.warning(
+                    f"fdtd_flaport: grid field extraction failed ({e}); falling back "
+                    "to a permittivity-based approximation, not a solved field"
+                )
 
         # Fallback: approximate from permittivity
         if self._last_eps_3d is not None:

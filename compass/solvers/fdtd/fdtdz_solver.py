@@ -84,7 +84,7 @@ class FdtdzSolver(SolverBase):
         if not _JAX_AVAILABLE:
             return
         try:
-            if self.device == "cuda":
+            if self.device.startswith("cuda"):
                 # JAX will use GPU if available
                 jax.config.update("jax_platform_name", "gpu")
                 logger.info("fdtdz: configured JAX for GPU")

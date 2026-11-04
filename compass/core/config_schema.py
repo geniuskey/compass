@@ -260,9 +260,15 @@ class SourceConfig(StrictModel):
 
 
 class ComputeConfig(StrictModel):
+    """Compute device selection.
+
+    ``gpu_id`` selects the CUDA device when CUDA is used. ``num_workers`` is
+    reserved for future parallel execution and is not used yet.
+    """
+
     backend: Literal["auto", "cuda", "cpu", "mps"] = "auto"
-    gpu_id: int = 0
-    num_workers: int = 4
+    gpu_id: int = Field(default=0, ge=0)
+    num_workers: int = Field(default=4, ge=1)
 
 
 class CompassConfig(BaseModel):
