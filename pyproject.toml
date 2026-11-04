@@ -35,6 +35,8 @@ rcwa = [
     "meent>=0.12.0",
     "fmmax>=1.7.1",
     "jax>=0.6.2",
+    # meent's JAX backend imports optax (meent.on_jax.optimizer).
+    "optax>=0.2",
 ]
 fdtd = [
     # flaport FDTD. The other FDTD backends are not pip-installable from here:

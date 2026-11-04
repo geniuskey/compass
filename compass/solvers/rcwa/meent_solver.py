@@ -43,7 +43,8 @@ def _dfs_work_grid_shape(shape_yx, fourier_order, enhanced_dfs):
 def _to_numpy(a) -> np.ndarray:
     """Convert a NumPy/JAX/torch array to NumPy."""
     if hasattr(a, "detach"):
-        a = a.detach().cpu().numpy()
+        # meent's torch backend returns conjugate-view tensors (e.g. kx).
+        a = a.detach().resolve_conj().cpu().numpy()
     return np.asarray(a)
 
 
