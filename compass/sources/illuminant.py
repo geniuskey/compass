@@ -14,6 +14,28 @@ from scipy.interpolate import interp1d
 
 logger = logging.getLogger(__name__)
 
+
+# CIE daylight basis functions S0, S1, S2 (CIE 015), 380-780 nm in 10 nm steps.
+_CIE_D_WL_NM = np.arange(380.0, 781.0, 10.0)
+_CIE_D_S0 = np.array([
+    63.4, 65.8, 94.8, 104.8, 105.9, 96.8, 113.9, 125.6, 125.5, 121.3, 121.3,
+    113.5, 113.1, 110.8, 106.5, 108.8, 105.3, 104.4, 100.0, 96.0, 95.1, 89.1,
+    90.5, 90.3, 88.4, 84.0, 85.1, 81.9, 82.6, 84.9, 81.3, 71.9, 74.3, 76.4,
+    63.3, 71.7, 77.0, 65.2, 47.7, 68.6, 65.0,
+])
+_CIE_D_S1 = np.array([
+    38.5, 35.0, 43.4, 46.3, 43.9, 37.1, 36.7, 35.9, 32.6, 27.9, 24.3, 20.1,
+    16.2, 13.2, 8.6, 6.1, 4.2, 1.9, 0.0, -1.6, -3.5, -3.5, -5.8, -7.2, -8.6,
+    -9.5, -10.9, -10.7, -12.0, -14.0, -13.6, -12.0, -13.3, -12.9, -10.6,
+    -11.6, -12.2, -10.2, -7.8, -11.2, -10.4,
+])
+_CIE_D_S2 = np.array([
+    3.0, 1.2, -1.1, -0.5, -0.7, -1.2, -2.6, -2.9, -2.8, -2.6, -2.6, -1.8,
+    -1.5, -1.3, -1.2, -1.0, -0.5, -0.3, 0.0, 0.2, 0.5, 2.1, 3.2, 4.1, 4.7,
+    5.1, 6.7, 7.3, 8.6, 9.8, 10.2, 8.3, 9.6, 8.5, 7.0, 7.6, 8.0, 6.7, 5.2,
+    7.4, 6.8,
+])
+
 # Physical constants
 H_PLANCK = 6.62607015e-34  # J·s
 C_LIGHT = 2.99792458e8  # m/s
@@ -124,54 +146,41 @@ class Illuminant:
 
     @staticmethod
     def cie_d_illuminant(temperature: float, wavelengths: np.ndarray) -> Illuminant:
-        """CIE daylight illuminant approximation.
+        """CIE daylight illuminant D_T (CIE 015 method).
 
-        Uses CIE daylight model: S(lam) = S0(lam) + M1 * S1(lam) + M2 * S2(lam).
-        Approximated here as a blackbody at the given temperature with a daylight
-        correction that boosts the blue end and applies a UV roll-off.
+        S(lam) = S0(lam) + M1 * S1(lam) + M2 * S2(lam), with the tabulated CIE
+        basis functions (10 nm steps, 380-780 nm, linearly interpolated and
+        held constant outside that range) and M1, M2 from the daylight-locus
+        chromaticity x_D(T). Normalized to a peak of 1.
 
         Args:
-            temperature: Correlated colour temperature in Kelvin.
+            temperature: Correlated colour temperature in Kelvin (4000-25000).
             wavelengths: Wavelength array in micrometers.
 
         Returns:
-            Illuminant with CIE-daylight-like spectral shape.
+            Daylight illuminant.
         """
+        if not 4000.0 <= temperature <= 25000.0:
+            raise ValueError(
+                f"CIE daylight is defined for 4000-25000 K, got {temperature} K"
+            )
         wl = np.asarray(wavelengths, dtype=np.float64)
-        # Start from blackbody
-        bb = Illuminant.blackbody(temperature, wl)
-        spectrum = bb.spectrum.copy()
-
-        # Daylight correction: slight blue boost, UV roll-off
-        xd = 0.0 if temperature <= 4000 else 1.0
         if temperature <= 7000:
-            xd = 0.244063 + 0.09911e3 / temperature + 2.9678e6 / temperature**2 - 4.6070e9 / temperature**3
+            xd = (0.244063 + 0.09911e3 / temperature + 2.9678e6 / temperature**2
+                  - 4.6070e9 / temperature**3)
         else:
-            xd = 0.237040 + 0.24748e3 / temperature + 1.9018e6 / temperature**2 - 2.0064e9 / temperature**3
+            xd = (0.237040 + 0.24748e3 / temperature + 1.9018e6 / temperature**2
+                  - 2.0064e9 / temperature**3)
         yd = -3.0 * xd**2 + 2.870 * xd - 0.275
+        m = 0.0241 + 0.2562 * xd - 0.7341 * yd
+        m1 = (-1.3515 - 1.7703 * xd + 5.9114 * yd) / m
+        m2 = (0.0300 - 31.4424 * xd + 30.0717 * yd) / m
 
-        # M coefficients
-        m1 = (-1.3515 - 1.7703 * xd + 5.9114 * yd) / (0.0241 + 0.2562 * xd - 0.7341 * yd)
-        m2 = (0.0300 - 31.4424 * xd + 30.0717 * yd) / (0.0241 + 0.2562 * xd - 0.7341 * yd)
-
-        # Approximate S0, S1, S2 basis functions as smooth curves
-        wl_nm = wl * 1000.0  # convert to nm for the model
-        s0 = np.exp(-0.5 * ((wl_nm - 560.0) / 120.0) ** 2) * 100.0 + 40.0
-        s1 = np.exp(-0.5 * ((wl_nm - 450.0) / 50.0) ** 2) * 20.0 - np.exp(
-            -0.5 * ((wl_nm - 600.0) / 60.0) ** 2
-        ) * 15.0
-        s2 = np.exp(-0.5 * ((wl_nm - 430.0) / 30.0) ** 2) * 10.0 - np.exp(
-            -0.5 * ((wl_nm - 560.0) / 40.0) ** 2
-        ) * 8.0
-
-        daylight_spd = s0 + m1 * s1 + m2 * s2
-        daylight_spd = np.maximum(daylight_spd, 0.0)
-        peak = np.max(daylight_spd)
-        if peak > 0:
-            daylight_spd = daylight_spd / peak
-
-        # Blend blackbody and daylight model (favour daylight model)
-        spectrum = 0.3 * spectrum + 0.7 * daylight_spd
+        wl_nm = wl * 1000.0
+        s0 = np.interp(wl_nm, _CIE_D_WL_NM, _CIE_D_S0)
+        s1 = np.interp(wl_nm, _CIE_D_WL_NM, _CIE_D_S1)
+        s2 = np.interp(wl_nm, _CIE_D_WL_NM, _CIE_D_S2)
+        spectrum = np.maximum(s0 + m1 * s1 + m2 * s2, 0.0)
         peak = np.max(spectrum)
         if peak > 0:
             spectrum = spectrum / peak

@@ -223,10 +223,27 @@ class PixelStack:
             # One microlens covers an N x N group of pixels; default radius
             # auto-scales to N * pitch / 2 when not explicitly set.
             sharing = max(1, int(ml_cfg.get("sharing", 1)))
-            default_r = sharing * self.pitch / 2.0
+            # `gap` is the lens-to-lens spacing; it narrows the default radius
+            # (an explicit radius_x / radius_y already includes it).
+            gap = max(0.0, float(ml_cfg.get("gap", 0.0)))
+            default_r = sharing * self.pitch / 2.0 - gap / 2.0
             radius_x = ml_cfg.get("radius_x", default_r)
             radius_y = ml_cfg.get("radius_y", default_r)
             ml_material = ml_cfg.get("material", "polymer_n1p56")
+
+            # "spherical" is the n = 2, alpha = 1 member of the superellipse
+            # family (an elliptical cap, spherical when height = radius).
+            profile_type = profile.get("type", "superellipse")
+            if profile_type == "spherical":
+                n_param, alpha_param = 2.0, 1.0
+            elif profile_type == "superellipse":
+                n_param = float(profile.get("n", 2.5))
+                alpha_param = float(profile.get("alpha", 1.0))
+            else:
+                raise ValueError(
+                    f"Unknown microlens profile type {profile_type!r}; "
+                    "expected 'superellipse' or 'spherical'"
+                )
 
             # Place one MicrolensSpec per N x N group, anchored at group center.
             rows, cols = self.unit_cell
@@ -242,9 +259,9 @@ class PixelStack:
                             radius_x=radius_x,
                             radius_y=radius_y,
                             material=ml_material,
-                            profile_type=profile.get("type", "superellipse"),
-                            n_param=profile.get("n", 2.5),
-                            alpha_param=profile.get("alpha", 1.0),
+                            profile_type=profile_type,
+                            n_param=n_param,
+                            alpha_param=alpha_param,
                             shift_x=shift_x,
                             shift_y=shift_y,
                         )

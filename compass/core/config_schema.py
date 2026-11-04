@@ -18,7 +18,7 @@ class StrictModel(BaseModel):
 
 
 class MicrolensProfileConfig(StrictModel):
-    type: str = "superellipse"
+    type: Literal["superellipse", "spherical"] = "superellipse"
     n: float = 2.5
     alpha: float = 1.0
 

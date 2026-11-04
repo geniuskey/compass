@@ -42,7 +42,17 @@ class ConeIlluminationRunner:
         source_config = config.get("source", {})
         compute_config = config.get("compute", {})
         solver_name = solver_config.get("name", "torcwa")
-        cone_config = source_config.get("cone", {})
+        cone_config = source_config.get("cone", {}) or {}
+        if cone_config.get("pupil_shape", "circular") != "circular":
+            raise NotImplementedError(
+                f"cone.pupil_shape={cone_config['pupil_shape']!r} is not implemented; "
+                "only 'circular' pupils are sampled"
+            )
+        if (source_config.get("ray_file") or {}).get("enabled", False):
+            raise NotImplementedError(
+                "source.ray_file is not wired into the runners yet; load CRA tables with "
+                "compass.sources.ray_file_reader.RayFileReader and pass them to the ROI sweep"
+            )
 
         # Build ConeIllumination from config
         sampling_cfg = cone_config.get("sampling", {})

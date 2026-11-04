@@ -102,3 +102,30 @@ class TestPlanewaveConfig:
     def test_rejects_unknown_polarization(self):
         with pytest.raises(ValueError, match="polarization"):
             PlanewaveSource(wavelengths=np.array([0.55]), polarization="te")  # type: ignore[arg-type]
+
+
+class TestMicrolensConfigFields:
+    def test_gap_narrows_default_radius(self):
+        ml = _stack({"microlens": {"gap": 0.1}}).microlenses[0]
+        assert ml.radius_x == pytest.approx(0.45) and ml.radius_y == pytest.approx(0.45)
+
+    def test_spherical_profile_is_n2_alpha1(self):
+        ml = _stack({"microlens": {"profile": {"type": "spherical", "n": 5.0}}}).microlenses[0]
+        assert (ml.n_param, ml.alpha_param) == (2.0, 1.0)
+
+    def test_unknown_profile_raises(self):
+        with pytest.raises(ValueError, match="profile type"):
+            _stack({"microlens": {"profile": {"type": "conical"}}})
+
+
+@pytest.mark.parametrize("source", [
+    {"type": "cone_illumination", "cone": {"pupil_shape": "elliptical"}},
+    {"type": "cone_illumination", "cone": {}, "ray_file": {"enabled": True}},
+])
+def test_unimplemented_cone_options_raise(source):
+    from compass.runners.cone_runner import ConeIlluminationRunner
+
+    source = {"wavelength": {"mode": "single", "value": 0.55}, **source}
+    with pytest.raises(NotImplementedError):
+        ConeIlluminationRunner.run({"pixel": {"pitch": 1.0}, "solver": {"name": "tmm"},
+                                    "source": source})

@@ -453,3 +453,15 @@ class TestSignalCalculator:
             assert sig <= wl_range + 1e-6, (
                 f"Signal {name}={sig:.6f} exceeds wavelength range {wl_range:.6f}"
             )
+
+
+def test_cie_d65_matches_cie_table():
+    """D65 from the tabulated CIE basis reproduces the published SPD."""
+    import numpy as np
+
+    from compass.sources.illuminant import Illuminant
+
+    wl = np.array([0.40, 0.46, 0.50, 0.56, 0.60, 0.70])
+    cie = np.array([82.75, 117.81, 109.35, 100.0, 90.01, 71.61])  # CIE D65, 10 nm table
+    spd = Illuminant.cie_d65(wl).spectrum
+    np.testing.assert_allclose(spd / spd[3], cie / 100.0, rtol=0.01)
