@@ -243,6 +243,10 @@ class FdtdzSolver(SolverBase):
                         trans_z,
                         pol,
                     )
+                except NotImplementedError:
+                    # Unsupported configuration (e.g. lossy media), not a
+                    # transient numerical failure: do not hide it as NaN.
+                    raise
                 except Exception as e:
                     logger.error(
                         f"fdtdz: failed at lambda={wavelength:.4f}um, pol={pol}: {e}",

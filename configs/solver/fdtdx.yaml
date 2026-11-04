@@ -6,6 +6,6 @@ solver:
   params:
     grid_spacing: 0.02      # um, ~lambda/20 for visible
     pml_layers: 10
-    time_steps: 2000
+    duration: null          # um/c; null = auto (6 x optical path + 40 x lambda_max)
     dtype: "float32"
     courant_factor: 0.5

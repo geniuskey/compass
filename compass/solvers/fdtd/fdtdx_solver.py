@@ -58,10 +58,50 @@ class FdtdxSolver(SolverBase):
     Config params (under config["params"]):
         grid_spacing: Spatial discretization in um (default: 0.02).
         pml_layers: Number of PML cells on each z boundary (default: 10).
-        time_steps: Number of FDTD time steps (default: 2000).
+        duration: Simulated time in um/c (default: auto from the stack's
+            optical path, 6 * sum(n d) + 40 * lambda_max).
+        time_steps: Alternative to duration (steps at the Courant time step).
         dtype: Float precision ("float32" or "float64", default: "float32").
         courant_factor: Courant number for time step stability (default: 0.5).
     """
+
+    def _optical_path(self, wavelength: float) -> tuple[float, float]:
+        """(sum Re(n) * d over the stack in um, max Re(n)) at ``wavelength``."""
+        if self._pixel_stack is None:
+            raise RuntimeError("Call setup_geometry() before run()")
+        path, n_max = 0.0, 1.0
+        for s in self._pixel_stack.get_layer_slices(wavelength, 16, 16):
+            n = float(np.max(np.real(np.sqrt(s.eps_grid))))
+            path += n * s.thickness
+            n_max = max(n_max, n)
+        return path, n_max
+
+    def _resolve_duration(self, params: dict, dx: float) -> float:
+        """Simulated time in um/c.
+
+        Explicit ``duration`` (um/c) or ``time_steps`` win. Otherwise the
+        duration covers the source pulse plus several round trips of the
+        stack's optical path: the old default (time_steps=2000, ~11.5 um/c
+        at dx=0.02) truncated the response of thick silicon and changed R
+        by up to 0.2.
+        """
+        if self._source is None:
+            raise RuntimeError("Call setup_source() before run()")
+        wl_min = float(np.min(self._source.wavelengths))
+        wl_max = float(np.max(self._source.wavelengths))
+        path, n_max = self._optical_path(wl_min)
+        cells_per_wl = wl_min / (n_max * dx)
+        if cells_per_wl < 10:
+            logger.warning(
+                f"fdtdx: grid_spacing={dx} um resolves λ/n = {wl_min / n_max:.3f} um with "
+                f"only {cells_per_wl:.1f} cells (n_max={n_max:.2f}); expect R/T errors of "
+                "several percent for high-index layers (aim for >= 15-20 cells)"
+            )
+        if params.get("duration") is not None:
+            return float(params["duration"])
+        if params.get("time_steps") is not None:
+            return float(params["time_steps"]) * dx * self._courant_factor / np.sqrt(3)
+        return float(6.0 * path + 40.0 * wl_max)
 
     def __init__(self, config: dict, device: str = "cpu"):
         if not _JAX_AVAILABLE:
@@ -171,13 +211,18 @@ class FdtdxSolver(SolverBase):
         from compass.solvers.fdtd.fdtdx_native import solve
 
         params = self.config.get("params", {})
-        dx = self._grid_spacing
         lx, ly = self._pixel_stack.domain_size
         lo, hi = self._pixel_stack.z_range
-        nx, ny, nz = round(lx / dx), round(ly / dx), max(1, round((hi - lo) / dx))
-        duration = float(
-            params.get("duration", self._time_steps * dx * self._courant_factor / np.sqrt(3))
-        )
+        # Snap the cell size so the periodic cell is exactly lx x ly.
+        nx = max(1, round(lx / self._grid_spacing))
+        dx = lx / nx
+        ny = max(1, round(ly / dx))
+        if abs(ny * dx - ly) > 1e-6 * ly:
+            raise ValueError(
+                f"domain {lx} x {ly} um has no common cell size near {self._grid_spacing} um"
+            )
+        nz = max(1, round((hi - lo) / dx))
+        duration = self._resolve_duration(params, dx)
         self._failed_runs = []
         spectra = []
         observed = None
