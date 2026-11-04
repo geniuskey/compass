@@ -18,9 +18,11 @@ from compass.solvers.rcwa.fields import (
     FIELD_N_XY,
     FIELD_N_Z,
     FIELD_PLANES,
+    approximate_field,
     check_xy_position,
     column_heights,
     component_from_field,
+    eps_imag_weight_qe,
     integrate_photodiode_qe,
     locate_slice,
     slice_depth_samples,
@@ -385,94 +387,14 @@ class TorcwaSolver(SolverBase):
         wavelength: float,
         total_absorption: float,
     ) -> dict:
-        """Compute per-pixel QE from layer absorption profiles.
+        """Approximate per-pixel QE by eps'' weighting (fallback only).
 
-        Uses the imaginary part of permittivity in each photodiode region
-        to weight the absorption distribution. When field reconstruction
-        is available, uses Poynting vector differences; otherwise falls
-        back to eps_imag weighting.
+        See :func:`compass.solvers.rcwa.fields.eps_imag_weight_qe`; ``sim``,
+        ``torch`` and ``wavelength`` are unused and kept for API stability.
         """
         if self._pixel_stack is None:
             raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        bayer = self._pixel_stack.bayer_map
-        n_rows, n_cols = self._pixel_stack.unit_cell
-        n_pixels = n_rows * n_cols
-        if n_pixels == 0:
-            return {}
-        pitch = self._pixel_stack.pitch
-
-        # Build absorption weight per pixel from eps_imag in PD regions
-        pixel_weights = {}
-        total_weight = 0.0
-        si_z_end = max(
-            (layer.z_end for layer in self._pixel_stack.layers if layer.name == "silicon"),
-            default=0.0,
-        )
-
-        for pd in self._pixel_stack.photodiodes:
-            r, c = pd.pixel_index
-            color = pd.color
-            key = f"{color}_{r}_{c}"
-
-            # PD bounding box in absolute coordinates. PhotodiodeSpec.position
-            # is the offset from the pixel center, so shift by the pixel origin.
-            pd_cx = (c + 0.5) * pitch + pd.position[0]
-            pd_cy = (r + 0.5) * pitch + pd.position[1]
-            pd_x_min = pd_cx - pd.size[0] / 2
-            pd_x_max = pd_cx + pd.size[0] / 2
-            pd_y_min = pd_cy - pd.size[1] / 2
-            pd_y_max = pd_cy + pd.size[1] / 2
-            # position[2] is the PD-center depth below the silicon top surface
-            pd_cz = si_z_end - pd.position[2]
-            pd_z_min = pd_cz - pd.size[2] / 2
-            pd_z_max = pd_cz + pd.size[2] / 2
-
-            weight = 0.0
-            for s in layer_slices:
-                # Check z overlap with photodiode
-                z_overlap_min = max(s.z_start, pd_z_min)
-                z_overlap_max = min(s.z_end, pd_z_max)
-                if z_overlap_max <= z_overlap_min:
-                    continue
-
-                dz = z_overlap_max - z_overlap_min
-                eps = s.eps_grid
-                # eps grids are indexed [row=y, col=x] (shape (ny, nx))
-                ny_s, nx_s = eps.shape
-
-                # Map PD xy (domain coordinates in [0, lx) x [0, ly)) to grid indices
-                lx, ly = self._pixel_stack.domain_size
-                ix_min = max(0, int((pd_x_min / lx) * nx_s))
-                ix_max = min(nx_s, int(np.ceil((pd_x_max / lx) * nx_s)))
-                iy_min = max(0, int((pd_y_min / ly) * ny_s))
-                iy_max = min(ny_s, int(np.ceil((pd_y_max / ly) * ny_s)))
-
-                if ix_max <= ix_min or iy_max <= iy_min:
-                    continue
-
-                # Absorption weight = integral of eps_imag over PD volume
-                eps_region = eps[iy_min:iy_max, ix_min:ix_max]
-                eps_imag_mean = float(np.mean(np.imag(eps_region)))
-                weight += eps_imag_mean * dz * (ix_max - ix_min) * (iy_max - iy_min) / (nx_s * ny_s)
-
-            pixel_weights[key] = max(weight, 0.0)
-            total_weight += max(weight, 0.0)
-
-        # Distribute total absorption proportionally; normalize per pixel area
-        # (QE convention: absorbed power / power incident on that pixel).
-        qe_per_pixel = {}
-        if total_weight > 0:
-            for key, w in pixel_weights.items():
-                qe_per_pixel[key] = min(1.0, total_absorption * (w / total_weight) * n_pixels)
-        else:
-            # Fallback: uniform stack — every pixel sees the cell-average absorption
-            for r in range(n_rows):
-                for c in range(n_cols):
-                    color = bayer[r][c]
-                    key = f"{color}_{r}_{c}"
-                    qe_per_pixel[key] = total_absorption
-
-        return qe_per_pixel
+        return eps_imag_weight_qe(self._pixel_stack, layer_slices, total_absorption)
 
     FIELD_COMPONENTS = FIELD_COMPONENTS
     FIELD_PLANES = FIELD_PLANES
@@ -587,93 +509,12 @@ class TorcwaSolver(SolverBase):
         plane,
         position,
     ) -> np.ndarray:
-        """Build approximate field distribution from permittivity profile.
-
-        Models field intensity as roughly proportional to exp(-alpha*z)
-        where alpha depends on the imaginary part of the permittivity.
-        """
+        """Permittivity-based fallback map (see :func:`fields.approximate_field`)."""
         if self._pixel_stack is None:
             raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        nz = len(layer_info)
-        nx_out, ny_out = 64, 64
-        lx, ly = self._pixel_stack.domain_size
-
-        if plane == "xy":
-            # Single z-slice: find the layer
-            z_accum = 0.0
-            for s in layer_info:
-                if z_accum + s.thickness >= position:
-                    eps = s.eps_grid
-                    from scipy.ndimage import zoom
-
-                    target_shape = (nx_out, ny_out)
-                    if eps.shape != target_shape:
-                        zx = target_shape[0] / eps.shape[0]
-                        zy = target_shape[1] / eps.shape[1]
-                        if component == "|E|2":
-                            return np.asarray(np.abs(zoom(np.real(eps), (zx, zy), order=1)))
-                        else:
-                            return np.asarray(zoom(np.real(eps), (zx, zy), order=1))
-                    if component == "|E|2":
-                        return np.asarray(np.abs(np.real(eps)))
-                    return np.asarray(np.real(eps))
-                z_accum += s.thickness
-            return np.zeros((nx_out, ny_out))
-
-        elif plane == "xz":
-            # Build xz cross-section at y=position
-            field_2d = np.zeros((nx_out, nz))
-            for zi, s in enumerate(layer_info):
-                eps = s.eps_grid
-                ny_s = eps.shape[0]
-                y_idx = min(int(((position + ly / 2) / ly) * ny_s), ny_s - 1)
-                y_idx = max(0, y_idx)
-                col = eps[y_idx, :]
-                # Resample to nx_out
-                x_orig = np.linspace(0, 1, len(col))
-                x_new = np.linspace(0, 1, nx_out)
-                field_2d[:, zi] = np.interp(x_new, x_orig, np.abs(np.imag(col)) + 1e-10)
-
-            if component == "|E|2":
-                # Approximate |E|^2 decay through absorbing media
-                if self._last_wavelength is None:
-                    raise RuntimeError("no wavelength data; run a simulation first")
-                k0 = 2 * np.pi / self._last_wavelength
-                for xi in range(nx_out):
-                    intensity = 1.0
-                    for zi in range(nz):
-                        alpha = 2 * k0 * field_2d[xi, zi]
-                        dz = layer_info[zi].thickness
-                        intensity *= np.exp(-alpha * dz)
-                        field_2d[xi, zi] = intensity
-            return field_2d
-
-        elif plane == "yz":
-            field_2d = np.zeros((ny_out, nz))
-            for zi, s in enumerate(layer_info):
-                eps = s.eps_grid
-                nx_s = eps.shape[1]
-                x_idx = min(int(((position + lx / 2) / lx) * nx_s), nx_s - 1)
-                x_idx = max(0, x_idx)
-                col = eps[:, x_idx]
-                y_orig = np.linspace(0, 1, len(col))
-                y_new = np.linspace(0, 1, ny_out)
-                field_2d[:, zi] = np.interp(y_new, y_orig, np.abs(np.imag(col)) + 1e-10)
-
-            if component == "|E|2":
-                if self._last_wavelength is None:
-                    raise RuntimeError("no wavelength data; run a simulation first")
-                k0 = 2 * np.pi / self._last_wavelength
-                for yi in range(ny_out):
-                    intensity = 1.0
-                    for zi in range(nz):
-                        alpha = 2 * k0 * field_2d[yi, zi]
-                        dz = layer_info[zi].thickness
-                        intensity *= np.exp(-alpha * dz)
-                        field_2d[yi, zi] = intensity
-            return field_2d
-
-        return np.zeros((64, 64))
+        return approximate_field(
+            self._pixel_stack, layer_info, self._last_wavelength, component, plane, position
+        )
 
     @staticmethod
     def _component_from_field(E: list, H: list, component: str) -> np.ndarray:

@@ -1,6 +1,6 @@
 """Validate RCWA solved-field extraction and field-based QE on real backends.
 
-Executes torcwa and grcwa (each skipped when not installed). Checks that
+Executes torcwa, grcwa, meent and fmmax (each skipped when not installed). Checks that
 get_field_distribution returns reconstructed fields, not the permittivity
 approximation, by testing physical invariants:
 
@@ -21,13 +21,25 @@ from compass.solvers.rcwa.fields import FIELD_N_XY, FIELD_N_Z
 
 N, K, D, WL = 1.5, 0.05, 0.3, 0.55
 
-SLAB_PARAMS = {"torcwa": {"fourier_order": [1, 1]}, "grcwa": {"nG": 9}}
-PIXEL_PARAMS = {"torcwa": {"fourier_order": [3, 3]}, "grcwa": {"nG": 49}}
-BACKENDS = pytest.mark.parametrize("backend", ["torcwa", "grcwa"])
+SLAB_PARAMS = {
+    "torcwa": {"fourier_order": [1, 1]},
+    "grcwa": {"nG": 9},
+    "meent": {"fourier_order": [1, 1]},
+    "fmmax": {"fourier_order": [1, 1]},
+}
+PIXEL_PARAMS = {
+    "torcwa": {"fourier_order": [3, 3]},
+    "grcwa": {"nG": 49},
+    "meent": {"fourier_order": [3, 3]},
+    "fmmax": {"fourier_order": [3, 3]},
+}
+BACKENDS = pytest.mark.parametrize("backend", ["torcwa", "grcwa", "meent", "fmmax"])
 
 
 def _require(backend):
     pytest.importorskip(backend)
+    if backend == "fmmax":
+        pytest.importorskip("jax")
     importlib.import_module(f"compass.solvers.rcwa.{backend}_solver")
 
 
@@ -145,3 +157,35 @@ def test_bsi_pixel_qe_is_physical(backend):
     assert np.argmax(qe["R_0_0"]) == 2
     # Color filtering: off-band QE well below in-band QE.
     assert qe["B_1_1"][1] < 0.3 * qe["B_1_1"][0]
+
+
+@pytest.mark.parametrize("backend", ["meent", "fmmax"])
+def test_li_rule_backends_pin_slice_absorption_to_flux(backend, caplog):
+    """meent/fmmax (Li-rule factorization): absorbed power per slice is the
+    exact flux difference, so the field-based total equals 1 - R - T."""
+    import logging
+
+    with caplog.at_level(logging.DEBUG, logger="compass.solvers.rcwa.fields"):
+        _, result = _bsi_solver(backend)
+    lines = [r.getMessage() for r in caplog.records if "field-integrated absorption" in r.message]
+    assert lines, "expected the integrator's debug summary"
+    total = float(lines[-1].split("absorption ")[1].split(",")[0])
+    assert total == pytest.approx(result.absorption[0], abs=0.01)
+
+
+def test_rcwa_backends_agree_on_bsi_qe():
+    """Field-integrated per-pixel QE agrees across the RCWA backends."""
+    available = []
+    for backend in ("torcwa", "meent", "fmmax"):
+        try:
+            _require(backend)
+        except pytest.skip.Exception:
+            continue
+        available.append(backend)
+    if len(available) < 2:
+        pytest.skip("need at least two RCWA backends")
+    qes = {b: _bsi_solver(b)[1].qe_per_pixel for b in available}
+    ref = qes[available[0]]
+    for b in available[1:]:
+        for key, val in ref.items():
+            assert qes[b][key][0] == pytest.approx(val[0], abs=0.05), (b, key)

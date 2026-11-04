@@ -154,11 +154,16 @@ solver-specific. The most important difference:
 Every result records `metadata["qe_method"]` (`field_integration`,
 `eps_imag_weight`, `eps_imag_weight_fallback`, `tmm_1d_analytic`) so
 cross-solver QE differences can be attributed to post-processing methodology
-rather than solver accuracy. **torcwa** and **grcwa** integrate
-`k0·ε''·|E|²` over each photodiode volume (`field_integration`, shared
-implementation in `compass/solvers/rcwa/fields.py`) and report
-`eps_imag_weight_fallback` only if field reconstruction fails; meent, fmmax and
-fdtd_flaport still use the geometric `eps_imag_weight` approximation.
+rather than solver accuracy. All four RCWA solvers (**torcwa**, **grcwa**,
+**meent**, **fmmax**) integrate `k0·ε''·|E|²` over each photodiode volume
+(`field_integration`, shared implementation in
+`compass/solvers/rcwa/fields.py`) and report `eps_imag_weight_fallback` only if
+field reconstruction fails. meent and fmmax factorize the permittivity with
+Li's inverse / normal-vector rules, under which the truncated E series rings
+at metal and DTI interfaces; they therefore reconstruct `E = D/ε(r)` and pin
+each slice's absorbed power to the exact Fourier-space Poynting flux difference,
+so only the in-plane distribution comes from the real-space field.
+fdtd_flaport still uses the geometric `eps_imag_weight` approximation.
 
 ### solver.stability: StabilityConfig
 

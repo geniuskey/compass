@@ -16,6 +16,18 @@ from compass.compute import cuda_device_index
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
+from compass.solvers.rcwa.fields import (
+    FIELD_N_XY,
+    approximate_field,
+    check_xy_position,
+    column_heights,
+    component_from_field,
+    eps_imag_weight_qe,
+    integrate_photodiode_qe,
+    locate_slice,
+    slice_depth_samples,
+    validate_field_request,
+)
 from compass.sources.planewave import PlanewaveSource
 
 logger = logging.getLogger(__name__)
@@ -27,6 +39,131 @@ _FORMULATION_MAP = {
     "jones": "JONES",
     "jonesdirect": "JONES_DIRECT",
 }
+
+
+class _FmmaxFieldSampler:
+    """Field evaluation inside a solved fmmax layer stack.
+
+    Interior amplitudes come from fmmax's ``stack_s_matrices_interior`` /
+    ``stack_amplitudes_interior``; fields are evaluated with a direct
+    Fourier sum at arbitrary points, batched over depth.
+
+    Conventions, validated against the flux and Poynting-theorem invariants:
+
+    * fmmax z points down from each layer's top (like torcwa/grcwa) and
+      uses ``exp(-i omega t)``; layer 0 / N+1 are the semi-infinite air
+      media, so slice ``i`` is fmmax layer ``i + 1``.
+    * The incident amplitude is rescaled so ``Re(E x H*)`` integrates to
+      ``cos(theta)`` over a z-plane (fmmax reports ``0.5 Re(E x H*)``),
+      i.e. |E0| = 1 as in the other RCWA adapters.
+    * fmmax samples the permittivity at cell centres, matching COMPASS.
+    * The vector formulations factorize the permittivity with normal-vector
+      (Li) rules, under which the truncated E series rings at metal /
+      high-contrast interfaces. The real-space E is reconstructed from the
+      displacement, ``E = D / eps(r)``, using fmmax's own transverse and zz
+      permittivity matrices.
+    """
+
+    def __init__(self, layer_solve_results, layer_thicknesses, forward, power,
+                 cos_theta, eps_grids, lx, ly):
+        import jax.numpy as jnp
+        from fmmax import basis, fields, scattering
+
+        self._jnp = jnp
+        self._fields = fields
+        self.lsr = layer_solve_results
+        self.thick = [float(t) for t in layer_thicknesses]
+        self.eps_grids = eps_grids  # COMPASS [y, x] grids, slice order (top first)
+        self.lx, self.ly = lx, ly
+        scale = float(np.sqrt(cos_theta / (2.0 * power)))
+        fwd = forward * scale
+        interior = scattering.stack_s_matrices_interior(
+            layer_solve_results, [jnp.asarray(t) for t in layer_thicknesses]
+        )
+        self.amps = fields.stack_amplitudes_interior(interior, fwd, jnp.zeros_like(fwd))
+        lsr0 = layer_solve_results[0]
+        self.k = np.asarray(basis.transverse_wavevectors(
+            in_plane_wavevector=lsr0.in_plane_wavevector,
+            primitive_lattice_vectors=lsr0.primitive_lattice_vectors,
+            expansion=lsr0.expansion,
+        ))  # (n_terms, 2)
+
+    def fourier(self, slice_index: int, depth_um):
+        """Fourier coefficients ([ex, ey, ez], [hx, hy, hz], [dx, dy, dz]), each (n_depth, N)."""
+        jnp = self._jnp
+        L = slice_index + 1
+        lsr = self.lsr[L]
+        z = jnp.asarray(np.atleast_1d(np.asarray(depth_um, dtype=float)))
+        fwd_start, bwd_end = self.amps[L]
+        fwd, bwd = self._fields.colocate_amplitudes(
+            fwd_start, bwd_end, z_offset=z, layer_solve_result=lsr,
+            layer_thickness=jnp.asarray(self.thick[L]),
+        )
+        (ex, ey, ez), (hx, hy, hz) = self._fields.fields_from_wave_amplitudes(fwd, bwd, lsr)
+        n = ex.shape[-2]
+        d_t = lsr.transverse_permittivity_matrix @ jnp.concatenate([ex, ey], axis=-2)
+        dz = lsr.z_permittivity_matrix @ ez
+
+        def np_t(a):
+            return np.asarray(a).T
+
+        return (
+            [np_t(ex), np_t(ey), np_t(ez)],
+            [np_t(hx), np_t(hy), np_t(hz)],
+            [np_t(d_t[..., :n, :]), np_t(d_t[..., n:, :]), np_t(dz)],
+        )
+
+    def power_down(self, slice_index: int, depth_um: float) -> float:
+        """Cell-averaged downward Re(E x H*) (incident flux = cos(theta))."""
+        (ex, ey, _), (hx, hy, _), _ = self.fourier(slice_index, np.array([depth_um]))
+        return float(np.sum(np.real(ex * np.conj(hy) - ey * np.conj(hx))))
+
+    def _eps_at(self, slice_index: int, x_um, y_um) -> np.ndarray:
+        eps = self.eps_grids[slice_index]
+        n0, n1 = eps.shape
+        ix = np.floor(np.asarray(x_um) / self.lx * n1).astype(int) % n1
+        iy = np.floor(np.asarray(y_um) / self.ly * n0).astype(int) % n0
+        return np.asarray(eps[iy, ix])
+
+    def _phase(self, x_um, y_um) -> np.ndarray:
+        x = np.asarray(x_um, dtype=float)
+        y = np.asarray(y_um, dtype=float)
+        kx = self.k[:, 0].reshape((-1,) + (1,) * x.ndim)
+        ky = self.k[:, 1].reshape((-1,) + (1,) * x.ndim)
+        return np.asarray(np.exp(1j * (kx * x + ky * y)))  # (N, *points)
+
+    def e2_on_grid(self, slice_index: int, depths_um, x_um, y_um) -> np.ndarray:
+        """Sum over depths of |E|^2 = |D/eps|^2 on the grid, indexed [y, x]."""
+        _, _, fd = self.fourier(slice_index, depths_um)
+        Y, X = np.meshgrid(np.asarray(y_um), np.asarray(x_um), indexing="ij")
+        phase = self._phase(X, Y).reshape(len(self.k), -1)  # (N, n_pts)
+        total = np.zeros(phase.shape[1])
+        for c in fd:
+            total += np.sum(np.abs(c @ phase) ** 2, axis=0)
+        inv_eps2 = 1.0 / np.abs(self._eps_at(slice_index, X, Y)) ** 2
+        return np.asarray(total.reshape(X.shape) * inv_eps2)
+
+    def at_points(
+        self, slice_index: int, depth_um: float, x_um, y_um, displacement: bool = True
+    ):
+        """Fields ([Ex, Ey, Ez], [Hx, Hy, Hz]) at points (x, y) in um.
+
+        With ``displacement`` (default) E is ``D / eps(r)``; otherwise the
+        raw truncated E series, whose plane average of ``Re(E x H*)`` equals
+        the Fourier-space flux exactly (used for ``Sz``).
+        """
+        fe, fh, fd = self.fourier(slice_index, np.array([depth_um]))
+        phase = self._phase(x_um, y_um)
+        shape = (-1,) + (1,) * (phase.ndim - 1)
+
+        def series(c):
+            return np.sum(c[0].reshape(shape) * phase, axis=0)
+
+        H = [series(c) for c in fh]
+        if not displacement:
+            return [series(c) for c in fe], H
+        eps = self._eps_at(slice_index, x_um, y_um)
+        return [series(c) / eps for c in fd], H
 
 
 class FmmaxSolver(SolverBase):
@@ -46,7 +183,10 @@ class FmmaxSolver(SolverBase):
         super().__init__(config, device)
         self._source: PlanewaveSource | None = None
         self._last_layer_slices: list | None = None
+        self._last_layer_info: list | None = None
+        self._last_sampler: _FmmaxFieldSampler | None = None
         self._last_wavelength: float | None = None
+        self._qe_fallback_used = False
 
         params = config.get("params", {})
         self._fmm_formulation = params.get("fmm_formulation", "jones")
@@ -120,6 +260,9 @@ class FmmaxSolver(SolverBase):
         target = "gpu" if self.device.startswith("cuda") else "cpu"
         selected = jax.devices(target)[cuda_device_index(self.device)]
         jax.config.update("jax_default_device", selected)
+        if self._dtype_str == "complex128" and not jax.config.read("jax_enable_x64"):
+            # Without x64 JAX silently downcasts complex128 to complex64.
+            jax.config.update("jax_enable_x64", True)
 
         params = self.config.get("params", {})
         fourier_order = params.get("fourier_order", [9, 9])
@@ -133,7 +276,11 @@ class FmmaxSolver(SolverBase):
             "complex64": jnp.complex64,
             "complex128": jnp.complex128,
         }
-        jax_dtype = dtype_map.get(self._dtype_str, jnp.complex64)
+        if self._dtype_str not in dtype_map:
+            raise ValueError(
+                f"fmmax dtype must be one of {sorted(dtype_map)}, got {self._dtype_str!r}"
+            )
+        jax_dtype = dtype_map[self._dtype_str]
 
         lx, ly = self._pixel_stack.domain_size
         # Zero disables automatic oversampling for independent grid/order studies.
@@ -154,6 +301,7 @@ class FmmaxSolver(SolverBase):
 
         pol_runs = self._source.get_polarization_runs()
         self._failed_runs = []
+        self._qe_fallback_used = False
         all_qe: dict[str, list[float]] = {}
         all_R: list[float] = []
         all_T: list[float] = []
@@ -170,8 +318,9 @@ class FmmaxSolver(SolverBase):
             qe_pol_accum: dict[str, list[float]] = {}
 
             for pol in pol_runs:
+                sampler: _FmmaxFieldSampler | None = None
                 try:
-                    R, T, A = self._solve_single(
+                    R, T, A, sampler = self._solve_single(
                         wavelength=wavelength,
                         layer_slices=layer_slices,
                         pol=pol,
@@ -193,12 +342,16 @@ class FmmaxSolver(SolverBase):
                 A_pol.append(A)
 
                 self._last_layer_slices = layer_slices
+                self._last_layer_info = list(reversed(layer_slices))
                 self._last_wavelength = wavelength
+                self._last_sampler = sampler
 
                 if np.isnan(A):
                     pixel_qe = self._nan_pixel_qe()
+                elif not self._pixel_stack.photodiodes:
+                    pixel_qe = {}
                 else:
-                    pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
+                    pixel_qe = self._compute_qe_with_fallback(sampler, layer_slices, wavelength, A)
                 for key, val in pixel_qe.items():
                     qe_pol_accum.setdefault(key, []).append(val)
 
@@ -239,7 +392,11 @@ class FmmaxSolver(SolverBase):
                 "grid_multiplier": grid_multiplier,
                 "num_terms": expansion.num_terms,
                 "dtype": self._dtype_str,
-                "qe_method": "eps_imag_weight",
+                # Field integration vs. the eps''-weight approximation is a
+                # QE methodology difference, not solver accuracy.
+                "qe_method": (
+                    "eps_imag_weight_fallback" if self._qe_fallback_used else "field_integration"
+                ),
                 **self._failure_metadata(),
             },
         )
@@ -256,7 +413,7 @@ class FmmaxSolver(SolverBase):
         ly: float,
         jnp,
         fmm,
-    ) -> tuple[float, float, float]:
+    ) -> tuple[float, float, float, _FmmaxFieldSampler | None]:
         """Run fmmax for a single wavelength and polarization.
 
         Args:
@@ -272,7 +429,8 @@ class FmmaxSolver(SolverBase):
             fmm: fmmax.fmm module reference.
 
         Returns:
-            Tuple of (R, T, A) as floats.
+            Tuple of (R, T, A) as floats and a field sampler (None if the
+            interior field setup failed).
         """
         from fmmax import basis, fields, scattering
 
@@ -355,7 +513,77 @@ class FmmaxSolver(SolverBase):
         T = float(jnp.sum(transmitted_flux)) / power
         A = 1.0 - R - T
 
-        return R, T, A
+        try:
+            cos_theta = float(np.cos(self._source.theta_rad)) if self._source else 1.0
+            sampler: _FmmaxFieldSampler | None = _FmmaxFieldSampler(
+                layer_solve_results, layer_thicknesses, forward, power, cos_theta,
+                [s.eps_grid for s in reversed(layer_slices)], lx, ly,
+            )
+        except Exception as e:  # field data unavailable -> QE fallback
+            logger.warning(f"fmmax: field reconstruction setup failed ({e})")
+            sampler = None
+        return R, T, A, sampler
+
+    def _compute_qe_with_fallback(
+        self,
+        sampler: _FmmaxFieldSampler | None,
+        layer_slices: list,
+        wavelength: float,
+        total_absorption: float,
+    ) -> dict[str, float]:
+        """Field-integrated QE, falling back to eps''-weighting on failure."""
+        try:
+            if sampler is None:
+                raise RuntimeError("no field data")
+            return self._compute_per_pixel_qe_fields(sampler, wavelength, total_absorption)
+        except Exception as e:
+            logger.warning(
+                f"fmmax: field-based QE failed at λ={wavelength:.4f}um ({e}); "
+                "falling back to eps''-weight approximation"
+            )
+            self._qe_fallback_used = True
+            return self._compute_per_pixel_qe(layer_slices, wavelength, total_absorption)
+
+    def _compute_per_pixel_qe_fields(
+        self,
+        sampler: _FmmaxFieldSampler,
+        wavelength: float,
+        total_absorption: float,
+    ) -> dict[str, float]:
+        """Per-pixel QE by integrating eps'' |E|^2 over photodiode volumes.
+
+        Uses the QE definition shared with the other RCWA adapters
+        (:func:`compass.solvers.rcwa.fields.integrate_photodiode_qe`); each
+        slice's total is pinned to the exact Fourier-space flux difference.
+        """
+        if self._pixel_stack is None or self._source is None:
+            raise RuntimeError("Call setup_geometry() and setup_source() before run()")
+        if self._last_layer_info is None:
+            raise RuntimeError("no layer data recorded")
+        lx, ly = self._pixel_stack.domain_size
+        cos_theta = float(np.cos(self._source.theta_rad))
+
+        def e2_dz(li: int, s) -> np.ndarray:
+            n0, n1 = s.eps_grid.shape  # [y, x]
+            depths, dz = slice_depth_samples(s.thickness)
+            x = (np.arange(n1) + 0.5) * (lx / n1)  # COMPASS cell centres
+            y = (np.arange(n0) + 0.5) * (ly / n0)
+            return sampler.e2_on_grid(li, depths, x, y) * dz
+
+        def absorbed(li: int, s) -> float:
+            top = sampler.power_down(li, 0.0)
+            return (top - sampler.power_down(li, s.thickness)) / cos_theta
+
+        return integrate_photodiode_qe(
+            self._pixel_stack,
+            self._last_layer_info,
+            wavelength,
+            self._source.theta_rad,
+            e2_dz,
+            total_absorption,
+            "fmmax",
+            slice_absorption=absorbed,
+        )
 
     def _compute_per_pixel_qe(
         self,
@@ -363,80 +591,10 @@ class FmmaxSolver(SolverBase):
         wavelength: float,
         total_absorption: float,
     ) -> dict[str, float]:
-        """Compute per-pixel QE using eps_imag weighting in PD regions.
-
-        Args:
-            layer_slices: Layer slices from pixel_stack.
-            wavelength: Current wavelength in um.
-            total_absorption: Total absorption for this wavelength.
-
-        Returns:
-            Dictionary mapping pixel key to QE value.
-        """
+        """Approximate per-pixel QE by eps'' weighting (fallback only)."""
         if self._pixel_stack is None:
             raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        bayer = self._pixel_stack.bayer_map
-        n_rows, n_cols = self._pixel_stack.unit_cell
-        n_pixels = n_rows * n_cols
-        if n_pixels == 0:
-            return {}
-        lx, ly = self._pixel_stack.domain_size
-
-        pixel_weights: dict[str, float] = {}
-        total_weight = 0.0
-
-        pitch = self._pixel_stack.pitch
-        si_z_end = max(
-            (layer.z_end for layer in self._pixel_stack.layers if layer.name == "silicon"),
-            default=0.0,
-        )
-        for pd in self._pixel_stack.photodiodes:
-            r, c = pd.pixel_index
-            key = f"{pd.color}_{r}_{c}"
-            # position[2] is the PD-center depth below the silicon top surface
-            pd_cz = si_z_end - pd.position[2]
-            pd_z_min = pd_cz - pd.size[2] / 2
-            pd_z_max = pd_cz + pd.size[2] / 2
-
-            # PhotodiodeSpec.position is the offset from the pixel center;
-            # convert to absolute domain coordinates ([0, lx) x [0, ly)).
-            pd_cx = (c + 0.5) * pitch + pd.position[0]
-            pd_cy = (r + 0.5) * pitch + pd.position[1]
-
-            weight = 0.0
-            for s in layer_slices:
-                z_overlap_min = max(s.z_start, pd_z_min)
-                z_overlap_max = min(s.z_end, pd_z_max)
-                if z_overlap_max <= z_overlap_min:
-                    continue
-                dz = z_overlap_max - z_overlap_min
-                # eps grids are indexed [row=y, col=x] (shape (ny, nx))
-                ny_s, nx_s = s.eps_grid.shape
-                ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx_s))
-                ix_max = min(nx_s, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx_s)))
-                iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny_s))
-                iy_max = min(ny_s, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny_s)))
-                if ix_max <= ix_min or iy_max <= iy_min:
-                    continue
-                eps_region = s.eps_grid[iy_min:iy_max, ix_min:ix_max]
-                weight += float(np.mean(np.imag(eps_region))) * dz
-
-            pixel_weights[key] = max(weight, 0.0)
-            total_weight += max(weight, 0.0)
-
-        # Per-pixel QE convention: absorbed power normalized by the power
-        # incident on that pixel's own area (shared with the torcwa solver).
-        qe_per_pixel: dict[str, float] = {}
-        if total_weight > 0:
-            for key, w in pixel_weights.items():
-                qe_per_pixel[key] = min(1.0, total_absorption * (w / total_weight) * n_pixels)
-        else:
-            # Uniform stack: every pixel sees the cell-average absorption
-            for r in range(n_rows):
-                for c in range(n_cols):
-                    key = f"{bayer[r][c]}_{r}_{c}"
-                    qe_per_pixel[key] = total_absorption
-        return qe_per_pixel
+        return eps_imag_weight_qe(self._pixel_stack, layer_slices, total_absorption)
 
     def get_field_distribution(
         self,
@@ -444,69 +602,75 @@ class FmmaxSolver(SolverBase):
         plane: str = "xz",
         position: float = 0.0,
     ) -> np.ndarray:
-        """Extract approximate 2D field from permittivity profile.
+        """Extract a 2D solved-field slice from the last simulation.
 
-        This provides a Beer-Lambert approximation of the field distribution
-        based on the imaginary part of permittivity, as full field extraction
-        from fmmax requires additional computation.
+        Same conventions as the other RCWA adapters: x, y in
+        ``[0, lx) x [0, ly)``, z up from the stack bottom, |E0| = 1, and
+        ``Sz`` the Poynting z-component (negative for downward flow;
+        incident flux ``cos(theta)``). Fields belong to the last
+        polarization run. Intensities use the displacement-based
+        reconstruction ``E = D / eps``; ``Sz`` uses the raw E series so its
+        plane average is the exact Fourier-space flux.
 
         Args:
-            component: Field component ("Ex", "Ey", "Ez", "|E|2").
-            plane: Slice plane ("xy", "xz", "yz").
+            component: "Ex", "Ey", "Ez" (each |E_c|^2), "|E|2", or "Sz".
+            plane: "xy" (position = z), "xz" (position = y) or
+                "yz" (position = x), all in um.
             position: Position along the normal axis in um.
 
         Returns:
-            2D field array.
+            2D array: ``(nx, ny)`` for "xy", ``(nx, nz)`` for "xz",
+            ``(ny, nz)`` for "yz", with z increasing upward.
+
+        Raises:
+            ValueError: Unknown component/plane, or an "xy" position outside
+                the simulated stack.
         """
-        if self._last_layer_slices is None:
+        validate_field_request(component, plane)
+        if self._last_layer_info is None or self._pixel_stack is None:
             logger.warning("fmmax: no simulation data, returning zeros")
-            return np.zeros((64, 64))
+            return np.zeros((FIELD_N_XY, FIELD_N_XY))
+        if plane == "xy":
+            check_xy_position(self._last_layer_info, position)
+        try:
+            if self._last_sampler is None:
+                raise RuntimeError("no field data from the last run")
+            return self._solved_field(self._last_sampler, component, plane, position)
+        except Exception as e:
+            logger.warning(
+                f"fmmax: field reconstruction failed ({e}); returning a "
+                "permittivity-based approximation, not a solved field"
+            )
+        return approximate_field(
+            self._pixel_stack, self._last_layer_info, self._last_wavelength,
+            component, plane, position,
+        )
 
-        if self._pixel_stack is None:
-            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        layer_info = self._last_layer_slices
-        _lx, ly = self._pixel_stack.domain_size
-        nz = len(layer_info)
-        nx_out, ny_out = 64, 64
-        wl = self._last_wavelength or 0.55
-        k0 = 2 * np.pi / wl
+    def _solved_field(
+        self, sampler: _FmmaxFieldSampler, component: str, plane: str, position: float
+    ) -> np.ndarray:
+        if self._pixel_stack is None or self._last_layer_info is None:
+            raise RuntimeError("no simulation data")
+        layer_info = self._last_layer_info
+        lx, ly = self._pixel_stack.domain_size
+        u = (np.arange(FIELD_N_XY) + 0.5) / FIELD_N_XY
 
-        if plane == "xz":
-            field_2d = np.zeros((nx_out, nz))
-            for zi, s in enumerate(layer_info):
-                eps = s.eps_grid
-                ny_s = eps.shape[0]
-                y_idx = max(
-                    0,
-                    min(ny_s - 1, int(((position + ly / 2) / ly) * ny_s)),
-                )
-                col = eps[y_idx, :]
-                x_orig = np.linspace(0, 1, len(col))
-                x_new = np.linspace(0, 1, nx_out)
-                field_2d[:, zi] = np.interp(x_new, x_orig, np.abs(np.imag(col)) + 1e-10)
-            if component == "|E|2":
-                for xi in range(nx_out):
-                    intensity = 1.0
-                    for zi in range(nz):
-                        alpha = 2 * k0 * field_2d[xi, zi]
-                        dz = layer_info[zi].thickness
-                        intensity *= np.exp(-alpha * dz)
-                        field_2d[xi, zi] = intensity
-            return field_2d
+        if plane == "xy":
+            li, depth = locate_slice(layer_info, position)
+            X, Y = np.meshgrid(u * lx, u * ly, indexing="ij")
+            E, H = sampler.at_points(li, depth, X, Y, displacement=component != "Sz")
+            return component_from_field(E, H, component)
 
-        elif plane == "xy":
-            z_accum = 0.0
-            for s in layer_info:
-                if z_accum + s.thickness >= position:
-                    from scipy.ndimage import zoom
-
-                    eps = s.eps_grid
-                    zx = nx_out / eps.shape[0]
-                    zy = ny_out / eps.shape[1]
-                    return np.asarray(np.abs(zoom(np.real(eps), (zx, zy), order=1)))
-                z_accum += s.thickness
-
-        return np.zeros((64, 64))
+        heights = column_heights(layer_info)
+        line = u * (lx if plane == "xz" else ly)
+        x = line if plane == "xz" else np.full_like(line, position)
+        y = np.full_like(line, position) if plane == "xz" else line
+        out = np.zeros((FIELD_N_XY, len(heights)))
+        for zi, z in enumerate(heights):
+            li, depth = locate_slice(layer_info, float(z))
+            E, H = sampler.at_points(li, depth, x, y, displacement=component != "Sz")
+            out[:, zi] = component_from_field(E, H, component)
+        return out
 
 
 SolverFactory.register("fmmax", FmmaxSolver)

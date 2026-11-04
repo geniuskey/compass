@@ -14,6 +14,18 @@ from compass.compute import cuda_device_index
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
+from compass.solvers.rcwa.fields import (
+    FIELD_N_XY,
+    approximate_field,
+    check_xy_position,
+    column_heights,
+    component_from_field,
+    eps_imag_weight_qe,
+    integrate_photodiode_qe,
+    locate_slice,
+    slice_depth_samples,
+    validate_field_request,
+)
 from compass.sources.planewave import PlanewaveSource
 
 logger = logging.getLogger(__name__)
@@ -28,6 +40,183 @@ def _dfs_work_grid_shape(shape_yx, fourier_order, enhanced_dfs):
     return result
 
 
+def _to_numpy(a) -> np.ndarray:
+    """Convert a NumPy/JAX/torch array to NumPy."""
+    if hasattr(a, "detach"):
+        a = a.detach().cpu().numpy()
+    return np.asarray(a)
+
+
+class _MeentFieldSampler:
+    """Field evaluation on a solved 2D meent (enhanced TMM) object.
+
+    Mirrors meent's ``field_dist_2d`` (matching it to round-off) but caches
+    the per-layer mode coefficients and evaluates at arbitrary depths and
+    points, which the depth-resolved QE integral needs. Arrays are converted
+    to NumPy, so every meent backend is supported.
+
+    Conventions, validated against the flux and Poynting-theorem invariants:
+
+    * meent uses ``exp(+j omega t)`` and is fed ``n - ik``; its fields are
+      complex conjugates of COMPASS fields (``|E|^2`` and ``Re(E x H*)`` are
+      unchanged). Its H carries the opposite sign of the torcwa/grcwa
+      backend frame, so H is negated here: ``Re(Ex Hy* - Ey Hx*)`` is then
+      the downward power flux, and the incident flux equals ``cos(theta)``.
+    * Lengths inside meent are nm; the public methods take um.
+    * Layer ``i`` (top first) is meent layer ``i``; depth is measured down
+      from that layer's top.
+    * meent's eps sample ``(row a, col b)`` sits at ``((b + o) lx/n1,
+      (a + o) ly/n0)``, where the offset ``o`` follows from the raster
+      Fourier transform (cell centre for CFS and repeated-pixel DFS).
+      COMPASS samples cell centres, so points are shifted by ``(0.5 - o)``
+      cells before evaluation.
+    * meent factorizes the permittivity with Li's inverse rule, under which
+      the truncated E series rings strongly at metal / high-contrast
+      interfaces (the real-space ``eps''|E|^2`` integral overshoots the
+      absorbed power by 2x in a metal grid). The real-space E is therefore
+      reconstructed from the displacement, ``E = D / eps(r)``, with
+      ``D = [[eps]] E`` taken from meent's own convolution matrices.
+    """
+
+    def __init__(self, mee, fourier_type: int = 0, enhanced_dfs: bool = True):
+        wl_nm = float(np.real(_to_numpy(mee.wavelength)))
+        self.k0 = 2.0 * np.pi / wl_nm  # nm^-1
+        kx, ky = mee.get_kx_ky_vector(wavelength=mee.wavelength)
+        self.kx = _to_numpy(kx).astype(complex)
+        self.ky = _to_numpy(ky).astype(complex)
+        self.ffx, self.ffy = len(self.kx), len(self.ky)
+        self.kx_flat = np.tile(self.kx, self.ffy)  # index = iy * ffx + ix
+        self.ky_flat = np.repeat(self.ky, self.ffx)
+        self.fto = (int(mee.fto[0]), int(mee.fto[1]))
+        self.fourier_type = fourier_type
+        self.enhanced_dfs = enhanced_dfs
+        self.use_pinv = bool(getattr(mee, "use_pinv", False))
+        self.period_nm = (float(mee.period[0]), float(mee.period[1]))
+        # meent permittivity (n - ik)^2 per layer, [layer, y, x]
+        self.eps = _to_numpy(mee.ucell).astype(complex) ** 2
+        n0, n1 = self.eps.shape[1:]
+        if fourier_type == 0:
+            work = _dfs_work_grid_shape([n0, n1], list(self.fto), enhanced_dfs)
+            offset_y, offset_x = ((1.0 - n / w) / 2.0 for n, w in zip((n0, n1), work, strict=True))
+        else:
+            offset_y = offset_x = 0.5
+        # COMPASS -> meent shift (nm) of the sample frame
+        self._shift = (
+            (0.5 - offset_x) * self.period_nm[0] / n1,
+            (0.5 - offset_y) * self.period_nm[1] / n0,
+        )
+        self._conv: dict[int, tuple[np.ndarray, np.ndarray]] = {}
+
+        T = _to_numpy(mee.T1)[0]  # (2 ffxy, 1): incidence set by mee.pol/psi
+        self._layers = []
+        for info in mee.layer_info_list[::-1]:  # top layer first
+            epz_conv_i, W, V, q, d_arr, A_i, B = (_to_numpy(x) for x in info)
+            d = float(np.real(d_arr))
+            X = np.exp(-self.k0 * q * d)[:, None]
+            c_plus = T[:, 0]
+            c_minus = (B @ (A_i @ (X * T)))[:, 0]
+            self._layers.append((epz_conv_i, W, V, q, d, c_plus, c_minus))
+            T = A_i @ (X * T)
+
+    def _transverse_conv(self, li: int) -> tuple[np.ndarray, np.ndarray]:
+        """meent's (epx, epy) convolution matrices for layer ``li``."""
+        if li not in self._conv:
+            from meent.on_numpy.emsolver import convolution_matrix as cm
+
+            cell = np.sqrt(self.eps[li : li + 1])
+            if self.fourier_type == 0:
+                epx, epy, _ = cm.to_conv_mat_raster_discrete(
+                    cell, *self.fto, type_complex=np.complex128,
+                    enhanced_dfs=self.enhanced_dfs, use_pinv=self.use_pinv,
+                )
+            else:
+                epx, epy, _ = cm.to_conv_mat_raster_continuous(
+                    cell, *self.fto, type_complex=np.complex128, use_pinv=self.use_pinv,
+                )
+            self._conv[li] = (np.asarray(epx[0]), np.asarray(epy[0]))
+        return self._conv[li]
+
+    def fourier(self, slice_index: int, depth_um):
+        """Fourier coefficients at the given depths, each (n_depth, ffxy).
+
+        Returns:
+            ``([ex, ey, ez], [hx, hy, hz], [dx, dy, dz])``; ``d`` is the
+            displacement (``eps`` times E in meent's units).
+        """
+        epz_conv_i, W, V, q, d, c_plus, c_minus = self._layers[slice_index]
+        z = np.atleast_1d(np.asarray(depth_um, dtype=float))[:, None] * 1000.0
+        a_plus = np.exp(-self.k0 * q[None, :] * z) * c_plus[None, :]
+        a_minus = np.exp(self.k0 * q[None, :] * (z - d)) * c_minus[None, :]
+        n = self.ffx * self.ffy
+        S = (a_plus + a_minus) @ W.T
+        U = (a_minus - a_plus) @ V.T
+        sx, sy = S[:, :n], S[:, n:]
+        ux, uy = U[:, :n], U[:, n:]
+        dz = -1j * (self.kx_flat * uy - self.ky_flat * ux)
+        sz = dz @ epz_conv_i.T
+        uz = -1j * (self.kx_flat * sy - self.ky_flat * sx)
+        epx, epy = self._transverse_conv(slice_index)
+        return [sx, sy, sz], [-1j * ux, -1j * uy, -1j * uz], [sx @ epx.T, sy @ epy.T, dz]
+
+    def power_down(self, slice_index: int, depth_um: float) -> float:
+        """Cell-averaged downward Poynting flux (incident flux = cos(theta))."""
+        (ex, ey, _), (hx, hy, _), _ = self.fourier(slice_index, np.array([depth_um]))
+        return float(np.sum(np.real(ex * np.conj(hy) - ey * np.conj(hx))))
+
+    def _native(self, x_um, y_um):
+        x = np.asarray(x_um, dtype=float) * 1000.0 - self._shift[0]
+        y = np.asarray(y_um, dtype=float) * 1000.0 - self._shift[1]
+        return x, y
+
+    def _eps_at(self, slice_index: int, x_um, y_um) -> np.ndarray:
+        """meent permittivity of the grid cell containing COMPASS (x, y)."""
+        eps = self.eps[slice_index]
+        n0, n1 = eps.shape
+        lx, ly = self.period_nm[0] / 1000.0, self.period_nm[1] / 1000.0
+        ix = np.floor(np.asarray(x_um) / lx * n1).astype(int) % n1
+        iy = np.floor(np.asarray(y_um) / ly * n0).astype(int) % n0
+        return np.asarray(eps[iy, ix])
+
+    def e2_on_grid(self, slice_index: int, depths_um, x_um, y_um) -> np.ndarray:
+        """Sum over depths of |E|^2 = |D/eps|^2 on the grid, indexed [y, x]."""
+        _, _, fd = self.fourier(slice_index, depths_um)
+        xn, yn = self._native(x_um, y_um)
+        px = np.exp(-1j * self.k0 * np.outer(xn, self.kx))  # (nx, ffx)
+        py = np.exp(-1j * self.k0 * np.outer(yn, self.ky))  # (ny, ffy)
+        Y, X = np.meshgrid(np.asarray(y_um), np.asarray(x_um), indexing="ij")
+        inv_eps2 = 1.0 / np.abs(self._eps_at(slice_index, X, Y)) ** 2
+        out = np.zeros((len(yn), len(xn)))
+        for c in fd:
+            C = c.reshape(-1, self.ffy, self.ffx)
+            out += np.sum(np.abs(np.einsum("zij,ai,bj->zab", C, py, px)) ** 2, axis=0)
+        return np.asarray(out * inv_eps2)
+
+    def at_points(
+        self, slice_index: int, depth_um: float, x_um, y_um, displacement: bool = True
+    ):
+        """Fields ([Ex, Ey, Ez], [Hx, Hy, Hz]) at COMPASS points (x, y) in um.
+
+        With ``displacement`` (default) E is ``D / eps(r)``; otherwise the
+        raw truncated E series, whose plane average of ``Re(E x H*)`` equals
+        the Fourier-space flux exactly (used for ``Sz``).
+        """
+        fe, fh, fd = self.fourier(slice_index, np.array([depth_um]))
+        x, y = self._native(x_um, y_um)
+        shape = (-1,) + (1,) * x.ndim
+        phase = np.exp(
+            -1j * self.k0 * (self.kx_flat.reshape(shape) * x + self.ky_flat.reshape(shape) * y)
+        )
+
+        def series(c):
+            return np.sum(c[0].reshape(shape) * phase, axis=0)
+
+        H = [series(c) for c in fh]
+        if not displacement:
+            return [series(c) for c in fe], H
+        eps = self._eps_at(slice_index, x_um, y_um)
+        return [series(c) / eps for c in fd], H
+
+
 class MeentSolver(SolverBase):
     """meent RCWA solver adapter.
 
@@ -39,7 +228,10 @@ class MeentSolver(SolverBase):
         self._source: PlanewaveSource | None = None
         self._backend = config.get("params", {}).get("backend", "numpy")
         self._last_layer_slices: list | None = None
+        self._last_layer_info: list | None = None
+        self._last_sampler: _MeentFieldSampler | None = None
         self._last_wavelength: float | None = None
+        self._qe_fallback_used = False
 
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
         if pixel_stack is None:
@@ -96,6 +288,7 @@ class MeentSolver(SolverBase):
 
         pol_runs = self._source.get_polarization_runs()
         self._failed_runs = []
+        self._qe_fallback_used = False
         all_qe: dict[str, list[float]] = {}
         all_R, all_T, all_A = [], [], []
 
@@ -161,23 +354,35 @@ class MeentSolver(SolverBase):
                             f"(numerical instability for multi-layer 2D stack)"
                         )
                     A = 1.0 - R - T
+                    try:
+                        sampler: _MeentFieldSampler | None = _MeentFieldSampler(
+                            mee, fourier_type, enhanced_dfs
+                        )
+                    except Exception as e:  # field data unavailable -> QE fallback
+                        logger.warning(f"meent: field reconstruction setup failed ({e})")
+                        sampler = None
 
                 except Exception as e:
                     logger.error(f"meent failed at λ={wavelength:.4f}um: {e}")
                     self._record_failed_run(wavelength, pol, e)
                     R = T = A = float("nan")
+                    sampler = None
 
                 R_pol.append(R)
                 T_pol.append(T)
                 A_pol.append(A)
 
                 self._last_layer_slices = layer_slices
+                self._last_layer_info = list(reversed(layer_slices))
                 self._last_wavelength = wavelength
+                self._last_sampler = sampler
 
                 if np.isnan(A):
                     pixel_qe = self._nan_pixel_qe()
+                elif not self._pixel_stack.photodiodes:
+                    pixel_qe = {}
                 else:
-                    pixel_qe = self._compute_per_pixel_qe(layer_slices, wavelength, A)
+                    pixel_qe = self._compute_qe_with_fallback(sampler, layer_slices, wavelength, A)
                 for key, val in pixel_qe.items():
                     qe_pol_accum.setdefault(key, []).append(val)
 
@@ -223,9 +428,74 @@ class MeentSolver(SolverBase):
                 "fourier_work_grid_shape_source": (
                     "derived from meent raster DFS repeat rule; CFS has no FFT work grid"
                 ),
-                "qe_method": "eps_imag_weight",
+                # Field integration vs. the eps''-weight approximation is a
+                # QE methodology difference, not solver accuracy.
+                "qe_method": (
+                    "eps_imag_weight_fallback" if self._qe_fallback_used else "field_integration"
+                ),
                 **self._failure_metadata(),
             },
+        )
+
+    def _compute_qe_with_fallback(
+        self,
+        sampler: _MeentFieldSampler | None,
+        layer_slices,
+        wavelength: float,
+        total_absorption: float,
+    ) -> dict:
+        """Field-integrated QE, falling back to eps''-weighting on failure."""
+        try:
+            if sampler is None:
+                raise RuntimeError("no field data")
+            return self._compute_per_pixel_qe_fields(sampler, wavelength, total_absorption)
+        except Exception as e:
+            logger.warning(
+                f"meent: field-based QE failed at λ={wavelength:.4f}um ({e}); "
+                "falling back to eps''-weight approximation"
+            )
+            self._qe_fallback_used = True
+            return self._compute_per_pixel_qe(layer_slices, wavelength, total_absorption)
+
+    def _compute_per_pixel_qe_fields(
+        self,
+        sampler: _MeentFieldSampler,
+        wavelength: float,
+        total_absorption: float,
+    ) -> dict:
+        """Per-pixel QE by integrating eps'' |E|^2 over photodiode volumes.
+
+        Uses the QE definition shared with the other RCWA adapters
+        (:func:`compass.solvers.rcwa.fields.integrate_photodiode_qe`).
+        """
+        if self._pixel_stack is None or self._source is None:
+            raise RuntimeError("Call setup_geometry() and setup_source() before run()")
+        if self._last_layer_info is None:
+            raise RuntimeError("no layer data recorded")
+        lx, ly = self._pixel_stack.domain_size
+
+        def e2_dz(li: int, s) -> np.ndarray:
+            n0, n1 = s.eps_grid.shape  # [y, x]
+            depths, dz = slice_depth_samples(s.thickness)
+            x = (np.arange(n1) + 0.5) * (lx / n1)  # COMPASS cell centres
+            y = (np.arange(n0) + 0.5) * (ly / n0)
+            return sampler.e2_on_grid(li, depths, x, y) * dz
+
+        cos_theta = float(np.cos(self._source.theta_rad))
+
+        def absorbed(li: int, s) -> float:
+            top = sampler.power_down(li, 0.0)
+            return (top - sampler.power_down(li, s.thickness)) / cos_theta
+
+        return integrate_photodiode_qe(
+            self._pixel_stack,
+            self._last_layer_info,
+            wavelength,
+            self._source.theta_rad,
+            e2_dz,
+            total_absorption,
+            "meent",
+            slice_absorption=absorbed,
         )
 
     def _compute_per_pixel_qe(
@@ -234,71 +504,10 @@ class MeentSolver(SolverBase):
         wavelength: float,
         total_absorption: float,
     ) -> dict:
-        """Compute per-pixel QE using eps_imag weighting in PD regions."""
+        """Approximate per-pixel QE by eps'' weighting (fallback only)."""
         if self._pixel_stack is None:
             raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        bayer = self._pixel_stack.bayer_map
-        n_rows, n_cols = self._pixel_stack.unit_cell
-        n_pixels = n_rows * n_cols
-        if n_pixels == 0:
-            return {}
-        lx, ly = self._pixel_stack.domain_size
-
-        pixel_weights = {}
-        total_weight = 0.0
-
-        pitch = self._pixel_stack.pitch
-        si_z_end = max(
-            (layer.z_end for layer in self._pixel_stack.layers if layer.name == "silicon"),
-            default=0.0,
-        )
-        for pd in self._pixel_stack.photodiodes:
-            r, c = pd.pixel_index
-            key = f"{pd.color}_{r}_{c}"
-            # position[2] is the PD-center depth below the silicon top surface
-            pd_cz = si_z_end - pd.position[2]
-            pd_z_min = pd_cz - pd.size[2] / 2
-            pd_z_max = pd_cz + pd.size[2] / 2
-
-            # PhotodiodeSpec.position is the offset from the pixel center;
-            # convert to absolute domain coordinates ([0, lx) x [0, ly)).
-            pd_cx = (c + 0.5) * pitch + pd.position[0]
-            pd_cy = (r + 0.5) * pitch + pd.position[1]
-
-            weight = 0.0
-            for s in layer_slices:
-                z_overlap_min = max(s.z_start, pd_z_min)
-                z_overlap_max = min(s.z_end, pd_z_max)
-                if z_overlap_max <= z_overlap_min:
-                    continue
-                dz = z_overlap_max - z_overlap_min
-                # eps grids are indexed [row=y, col=x] (shape (ny, nx))
-                ny_s, nx_s = s.eps_grid.shape
-                ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx_s))
-                ix_max = min(nx_s, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx_s)))
-                iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny_s))
-                iy_max = min(ny_s, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny_s)))
-                if ix_max <= ix_min or iy_max <= iy_min:
-                    continue
-                eps_region = s.eps_grid[iy_min:iy_max, ix_min:ix_max]
-                weight += float(np.mean(np.imag(eps_region))) * dz
-
-            pixel_weights[key] = max(weight, 0.0)
-            total_weight += max(weight, 0.0)
-
-        # Per-pixel QE convention: absorbed power normalized by the power
-        # incident on that pixel's own area (shared with the torcwa solver).
-        qe_per_pixel = {}
-        if total_weight > 0:
-            for key, w in pixel_weights.items():
-                qe_per_pixel[key] = min(1.0, total_absorption * (w / total_weight) * n_pixels)
-        else:
-            # Uniform stack: every pixel sees the cell-average absorption
-            for r in range(n_rows):
-                for c in range(n_cols):
-                    key = f"{bayer[r][c]}_{r}_{c}"
-                    qe_per_pixel[key] = total_absorption
-        return qe_per_pixel
+        return eps_imag_weight_qe(self._pixel_stack, layer_slices, total_absorption)
 
     def get_field_distribution(
         self,
@@ -306,53 +515,75 @@ class MeentSolver(SolverBase):
         plane: str = "xz",
         position: float = 0.0,
     ) -> np.ndarray:
-        """Extract approximate 2D field from permittivity profile."""
-        if self._last_layer_slices is None:
+        """Extract a 2D solved-field slice from the last simulation.
+
+        Same conventions as the torcwa/grcwa adapters: x, y in
+        ``[0, lx) x [0, ly)``, z up from the stack bottom, |E0| = 1, and
+        ``Sz`` the Poynting z-component (negative for downward flow;
+        incident flux ``cos(theta)``). Fields belong to the last
+        polarization run. Intensities use the displacement-based
+        reconstruction ``E = D / eps``; ``Sz`` uses the raw E series so its
+        plane average is the exact Fourier-space flux.
+
+        Args:
+            component: "Ex", "Ey", "Ez" (each |E_c|^2), "|E|2", or "Sz".
+            plane: "xy" (position = z), "xz" (position = y) or
+                "yz" (position = x), all in um.
+            position: Position along the normal axis in um.
+
+        Returns:
+            2D array: ``(nx, ny)`` for "xy", ``(nx, nz)`` for "xz",
+            ``(ny, nz)`` for "yz", with z increasing upward.
+
+        Raises:
+            ValueError: Unknown component/plane, or an "xy" position outside
+                the simulated stack.
+        """
+        validate_field_request(component, plane)
+        if self._last_layer_info is None or self._pixel_stack is None:
             logger.warning("meent: no simulation data, returning zeros")
-            return np.zeros((64, 64))
+            return np.zeros((FIELD_N_XY, FIELD_N_XY))
+        if plane == "xy":
+            check_xy_position(self._last_layer_info, position)
+        try:
+            if self._last_sampler is None:
+                raise RuntimeError("no field data from the last run")
+            return self._solved_field(self._last_sampler, component, plane, position)
+        except Exception as e:
+            logger.warning(
+                f"meent: field reconstruction failed ({e}); returning a "
+                "permittivity-based approximation, not a solved field"
+            )
+        return approximate_field(
+            self._pixel_stack, self._last_layer_info, self._last_wavelength,
+            component, plane, position,
+        )
 
-        if self._pixel_stack is None:
-            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        layer_info = self._last_layer_slices
-        _lx, ly = self._pixel_stack.domain_size
-        nz = len(layer_info)
-        nx_out, ny_out = 64, 64
-        wl = self._last_wavelength or 0.55
-        k0 = 2 * np.pi / wl
+    def _solved_field(
+        self, sampler: _MeentFieldSampler, component: str, plane: str, position: float
+    ) -> np.ndarray:
+        if self._pixel_stack is None or self._last_layer_info is None:
+            raise RuntimeError("no simulation data")
+        layer_info = self._last_layer_info
+        lx, ly = self._pixel_stack.domain_size
+        u = np.arange(FIELD_N_XY) / FIELD_N_XY
 
-        if plane == "xz":
-            field_2d = np.zeros((nx_out, nz))
-            for zi, s in enumerate(layer_info):
-                eps = s.eps_grid
-                ny_s = eps.shape[0]
-                y_idx = max(0, min(ny_s - 1, int(((position + ly / 2) / ly) * ny_s)))
-                col = eps[y_idx, :]
-                x_orig = np.linspace(0, 1, len(col))
-                x_new = np.linspace(0, 1, nx_out)
-                field_2d[:, zi] = np.interp(x_new, x_orig, np.abs(np.imag(col)) + 1e-10)
-            if component == "|E|2":
-                for xi in range(nx_out):
-                    intensity = 1.0
-                    for zi in range(nz):
-                        alpha = 2 * k0 * field_2d[xi, zi]
-                        dz = layer_info[zi].thickness
-                        intensity *= np.exp(-alpha * dz)
-                        field_2d[xi, zi] = intensity
-            return field_2d
+        if plane == "xy":
+            li, depth = locate_slice(layer_info, position)
+            X, Y = np.meshgrid(u * lx, u * ly, indexing="ij")
+            E, H = sampler.at_points(li, depth, X, Y, displacement=component != "Sz")
+            return component_from_field(E, H, component)
 
-        elif plane == "xy":
-            z_accum = 0.0
-            for s in layer_info:
-                if z_accum + s.thickness >= position:
-                    from scipy.ndimage import zoom
-
-                    eps = s.eps_grid
-                    zx = nx_out / eps.shape[0]
-                    zy = ny_out / eps.shape[1]
-                    return np.asarray(np.abs(zoom(np.real(eps), (zx, zy), order=1)))
-                z_accum += s.thickness
-
-        return np.zeros((64, 64))
+        heights = column_heights(layer_info)
+        line = u * (lx if plane == "xz" else ly)
+        x = line if plane == "xz" else np.full_like(line, position)
+        y = np.full_like(line, position) if plane == "xz" else line
+        out = np.zeros((FIELD_N_XY, len(heights)))
+        for zi, z in enumerate(heights):
+            li, depth = locate_slice(layer_info, float(z))
+            E, H = sampler.at_points(li, depth, x, y, displacement=component != "Sz")
+            out[:, zi] = component_from_field(E, H, component)
+        return out
 
 
 SolverFactory.register("meent", MeentSolver)

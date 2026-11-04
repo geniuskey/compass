@@ -50,7 +50,7 @@ def test_explicit_grid_override_and_default_oversampling(
 
         monkeypatch.setattr(library, "call_mee", call_mee)
     else:
-        monkeypatch.setattr(solver, "_solve_single", lambda **_kwargs: (0.1, 0.8, 0.1))
+        monkeypatch.setattr(solver, "_solve_single", lambda **_kwargs: (0.1, 0.8, 0.1, None))
     solver.setup_geometry(stack)
     solver.setup_source({"wavelength": {"mode": "single", "value": 0.55}, "polarization": "TE"})
     result = solver.run()

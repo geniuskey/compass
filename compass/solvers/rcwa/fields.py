@@ -1,7 +1,7 @@
 """Solver-independent helpers for RCWA field slices and field-based QE.
 
-torcwa and grcwa share the same conventions once their fields are
-expressed on a common footing:
+The RCWA adapters (torcwa, grcwa, meent, fmmax) share the same conventions
+once their fields are expressed on a common footing:
 
 * Incident plane wave of unit amplitude (|E0| = 1) from the top (air).
 * The backend z axis points *down* from the top interface of the stack,
@@ -111,6 +111,7 @@ def integrate_photodiode_qe(
     e2_dz: Callable[[int, LayerSlice], np.ndarray],
     total_absorption: float,
     solver_name: str,
+    slice_absorption: Callable[[int, LayerSlice], float] | None = None,
 ) -> dict[str, float]:
     """Per-pixel QE from the absorbed power density eps'' |E|^2.
 
@@ -136,6 +137,13 @@ def integrate_photodiode_qe(
             (b * lx / n1, a * ly / n0).
         total_absorption: A = 1 - R - T, for an energy cross-check.
         solver_name: Name used in log messages.
+        slice_absorption: Optional callback ``(index, slice) -> fraction``
+            giving the exact fraction of the incident power absorbed in a
+            slice (from the Fourier-space Poynting flux at its faces). When
+            given, each slice's density is rescaled to that total, so only
+            the in-plane distribution comes from the real-space field. Use
+            it for backends whose permittivity factorization (Li's inverse
+            rule) makes the truncated real-space ``|E|^2`` inexact.
 
     Returns:
         Mapping of pixel name (e.g. "R_0_0") to QE.
@@ -159,7 +167,13 @@ def integrate_photodiode_qe(
         n0, n1 = s.eps_grid.shape
         density = np.asarray(e2_dz(li, s)) * eps_imag
         cell_area = (lx / n1) * (ly / n0)
-        total_field_abs += norm_cell * float(density.sum()) * cell_area
+        raw = norm_cell * float(density.sum()) * cell_area
+        if slice_absorption is not None:
+            exact = max(float(slice_absorption(li, s)), 0.0)
+            density = density * (exact / raw) if raw > 1e-15 else density * 0.0
+            logger.debug(f"{solver_name}: slice {s.name}: field {raw:.4f}, flux {exact:.4f}")
+            raw = exact
+        total_field_abs += raw
         if s.name.startswith("silicon"):
             if grid_shape is None:
                 grid_shape = (n0, n1)
@@ -168,6 +182,10 @@ def integrate_photodiode_qe(
     if si_density is None or grid_shape is None:
         raise RuntimeError("no absorbing silicon slice found for QE integration")
 
+    logger.debug(
+        f"{solver_name}: field-integrated absorption {total_field_abs:.4f}, "
+        f"1-R-T = {total_absorption:.4f} at λ={wavelength:.4f}um"
+    )
     if total_absorption > 0.02 and abs(total_field_abs - total_absorption) > 0.1:
         logger.warning(
             f"{solver_name}: field-integrated absorption {total_field_abs:.3f} deviates "
@@ -197,3 +215,133 @@ def integrate_photodiode_qe(
         qe = norm_pixel * float(si_density[iy0:iy1, ix0:ix1].sum()) * cell_area
         qe_per_pixel[key] = float(np.clip(qe, 0.0, 1.0))
     return qe_per_pixel
+
+
+def eps_imag_weight_qe(
+    pixel_stack,
+    layer_slices: Sequence[LayerSlice],
+    total_absorption: float,
+) -> dict[str, float]:
+    """Approximate per-pixel QE by distributing ``1 - R - T`` with eps'' weights.
+
+    Fallback only, used when field reconstruction fails: it ignores where
+    the light actually goes (no color filtering, no lensing), so it is not
+    comparable to :func:`integrate_photodiode_qe`. Absorption is split
+    between photodiodes in proportion to the integral of eps'' over each
+    photodiode box, and normalized per pixel area.
+
+    Args:
+        pixel_stack: PixelStack providing domain size, pitch and photodiodes.
+        layer_slices: Slices in any order (COMPASS z coordinates).
+        total_absorption: A = 1 - R - T.
+
+    Returns:
+        Mapping of pixel name (e.g. "R_0_0") to QE.
+    """
+    n_rows, n_cols = pixel_stack.unit_cell
+    n_pixels = n_rows * n_cols
+    if n_pixels == 0:
+        return {}
+    lx, ly = pixel_stack.domain_size
+    pitch = pixel_stack.pitch
+    si_z_end = max(
+        (layer.z_end for layer in pixel_stack.layers if layer.name == "silicon"),
+        default=0.0,
+    )
+
+    pixel_weights: dict[str, float] = {}
+    for pd in pixel_stack.photodiodes:
+        r, c = pd.pixel_index
+        # position[2] is the PD-center depth below the silicon top surface
+        pd_cz = si_z_end - pd.position[2]
+        pd_z_min = pd_cz - pd.size[2] / 2
+        pd_z_max = pd_cz + pd.size[2] / 2
+        # PhotodiodeSpec.position is the offset from the pixel center.
+        pd_cx = (c + 0.5) * pitch + pd.position[0]
+        pd_cy = (r + 0.5) * pitch + pd.position[1]
+
+        weight = 0.0
+        for s in layer_slices:
+            dz = min(s.z_end, pd_z_max) - max(s.z_start, pd_z_min)
+            if dz <= 0:
+                continue
+            # eps grids are indexed [row=y, col=x] (shape (ny, nx))
+            ny_s, nx_s = s.eps_grid.shape
+            ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx_s))
+            ix_max = min(nx_s, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx_s)))
+            iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny_s))
+            iy_max = min(ny_s, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny_s)))
+            if ix_max <= ix_min or iy_max <= iy_min:
+                continue
+            eps_region = s.eps_grid[iy_min:iy_max, ix_min:ix_max]
+            area_frac = (ix_max - ix_min) * (iy_max - iy_min) / (nx_s * ny_s)
+            weight += float(np.mean(np.imag(eps_region))) * dz * area_frac
+        pixel_weights[f"{pd.color}_{r}_{c}"] = max(weight, 0.0)
+
+    total_weight = sum(pixel_weights.values())
+    if total_weight > 0:
+        return {
+            key: min(1.0, total_absorption * (w / total_weight) * n_pixels)
+            for key, w in pixel_weights.items()
+        }
+    # Uniform stack: every pixel sees the cell-average absorption
+    bayer = pixel_stack.bayer_map
+    return {
+        f"{bayer[r][c]}_{r}_{c}": total_absorption
+        for r in range(n_rows)
+        for c in range(n_cols)
+    }
+
+
+def approximate_field(
+    pixel_stack,
+    layer_info: Sequence[LayerSlice],
+    wavelength: float | None,
+    component: str,
+    plane: str,
+    position: float,
+) -> np.ndarray:
+    """Permittivity-based stand-in for a field slice (NOT a solved field).
+
+    Used only when field reconstruction fails. "xy" returns Re(eps) of the
+    slice at height ``position``; "xz"/"yz" return, per slice, either the
+    absorption index k (components other than "|E|2") or a Beer-Lambert
+    decay ``exp(-2 k0 sum k dz)`` from the top of the stack ("|E|2").
+    Coordinates follow the solved-field convention: x, y in
+    ``[0, lx) x [0, ly)``, columns ordered bottom to top.
+
+    Returns:
+        ``(64, 64)`` for "xy" (indexed [x, y]); ``(64, n_slices)`` otherwise.
+    """
+    validate_field_request(component, plane)
+    n_out = FIELD_N_XY
+    lx, ly = pixel_stack.domain_size
+    top_first = sorted(layer_info, key=lambda s: -s.z_end)
+    u = (np.arange(n_out) + 0.5) / n_out
+
+    if plane == "xy":
+        li, _ = locate_slice(top_first, position)
+        eps = top_first[li].eps_grid  # [y, x]
+        n0, n1 = eps.shape
+        ix = np.minimum((u * n1).astype(int), n1 - 1)
+        iy = np.minimum((u * n0).astype(int), n0 - 1)
+        return np.asarray(np.abs(np.real(eps[np.ix_(iy, ix)].T)))
+
+    cols = []
+    for s in top_first:
+        eps = s.eps_grid
+        n0, n1 = eps.shape
+        if plane == "xz":
+            row = min(max(int(position / ly * n0), 0), n0 - 1)
+            line = eps[row, np.minimum((u * n1).astype(int), n1 - 1)]
+        else:
+            col = min(max(int(position / lx * n1), 0), n1 - 1)
+            line = eps[np.minimum((u * n0).astype(int), n0 - 1), col]
+        cols.append(np.abs(np.imag(np.sqrt(line))))
+    kappa = np.stack(cols, axis=1)  # (n_out, n_slices), top first
+
+    if component == "|E|2":
+        k0 = 2 * np.pi / (wavelength or 0.55)
+        dz = np.array([s.thickness for s in top_first])
+        kappa = np.exp(-2 * k0 * np.cumsum(kappa * dz, axis=1))
+    return np.asarray(kappa[:, ::-1])
