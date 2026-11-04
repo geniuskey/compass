@@ -122,34 +122,29 @@ class MinimizeCrosstalk(ObjectiveFunction):
         self.target_wavelength_range = target_wavelength_range
 
     def evaluate(self, result: SimulationResult) -> float:
-        """Return mean crosstalk (already a value to minimize)."""
+        """Return mean spectral crosstalk (already a value to minimize).
+
+        Uses the band-aware definition of
+        :meth:`compass.analysis.crosstalk.CrosstalkAnalyzer.summarize`: at
+        each wavelength, the share of collected signal landing in pixels of
+        a color whose band does not contain that wavelength.
+        """
+        from compass.analysis.crosstalk import CrosstalkAnalyzer
+
+        if len(result.qe_per_pixel) < 2:
+            return 0.0
         wl = np.asarray(result.wavelengths)
         mask = np.ones(len(wl), dtype=bool)
         if self.target_wavelength_range is not None:
             wl_min, wl_max = self.target_wavelength_range
             mask = (wl >= wl_min) & (wl <= wl_max)
-
-        pixels = sorted(result.qe_per_pixel.keys())
-        n = len(pixels)
-        if n < 2:
-            return 0.0
-
-        # For each pixel, compute its fraction of total QE
-        qe_matrix = np.array([
-            np.asarray(result.qe_per_pixel[p])[mask] for p in pixels
-        ])  # (n_pixels, n_wl)
-        total_qe = np.sum(qe_matrix, axis=0, keepdims=True)  # (1, n_wl)
-        total_qe = np.maximum(total_qe, 1e-30)
-        fractions = qe_matrix / total_qe  # (n_pixels, n_wl)
-
-        # Crosstalk = 1 - self-fraction, averaged over all pixels and wavelengths
-        # Self-fraction for pixel i = fractions[i] when that pixel is illuminated.
-        # Simplified: mean off-diagonal fraction = 1 - (1/n) since uniform illum.
-        # More precise: sum of non-self fractions per pixel.
-        crosstalk_per_pixel = 1.0 - fractions  # fraction going elsewhere
-        mean_crosstalk = float(np.mean(crosstalk_per_pixel))
-
-        return mean_crosstalk
+        sub = SimulationResult(
+            qe_per_pixel={k: np.asarray(v)[mask] for k, v in result.qe_per_pixel.items()},
+            wavelengths=wl[mask],
+        )
+        mean_ct = CrosstalkAnalyzer.summarize(sub)["mean_crosstalk"]
+        # No wavelength falls in any color band: nothing to penalize.
+        return 0.0 if np.isnan(mean_ct) else float(mean_ct)
 
     def name(self) -> str:
         return "MinimizeCrosstalk"

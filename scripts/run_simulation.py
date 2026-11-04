@@ -5,6 +5,8 @@ Usage:
     python scripts/run_simulation.py
     python scripts/run_simulation.py solver=torcwa pixel=default_bsi_1um
     python scripts/run_simulation.py source=wavelength_sweep solver.params.fourier_order=[11,11]
+    python scripts/run_simulation.py +experiment=solver_comparison   # also roi_sweep,
+                                                                     # optimize_microlens
 """
 
 from __future__ import annotations
@@ -36,30 +38,35 @@ def main(cfg: DictConfig) -> None:
 
     CompassConfig.model_validate(config)
 
-    from compass.runners.single_run import SingleRunner
-
-    result = SingleRunner.run(config)
-
-    # Log results summary
-    logger.info(f"Wavelengths: {result.wavelengths}")
-    for pixel_name, qe in result.qe_per_pixel.items():
-        logger.info(f"  {pixel_name}: QE mean={qe.mean():.4f}")
-
-    if result.reflection is not None:
-        logger.info(f"  R mean={result.reflection.mean():.4f}")
-    if result.transmission is not None:
-        logger.info(f"  T mean={result.transmission.mean():.4f}")
-    if result.absorption is not None:
-        logger.info(f"  A mean={result.absorption.mean():.4f}")
-
-    # Save results
-    output_dir = cfg.get("output_dir", "./outputs")
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-
     from compass.io.export import ResultExporter
+    from compass.runners.experiment_runner import run_experiment
 
-    ResultExporter.to_csv(result, f"{output_dir}/qe_spectrum.csv")
-    ResultExporter.to_json(result, f"{output_dir}/result_summary.json")
+    out = run_experiment(config)
+    logger.info(f"Experiment kind: {out['kind']}")
+
+    output_dir = Path(cfg.get("output_dir", "./outputs"))
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    single = len(out["results"]) == 1 and out["kind"] == "single"
+    for label, result in out["results"].items():
+        logger.info(f"[{label}] wavelengths: {result.wavelengths}")
+        for pixel_name, qe in result.qe_per_pixel.items():
+            logger.info(f"  {pixel_name}: QE mean={qe.mean():.4f}")
+        for name, arr in (("R", result.reflection), ("T", result.transmission),
+                          ("A", result.absorption)):
+            if arr is not None:
+                logger.info(f"  {name} mean={arr.mean():.4f}")
+        stem = output_dir if single else output_dir / label
+        ResultExporter.to_csv(result, f"{stem}/qe_spectrum.csv")
+        ResultExporter.to_json(result, f"{stem}/result_summary.json")
+
+    extra = {k: v for k, v in out.items() if k in ("summary", "optimization")}
+    if extra:
+        import json
+
+        with open(output_dir / f"{out['kind']}.json", "w") as f:
+            json.dump(extra, f, indent=2, default=str)
+        logger.info(f"{out['kind']}: {json.dumps(extra, default=str)[:2000]}")
 
     logger.info(f"Results saved to {output_dir}")
 

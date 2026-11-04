@@ -11,6 +11,12 @@ from compass.core.types import SimulationResult
 
 logger = logging.getLogger(__name__)
 
+
+def _jsonable(obj):
+    from compass.io.hdf5_handler import _jsonable as conv
+
+    return conv(obj)
+
 class ResultExporter:
     """Export results to various formats."""
 
@@ -34,7 +40,8 @@ class ResultExporter:
         summary = {
             "wavelengths_um": result.wavelengths.tolist(),
             "qe_per_pixel": {k: v.tolist() for k, v in result.qe_per_pixel.items()},
-            "metadata": {k: str(v) for k, v in result.metadata.items()},
+            # Keep numbers/lists/dicts typed; only non-JSON objects become strings.
+            "metadata": json.loads(json.dumps(result.metadata, default=_jsonable)),
         }
         if result.reflection is not None:
             summary["reflection"] = result.reflection.tolist()

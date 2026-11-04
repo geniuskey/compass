@@ -174,18 +174,22 @@ class TestJSONExport:
         assert "transmission" not in data
         assert "absorption" not in data
 
-    def test_json_metadata_as_strings(self, tmp_path):
-        """Metadata values are converted to strings in JSON."""
-        result = _make_result(metadata={"runtime": 1.5, "solver": "test"})
+    def test_json_metadata_keeps_types(self, tmp_path):
+        """Metadata keeps JSON types; only non-JSON objects become strings."""
+        import numpy as np
+
+        result = _make_result(metadata={
+            "runtime": 1.5, "solver": "test", "n": np.int64(3),
+            "failed_runs": [{"wavelength": 0.5}], "obj": object(),
+        })
         filepath = str(tmp_path / "meta.json")
         ResultExporter.to_json(result, filepath)
 
         with open(filepath) as f:
-            data = json.load(f)
-        assert "metadata" in data
-        # All values should be strings per the implementation
-        for v in data["metadata"].values():
-            assert isinstance(v, str)
+            meta = json.load(f)["metadata"]
+        assert meta["runtime"] == 1.5 and meta["n"] == 3 and meta["solver"] == "test"
+        assert meta["failed_runs"] == [{"wavelength": 0.5}]
+        assert isinstance(meta["obj"], str)
 
     def test_json_creates_parent_dirs(self, tmp_path):
         """Parent directories are created if they do not exist."""

@@ -244,3 +244,50 @@ class TestHDF5EdgeCases:
         np.testing.assert_array_almost_equal(
             loaded.wavelengths, result.wavelengths
         )
+
+
+class TestRoundTripRegressions:
+    """Losses and crashes found in the v1 format."""
+
+    def _result(self, **kw):
+        import numpy as np
+
+        from compass.core.types import FieldData, SimulationResult
+
+        base = dict(
+            qe_per_pixel={"R_0_0": np.array([0.1, 0.2]), "odd/name": np.array([0.3, 0.4])},
+            wavelengths=np.array([0.5, 0.6]),
+            reflection=np.array([0.1, 0.1]),
+            fields={"wl_0.5": FieldData(Ex=np.ones((2, 2, 2), complex), x=np.arange(2.0),
+                                        y=np.arange(2.0), z=np.arange(2.0))},
+            poynting={"Sz": np.ones((2, 2))},
+            metadata={
+                "solver_name": "tmm", "runtime": 1.5, "config_yaml": "user value",
+                "failed_runs": [{"wavelength": 0.5, "error": "x"}], "opt": None,
+                "big": np.zeros(20000),
+            },
+        )
+        base.update(kw)
+        return SimulationResult(**base)
+
+    def test_lossless_round_trip(self, tmp_path):
+        import numpy as np
+
+        from compass.io.hdf5_handler import HDF5Handler
+
+        config = {"pixel": {"pitch": np.float64(1.0)}, "seed": np.int64(3)}
+        path = str(tmp_path / "r.h5")
+        HDF5Handler.save_result(self._result(), config, path, save_fields=True)
+        loaded, cfg = HDF5Handler.load_result(path)
+
+        assert cfg == {"pixel": {"pitch": 1.0}, "seed": 3}
+        assert set(loaded.qe_per_pixel) == {"R_0_0", "odd/name"}
+        meta = loaded.metadata
+        assert meta["config_yaml"] == "user value"
+        assert meta["failed_runs"] == [{"wavelength": 0.5, "error": "x"}]
+        assert meta["opt"] is None and meta["runtime"] == 1.5
+        assert len(meta["big"]) == 20000
+        fd = loaded.fields["wl_0.5"]
+        np.testing.assert_array_equal(fd.Ex, np.ones((2, 2, 2)))
+        np.testing.assert_array_equal(fd.z, np.arange(2.0))
+        np.testing.assert_array_equal(loaded.poynting["Sz"], np.ones((2, 2)))

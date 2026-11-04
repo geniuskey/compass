@@ -18,8 +18,14 @@ class ComparisonRunner:
     @staticmethod
     def _run_single_solver(config: dict, solver_config: dict) -> tuple[str, SimulationResult]:
         """Run a single solver and return (label, result)."""
+        # Experiment configs list solvers as ``solver: <name>``; SingleRunner
+        # reads ``name``. Without normalising, every entry ran the default.
+        solver_config = dict(solver_config)
+        name = solver_config.get("name") or solver_config.get("solver")
+        if not name:
+            raise ValueError(f"solver config needs a 'name' (or 'solver') key: {solver_config}")
+        solver_config["name"] = name
         cfg = {**config, "solver": solver_config}
-        name = solver_config.get("name", solver_config.get("solver", "unknown"))
         logger.info(f"Running solver: {name}")
         result = SingleRunner.run(cfg)
         return name, result

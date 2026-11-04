@@ -296,48 +296,30 @@ def plot_crosstalk_heatmap(
         ax.set_title("No pixel data")
         return ax
 
-    # Build QE matrix: rows = pixels, cols = wavelength indices
-    qe_matrix = np.zeros((n_pixels, len(result.wavelengths)))
-    for i, pname in enumerate(pixel_names):
-        qe = result.qe_per_pixel[pname]
-        if len(qe) == len(result.wavelengths):
-            qe_matrix[i, :] = qe
-        else:
-            logger.warning(
-                "Pixel '%s' QE length mismatch; padding with zeros.", pname
-            )
+    # Spectral crosstalk (same definition as QECalculator / CrosstalkAnalyzer):
+    # row i = pixel whose color band is the "intended" light, column j = the
+    # pixel that collected it. Rows sum to 1; off-color entries are crosstalk.
+    from compass.analysis.crosstalk import CrosstalkAnalyzer
+    from compass.analysis.qe_calculator import QECalculator
 
-    # Compute crosstalk matrix
+    if wavelength_idx is not None and not 0 <= wavelength_idx < len(result.wavelengths):
+        logger.warning(
+            "wavelength_idx=%d out of range [0, %d); using band average.",
+            wavelength_idx, len(result.wavelengths),
+        )
+        wavelength_idx = None
     if wavelength_idx is not None:
-        if wavelength_idx < 0 or wavelength_idx >= len(result.wavelengths):
-            logger.warning(
-                "wavelength_idx=%d out of range [0, %d); using average.",
-                wavelength_idx, len(result.wavelengths),
-            )
-            qe_vec = np.mean(qe_matrix, axis=1)
-            wl_label = "avg"
-        else:
-            qe_vec = qe_matrix[:, wavelength_idx]
-            wl_nm = um_to_nm(result.wavelengths[wavelength_idx])
-            wl_label = f"{wl_nm:.0f} nm"
+        full = CrosstalkAnalyzer.compute_matrix(
+            result.qe_per_pixel, None, np.asarray(result.wavelengths)
+        )
+        # Rows are undefined (NaN) for pixels whose band excludes this wavelength.
+        xtalk_matrix = np.nan_to_num(full[:, :, wavelength_idx], nan=0.0)
+        wl_label = f"{um_to_nm(result.wavelengths[wavelength_idx]):.0f} nm"
     else:
-        qe_vec = np.mean(qe_matrix, axis=1)
-        wl_label = "avg over all wavelengths"
-
-    # Normalize: crosstalk_ij = qe_i / sum(qe) for each intended target pixel
-    total_qe = np.sum(qe_vec)
-    if total_qe > 0:
-        xtalk_matrix = np.outer(qe_vec, qe_vec) / (total_qe * total_qe) * n_pixels
-    else:
-        xtalk_matrix = np.zeros((n_pixels, n_pixels))
-
-    # Simple diagonal-dominant approximation:
-    # Self-signal on diagonal, crosstalk estimated from QE ratios
-    for i in range(n_pixels):
-        row_sum = np.sum(qe_vec)
-        if row_sum > 0:
-            xtalk_matrix[i, :] = qe_vec / row_sum
-            xtalk_matrix[i, i] = qe_vec[i] / row_sum
+        xtalk_matrix = QECalculator.compute_crosstalk(
+            result.qe_per_pixel, np.asarray(result.wavelengths)
+        )
+        wl_label = "band-integrated"
 
     im = ax.imshow(
         xtalk_matrix,
@@ -353,8 +335,8 @@ def plot_crosstalk_heatmap(
     ax.set_yticks(range(n_pixels))
     ax.set_xticklabels(pixel_names, rotation=45, ha="right", fontsize=7)
     ax.set_yticklabels(pixel_names, fontsize=7)
-    ax.set_xlabel("Source pixel")
-    ax.set_ylabel("Detector pixel")
+    ax.set_xlabel("Collecting pixel")
+    ax.set_ylabel("Intended pixel (color band)")
     ax.set_title(f"Crosstalk Matrix ({wl_label})")
 
     # Annotate cell values

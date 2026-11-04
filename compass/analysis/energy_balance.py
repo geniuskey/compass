@@ -14,14 +14,26 @@ class EnergyBalance:
 
     @staticmethod
     def check(result: SimulationResult, tolerance: float = 0.01) -> dict:
-        """Check R+T+A ≈ 1 for all wavelengths."""
+        """Check R+T+A ≈ 1 for all wavelengths.
+
+        ``verified`` is False when the result carries no independent
+        absorption; then only the bounds 0 <= R, T and R + T <= 1 are checked.
+        NaN values make the check invalid.
+        """
         if result.reflection is None or result.transmission is None:
             return {"valid": True, "message": "Insufficient data for energy check"}
         R = np.asarray(result.reflection)
         T = np.asarray(result.transmission)
-        A = np.asarray(result.absorption) if result.absorption is not None else 1.0 - R - T
-        total = R + T + A
-        error = np.abs(total - 1.0)
+        if result.absorption is not None:
+            A = np.asarray(result.absorption)
+            error = np.abs(R + T + A - 1.0)
+            verified = True
+        else:
+            # Without an independent A, R + T + (1 - R - T) == 1 trivially;
+            # only check that 0 <= R, T and R + T <= 1.
+            A = 1.0 - R - T
+            error = np.maximum.reduce([-R, -T, R + T - 1.0, np.zeros_like(R)])
+            verified = False
         max_err = float(np.max(error))
         mean_err = float(np.mean(error))
         valid = max_err < tolerance
@@ -29,6 +41,7 @@ class EnergyBalance:
             logger.warning(f"Energy balance violation: max error = {max_err:.4f}")
         return {
             "valid": valid,
+            "verified": verified,
             "max_error": max_err,
             "mean_error": mean_err,
             "per_wavelength": error,

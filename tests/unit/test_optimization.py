@@ -139,13 +139,25 @@ class TestMaximizeQE:
 class TestMinimizeCrosstalk:
     """Tests for MinimizeCrosstalk objective."""
 
-    def test_uniform_qe_crosstalk(self):
-        """With uniform QE, each pixel gets 1/n fraction so crosstalk = 1 - 1/n."""
+    def test_matches_crosstalk_analyzer(self):
+        """Uses the band-aware CrosstalkAnalyzer definition."""
+        from compass.analysis.crosstalk import CrosstalkAnalyzer
+
         result = _make_result(qe_value=0.5, n_pixels=4)
+        expected = CrosstalkAnalyzer.summarize(result)["mean_crosstalk"]
+        assert MinimizeCrosstalk().evaluate(result) == pytest.approx(expected)
+
+    def test_color_selective_pixels_have_less_crosstalk(self):
+        """Unlike a share-of-total metric, the value responds to the structure."""
+        uniform = _make_result(qe_value=0.5, n_pixels=4)
+        selective = _make_result(qe_value=0.5, n_pixels=4)
+        wl = selective.wavelengths
+        bands = {"B": (0.40, 0.50), "G": (0.50, 0.60), "R": (0.60, 0.70)}
+        for name in selective.qe_per_pixel:
+            lo, hi = bands[name[0]]
+            selective.qe_per_pixel[name] = np.where((wl >= lo) & (wl <= hi), 0.6, 0.05)
         obj = MinimizeCrosstalk()
-        val = obj.evaluate(result)
-        # Each pixel fraction = 0.25, crosstalk = 1 - 0.25 = 0.75
-        assert val == pytest.approx(0.75)
+        assert obj.evaluate(selective) < 0.5 * obj.evaluate(uniform)
 
     def test_single_pixel_no_crosstalk(self):
         """Single pixel has no crosstalk (returns 0)."""
@@ -226,10 +238,10 @@ class TestCompositeObjective:
         """Composite returns weighted sum of components."""
         result = _make_result(qe_value=0.5, n_pixels=4)
         obj1 = MaximizeQE()  # returns -0.5
-        obj2 = MinimizeCrosstalk()  # returns 0.75
+        obj2 = MinimizeCrosstalk()
         composite = CompositeObjective([(1.0, obj1), (0.5, obj2)])
         val = composite.evaluate(result)
-        expected = 1.0 * (-0.5) + 0.5 * 0.75
+        expected = 1.0 * (-0.5) + 0.5 * obj2.evaluate(result)
         assert val == pytest.approx(expected)
 
     def test_empty_raises(self):

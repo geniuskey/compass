@@ -45,6 +45,12 @@ class ROISweepRunner:
             angle = dict(source.get("angle", {}))
             angle["theta_deg"] = cra
             source["angle"] = angle
+            if "cone" in source or source.get("type") == "cone_illumination":
+                # ConeIlluminationRunner centres the cone on cone.cra_deg
+                # and ignores angle.theta_deg.
+                cone = dict(source.get("cone") or {})
+                cone["cra_deg"] = cra
+                source["cone"] = cone
             cfg["source"] = source
         return cfg
 

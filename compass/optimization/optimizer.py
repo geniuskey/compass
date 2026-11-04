@@ -86,6 +86,10 @@ class PixelOptimizer:
     ):
         self.base_config = copy.deepcopy(base_config)
         self.parameter_space = parameter_space
+        # Parameters were built on the caller's dict; rebind them to the
+        # private copy that is actually simulated (and returned as
+        # final_config), leaving the caller's config untouched.
+        self.parameter_space.bind(self.base_config)
         self.objective = objective
         self.solver_name = solver_name
         self.method = method.lower()

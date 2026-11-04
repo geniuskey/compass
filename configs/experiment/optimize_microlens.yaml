@@ -8,7 +8,6 @@ experiment:
   description: "Inverse design of microlens geometry for maximum QE with crosstalk penalty"
 
 optimization:
-  solver: meent
   method: nelder-mead
   max_iterations: 50
   tolerance: 1.0e-4

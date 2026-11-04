@@ -306,6 +306,12 @@ class ParameterSpace:
             raise ValueError("ParameterSpace requires at least one parameter.")
         self.params = params
 
+    def bind(self, config: dict) -> None:
+        """Point every parameter at ``config`` (the dict they read and write)."""
+        for p in self.params:
+            if hasattr(p, "config"):
+                p.config = config
+
     @property
     def total_size(self) -> int:
         """Total number of scalar parameters across all optimizables."""

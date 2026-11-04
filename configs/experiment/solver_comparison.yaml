@@ -8,10 +8,10 @@ experiment:
   description: "Compare RCWA and FDTD solvers on 2x2 Bayer unit cell"
 
   solvers:
-    - solver: "torcwa"
+    - name: "torcwa"
       params:
         fourier_order: [11, 11]
-    - solver: "meent"
+    - name: "meent"
       params:
         fourier_order: [11, 11]
         backend: "torch"

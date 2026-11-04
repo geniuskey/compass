@@ -121,7 +121,8 @@ class SignalCalculator:
             scene: Scene reflectance model.
             module: Camera module optics.
             qe_per_pixel: Dict mapping pixel name to QE spectrum array.
-            bayer_map: 2D list of pixel names defining the Bayer pattern.
+            bayer_map: 2D Bayer pattern: pixel names (``"R_0_0"``) or
+                color letters (``"R"``, resolved to ``"R_{row}_{col}"``).
 
         Returns:
             Dict mapping colour channel name to averaged signal
@@ -132,10 +133,17 @@ class SignalCalculator:
         # Group by colour channel (first part of name before '_')
         channel_sums: dict[str, float] = {}
         channel_counts: dict[str, int] = {}
-        for row in bayer_map:
-            for pixel_name in row:
+        for r, row in enumerate(bayer_map):
+            for c, entry in enumerate(row):
+                # bayer_map holds either pixel names ("R_0_0") or, as in
+                # PixelStack / pixel configs, bare color letters ("R").
+                pixel_name = entry if entry in pixel_signals else f"{entry}_{r}_{c}"
+                if pixel_name not in pixel_signals:
+                    logger.warning(f"No QE for bayer_map entry {entry!r} at ({r}, {c})")
                 channel = pixel_name.split("_")[0]
-                channel_sums[channel] = channel_sums.get(channel, 0.0) + pixel_signals.get(pixel_name, 0.0)
+                channel_sums[channel] = channel_sums.get(channel, 0.0) + pixel_signals.get(
+                    pixel_name, 0.0
+                )
                 channel_counts[channel] = channel_counts.get(channel, 0) + 1
 
         channel_signals: dict[str, float] = {}
