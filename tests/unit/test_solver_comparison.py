@@ -169,3 +169,31 @@ class TestSummary:
         # A is compared against B (reference)
         assert "A_vs_B_px" in diffs
         assert diffs["A_vs_B_px"][0] == pytest.approx(0.1)
+
+
+def test_mismatched_wavelength_grids_raise():
+    import numpy as np
+    import pytest
+
+    from compass.analysis.solver_comparison import SolverComparison
+    from compass.core.types import SimulationResult
+
+    a = SimulationResult(qe_per_pixel={"B_0_0": np.array([0.5, 0.4])}, wavelengths=np.array([0.45, 0.55]))
+    b = SimulationResult(qe_per_pixel={"B_0_0": np.array([0.5, 0.4])}, wavelengths=np.array([0.45, 0.60]))
+    with pytest.raises(ValueError, match="wavelength grid"):
+        SolverComparison([a, b], ["a", "b"])
+
+
+def test_relative_error_ignores_near_zero_out_of_band_qe():
+    import numpy as np
+    import pytest
+
+    from compass.analysis.solver_comparison import SolverComparison
+    from compass.core.types import SimulationResult
+
+    wl = np.array([0.45, 0.70])
+    ref = SimulationResult(qe_per_pixel={"B_0_0": np.array([0.6, 1e-9])}, wavelengths=wl)
+    other = SimulationResult(qe_per_pixel={"B_0_0": np.array([0.6, 1e-4])}, wavelengths=wl)
+    err = SolverComparison([ref, other], ["ref", "other"]).summary()["max_qe_relative_error_pct"]
+    # 1e-4 against the 1%-of-peak floor (0.006): 1.7 %, not ~1e7 %
+    assert max(err.values()) == pytest.approx(100 * 1e-4 / 0.006, rel=1e-3)
