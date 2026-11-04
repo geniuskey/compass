@@ -21,10 +21,9 @@ def _template(
     import jax
     import jax.numpy as jnp
 
-    if precision != "float32":
-        jax.config.update("jax_enable_x64", True)
+    # Called inside solve()'s jax.enable_x64 / jax.default_device scope;
+    # no process-wide config is changed.
     target = jax.devices("gpu" if device.startswith("cuda") else "cpu")[cuda_device_index(device)]
-    jax.config.update("jax_default_device", target)
     config = fx.SimulationConfig(
         time=duration * 1e-6 / 299792458,
         grid=fx.UniformGrid(spacing=spacing * 1e-6),
@@ -98,6 +97,20 @@ def solve(
     precision="float64",
 ):
     """Return raw R/T/A and observed device; no clipping or QE surrogate."""
+    import jax
+
+    target = jax.devices("gpu" if device.startswith("cuda") else "cpu")[cuda_device_index(device)]
+    with jax.enable_x64(precision != "float32"), jax.default_device(target):
+        return _solve_scoped(
+            epsilon_yxz, wavelength, spacing, duration, pml_cells, device, polarization,
+            courant_factor, precision,
+        )
+
+
+def _solve_scoped(
+    epsilon_yxz, wavelength, spacing, duration, pml_cells, device, polarization,
+    courant_factor, precision,
+):
     import jax
     import jax.numpy as jnp
 

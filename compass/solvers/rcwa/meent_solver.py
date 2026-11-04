@@ -267,11 +267,18 @@ class MeentSolver(SolverBase):
         if self._backend == "jax":
             import jax
 
+            # Scoped, so other JAX solvers in the process are not re-targeted;
+            # meent is fed complex128, which needs x64 inside the scope.
             target = "gpu" if self.device.startswith("cuda") else "cpu"
-            jax.config.update(
-                "jax_default_device", jax.devices(target)[cuda_device_index(self.device)]
-            )
+            device = jax.devices(target)[cuda_device_index(self.device)]
+            with jax.default_device(device), jax.enable_x64(True):
+                return self._run_scoped(meent)
+        return self._run_scoped(meent)
 
+    def _run_scoped(self, meent) -> SimulationResult:
+        """Body of :meth:`run` (inside the JAX scope for the jax backend)."""
+        if self._pixel_stack is None or self._source is None:
+            raise RuntimeError("Call setup_geometry() and setup_source() before run()")
         params = self.config.get("params", {})
         fourier_order = params.get("fourier_order", [9, 9])
         fourier_type = params.get("fourier_type", 0)

@@ -11,9 +11,9 @@ solver:
   type: "fdtd"
 
   params:
+    # Only keys read by compass/solvers/fdtd/meep_solver.py are listed.
     resolution: 50              # pixels per um
-    runtime: 200                # femtoseconds
     pml_thickness: 1.0          # um
-    courant_number: null
-    dtype: "float64"
-    symmetries: []              # e.g. ["X", "Y"] for 4x speedup
+    runtime_periods: 100        # source periods after the pulse
+    use_dispersive: true        # Drude-Lorentz fit of n, k at each wavelength
+    air_padding: 0.8            # um of air between the stack and each PML

@@ -342,19 +342,31 @@ class MeepSolver(SolverBase):
 
         pml_layers = [mp.PML(thickness=pml_thickness, direction=mp.Z)]
 
-        # Source polarization
+        # Source polarization: TE (s) is perpendicular to the plane of
+        # incidence, TM (p) lies in it; both rotate with phi. The current
+        # sheet carries the Bloch phase exp(i 2 pi k.r) so it launches a
+        # single oblique plane wave rather than a mix of diffraction orders.
+        phi_rad = self._source.phi_rad
         if polarization == "TE":
-            src_component = mp.Ey
+            comps = [(mp.Ex, -np.sin(phi_rad)), (mp.Ey, np.cos(phi_rad))]
         else:
-            src_component = mp.Ex
+            comps = [(mp.Ex, np.cos(phi_rad)), (mp.Ey, np.sin(phi_rad))]
+        kvec = mp.Vector3(k_point.x, k_point.y, 0)
+
+        def bloch_amp(p, _k=kvec):
+            return complex(np.exp(2j * np.pi * (_k.x * p.x + _k.y * p.y)))
 
         sources = [
             mp.Source(
                 src=mp.GaussianSource(frequency=fcen, fwidth=fwidth),
-                component=src_component,
+                component=comp,
                 center=mp.Vector3(0, 0, src_z),
                 size=mp.Vector3(lx, ly, 0),
-            ),
+                amplitude=float(amp),
+                amp_func=bloch_amp,
+            )
+            for comp, amp in comps
+            if abs(amp) > 1e-12
         ]
 
         # --- Reference run (no structure, for flux normalization) ---
@@ -603,6 +615,11 @@ class MeepSolver(SolverBase):
                 # Add DTI if enabled
                 dti_cfg = si_cfg.get("dti", {})
                 if dti_cfg.get("enabled", False):
+                    # Same trench extent as PixelStack (FDTI full depth, BDTI
+                    # `depth` below the Si top).
+                    z0_rel, z1_rel = self._pixel_stack._dti_span(dti_cfg, layer.thickness)
+                    dti_h = z1_rel - z0_rel
+                    dti_zc = layer.z_start + 0.5 * (z0_rel + z1_rel) - z_center
                     dti_width = dti_cfg.get("width", 0.1)
                     dti_mat_name = dti_cfg.get("material", "sio2")
                     dti_meep_mat = self._get_meep_material(
@@ -614,8 +631,8 @@ class MeepSolver(SolverBase):
                         dx = c * self._pixel_stack.pitch - lx / 2.0
                         geometry.append(
                             mp.Block(
-                                center=mp.Vector3(dx, 0, layer_z_center),
-                                size=mp.Vector3(dti_width, ly, layer.thickness),
+                                center=mp.Vector3(dx, 0, dti_zc),
+                                size=mp.Vector3(dti_width, ly, dti_h),
                                 material=dti_meep_mat,
                             )
                         )
@@ -625,54 +642,19 @@ class MeepSolver(SolverBase):
                         dy = r * self._pixel_stack.pitch - ly / 2.0
                         geometry.append(
                             mp.Block(
-                                center=mp.Vector3(0, dy, layer_z_center),
-                                size=mp.Vector3(lx, dti_width, layer.thickness),
+                                center=mp.Vector3(0, dy, dti_zc),
+                                size=mp.Vector3(lx, dti_width, dti_h),
                                 material=dti_meep_mat,
                             )
                         )
 
             elif layer.name == "microlens":
-                # Approximate microlens with stacked cylinders (staircase)
-                n_lens_slices = 20
-                slice_thickness = layer.thickness / n_lens_slices
-                ml_mat_name = layer.base_material
-                ml_meep_mat = self._get_meep_material(mp, ml_mat_name, wavelength, use_dispersive)
-
-                for ml_spec in self._pixel_stack.microlenses:
-                    ml_idx = self._pixel_stack.microlenses.index(ml_spec)
-                    r_idx = ml_idx // self._pixel_stack.unit_cell[1]
-                    c_idx = ml_idx % self._pixel_stack.unit_cell[1]
-                    cx = (c_idx + 0.5) * self._pixel_stack.pitch - lx / 2.0
-                    cy = (r_idx + 0.5) * self._pixel_stack.pitch - ly / 2.0
-
-                    for i in range(n_lens_slices):
-                        rel_z = (i + 0.5) * slice_thickness
-                        # Superellipse radius at this height
-                        frac = rel_z / ml_spec.height
-                        if frac > 1.0:
-                            continue
-                        # Inverse of the lens profile: radius at height z
-                        # z = h*(1-r^2)^(1/(2*alpha)) => r = sqrt(1-(z/h)^(2*alpha))
-                        r_frac = np.sqrt(max(0.0, 1.0 - frac ** (2.0 * ml_spec.alpha_param)))
-                        rx = ml_spec.radius_x * r_frac
-                        ry = ml_spec.radius_y * r_frac
-
-                        if rx < 0.01 or ry < 0.01:
-                            continue
-
-                        slice_z = layer.z_start + rel_z - z_center
-
-                        geometry.append(
-                            mp.Ellipsoid(
-                                center=mp.Vector3(
-                                    cx + ml_spec.shift_x,
-                                    cy + ml_spec.shift_y,
-                                    slice_z,
-                                ),
-                                size=mp.Vector3(2 * rx, 2 * ry, slice_thickness),
-                                material=ml_meep_mat,
-                            )
-                        )
+                ml_meep_mat = self._get_meep_material(
+                    mp, layer.base_material, wavelength, use_dispersive
+                )
+                geometry.extend(
+                    self._microlens_geometry(mp, layer, ml_meep_mat, lx, ly, z_center)
+                )
 
             elif layer.name == "air":
                 # Air is the default medium, no geometry needed
@@ -692,6 +674,60 @@ class MeepSolver(SolverBase):
                 )
 
         logger.debug(f"meep: built {len(geometry)} geometry objects")
+        return geometry
+
+    def _microlens_geometry(self, mp, layer, material, lx, ly, z_center) -> list:
+        """Microlens as a staircase of superellipse prisms (plus residual base).
+
+        Mirrors :meth:`PixelStack._microlens_staircase`: lens material where
+        ``base + h(x, y) > z``, with the superellipse cross-section
+        ``|x/rx|^n + |y/ry|^n <= r(z)^n`` of each slice. Prisms (not
+        ellipsoids, whose z-extent tapers within each slice) fill every
+        slice fully. Lenses shifted across the cell edge are replicated at
+        their periodic images, and shared lenses are centred on their
+        N x N pixel group like in PixelStack.
+        """
+        stack = self._pixel_stack
+        if stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
+        n_slices = 20
+        base_t = float(getattr(stack, "_ml_base_thickness", 0.0))
+        geometry = []
+        if base_t > 0:
+            geometry.append(
+                mp.Block(
+                    center=mp.Vector3(0, 0, layer.z_start + base_t / 2 - z_center),
+                    size=mp.Vector3(lx, ly, base_t),
+                    material=material,
+                )
+            )
+        sharing = int(getattr(stack, "_lens_sharing", 1))
+        n_groups_x = max(1, stack.unit_cell[1] // sharing)
+        t = np.linspace(0.0, 2 * np.pi, 64, endpoint=False)
+        for idx, ml in enumerate(stack.microlenses):
+            gr, gc = divmod(idx, n_groups_x)
+            cx = (gc + 0.5) * sharing * stack.pitch - lx / 2.0 + ml.shift_x
+            cy = (gr + 0.5) * sharing * stack.pitch - ly / 2.0 + ml.shift_y
+            cap_t = ml.height / n_slices
+            for i in range(n_slices):
+                frac = (i + 0.5) / n_slices  # height fraction of this slice
+                r_frac = np.sqrt(max(0.0, 1.0 - frac ** (2.0 * ml.alpha_param)))
+                rx, ry = ml.radius_x * r_frac, ml.radius_y * r_frac
+                if rx < 1e-3 or ry < 1e-3:
+                    continue
+                e = 2.0 / ml.n_param
+                px = rx * np.sign(np.cos(t)) * np.abs(np.cos(t)) ** e
+                py = ry * np.sign(np.sin(t)) * np.abs(np.sin(t)) ** e
+                z_lo = layer.z_start + base_t + i * cap_t - z_center
+                for ox in (-lx, 0.0, lx):
+                    for oy in (-ly, 0.0, ly):
+                        x0, y0 = cx + ox, cy + oy
+                        if abs(x0) - rx >= lx / 2 or abs(y0) - ry >= ly / 2:
+                            continue  # image does not reach into the cell
+                        verts = [
+                            mp.Vector3(x0 + a, y0 + b, z_lo) for a, b in zip(px, py, strict=True)
+                        ]
+                        geometry.append(mp.Prism(verts, height=cap_t, material=material))
         return geometry
 
     def _get_meep_material(

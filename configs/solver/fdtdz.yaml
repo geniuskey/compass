@@ -11,9 +11,9 @@ solver:
   type: "fdtd"
 
   params:
+    # Only keys read by compass/solvers/fdtd/fdtdz_solver.py are listed.
     grid_spacing: 0.02          # um per cell
-    runtime: 200                # femtoseconds
     pml_layers: 15
-    courant_number: null        # auto-select based on grid
-    dtype: "float32"
-    jax_platform: "gpu"         # "cpu", "gpu", or "tpu"
+    dt_factor: 0.5              # time step as a fraction of the Courant limit
+    n_timesteps: 2000
+    source_offset: 5            # cells between the PML and the source plane

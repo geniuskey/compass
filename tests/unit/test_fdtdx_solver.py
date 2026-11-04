@@ -713,3 +713,13 @@ class TestFdtdxConfigParams:
         solver = FdtdxSolver({"name": "fdtdx", "type": "fdtd", "params": {}})
         assert solver.name == "fdtdx"
         assert solver.solver_type == "fdtd"
+
+
+def test_field_request_after_run_without_fields_raises():
+    """After a run the adapter has no field data; it must not return zeros."""
+    from compass.solvers.fdtd.fdtdx_solver import FdtdxSolver
+
+    solver = FdtdxSolver({"name": "fdtdx", "params": {}})
+    solver._has_run = True
+    with pytest.raises(NotImplementedError, match="does not record"):
+        solver.get_field_distribution("|E|2", "xz", 0.0)

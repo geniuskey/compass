@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import sys
 import types
 from unittest.mock import MagicMock, patch
@@ -50,6 +51,8 @@ def _make_fake_jax():
     jax.numpy = jnp
     jax.config = MagicMock()
     jax.devices = lambda backend=None: [MagicMock(name=f"{backend}:0")]
+    jax.default_device = lambda _device: contextlib.nullcontext()
+    jax.enable_x64 = lambda _flag=True: contextlib.nullcontext()
     # scipy's array_api_compat checks for jax.Array; provide a dummy
     jax.Array = type("Array", (), {})
     return jax, jnp

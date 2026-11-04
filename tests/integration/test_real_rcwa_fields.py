@@ -189,3 +189,15 @@ def test_rcwa_backends_agree_on_bsi_qe():
     for b in available[1:]:
         for key, val in ref.items():
             assert qes[b][key][0] == pytest.approx(val[0], abs=0.05), (b, key)
+
+
+def test_jax_solvers_do_not_mutate_global_jax_config():
+    """fmmax / meent(jax) scope device and x64 to the run."""
+    jax = pytest.importorskip("jax")
+    before = (jax.config.jax_enable_x64, jax.config.jax_default_device)
+    solver, result = _slab_solver("fmmax")
+    assert np.isfinite(result.reflection[0])
+    # lazy field evaluation after run() still works in the run's precision
+    assert np.isfinite(solver.get_field_distribution("|E|2", "xz", 0.5)).all()
+    after = (jax.config.jax_enable_x64, jax.config.jax_default_device)
+    assert after == before

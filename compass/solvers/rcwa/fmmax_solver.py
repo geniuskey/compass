@@ -66,11 +66,15 @@ class _FmmaxFieldSampler:
 
     def __init__(self, layer_solve_results, layer_thicknesses, forward, power,
                  cos_theta, eps_grids, lx, ly):
+        import jax
         import jax.numpy as jnp
         from fmmax import basis, fields, scattering
 
         self._jnp = jnp
+        self._jax = jax
         self._fields = fields
+        self._x64 = bool(getattr(jax.config, "jax_enable_x64"))  # noqa: B009
+        self._device = getattr(jax.config, "jax_default_device")  # noqa: B009
         self.lsr = layer_solve_results
         self.thick = [float(t) for t in layer_thicknesses]
         self.eps_grids = eps_grids  # COMPASS [y, x] grids, slice order (top first)
@@ -90,6 +94,12 @@ class _FmmaxFieldSampler:
 
     def fourier(self, slice_index: int, depth_um):
         """Fourier coefficients ([ex, ey, ez], [hx, hy, hz], [dx, dy, dz]), each (n_depth, N)."""
+        # Lazy field evaluation (e.g. get_field_distribution) happens after
+        # run() returned, so re-enter the precision/device scope it used.
+        with self._jax.enable_x64(self._x64), self._jax.default_device(self._device):
+            return self._fourier(slice_index, depth_um)
+
+    def _fourier(self, slice_index: int, depth_um):
         jnp = self._jnp
         L = slice_index + 1
         lsr = self.lsr[L]
@@ -256,14 +266,18 @@ class FmmaxSolver(SolverBase):
                 "fmmax and jax are required. Install with: pip install fmmax jax"
             ) from err
 
-        # Configure JAX device
+        # Scope the JAX device and precision to this run instead of mutating
+        # process-wide config (which re-targeted other JAX solvers). Without
+        # x64, JAX silently downcasts complex128 to complex64.
         target = "gpu" if self.device.startswith("cuda") else "cpu"
         selected = jax.devices(target)[cuda_device_index(self.device)]
-        jax.config.update("jax_default_device", selected)
-        if self._dtype_str == "complex128" and not jax.config.read("jax_enable_x64"):
-            # Without x64 JAX silently downcasts complex128 to complex64.
-            jax.config.update("jax_enable_x64", True)
+        with jax.default_device(selected), jax.enable_x64(self._dtype_str == "complex128"):
+            return self._run_scoped(jnp, basis, fmm)
 
+    def _run_scoped(self, jnp, basis, fmm) -> SimulationResult:
+        """Body of :meth:`run`, executed inside the JAX device/x64 scope."""
+        if self._pixel_stack is None or self._source is None:
+            raise RuntimeError("Call setup_geometry() and setup_source() before run()")
         params = self.config.get("params", {})
         fourier_order = params.get("fourier_order", [9, 9])
 

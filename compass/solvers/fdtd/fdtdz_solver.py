@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 _FDTDZ_AVAILABLE = False
 _JAX_AVAILABLE = False
 try:
-    import jax
+    import jax  # noqa: F401  (availability probe)
 
     _JAX_AVAILABLE = True
 except ImportError:
@@ -80,22 +80,14 @@ class FdtdzSolver(SolverBase):
         self._configure_jax_device()
 
     def _configure_jax_device(self) -> None:
-        """Configure JAX to use the appropriate device."""
-        if not _JAX_AVAILABLE:
-            return
-        try:
-            if self.device.startswith("cuda"):
-                # JAX will use GPU if available
-                jax.config.update("jax_platform_name", "gpu")
-                logger.info("fdtdz: configured JAX for GPU")
-            elif self.device == "tpu":
-                jax.config.update("jax_platform_name", "tpu")
-                logger.info("fdtdz: configured JAX for TPU")
-            else:
-                jax.config.update("jax_platform_name", "cpu")
-                logger.info("fdtdz: configured JAX for CPU")
-        except Exception as e:
-            logger.warning(f"fdtdz: could not set JAX device to '{self.device}': {e}")
+        """Log the target device.
+
+        Device and precision are scoped per run (``jax.default_device`` /
+        ``jax.enable_x64``); the adapter used to set ``jax_platform_name``
+        process-wide, which silently re-targeted other JAX solvers.
+        """
+        if _JAX_AVAILABLE:
+            logger.info(f"fdtdz: JAX target device '{self.device}'")
 
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
         """Convert PixelStack to fdtdz permittivity volume.

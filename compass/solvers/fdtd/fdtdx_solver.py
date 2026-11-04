@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 _FDTDX_AVAILABLE = False
 _JAX_AVAILABLE = False
 try:
-    import jax
+    import jax  # noqa: F401  (availability probe)
 
     _JAX_AVAILABLE = True
 except ImportError:
@@ -125,21 +125,14 @@ class FdtdxSolver(SolverBase):
         self._configure_jax_device()
 
     def _configure_jax_device(self) -> None:
-        """Configure JAX to use the appropriate device."""
-        if not _JAX_AVAILABLE:
-            return
-        try:
-            if self.device.startswith("cuda"):
-                jax.config.update("jax_platform_name", "gpu")
-                logger.info("fdtdx: configured JAX for GPU")
-            elif self.device == "tpu":
-                jax.config.update("jax_platform_name", "tpu")
-                logger.info("fdtdx: configured JAX for TPU")
-            else:
-                jax.config.update("jax_platform_name", "cpu")
-                logger.info("fdtdx: configured JAX for CPU")
-        except Exception as e:
-            logger.warning(f"fdtdx: could not set JAX device to '{self.device}': {e}")
+        """Log the target device.
+
+        Device and precision are scoped per run (``jax.default_device`` /
+        ``jax.enable_x64``); the adapter used to set ``jax_platform_name``
+        process-wide, which silently re-targeted other JAX solvers.
+        """
+        if _JAX_AVAILABLE:
+            logger.info(f"fdtdx: JAX target device '{self.device}'")
 
     def setup_geometry(self, pixel_stack: PixelStack) -> None:
         """Convert PixelStack to FDTDX geometry representation.
@@ -224,6 +217,7 @@ class FdtdxSolver(SolverBase):
         nz = max(1, round((hi - lo) / dx))
         duration = self._resolve_duration(params, dx)
         self._failed_runs = []
+        self._has_run = True
         spectra = []
         observed = None
         for wl in self._source.wavelengths:
@@ -295,7 +289,13 @@ class FdtdxSolver(SolverBase):
             2D field array.
         """
         if self._last_fields is None:
-            logger.warning("fdtdx: no field data available, returning zeros")
+            if getattr(self, "_has_run", False):
+                # Returning zeros here looked like a (dark) solved field.
+                raise NotImplementedError(
+                    "the fdtdx adapter does not record field distributions; "
+                    "use meep, fdtd_flaport or an RCWA solver for field maps"
+                )
+            logger.warning("fdtdx: no simulation data, returning zeros")
             return np.zeros((64, 64))
 
         # Use the last wavelength's field data
