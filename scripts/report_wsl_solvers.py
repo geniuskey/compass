@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from itertools import pairwise
 from pathlib import Path
@@ -15,9 +16,11 @@ REPORT = ROOT / "docs/reports/patterned-cpu-gpu-meep-comparison.md"
 PORTABLE_ASSETS = (
     "metrics.json",
     "environment.json",
-    "spectra.png",
-    "performance.png",
-    "convergence.png",
+    *(
+        f"{figure}.{extension}"
+        for figure in ("spectra", "differences", "performance", "convergence", "geometry")
+        for extension in ("png", "svg")
+    ),
     "timing_jobs.json",
     "linux_requirements_freeze.txt",
     "meep_conda_explicit.txt",
@@ -397,6 +400,7 @@ def write_report():
         "pml_delta": pml_delta,
         "pml_time_delta": pml_time_delta,
     }
+
     def gate_label(value, limit):
         if value is None:
             return "미측정"
@@ -408,15 +412,10 @@ def write_report():
         else None
     )
     lines = [
-        "# WSL 실제 CPU/GPU 및 Meep 기준 전자기 솔버 비교",
+        "# Meep 기준 CPU/GPU 솔버 비교",
         "",
-        f"Meep 기준값 수렴 판정: **{'통과' if accepted else '미확정 / 수렴 기준을 아직 충족하지 않음'}**. "
-        "이 문서는 `outputs/patterned_cpu_gpu/wsl/`의 새 실행만 사용한다. 이전 Windows 결과는 별도 보존하며 성능 표에 섞지 않는다.",
-        "",
-        "## 비교 실험의 결론",
-        "",
-        "실제 Meep 계산과 CPU/GPU 솔버 비교는 수행했다. 아래 판정은 계산 실행 성공과 기준값의 수렴을 구분한다. "
-        "Meep 기준값이 승인되기 전까지 솔버 간 차이는 잠정 비교이며 정확도 순위를 확정할 수 없다.",
+        f"**Meep 기준값: {'수렴 통과' if accepted else '수렴 미확정'}**. "
+        "450/550/650 nm 실측 R/T/A와 CPU/GPU 속도를 비교한다. 기준값이 승인되기 전까지 정확도 비교는 잠정 결과다.",
         "",
         "| 검증 항목 | 실측 / 판정 | 통과 기준 |",
         "|---|---|---|",
@@ -940,97 +939,9 @@ def write_report():
         "",
     ]
     if success:
-        import matplotlib
+        from plot_wsl_comparison import generate_figures
 
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-
-        fig, axs = plt.subplots(1, 3, figsize=(13, 4), layout="constrained")
-        for r in highest:
-            for i, ax in enumerate(axs):
-                ax.plot(
-                    np.array(r["wavelength_um"]) * 1000,
-                    np.asarray(r["rta"])[:, i],
-                    "o-",
-                    label=(
-                        f"fdtdx dx={r['params']['grid_spacing']}, t={fdtdx_duration(r)}"
-                        if r["solver"] == "fdtdx"
-                        else f"{r['solver']} N={r['order']}"
-                    ),
-                )
-        if best:
-            for i, ax in enumerate(axs):
-                ax.plot(
-                    [s["wavelength_um"] * 1000 for s in best["spectra"]],
-                    np.asarray(ref_values)[:, i],
-                    "k--",
-                    label=f"Meep r={best['resolution']}",
-                )
-        for ax, title in zip(axs, ["R", "T", "A (residual)"]):
-            ax.set(xlabel="Wavelength (nm)", ylabel=title)
-            ax.grid(alpha=0.2)
-        axs[0].legend(fontsize=6)
-        fig.savefig(OUT / "spectra.png", dpi=170)
-        plt.close(fig)
-        lines += ["![Measured spectra](../../outputs/patterned_cpu_gpu/wsl/spectra.png)", ""]
-        if paired:
-            fig, ax = plt.subplots(figsize=(9, 4), layout="constrained")
-            x = np.arange(len(paired))
-            ax.bar(x - 0.2, [a["warm_median_s"] for a, b in paired], 0.4, label="CPU")
-            ax.bar(x + 0.2, [b["warm_median_s"] for a, b in paired], 0.4, label="GPU requested")
-            ax.set_xticks(x, [a["solver"] for a, b in paired])
-            ax.set(ylabel="Warm median seconds / 3 wavelengths", yscale="log")
-            ax.legend()
-            fig.savefig(OUT / "performance.png", dpi=170)
-            plt.close(fig)
-            lines += [
-                "![Measured performance](../../outputs/patterned_cpu_gpu/wsl/performance.png)",
-                "",
-            ]
-        fig, axs = plt.subplots(1, 2, figsize=(12, 4), layout="constrained")
-        for name, device in sorted({(r["solver"], r["device"]) for r in rcwa}):
-            group = {
-                r["order"]: r
-                for r in rcwa
-                if r["solver"] == name and r["device"] == device and r["grid"] == 128
-            }
-            if group:
-                orders = sorted(group)
-                axs[0].plot(
-                    orders, [group[n]["rta"][2][0] for n in orders], "o-", label=f"{name}/{device}"
-                )
-        for wl in [0.45, 0.55, 0.65]:
-            g = [
-                r
-                for r in references
-                if meep_complete(r) and best and meep_protocol(r) == meep_protocol(best)
-            ]
-            if g:
-                by_resolution = {}
-                for run in sorted(g, key=lambda r: r["duration"]):
-                    by_resolution[run["resolution"]] = run
-                g = [by_resolution[n] for n in sorted(by_resolution)]
-                axs[1].plot(
-                    [r["resolution"] for r in g],
-                    [
-                        next(s["rta"][0] for s in r["spectra"] if s["wavelength_um"] == wl)
-                        for r in g
-                    ],
-                    "o-",
-                    label=f"{wl * 1000:.0f} nm",
-                )
-        axs[0].set(xlabel="RCWA order per axis", ylabel="R at 650 nm, grid 128")
-        axs[1].set(xlabel="Meep points / um", ylabel="Reflectance")
-        for ax in axs:
-            ax.grid(alpha=0.2)
-            if ax.get_legend_handles_labels()[0]:
-                ax.legend(fontsize=7)
-        fig.savefig(OUT / "convergence.png", dpi=170)
-        plt.close(fig)
-        lines += [
-            "![Measured convergence](../../outputs/patterned_cpu_gpu/wsl/convergence.png)",
-            "",
-        ]
+        generate_figures(OUT, highest, paired, best, previous, manifest["reference_selection"])
     if REPORT.exists() and not (OUT / "windows_report_before_wsl.md").exists():
         (OUT / "windows_report_before_wsl.md").write_bytes(REPORT.read_bytes())
     (OUT / "metrics.json").write_text(json.dumps(manifest, indent=2, default=str))
@@ -1040,6 +951,43 @@ def write_report():
         if (OUT / name).exists():
             shutil.copy2(OUT / name, portable / name)
     body = "\n".join(lines) + "\n"
+    if success:
+        asset = "/reports/patterned-cpu-gpu-meep-wsl"
+
+        def figure(name, alt):
+            return f"[![{alt}]({asset}/{name}.png)]({asset}/{name}.svg)\n\n"
+
+        visual_summary = (
+            "## 차트로 비교하기 {#visual-comparison}\n\n"
+            "그림을 누르면 SVG 원본으로 확대할 수 있다.\n\n"
+            "### 1. Meep 수렴 상태\n\n"
+            + figure("convergence", "Meep 시간·공간 수렴 기준 대비 변화와 파장별 R/T/A 격자 변화")
+            + "점선 1 이하면 해당 변화 기준을 통과한다. 시간은 통과했지만 공간 격자는 기준을 넘었고 PML은 미측정이다. "
+            "아래쪽 막대는 해상도 120→160에서 R/T/A가 얼마나 움직였는지 보여준다. 이 격자 변화는 참값에 대한 오차 상계가 아니다.\n\n"
+            "### 2. 파장별 반사·투과·흡수\n\n"
+            + figure("spectra", "세 파장에서 솔버별 반사율 R·투과율 T·잔차 흡수율 A를 비교한 차트")
+            + "검은 점선은 Meep, 색 선은 각 솔버의 최고 측정 설정이다. 점 세 개만 실측이며 연결선은 중간 파장 예측이 아니다. "
+            "흡수 A는 1−R−T 잔차다. 범례에 사용한 차수·격자·장치를 함께 표시했다.\n\n"
+            "### 3. Meep 대비 차이\n\n"
+            + figure("differences", "솔버별 Meep 대비 최대 절대 차이 막대와 파장별 차이 히트맵")
+            + "왼쪽은 세 파장 전체의 최대 차이, 오른쪽은 각 파장의 R/T/A 중 최대 차이다. 단위는 %p다. "
+            "주황 점선은 Meep 자체의 관측된 격자 변화다. 기준값 수렴이 미확정이므로 이 그림으로 정확도 순위를 확정하지 않는다.\n\n"
+            "### 4. CPU/GPU 실행시간과 가속률\n\n"
+            + figure("performance", "같은 설정의 CPU·GPU warm 실행시간과 가속률을 비교한 가로 막대 차트")
+            + "회색은 CPU, 파랑은 GPU 요청 경로이며 막대가 짧을수록 빠르다. 숫자는 세 파장 실행의 warm 3회 중앙값과 CPU/GPU 시간 비다. "
+            "RCWA는 N=9 성능 조건이며 위 최고 차수 정확도 비교와 다른 실행이다. meent/JAX는 GPU 배열 계산과 CPU 고유값 풀이가 섞인 경로다.\n\n"
+        )
+        body = body.replace("| 검증 항목 |", visual_summary + "<details>\n<summary>검증 판정 수치표 펼치기</summary>\n\n| 검증 항목 |", 1)
+        body = body.replace("위 조건 모두 통과 |\n", "위 조건 모두 통과 |\n\n</details>\n", 1)
+        body = body.replace("## 구조와 물리량\n\n", "## 구조와 물리량\n\n" + figure("geometry", "0.8 µm 주기 패턴의 XY 평면과 첫 기둥을 지나는 XZ 단면"), 1)
+        # Keep large raw tables available without burying the visual comparison.
+        def fold_table(match):
+            table = match.group(0)
+            if len(table.splitlines()) < 9:
+                return table
+            return "<details>\n<summary>전체 실측 수치표 펼치기</summary>\n\n" + table + "\n</details>\n"
+
+        body = re.sub(r"(?:^\|[^\n]*\n){2,}", fold_table, body, flags=re.MULTILINE)
     if closeout:
         notice = (
             "사용자의 추가 확장 중단 요청에 따라 측정을 종료했다. 완료된 실측은 보존하고 "
@@ -1048,8 +996,7 @@ def write_report():
             "수렴 미확정 상태의 Meep 대비 차이는 잠정 비교로만 해석한다. "
             "N=9 가속률만으로 정확한 솔버를 추천하지 않는다. 추가 계산 프로세스는 모두 종료했다.\n\n"
         )
-        first, rest = body.split("\n", 1)
-        body = first + "\n\n" + notice + rest
+        body = body.replace("## 구현·검증과 재현\n", "<details>\n<summary>측정 종료 기록</summary>\n\n" + notice + "</details>\n\n## 구현·검증과 재현\n", 1)
         body = body.replace("미측정 / 진행 중", "미측정 (측정 종료)")
     for name in PORTABLE_ASSETS:
         body = body.replace(

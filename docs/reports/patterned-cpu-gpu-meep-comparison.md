@@ -1,13 +1,37 @@
-# WSL 실제 CPU/GPU 및 Meep 기준 전자기 솔버 비교
+# Meep 기준 CPU/GPU 솔버 비교
 
-사용자의 추가 확장 중단 요청에 따라 측정을 종료했다. 완료된 실측은 보존하고 실행 중이던 추가 계산은 stopped_by_scope로 기록했다. 대기·중단 데이터는 측정값으로 대체하지 않았다. Meep 기준 수렴 판정은 미확정이며, 인접 최고 완료 격자의 최대 변화는 0.01825320151341342이다. 수렴 미확정 상태의 Meep 대비 차이는 잠정 비교로만 해석한다. N=9 가속률만으로 정확한 솔버를 추천하지 않는다. 추가 계산 프로세스는 모두 종료했다.
+**Meep 기준값: 수렴 미확정**. 450/550/650 nm 실측 R/T/A와 CPU/GPU 속도를 비교한다. 기준값이 승인되기 전까지 정확도 비교는 잠정 결과다.
 
+## 차트로 비교하기 {#visual-comparison}
 
-Meep 기준값 수렴 판정: **미확정 / 수렴 기준을 아직 충족하지 않음**. 이 문서는 `outputs/patterned_cpu_gpu/wsl/`의 새 실행만 사용한다. 이전 Windows 결과는 별도 보존하며 성능 표에 섞지 않는다.
+그림을 누르면 SVG 원본으로 확대할 수 있다.
 
-## 비교 실험의 결론
+### 1. Meep 수렴 상태
 
-실제 Meep 계산과 CPU/GPU 솔버 비교는 수행했다. 아래 판정은 계산 실행 성공과 기준값의 수렴을 구분한다. Meep 기준값이 승인되기 전까지 솔버 간 차이는 잠정 비교이며 정확도 순위를 확정할 수 없다.
+[![Meep 시간·공간 수렴 기준 대비 변화와 파장별 R/T/A 격자 변화](/reports/patterned-cpu-gpu-meep-wsl/convergence.png)](/reports/patterned-cpu-gpu-meep-wsl/convergence.svg)
+
+점선 1 이하면 해당 변화 기준을 통과한다. 시간은 통과했지만 공간 격자는 기준을 넘었고 PML은 미측정이다. 아래쪽 막대는 해상도 120→160에서 R/T/A가 얼마나 움직였는지 보여준다. 이 격자 변화는 참값에 대한 오차 상계가 아니다.
+
+### 2. 파장별 반사·투과·흡수
+
+[![세 파장에서 솔버별 반사율 R·투과율 T·잔차 흡수율 A를 비교한 차트](/reports/patterned-cpu-gpu-meep-wsl/spectra.png)](/reports/patterned-cpu-gpu-meep-wsl/spectra.svg)
+
+검은 점선은 Meep, 색 선은 각 솔버의 최고 측정 설정이다. 점 세 개만 실측이며 연결선은 중간 파장 예측이 아니다. 흡수 A는 1−R−T 잔차다. 범례에 사용한 차수·격자·장치를 함께 표시했다.
+
+### 3. Meep 대비 차이
+
+[![솔버별 Meep 대비 최대 절대 차이 막대와 파장별 차이 히트맵](/reports/patterned-cpu-gpu-meep-wsl/differences.png)](/reports/patterned-cpu-gpu-meep-wsl/differences.svg)
+
+왼쪽은 세 파장 전체의 최대 차이, 오른쪽은 각 파장의 R/T/A 중 최대 차이다. 단위는 %p다. 주황 점선은 Meep 자체의 관측된 격자 변화다. 기준값 수렴이 미확정이므로 이 그림으로 정확도 순위를 확정하지 않는다.
+
+### 4. CPU/GPU 실행시간과 가속률
+
+[![같은 설정의 CPU·GPU warm 실행시간과 가속률을 비교한 가로 막대 차트](/reports/patterned-cpu-gpu-meep-wsl/performance.png)](/reports/patterned-cpu-gpu-meep-wsl/performance.svg)
+
+회색은 CPU, 파랑은 GPU 요청 경로이며 막대가 짧을수록 빠르다. 숫자는 세 파장 실행의 warm 3회 중앙값과 CPU/GPU 시간 비다. RCWA는 N=9 성능 조건이며 위 최고 차수 정확도 비교와 다른 실행이다. meent/JAX는 GPU 배열 계산과 CPU 고유값 풀이가 섞인 경로다.
+
+<details>
+<summary>검증 판정 수치표 펼치기</summary>
 
 | 검증 항목 | 실측 / 판정 | 통과 기준 |
 |---|---|---|
@@ -15,6 +39,8 @@ Meep 기준값 수렴 판정: **미확정 / 수렴 기준을 아직 충족하지
 | 패턴 공간 격자 수렴 | 0.0182532 / 기준 미충족 | 최대 ΔRTA ≤ 0.005 |
 | PML 독립 검증 | 미측정; 미승인 | 최대 ΔRTA ≤ 0.001 및 양쪽 시간 수렴 |
 | Meep 패턴 기준값 최종 승인 | 미확정 | 위 조건 모두 통과 |
+
+</details>
 
 ΔRTA는 세 파장의 R/T/A 중 최대 절대 차이다. 예를 들어 0.01825는 약 1.83%p이며 상대 오차 1.83%를 뜻하지 않는다. 박막의 TMM 검증은 아래에 별도로 제시하며 패턴의 격자·PML 수렴을 대신하지 않는다. 이번 비교에는 photodiode QE 검증이 포함되지 않는다.
 
@@ -37,6 +63,8 @@ Meep 기준값 수렴 판정: **미확정 / 수렴 기준을 아직 충족하지
 
 ## 구조와 물리량
 
+[![0.8 µm 주기 패턴의 XY 평면과 첫 기둥을 지나는 XZ 단면](/reports/patterned-cpu-gpu-meep-wsl/geometry.png)](/reports/patterned-cpu-gpu-meep-wsl/geometry.svg)
+
 주기 0.8x0.8 µm, 공기 입출사, 수직 TE(Ey), 450/550/650 nm. 아래에서부터 n=1.45 spacer 0.12 µm, 높이 0.24 µm의 n=2.4+0.02i 기둥 2개, n=1.6 cap 0.08 µm이다. 기둥 (중심 x,y; 크기 x,y)은 (-0.2,-0.15;0.25,0.2), (0.175,0.175;0.2,0.25) µm이다.
 R/T는 모든 전파 회절차수의 총 파워다. A=1-R-T는 잔차이며 합계 1을 정확도 증거로 사용하지 않는다. 이번 경로에서 clipping을 제거했다. 합성 구조에는 photodiode가 없으며 QE 비교는 하지 않는다.
 torcwa/meent/fmmax는 사각형 기저 (2N+1)², grcwa는 원형 기저다. grcwa의 실제 모드 수를 기록하며 N 숫자만으로 동일 기저라고 간주하지 않는다.
@@ -56,6 +84,9 @@ torcwa/meent/fmmax는 사각형 기저 (2N+1)², grcwa는 원형 기저다. grcw
 
 ## 실제 GPU 및 FDTD 박막 검증
 
+<details>
+<summary>전체 실측 수치표 펼치기</summary>
+
 | 솔버 / 장치 | k | 격자 간격 (µm) | 파장 수 | 최대 TMM R/T/A 오차 | 구현 상태 | 원시 파일 |
 |---|---:|---:|---:|---:|---|---|
 | fdtdx / cuda | 0.05 | 0.0125 | 3 | 0.0257605 | 이전 탐색 구현; 현행 검증에서 제외 | `fdtdx_cuda_slab_absorbing_dx0125.json` |
@@ -70,6 +101,8 @@ torcwa/meent/fmmax는 사각형 기저 (2N+1)², grcwa는 원형 기저다. grcw
 | meent_torch_cfs / cpu | 0.05 | N=1, eps=64x64 (실제) | 1 | 2.77556e-17 | 현행 측정 | `meent_torch_cfs_cpu_slab_api_smoke.json` |
 | meent_torch / cuda | 0.05 | N=1, eps=64 (요청) | 3 | 4.44089e-16 | 현행 측정 | `meent_torch_cuda_slab_absorbing.json` |
 | torcwa / cuda | 0.05 | N=1, eps=64 (요청) | 3 | 7.42655e-11 | 현행 측정 | `torcwa_cuda_slab_absorbing.json` |
+
+</details>
 
 ## Meep 패턴 격자·시간 수렴 {#meep-convergence}
 
@@ -86,6 +119,9 @@ PML 밖 공기에 소스/면 모니터를 놓고 동일 셀의 빈 공간 계산
 
 주 기준 실행의 파장별 실제 종료시간과 마지막 두 누적 DFT 변화다. 시간 상한에 도달한 것과 시간 수렴 통과를 구분한다. 아직 계산하지 않은 파장을 0 또는 수렴한 값으로 채우지 않는다.
 
+<details>
+<summary>전체 실측 수치표 펼치기</summary>
+
 | 원시 파일 / 해상도 | λ (nm) | 실제 post-source 종료 (µm/c) | 이전 구간 / ΔRTA | 마지막 구간 / ΔRTA | 시간 판정 |
 |---|---:|---:|---|---|---|
 | `meep_reference_r120.json` / 120 | 450 | 145.0 | 80.0→110.0 / 0.000172827 | 110.0→145.0 / 3.49153e-05 | 통과 |
@@ -97,6 +133,8 @@ PML 밖 공기에 소스/면 모니터를 놓고 동일 셀의 빈 공간 계산
 | `meep_reference_r200.json` / 200 | 450 | 80.0 | 35.0→55.0 / 0.000378006 | 55.0→80.0 / 0.000451409 | 통과 |
 | `meep_reference_r200.json` / 200 | 550 | 미측정 | 미측정 | 미측정 | 미측정 (측정 종료) |
 | `meep_reference_r200.json` / 200 | 650 | 미측정 | 미측정 | 미측정 | 미측정 (측정 종료) |
+
+</details>
 
 비교에 선택한 Meep 파일: `meep_reference_r160.json`; PML 0.35 µm. 짝을 이룬 낮은 해상도 파일: `meep_reference_r120.json`.
 동일 PML의 인접 최고 격자 변화: 0.01825320151341342; 최고/이전 격자의 마지막 두 구간 최대 시간 변화: 0.00032783035137273764 / 0.0004595186575556687. 선택한 PML 변화: None; 해당 두 계산의 최대 시간 변화: None. PML 판정: stopped_by_scope / 선택 PML 허용 False. 수렴 판정: 미확정.
@@ -111,6 +149,9 @@ PML 밖 공기에 소스/면 모니터를 놓고 동일 셀의 빈 공간 계산
 
 ## CPU/GPU 동일 조건의 성능과 결과 차이 {#cpu-gpu-comparison}
 
+<details>
+<summary>전체 실측 수치표 펼치기</summary>
+
 | 솔버 | N / 격자 | 실제 모드 | CPU cold / warm (s) | GPU cold / warm (s) | 가속률 | CPU↔GPU 최대 ΔRTA | Meep 최대 ΔRTA | GPU allocator peak (MiB) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | fdtdx | 0 / 64 (요청) | None | 200.368 / 201.882 | 31.282 / 16.367 | 12.335x | 3.553e-15 | 0.137119676554073 | 81.8 |
@@ -120,6 +161,8 @@ PML 밖 공기에 소스/면 모니터를 놓고 동일 셀의 빈 공간 계산
 | meent_numpy | 9 / 128 (요청) | 361 | 51.336 / 49.158 | 해당 없음 / 미측정 | — | — | 0.0207446220621067 | — |
 | meent_torch | 9 / 128 (요청) | 361 | 59.585 / 49.879 | 18.512 / 12.675 | 3.935x | 1.793e-12 | 0.020744622058513573 | 1835.4 |
 | torcwa | 9 / 128 (요청) | 361 | 52.626 / 52.025 | 15.756 / 14.444 | 3.602x | 7.672e-14 | 0.09849500557913782 | 1119.8 |
+
+</details>
 
 meent/JAX의 GPU 열은 GPU 배열 연산 + CPU 고유값 풀이의 혼합 경로다. 완전 GPU 실행의 가속률로 해석하지 않는다.
 위 Meep 오차는 최고 측정 격자와의 차이다. Meep 기준값이 미확정이면 정확도 순위로 사용하지 않는다. 낮은 차수의 빠른 결과를 정확한 솔버로 추천하지 않는다.
@@ -134,6 +177,9 @@ meent/JAX의 GPU 열은 GPU 배열 연산 + CPU 고유값 풀이의 혼합 경�
 
 ## 차수와 유전율 격자의 독립 수렴
 
+<details>
+<summary>전체 실측 수치표 펼치기</summary>
+
 | 솔버 / 장치 | 격자 | N 변화 | 모드 수 변화 | 최대 ΔRTA |
 |---|---:|---:|---:|---:|
 | fmmax / cpu | 128 | 9→11 | 361→529 | 0.0131226 |
@@ -147,6 +193,8 @@ meent/JAX의 GPU 열은 GPU 배열 연산 + CPU 고유값 풀이의 혼합 경�
 | torcwa / cpu | 128 | 9→11 | 361→529 | 0.0177467 |
 | torcwa / cpu | 128 | 11→13 | 529→729 | 0.0153384 |
 | torcwa / cuda | 128 | 9→13 | 361→729 | 0.0330851 |
+
+</details>
 
 | 솔버 / 장치 | N | 격자 변화 | 최대 ΔRTA |
 |---|---:|---:|---:|
@@ -193,6 +241,9 @@ DFS↔CFS 차이 0.005는 두 알고리즘의 동일 차수 결과를 진단하�
 
 ## 실측 R/T/A (최고 측정 차수; 수렴 판정과 별개) {#measured-rta}
 
+<details>
+<summary>전체 실측 수치표 펼치기</summary>
+
 | 솔버 | N / 격자 | λ (nm) | R | T | A |
 |---|---:|---:|---:|---:|---:|
 | Meep | res=160 | 450 | 0.26900609 | 0.65474094 | 0.07625297 |
@@ -220,7 +271,12 @@ DFS↔CFS 차이 0.005는 두 알고리즘의 동일 차수 결과를 진단하�
 | torcwa / cpu | 13 / 256 (요청) | 550 | 0.29362277 | 0.64471321 | 0.06166402 |
 | torcwa / cpu | 13 / 256 (요청) | 650 | 0.59388169 | 0.30771607 | 0.09840223 |
 
+</details>
+
 최고 측정 설정의 Meep 차이 (수렴 판정과 별개):
+
+<details>
+<summary>전체 실측 수치표 펼치기</summary>
 
 | 솔버 / 장치 | 최대 ΔRTA (세 파장 전체) | 원시 파일 |
 |---|---:|---|
@@ -231,6 +287,8 @@ DFS↔CFS 차이 0.005는 두 알고리즘의 동일 차수 결과를 진단하�
 | meent_numpy / cpu | 0.017034 | `meent_numpy_cpu_n11_g128_convergence.json` |
 | meent_torch / cpu | 0.0207446 | `meent_torch_cpu_n9_g128.json` |
 | torcwa / cpu | 0.0668439 | `torcwa_cpu_n13_g256_convergence.json` |
+
+</details>
 
 ## fdtdz 별도 무손실 native 검증
 
@@ -281,6 +339,13 @@ fdtdz_environment.json의 설치 성공 시각보다 오래된 native 결과는 
 | meep_cw_pattern_diagnostic.json | timeout | 3D pattern CW trial interrupted after approximately 30 minutes without a converged result; not used as reference |
 | torcwa_cpu_n17_g128_convergence.json | timeout | Process failure or timeout; see corresponding log |
 
+<details>
+<summary>측정 종료 기록</summary>
+
+사용자의 추가 확장 중단 요청에 따라 측정을 종료했다. 완료된 실측은 보존하고 실행 중이던 추가 계산은 stopped_by_scope로 기록했다. 대기·중단 데이터는 측정값으로 대체하지 않았다. Meep 기준 수렴 판정은 미확정이며, 인접 최고 완료 격자의 최대 변화는 0.01825320151341342이다. 수렴 미확정 상태의 Meep 대비 차이는 잠정 비교로만 해석한다. N=9 가속률만으로 정확한 솔버를 추천하지 않는다. 추가 계산 프로세스는 모두 종료했다.
+
+</details>
+
 ## 구현·검증과 재현
 
 기존 비대칭 패턴의 torcwa/grcwa 입력 전치는 유지했다. torcwa field_xy의 [x,y] 출력을 QE의 [y,x] 격자로 돌려놓고 photodiode가 없으면 QE 재구성을 생략한다. meent에는 Torch/JAX 장치를 전달한다. RCWA의 유전율 격자는 epsilon_grid로 독립 제어하며 grid_multiplier=0이면 자동 oversampling을 끈다. meent/fmmax도 이 설정을 따르도록 수정했고 기본 grid_multiplier=3은 유지한다. 새 metadata의 epsilon_grid_requested는 요청 최소 크기, epsilon_grid_shape_yx는 실제 [y,x] 샘플 수다. 수정 직전 완료된 WSL meent/fmmax 결과 18개는 기존 max(epsilon_grid,3*(2N+1)) 식으로 확인했으며 모두 요청 격자와 같았다. 이 검토는 과거 runtime metadata를 새로 측정한 것처럼 채운 것이 아니다. 잔차 흡수를 자르지 않는다.
@@ -318,10 +383,4 @@ Meep 재현: `python scripts/finish_wsl_benchmarks.py`가 conda 환경의 mpirun
 - [Meep conda explicit 목록](../public/reports/patterned-cpu-gpu-meep-wsl/meep_conda_explicit.txt), [fdtdz conda explicit 목록](../public/reports/patterned-cpu-gpu-meep-wsl/fdtdz_conda_explicit.txt)
 - [측정 스크립트](https://github.com/geniuskey/compass/blob/main/scripts/benchmark_wsl_solvers.py), [native Meep](https://github.com/geniuskey/compass/blob/main/scripts/benchmark_meep_reference.py)
 - [이전 Windows 검토](gpu-execution-audit.md) (과거 환경 기록)
-
-![Measured spectra](../public/reports/patterned-cpu-gpu-meep-wsl/spectra.png)
-
-![Measured performance](../public/reports/patterned-cpu-gpu-meep-wsl/performance.png)
-
-![Measured convergence](../public/reports/patterned-cpu-gpu-meep-wsl/convergence.png)
 
