@@ -24,7 +24,7 @@ class MicrolensProfileConfig(StrictModel):
 
 
 class MicrolensShiftConfig(StrictModel):
-    mode: Literal["none", "manual", "auto_cra"] = "auto_cra"
+    mode: Literal["none", "manual", "auto_cra"] = "none"
     cra_deg: float = 0.0
     shift_x: float = 0.0
     shift_y: float = 0.0
@@ -34,8 +34,9 @@ class MicrolensShiftConfig(StrictModel):
 class MicrolensConfig(StrictModel):
     enabled: bool = True
     height: float = 0.6
-    radius_x: float = 0.48
-    radius_y: float = 0.48
+    # None: sharing * pitch / 2 - gap / 2 (computed by PixelStack).
+    radius_x: float | None = None
+    radius_y: float | None = None
     material: str = "polymer_n1p56"
     profile: MicrolensProfileConfig = Field(default_factory=MicrolensProfileConfig)
     shift: MicrolensShiftConfig = Field(default_factory=MicrolensShiftConfig)
@@ -54,7 +55,7 @@ class MicrolensConfig(StrictModel):
 
 
 class GridConfig(StrictModel):
-    enabled: bool = True
+    enabled: bool = False
     width: float = 0.05
     thickness: float | None = None
     height: float = 0.6
@@ -112,7 +113,7 @@ class DtiLinerConfig(StrictModel):
 
 
 class DtiConfig(StrictModel):
-    enabled: bool = True
+    enabled: bool = False
     mode: Literal["fdti", "bdti"] = "fdti"
     width: float = 0.1
     depth: float = 3.0

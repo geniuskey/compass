@@ -189,7 +189,9 @@ class FdtdzSolver(SolverBase):
         source_z = pml_layers + source_offset  # source injection plane
 
         # Photodiode masks for QE computation
-        _, pd_masks = self._pixel_stack.get_photodiode_mask(nx, ny, nz_interior)
+        _, pd_masks = self._pixel_stack.get_photodiode_mask(
+            nx, ny, nz_interior, full_stack=True
+        )
 
         pol_runs = self._source.get_polarization_runs()
         self._failed_runs = []

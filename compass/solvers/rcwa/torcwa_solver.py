@@ -363,7 +363,7 @@ class TorcwaSolver(SolverBase):
             n0, n1 = s.eps_grid.shape
             x_axis = torch.arange(n1, device=self.device, dtype=torch.float64) * (lx / n1)
             y_axis = torch.arange(n0, device=self.device, dtype=torch.float64) * (ly / n0)
-            depths, dz = slice_depth_samples(s.thickness)
+            depths, dz = slice_depth_samples(s.thickness, s, wavelength)
             e2_sum = torch.zeros((n0, n1), device=self.device, dtype=torch.float32)
             for z_prop in depths:
                 E, _H = sim.field_xy(li, x_axis, y_axis, z_prop=float(z_prop))

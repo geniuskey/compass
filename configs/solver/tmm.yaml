@@ -6,3 +6,4 @@ solver:
   params:
     polarization_average: true
     field_resolution: 200
+    substrate: air          # "air": finite Si over air (like RCWA/FDTD); "silicon": semi-infinite Si

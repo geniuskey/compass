@@ -188,6 +188,52 @@ def transfer_matrix_1d(
     return R, T, A
 
 
+def layer_absorption_1d(
+    n_layers: np.ndarray,
+    d_layers: np.ndarray,
+    wavelength: float,
+    theta_inc: float = 0.0,
+    polarization: str = "TE",
+) -> np.ndarray:
+    """Fraction of the incident power absorbed in each layer.
+
+    Propagates the tangential fields (E, H) from the substrate up through
+    the characteristic matrices and takes the drop of the Poynting flux
+    Re(E H*) across every film. The semi-infinite substrate entry holds T
+    (everything transmitted into it); the incident medium entry is 0.
+
+    Returns:
+        Array of length ``len(n_layers)``; ``R + sum(result) == 1``.
+    """
+    n_layers = np.asarray(n_layers, dtype=complex)
+    d_layers = np.asarray(d_layers, dtype=float)
+    R, T, _ = transfer_matrix_1d(n_layers, d_layers, wavelength, theta_inc, polarization)
+    k0 = 2.0 * np.pi / wavelength
+    cos_theta = _snell_cos_theta(n_layers, theta_inc)
+    eta_s = _eta(n_layers[-1], cos_theta[-1], polarization)
+    eh = np.array([1.0, eta_s], dtype=complex)  # fields at the substrate interface
+    flux_below = float(np.real(eh[0] * np.conj(eh[1])))
+    raw = np.zeros(len(n_layers))
+    for j in range(len(n_layers) - 2, 0, -1):
+        delta = k0 * n_layers[j] * cos_theta[j] * d_layers[j]
+        eta_j = _eta(n_layers[j], cos_theta[j], polarization)
+        m_j = np.array(
+            [[np.cos(delta), -1j * np.sin(delta) / eta_j],
+             [-1j * eta_j * np.sin(delta), np.cos(delta)]],
+            dtype=complex,
+        )
+        eh = m_j @ eh
+        flux_above = float(np.real(eh[0] * np.conj(eh[1])))
+        raw[j] = flux_above - flux_below
+        flux_below = flux_above
+    out = np.zeros(len(n_layers))
+    if flux_below > 0:
+        # flux_below is now the flux entering the stack, i.e. 1 - R.
+        out[1:-1] = raw[1:-1] * (1.0 - R) / flux_below
+    out[-1] = T
+    return out
+
+
 def tmm_spectrum(
     n_layers_func: Callable[[float], np.ndarray],
     d_layers: np.ndarray,

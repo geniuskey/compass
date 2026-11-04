@@ -8,9 +8,11 @@ each shipped option group against the defaults and validates it.
 
 from __future__ import annotations
 
+import glob
 from pathlib import Path
 
 import pytest
+import yaml
 from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
 
@@ -65,3 +67,34 @@ def test_experiment_configs_validate(experiment):
 def test_unknown_nested_key_is_rejected():
     with pytest.raises(Exception, match="thicknes"):
         CompassConfig.model_validate({"pixel": {"layers": {"silicon": {"thicknes": 3.0}}}})
+
+
+@pytest.mark.parametrize("path", [*sorted(glob.glob("configs/pixel/*.yaml")), "minimal"])
+def test_schema_defaults_match_code_defaults(path):
+    """A schema-dumped config (every default filled in) builds the same stack as
+    the raw dict the CLI passes on, so the two sets of defaults cannot drift."""
+    import logging
+
+    import numpy as np
+
+    from compass.core.config_schema import PixelConfig
+    from compass.geometry.pixel_stack import PixelStack
+
+    logging.disable(logging.WARNING)
+    try:
+        if path == "minimal":
+            raw = {"pitch": 1.0, "unit_cell": [2, 2]}
+        else:
+            with open(path) as f:
+                raw = yaml.safe_load(f)
+            raw = raw.get("pixel", raw)
+        dumped = PixelConfig.model_validate(raw).model_dump()
+        a, b = PixelStack({"pixel": raw}), PixelStack({"pixel": dumped})
+    finally:
+        logging.disable(logging.NOTSET)
+    sa, sb = a.get_layer_slices(0.55, 24, 24), b.get_layer_slices(0.55, 24, 24)
+    assert len(sa) == len(sb)
+    for x, y in zip(sa, sb, strict=True):
+        assert x.z_start == pytest.approx(y.z_start)
+        np.testing.assert_allclose(x.eps_grid, y.eps_grid)
+    assert a.microlenses == b.microlenses and a.photodiodes == b.photodiodes

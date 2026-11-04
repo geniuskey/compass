@@ -92,9 +92,21 @@ def column_heights(layer_info: Sequence[LayerSlice], n_z: int = FIELD_N_Z) -> np
     return np.linspace(z_bot, z_top, n_z)
 
 
-def slice_depth_samples(thickness: float) -> tuple[np.ndarray, float]:
-    """Midpoint depths (from the slice top) for integrating over a slice."""
-    nz = int(np.clip(round(thickness / 0.05), 8, 64))
+def slice_depth_samples(
+    thickness: float, slice_: LayerSlice | None = None, wavelength: float | None = None
+) -> tuple[np.ndarray, float]:
+    """Midpoint depths (from the slice top) for integrating over a slice.
+
+    With ``slice_`` and ``wavelength`` the step resolves the standing wave in
+    the slice's highest-index material (period lambda / 2n) with >= 6
+    samples; a fixed 50 nm step under-sampled it in silicon and made
+    field-integrated QE of a reflecting thin-Si pixel 26% low at 450 nm.
+    """
+    step = 0.05
+    if slice_ is not None and wavelength is not None:
+        n_max = float(np.max(np.real(np.sqrt(np.asarray(slice_.eps_grid, dtype=complex)))))
+        step = min(step, wavelength / (12.0 * max(n_max, 1.0)))
+    nz = int(np.clip(round(thickness / step), 8, 512))
     dz = thickness / nz
     return (np.arange(nz) + 0.5) * dz, dz
 

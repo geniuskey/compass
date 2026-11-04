@@ -56,13 +56,13 @@ layers:
 |------|------|--------|------|
 | `enabled` | bool | `true` | 마이크로렌즈 활성화 |
 | `height` | float | `0.6` | 렌즈 새그 높이(sag height) (um) |
-| `radius_x` | float | `0.48` | x 방향 반축 (um) |
-| `radius_y` | float | `0.48` | y 방향 반축 (um) |
+| `radius_x` | float or null | `null` (= sharing·pitch/2 − gap/2) | x 방향 반축 (um) |
+| `radius_y` | float or null | `null` (= sharing·pitch/2 − gap/2) | y 방향 반축 (um) |
 | `material` | str | `"polymer_n1p56"` | 렌즈 재료 |
 | `profile.type` | str | `"superellipse"` | 프로파일 모델 |
 | `profile.n` | float | `2.5` | 사각도 매개변수 |
 | `profile.alpha` | float | `1.0` | 곡률 매개변수 |
-| `shift.mode` | str | `"auto_cra"` | 시프트 모드: `"none"`, `"manual"`, `"auto_cra"` |
+| `shift.mode` | str | `"none"` | 시프트 모드: `"none"`, `"manual"`, `"auto_cra"` |
 | `shift.cra_deg` | float | `0.0` | 자동 시프트용 CRA (도) |
 | `shift.shift_x` | float | `0.0` | 수동 x 시프트 (um) |
 | `shift.shift_y` | float | `0.0` | 수동 y 시프트 (um) |
@@ -78,7 +78,7 @@ layers:
 | `red.material`, `green.material`, `blue.material` | str | `cf_*` | 색별 재료명 |
 | `red.thickness`, `green.thickness`, `blue.thickness` | float | `thickness` | 색별 CFA 높이(um) |
 | `red.contact_angle`, `green.contact_angle`, `blue.contact_angle` | float | `90.0` | grid 위 사다리꼴 돌출부 sidewall 각도(deg) |
-| `grid.enabled` | bool | `true` | 금속 그리드 활성화 |
+| `grid.enabled` | bool | `false` | 금속 그리드 활성화 |
 | `grid.width` | float | `0.05` | 그리드 선 폭 (um) |
 | `grid.thickness` | float | `thickness` | 금속 grid 높이(um) |
 | `grid.height` | float | `0.6` | `grid.thickness`의 legacy alias |
@@ -105,7 +105,7 @@ barl:
 | `material` | str | `"silicon"` | 기판 재료 |
 | `photodiode.position` | [float, float, float] | `[0, 0, 1.5]` | PD 중심: (x, y)는 픽셀 중심 기준 오프셋, z는 Si 상면 아래 깊이 (um) |
 | `photodiode.size` | [float, float, float] | `[0.7, 0.7, 2.0]` | PD 크기 (dx, dy, dz) um |
-| `dti.enabled` | bool | `true` | DTI 활성화 |
+| `dti.enabled` | bool | `false` | DTI 활성화 |
 | `dti.mode` | str | `"fdti"` | `"fdti"`(전체) 또는 `"bdti"`(후면 부분) |
 | `dti.width` | float | `0.1` | 트렌치 개구부 폭 (um) |
 | `dti.depth` | float | `3.0` | 트렌치 깊이 (um) |

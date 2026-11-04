@@ -227,8 +227,10 @@ class PixelStack:
             # (an explicit radius_x / radius_y already includes it).
             gap = max(0.0, float(ml_cfg.get("gap", 0.0)))
             default_r = sharing * self.pitch / 2.0 - gap / 2.0
-            radius_x = ml_cfg.get("radius_x", default_r)
-            radius_y = ml_cfg.get("radius_y", default_r)
+            radius_x = ml_cfg.get("radius_x")
+            radius_y = ml_cfg.get("radius_y")
+            radius_x = default_r if radius_x is None else float(radius_x)
+            radius_y = default_r if radius_y is None else float(radius_y)
             ml_material = ml_cfg.get("material", "polymer_n1p56")
 
             # "spherical" is the n = 2, alpha = 1 member of the superellipse
@@ -1145,8 +1147,14 @@ class PixelStack:
         nx: int = 64,
         ny: int = 64,
         nz: int = 128,
+        full_stack: bool = False,
     ) -> tuple[np.ndarray, dict[str, np.ndarray]]:
-        """Generate 3D photodiode mask.
+        """Generate 3D photodiode mask, indexed [y, x, z].
+
+        Args:
+            full_stack: Sample z over the whole stack (cell centres, aligned
+                with ``get_permittivity_grid(..., nz)``) instead of only the
+                silicon layer.
 
         Returns:
             Tuple of (full_mask, per_pixel_masks).
@@ -1174,4 +1182,5 @@ class PixelStack:
             si_layer.z_start,
             si_layer.z_end,
             self.bayer_map,
+            z_range=self.z_range if full_stack else None,
         )

@@ -9,6 +9,7 @@ approximation, by testing physical invariants:
 """
 
 import importlib
+import importlib.util
 
 import numpy as np
 import pytest
@@ -201,3 +202,44 @@ def test_jax_solvers_do_not_mutate_global_jax_config():
     assert np.isfinite(solver.get_field_distribution("|E|2", "xz", 0.5)).all()
     after = (jax.config.jax_enable_x64, jax.config.jax_default_device)
     assert after == before
+
+
+THIN_SI_PIXEL = {"pixel": {"pitch": 0.2, "unit_cell": [1, 1], "bayer_map": [["G"]], "layers": {
+    "air": {"thickness": 0.2}, "microlens": {"enabled": False},
+    "planarization": {"thickness": 0.1, "material": "sio2"},
+    "color_filter": {"thickness": 0.1, "materials": {"G": "sio2"}},
+    "barl": {"layers": []},
+    "silicon": {"thickness": 0.4, "material": "silicon",
+                "photodiode": {"position": [0, 0, 0.2], "size": [0.2, 0.2, 0.4]}}}}}
+
+
+@pytest.mark.parametrize("backend,params", [
+    ("torcwa", {"fourier_order": [0, 0]}), ("grcwa", {"nG": 2}),
+    ("meent", {"fourier_order": [0, 0]}), ("fmmax", {"fourier_order": [0, 0]}),
+    ("tmm", {}),
+])
+def test_thin_si_qe_equals_silicon_absorption(backend, params):
+    """Only silicon absorbs, so QE must equal 1 - R - T. A 50 nm depth step
+    under-sampled the Si standing wave (QE 26% low at 450 nm), and TMM used
+    nominal base materials and reported film loss as QE."""
+    if backend != "tmm":
+        _require(backend)
+    else:
+        importlib.import_module("compass.solvers.tmm.tmm_solver")
+    solver = SolverFactory.create(backend, {"name": backend,
+                                            "params": {"dtype": "complex128", **params}})
+    solver.setup_geometry(PixelStack(THIN_SI_PIXEL))
+    solver.setup_source({"wavelength": {"mode": "list", "values": [0.45, 0.6]},
+                         "polarization": "TE"})
+    r = solver.run()
+    np.testing.assert_allclose(r.qe_per_pixel["G_0_0"], r.absorption, rtol=5e-3)
+    if backend == "tmm" and importlib.util.find_spec("torcwa"):  # same 1D stack as order-0 RCWA
+        importlib.import_module("compass.solvers.rcwa.torcwa_solver")
+        ref = SolverFactory.create("torcwa", {"name": "torcwa", "params": {
+            "fourier_order": [0, 0], "dtype": "complex128"}})
+        ref.setup_geometry(PixelStack(THIN_SI_PIXEL))
+        ref.setup_source({"wavelength": {"mode": "list", "values": [0.45, 0.6]},
+                          "polarization": "TE"})
+        rr = ref.run()
+        np.testing.assert_allclose(r.reflection, rr.reflection, atol=2e-3)
+        np.testing.assert_allclose(r.transmission, rr.transmission, atol=2e-3)

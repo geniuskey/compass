@@ -76,10 +76,15 @@ class SignalCalculator:
         scene: SceneReflectance,
         module: ModuleOptics,
         qe_per_pixel: dict[str, np.ndarray],
+        photon_weighted: bool = False,
     ) -> dict[str, float]:
         """Compute integrated signal per pixel.
 
-        Signal_i = integral E(lam) * QE_i(lam) dlam
+        Signal_i = integral E(lam) * QE_i(lam) dlam, or with
+        ``photon_weighted`` the photon-count integral
+        integral E(lam) * QE_i(lam) * lam / (h c) dlam (lam in m), which is
+        what :meth:`compute_signal_electrons` needs to count electrons
+        exactly instead of at the mean wavelength.
 
         Uses trapezoidal integration over the wavelength grid.
 
@@ -98,6 +103,8 @@ class SignalCalculator:
         for name, qe in qe_per_pixel.items():
             qe_arr = np.asarray(qe, dtype=np.float64)
             integrand = irradiance * qe_arr
+            if photon_weighted:
+                integrand = integrand * (self.wavelengths * 1e-6) / (H_PLANCK * C_LIGHT)
             signal = float(np.trapezoid(integrand, self.wavelengths))
             signals[name] = signal
             logger.debug("Pixel '%s': signal=%.6e", name, signal)
@@ -158,13 +165,18 @@ class SignalCalculator:
         exposure_time: float,
         pixel_area: float,
         f_number: float,
+        photon_weighted: bool = False,
     ) -> dict[str, float]:
         """Convert relative signal to electron count estimate.
 
-        N_e = Signal * t_exp * A_pixel / (4 * F#^2) * scale_factor
+        N_e = Signal * t_exp * A_pixel * pi / (4 * F#^2) / E_photon
 
-        This is a simplified order-of-magnitude estimate. The scale factor
-        is derived from photon energy at the mean wavelength of the grid.
+        Pass a ``compute_pixel_signal(..., photon_weighted=True)`` signal with
+        ``photon_weighted=True`` for an exact count (photon energy inside
+        the spectral integral). Otherwise the energy-weighted signal is
+        divided by the photon energy at the mean grid wavelength, which
+        biases red channels low and blue high by up to ~20% over
+        400-700 nm.
 
         Args:
             pixel_signal: From compute_pixel_signal.
@@ -175,9 +187,11 @@ class SignalCalculator:
         Returns:
             Estimated electron count per pixel.
         """
-        # Mean wavelength for photon energy estimate
-        lam_mean_m = float(np.mean(self.wavelengths)) * 1e-6
-        photon_energy = H_PLANCK * C_LIGHT / lam_mean_m  # Joules
+        if photon_weighted:
+            photon_energy = 1.0  # already photons per unit time and area
+        else:
+            lam_mean_m = float(np.mean(self.wavelengths)) * 1e-6
+            photon_energy = H_PLANCK * C_LIGHT / lam_mean_m  # Joules
         # Pixel area in m^2
         a_pixel_m2 = pixel_area * 1e-12
         # Geometric factor: sensor plane irradiance ~ pi / (4 * F#^2)

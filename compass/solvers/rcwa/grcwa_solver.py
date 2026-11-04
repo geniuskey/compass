@@ -239,6 +239,12 @@ class GrcwaSolver(SolverBase):
 
                     # Init must be called BEFORE GridLayer_geteps (grcwa >= 0.1.2)
                     obj.Init_Setup(Gmethod=0)
+                    n_kept = getattr(obj, "nG", None)
+                    if n_kept is not None and int(n_kept) < 1:
+                        raise ValueError(
+                            f"grcwa kept {n_kept} plane waves for nG={nG}; circular "
+                            "truncation needs nG >= 2 (use e.g. nG=9 or more)"
+                        )
 
                     # Set permittivity for all grid layers (single concatenated call)
                     obj.GridLayer_geteps(np.concatenate(grid_eps_list))
@@ -258,7 +264,11 @@ class GrcwaSolver(SolverBase):
                     R = float(np.real(R))
                     T = float(np.real(T))
                     A = 1.0 - R - T
-                    sampler = _GrcwaFieldSampler(obj)
+                    try:
+                        sampler: _GrcwaFieldSampler | None = _GrcwaFieldSampler(obj)
+                    except Exception as e:  # field data unavailable -> QE fallback
+                        logger.warning(f"grcwa: field reconstruction setup failed ({e})")
+                        sampler = None
 
                     if R > 1.0 or R < 0.0:
                         logger.warning(
@@ -282,7 +292,7 @@ class GrcwaSolver(SolverBase):
                 self._last_wavelength = wavelength
                 self._last_sampler = sampler
 
-                if np.isnan(A) or sampler is None:
+                if np.isnan(A):
                     pixel_qe = self._nan_pixel_qe()
                 elif not self._pixel_stack.photodiodes:
                     pixel_qe = {}
@@ -331,13 +341,15 @@ class GrcwaSolver(SolverBase):
 
     def _compute_qe_with_fallback(
         self,
-        sampler: _GrcwaFieldSampler,
+        sampler: _GrcwaFieldSampler | None,
         layer_slices,
         wavelength: float,
         total_absorption: float,
     ) -> dict:
         """Field-integrated QE, falling back to eps''-weighting on failure."""
         try:
+            if sampler is None:
+                raise RuntimeError("no field data")
             return self._compute_per_pixel_qe_fields(sampler, wavelength, total_absorption)
         except Exception as e:
             logger.warning(
@@ -365,7 +377,7 @@ class GrcwaSolver(SolverBase):
 
         def e2_dz(li: int, s) -> np.ndarray:
             n0, n1 = s.eps_grid.shape  # [y, x]; grcwa grids are [x, y]
-            depths, dz = slice_depth_samples(s.thickness)
+            depths, dz = slice_depth_samples(s.thickness, s, wavelength)
             acc = np.zeros((n1, n0))
             for depth in depths:
                 acc += sampler.e2_on_grid(li, float(depth), n1, n0)

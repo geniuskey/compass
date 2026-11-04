@@ -325,8 +325,14 @@ class GeometryBuilder:
         si_z_start: float,
         si_z_end: float,
         bayer_map: list[list[str]],
+        z_range: tuple[float, float] | None = None,
     ) -> tuple[np.ndarray, dict]:
         """Generate 3D photodiode mask and per-pixel masks.
+
+        z is sampled at cell centres over ``z_range`` (default: the silicon
+        layer), the same convention as ``PixelStack.get_permittivity_grid``
+        when ``z_range`` is the full stack, and the PD is clipped to the
+        silicon.
 
         Args:
             nx, ny, nz: Grid resolution.
@@ -350,7 +356,8 @@ class GeometryBuilder:
         # periodic structures but symmetry of each pixel is preserved).
         x = (np.arange(nx) + 0.5) * (lx / nx)
         y = (np.arange(ny) + 0.5) * (ly / ny)
-        z = np.linspace(si_z_start, si_z_end, nz)
+        z_lo, z_hi = z_range if z_range is not None else (si_z_start, si_z_end)
+        z = z_lo + (np.arange(nz) + 0.5) * ((z_hi - z_lo) / nz)
 
         xx, yy, zz = np.meshgrid(x, y, z, indexing="xy")
 
@@ -370,6 +377,8 @@ class GeometryBuilder:
                     (np.abs(xx - cx) < dx / 2.0)
                     & (np.abs(yy - cy) < dy / 2.0)
                     & (np.abs(zz - cz) < dz / 2.0)
+                    & (zz >= si_z_start)
+                    & (zz <= si_z_end)
                 )
 
                 full_mask = full_mask | pixel_mask

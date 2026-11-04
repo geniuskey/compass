@@ -56,13 +56,13 @@ layers:
 |-------|------|---------|-------------|
 | `enabled` | bool | `true` | Enable microlens |
 | `height` | float | `0.6` | Lens sag height (um) |
-| `radius_x` | float | `0.48` | Semi-axis x (um) |
-| `radius_y` | float | `0.48` | Semi-axis y (um) |
+| `radius_x` | float or null | `null` (= sharing·pitch/2 − gap/2) | Semi-axis x (um) |
+| `radius_y` | float or null | `null` (= sharing·pitch/2 − gap/2) | Semi-axis y (um) |
 | `material` | str | `"polymer_n1p56"` | Lens material |
 | `profile.type` | str | `"superellipse"` | Profile model |
 | `profile.n` | float | `2.5` | Squareness parameter |
 | `profile.alpha` | float | `1.0` | Curvature parameter |
-| `shift.mode` | str | `"auto_cra"` | Shift mode: `"none"`, `"manual"`, `"auto_cra"` |
+| `shift.mode` | str | `"none"` | Shift mode: `"none"`, `"manual"`, `"auto_cra"` |
 | `shift.cra_deg` | float | `0.0` | CRA for auto shift (degrees) |
 | `shift.shift_x` | float | `0.0` | Manual x-shift (um) |
 | `shift.shift_y` | float | `0.0` | Manual y-shift (um) |
@@ -78,7 +78,7 @@ layers:
 | `red.material`, `green.material`, `blue.material` | str | `cf_*` | Per-channel material name |
 | `red.thickness`, `green.thickness`, `blue.thickness` | float | `thickness` | Per-channel CFA height (um) |
 | `red.contact_angle`, `green.contact_angle`, `blue.contact_angle` | float | `90.0` | Sidewall angle in degrees for the trapezoid above the grid |
-| `grid.enabled` | bool | `true` | Enable metal grid |
+| `grid.enabled` | bool | `false` | Enable metal grid |
 | `grid.width` | float | `0.05` | Grid line width (um) |
 | `grid.thickness` | float | `thickness` | Metal grid height (um) |
 | `grid.height` | float | `0.6` | Legacy alias for `grid.thickness` |
@@ -105,7 +105,7 @@ List of `{thickness, material}` pairs, ordered top to bottom.
 | `material` | str | `"silicon"` | Substrate material |
 | `photodiode.position` | [float, float, float] | `[0, 0, 1.5]` | PD center: (x, y) offset from the pixel center, z = depth below the Si top (um) |
 | `photodiode.size` | [float, float, float] | `[0.7, 0.7, 2.0]` | PD extent (dx, dy, dz) um |
-| `dti.enabled` | bool | `true` | Enable DTI |
+| `dti.enabled` | bool | `false` | Enable DTI |
 | `dti.mode` | str | `"fdti"` | `"fdti"` (full) or `"bdti"` (backside partial) |
 | `dti.width` | float | `0.1` | Trench width at the opening (um) |
 | `dti.depth` | float | `3.0` | Trench depth (um) |

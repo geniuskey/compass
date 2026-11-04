@@ -465,3 +465,29 @@ def test_cie_d65_matches_cie_table():
     cie = np.array([82.75, 117.81, 109.35, 100.0, 90.01, 71.61])  # CIE D65, 10 nm table
     spd = Illuminant.cie_d65(wl).spectrum
     np.testing.assert_allclose(spd / spd[3], cie / 100.0, rtol=0.01)
+
+
+def test_photon_weighted_electrons_follow_wavelength():
+    """Exact photon counting: equal energy at 650 nm yields 650/450 x the
+    electrons of 450 nm; the mean-wavelength estimate cannot tell them apart."""
+    calc = SignalCalculator(WL_VIS)
+    ill = Illuminant("flat", WL_VIS, np.ones_like(WL_VIS))
+    scene = SceneReflectance.flat(1.0, WL_VIS)
+    mod = ModuleOptics.smartphone_module()
+
+    def band(center):
+        return {"X": np.exp(-0.5 * ((WL_VIS - center) / 0.005) ** 2)}
+
+    def electrons(center, exact):
+        sig = calc.compute_pixel_signal(ill, scene, mod, band(center), photon_weighted=exact)
+        return calc.compute_signal_electrons(
+            sig, exposure_time=1e-2, pixel_area=1.0, f_number=2.0, photon_weighted=exact
+        )["X"]
+
+    t = mod.total_transmittance(WL_VIS)
+    t450 = float(np.interp(0.45, WL_VIS, t))
+    t650 = float(np.interp(0.65, WL_VIS, t))
+    exact = electrons(0.65, True) / electrons(0.45, True)
+    approx = electrons(0.65, False) / electrons(0.45, False)
+    assert exact == pytest.approx((0.65 / 0.45) * t650 / t450, rel=0.02)
+    assert approx == pytest.approx(t650 / t450, rel=0.02)

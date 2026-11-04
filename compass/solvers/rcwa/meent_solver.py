@@ -484,7 +484,7 @@ class MeentSolver(SolverBase):
 
         def e2_dz(li: int, s) -> np.ndarray:
             n0, n1 = s.eps_grid.shape  # [y, x]
-            depths, dz = slice_depth_samples(s.thickness)
+            depths, dz = slice_depth_samples(s.thickness, s, wavelength)
             x = (np.arange(n1) + 0.5) * (lx / n1)  # COMPASS cell centres
             y = (np.arange(n0) + 0.5) * (ly / n0)
             return sampler.e2_on_grid(li, depths, x, y) * dz

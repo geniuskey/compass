@@ -16,6 +16,7 @@ from compass.core.types import FieldData, SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
 from compass.solvers.tmm.tmm_core import (
+    layer_absorption_1d,
     tmm_field_profile,
     transfer_matrix_1d,
 )
@@ -42,7 +43,7 @@ class TMMSolver(SolverBase):
     - No lateral resolution: all pixels see the same 1D stack
     - Microlens focusing is not modeled
     - DTI and metal grids are averaged out
-    - Per-pixel QE is approximated (not directly computed)
+    - Per-pixel QE is the 1D silicon absorption (identical for every pixel)
     """
 
     def __init__(self, config: dict, device: str = "cpu"):
@@ -62,6 +63,12 @@ class TMMSolver(SolverBase):
         self._polarization_average: bool = config.get("params", {}).get(
             "polarization_average", True
         )
+        # "air": finite silicon over an air half-space, the same stack the
+        # RCWA / FDTD adapters simulate. "silicon": silicon as a semi-infinite
+        # substrate (all transmitted light is absorbed; QE is an upper bound).
+        self._substrate: str = config.get("params", {}).get("substrate", "air")
+        if self._substrate not in ("air", "silicon"):
+            raise ValueError(f"tmm substrate must be 'air' or 'silicon', got {self._substrate!r}")
         # Cache for last run (for field extraction)
         self._last_field_data: FieldData | None = None
         self._last_n_layers: np.ndarray | None = None
@@ -144,6 +151,44 @@ class TMMSolver(SolverBase):
 
         return n_complex
 
+    def _tmm_stack(self, wavelength: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """TMM arrays (incident air first) from the PixelStack's layer slices.
+
+        Each slice is replaced by its laterally averaged permittivity, so the
+        1D stack uses the same materials as the RCWA/FDTD solvers (e.g. the
+        configured color-filter materials and the microlens fill factor)
+        instead of each layer's nominal base material.
+
+        Returns:
+            (n, d, si_mask) in TMM order: index 0 is the incident air
+            half-space, the last entry the substrate; ``si_mask`` flags
+            finite silicon slices.
+        """
+        if self._pixel_stack is None:
+            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
+        params = self.config.get("params", {})
+        slices = self._pixel_stack.get_layer_slices(
+            wavelength, 64, 64, n_lens_slices=int(params.get("n_lens_slices", 20))
+        )
+        top_first = sorted(slices, key=lambda sl: -sl.z_end)
+        n_film = [complex(np.sqrt(np.mean(sl.eps_grid))) for sl in top_first]
+        d_film = [sl.thickness for sl in top_first]
+        is_si = [sl.name.startswith("silicon") for sl in top_first]
+        if self._substrate == "silicon":
+            if not any(is_si):
+                raise ValueError("substrate='silicon' needs a silicon layer")
+            n_sub = n_film[max(i for i, v in enumerate(is_si) if v)]  # bottom Si slice
+            keep = [i for i, v in enumerate(is_si) if not v]
+            n_film = [n_film[i] for i in keep]
+            d_film = [d_film[i] for i in keep]
+            is_si = [False] * len(keep)
+        else:
+            n_sub = 1.0 + 0j
+        n = np.array([1.0 + 0j, *n_film, n_sub], dtype=complex)
+        d = np.array([np.inf, *d_film, np.inf])
+        si_mask = np.array([False, *is_si, False])
+        return n, d, si_mask
+
     def _build_d_layers(self) -> np.ndarray:
         """Build the thickness array for TMM.
 
@@ -164,7 +209,10 @@ class TMMSolver(SolverBase):
         # layer[0] = incident medium, layer[-1] = substrate.
         d_tmm = d[::-1].copy()
         d_tmm[0] = np.inf  # incident medium (air)
-        d_tmm[-1] = np.inf  # substrate (silicon)
+        if self._substrate == "air":
+            d_tmm = np.append(d_tmm, np.inf)  # finite silicon, air half-space below
+        else:
+            d_tmm[-1] = np.inf  # semi-infinite silicon substrate
         return d_tmm
 
     def run(self) -> SimulationResult:
@@ -181,8 +229,6 @@ class TMMSolver(SolverBase):
         if self._source is None:
             raise RuntimeError("Call setup_source() before run()")
 
-        d_layers_tmm = self._build_d_layers()
-
         # Determine polarization runs
         pol_runs = self._source.get_polarization_runs()
         theta_rad = self._source.theta_rad
@@ -190,13 +236,12 @@ class TMMSolver(SolverBase):
         all_R = np.zeros(self._source.n_wavelengths)
         all_T = np.zeros(self._source.n_wavelengths)
         all_A = np.zeros(self._source.n_wavelengths)
+        all_si = np.zeros(self._source.n_wavelengths)
 
         for wl_idx, wavelength in enumerate(self._source.wavelengths):
-            # Get n,k for each layer, then reverse for TMM convention
-            n_layers_compass = self._get_n_layers_at_wavelength(wavelength)
-            n_layers_tmm = n_layers_compass[::-1]  # reverse: air first, Si last
+            n_layers_tmm, d_layers_tmm, si_mask = self._tmm_stack(float(wavelength))
 
-            R_pol, T_pol, A_pol = [], [], []
+            R_pol, T_pol, A_pol, si_pol = [], [], [], []
 
             for pol in pol_runs:
                 R, T, A = transfer_matrix_1d(
@@ -209,11 +254,19 @@ class TMMSolver(SolverBase):
                 R_pol.append(R)
                 T_pol.append(T)
                 A_pol.append(A)
+                layer_abs = layer_absorption_1d(
+                    n_layers_tmm, d_layers_tmm, wavelength, theta_rad, pol
+                )
+                if self._substrate == "air":
+                    si_pol.append(float(layer_abs[si_mask].sum()))
+                else:
+                    si_pol.append(T)  # everything entering the substrate is absorbed
 
             n_pol = len(pol_runs)
             all_R[wl_idx] = sum(R_pol) / n_pol
             all_T[wl_idx] = sum(T_pol) / n_pol
             all_A[wl_idx] = sum(A_pol) / n_pol
+            all_si[wl_idx] = sum(si_pol) / n_pol
 
             # Cache for field extraction (use last wavelength)
             self._last_n_layers = n_layers_tmm
@@ -221,7 +274,7 @@ class TMMSolver(SolverBase):
             self._last_wavelength = wavelength
 
         # Compute approximate per-pixel QE
-        qe_per_pixel = self._compute_approximate_qe(all_A)
+        qe_per_pixel = self._compute_approximate_qe(all_si)
 
         return SimulationResult(
             qe_per_pixel=qe_per_pixel,
@@ -236,21 +289,22 @@ class TMMSolver(SolverBase):
                 "n_layers": len(self._layer_names),
                 "layer_names": self._layer_names.copy(),
                 "polarization_average": self._polarization_average,
+                "substrate": self._substrate,
             },
         )
 
     def _compute_approximate_qe(self, total_absorption: np.ndarray) -> dict[str, np.ndarray]:
-        """Compute approximate per-pixel QE from total stack absorption.
+        """Per-pixel QE from the silicon absorption of the 1D stack.
 
         TMM has no lateral resolution: every pixel sees the same uniform 1D
-        stack, so under the standard per-pixel QE convention (absorbed power
-        normalized by the power incident on that pixel's own area — shared
-        with the RCWA solvers) each pixel's approximate QE equals the total
-        stack absorption. This includes parasitic absorption in the color
-        filter and other lossy layers, so it is an upper bound on silicon QE.
+        stack, so under the per-pixel QE convention shared with the RCWA
+        solvers each pixel's QE equals the stack's silicon absorption. (It
+        used to be the total film absorption A, which with a semi-infinite
+        silicon substrate is exactly the parasitic color-filter/BARL loss and
+        excludes the light absorbed in silicon.)
 
         Args:
-            total_absorption: Total absorption spectrum A(lambda).
+            total_absorption: Silicon absorption spectrum.
 
         Returns:
             Dictionary mapping pixel name to QE spectrum.
