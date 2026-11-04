@@ -33,6 +33,7 @@ class TorcwaSolver(SolverBase):
         self._last_sim = None
         self._last_layer_info: list | None = None
         self._last_wavelength: float | None = None
+        self._last_source_amp: list[float] | None = None
         self._qe_fallback_used = False
 
         # Configure precision
@@ -282,6 +283,7 @@ class TorcwaSolver(SolverBase):
         self._last_sim = sim
         self._last_layer_info = layer_info
         self._last_wavelength = wavelength
+        self._last_source_amp = source_amp
 
         if self._pixel_stack is None:
             raise RuntimeError("Call setup_geometry() before run()")
@@ -514,34 +516,71 @@ class TorcwaSolver(SolverBase):
 
         return qe_per_pixel
 
+    #: Supported field components and slice planes.
+    FIELD_COMPONENTS = ("Ex", "Ey", "Ez", "|E|2", "Sz")
+    FIELD_PLANES = ("xy", "xz", "yz")
+    #: Samples per in-plane axis and along z for solved-field slices.
+    FIELD_N_XY = 64
+    FIELD_N_Z = 128
+
     def get_field_distribution(
         self,
         component: str = "|E|2",
         plane: str = "xz",
         position: float = 0.0,
     ) -> np.ndarray:
-        """Extract 2D field slice from last simulation.
+        """Extract a 2D solved-field slice from the last simulation.
 
-        Uses torcwa's field reconstruction when available. Otherwise
-        builds an approximate field map from layer permittivity and
-        absorption profile.
+        Reconstructs fields with torcwa's ``field_xy``/``field_xz``/``field_yz``
+        for the last (wavelength, polarization) run. Coordinates follow the
+        COMPASS frame (and the Meep adapter): x, y in ``[0, lx) x [0, ly)``,
+        z from the bottom of the stack (z=0 at silicon bottom) upward. The
+        incident plane wave has unit amplitude (|E0| = 1) and ``Sz`` is the
+        z-component of the time-averaged Poynting vector in the same units,
+        so the incident flux through a z-plane is ``cos(theta)``: above the
+        stack the cell-averaged ``Sz`` equals ``-(1 - R) cos(theta)`` and
+        below it ``-T cos(theta)``. ``Sz`` is negative for light travelling
+        downward (-z). Fields belong to the last polarization run only.
+
+        If reconstruction fails, a permittivity-based approximation is
+        returned instead and a warning is logged.
 
         Args:
-            component: Field component ("Ex", "Ey", "Ez", "|E|2", "Sz").
-            plane: Slice plane ("xy", "xz", "yz").
+            component: "Ex", "Ey", "Ez" (each |E_c|^2), "|E|2", or "Sz".
+            plane: "xy" (position = z), "xz" (position = y) or
+                "yz" (position = x), all in um.
             position: Position along the normal axis in um.
 
         Returns:
-            2D field array.
+            2D array: ``(nx, ny)`` for "xy", ``(nx, nz)`` for "xz",
+            ``(ny, nz)`` for "yz", with z increasing upward.
+
+        Raises:
+            ValueError: Unknown component/plane, or an "xy" position outside
+                the simulated stack.
         """
+        if component not in self.FIELD_COMPONENTS:
+            raise ValueError(
+                f"Unknown field component {component!r}; expected one of {self.FIELD_COMPONENTS}"
+            )
+        if plane not in self.FIELD_PLANES:
+            raise ValueError(f"Unknown plane {plane!r}; expected one of {self.FIELD_PLANES}")
+
         if self._last_sim is None or self._last_layer_info is None:
             logger.warning("torcwa: no simulation data, returning zeros")
-            return np.zeros((64, 64))
+            return np.zeros((self.FIELD_N_XY, self.FIELD_N_XY))
 
         sim = self._last_sim
         layer_info = self._last_layer_info
 
-        # Try using torcwa's built-in field reconstruction
+        if plane == "xy":
+            z_lo = min(s.z_start for s in layer_info)
+            z_hi = max(s.z_end for s in layer_info)
+            if not z_lo <= position <= z_hi:
+                raise ValueError(
+                    f"xy-plane position z={position} um is outside the stack [{z_lo}, {z_hi}]"
+                )
+
         try:
             return self._extract_field_from_sim(sim, layer_info, component, plane, position)
         except Exception as e:
@@ -550,7 +589,6 @@ class TorcwaSolver(SolverBase):
                 "permittivity-based approximation, not a solved field"
             )
 
-        # Fallback: build approximate field from permittivity
         return self._approximate_field(layer_info, component, plane, position)
 
     def _extract_field_from_sim(
@@ -561,37 +599,52 @@ class TorcwaSolver(SolverBase):
         plane,
         position,
     ) -> np.ndarray:
-        """Extract field using torcwa's internal field reconstruction."""
+        """Reconstruct a field slice with torcwa's field_xy/xz/yz.
+
+        torcwa places z=0 at the top (input) interface with z increasing
+        downward through the layers in ``layer_info`` order, so a COMPASS
+        height ``z`` maps to ``z_top - z``.
+        """
+        import torch
+
         if self._pixel_stack is None:
             raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
+        if self._last_source_amp is None:
+            raise RuntimeError("no source amplitude recorded; run a simulation first")
 
-        nx_field, ny_field = 64, 64
-        _lx, _ly = self._pixel_stack.domain_size
+        # Field reconstruction needs the excitation; re-set it in case the QE
+        # step was skipped (no photodiodes) or the sim was reused.
+        sim.source_planewave(amplitude=self._last_source_amp, direction="forward", notation="ps")
+
+        lx, ly = self._pixel_stack.domain_size
+        n_xy = self.FIELD_N_XY
+        f64 = torch.float64
+        dev = self.device
+        z_top = max(s.z_end for s in layer_info)
+        z_bot = min(s.z_start for s in layer_info)
 
         if plane == "xy":
-            # Find the layer at the given z position
-            z_accum = 0.0
-            target_layer_idx = 0
-            target_z_in_layer = 0.0
-            for idx, s in enumerate(layer_info):
-                if z_accum + s.thickness >= position or idx == len(layer_info) - 1:
-                    target_layer_idx = idx + 1  # +1 for input layer
-                    target_z_in_layer = position - z_accum
-                    break
-                z_accum += s.thickness
+            # layer_info is ordered top (torcwa layer 0) to bottom.
+            li = next(
+                i for i, s in enumerate(layer_info) if s.z_start <= position <= s.z_end
+            )
+            s = layer_info[li]
+            x_axis = torch.arange(n_xy, device=dev, dtype=f64) * (lx / n_xy)
+            y_axis = torch.arange(n_xy, device=dev, dtype=f64) * (ly / n_xy)
+            E, H = sim.field_xy(li, x_axis, y_axis, z_prop=float(s.z_end - position))
+        else:
+            z_compass = np.linspace(z_bot, z_top, self.FIELD_N_Z)
+            z_axis = torch.tensor(z_top - z_compass, device=dev, dtype=f64)
+            if plane == "xz":
+                in_plane = torch.arange(n_xy, device=dev, dtype=f64) * (lx / n_xy)
+                E, H = sim.field_xz(in_plane, z_axis, float(position))
+            else:
+                in_plane = torch.arange(n_xy, device=dev, dtype=f64) * (ly / n_xy)
+                E, H = sim.field_yz(in_plane, z_axis, float(position))
 
-            # Use torcwa field_cell if available
-            if hasattr(sim, "field_cell"):
-                E, _H = sim.field_cell(
-                    layer_idx=target_layer_idx,
-                    nx=nx_field,
-                    ny=ny_field,
-                    z_pos=target_z_in_layer,
-                )
-                E_np = E.detach().cpu().numpy()
-                return self._component_from_field(E_np, component)
-
-        raise RuntimeError("field_cell not available")
+        E_np = [c.detach().cpu().numpy() for c in E]
+        H_np = [c.detach().cpu().numpy() for c in H]
+        return self._component_from_field(E_np, H_np, component)
 
     def _approximate_field(
         self,
@@ -689,20 +742,20 @@ class TorcwaSolver(SolverBase):
         return np.zeros((64, 64))
 
     @staticmethod
-    def _component_from_field(E: np.ndarray, component: str) -> np.ndarray:
-        """Extract a specific component from a 3-component field array."""
-        if component == "Ex":
-            return np.asarray(np.abs(E[..., 0]) ** 2)
-        elif component == "Ey":
-            return np.asarray(np.abs(E[..., 1]) ** 2)
-        elif component == "Ez":
-            return np.asarray(np.abs(E[..., 2]) ** 2)
-        elif component == "|E|2":
-            return np.asarray(np.sum(np.abs(E) ** 2, axis=-1))
-        elif component == "Sz":
-            # Approximate Poynting z: Re(Ex*Hy - Ey*Hx) ~ |E|^2 for planewave
-            return np.asarray(np.sum(np.abs(E) ** 2, axis=-1))
-        return np.asarray(np.abs(E[..., 0]) ** 2)
+    def _component_from_field(E: list, H: list, component: str) -> np.ndarray:
+        """Reduce torcwa [Ex, Ey, Ez] / [Hx, Hy, Hz] arrays to one quantity.
+
+        torcwa's z axis points down (into the stack); ``Sz`` is returned in
+        the COMPASS frame (z up), so downward power flow is negative.
+        """
+        if component in ("Ex", "Ey", "Ez"):
+            return np.asarray(np.abs(E["xyz".index(component[1])]) ** 2)
+        if component == "|E|2":
+            return np.asarray(sum(np.abs(c) ** 2 for c in E))
+        if component == "Sz":
+            s_down = np.real(E[0] * np.conj(H[1]) - E[1] * np.conj(H[0]))
+            return np.asarray(-s_down)
+        raise ValueError(f"Unknown field component {component!r}")
 
 
 # Register with factory
