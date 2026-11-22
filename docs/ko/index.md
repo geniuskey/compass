@@ -1,5 +1,7 @@
 ---
 layout: home
+title: COMPASS — 오픈소스 CMOS 이미지 센서 광학 플랫폼
+titleTemplate: false
 
 hero:
   name: "COMPASS"

@@ -1,5 +1,7 @@
 ---
 layout: home
+title: COMPASS — Open-source CMOS image sensor optics platform
+titleTemplate: false
 
 hero:
   name: "COMPASS"

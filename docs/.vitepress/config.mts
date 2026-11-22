@@ -446,12 +446,15 @@ export default withMermaid(defineConfig({
 
       gtag('config', 'G-DXE9T8VSVP');`],
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/compass/favicon.svg' }],
-    ['meta', { property: 'og:title', content: 'COMPASS' }],
+    ['meta', { name: 'author', content: 'Euiyun Lab' }],
+    ['meta', { property: 'og:title', content: 'COMPASS — Open-source CMOS image sensor optics platform' }],
     ['meta', { property: 'og:description', content: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation' }],
+    ['meta', { property: 'og:site_name', content: 'COMPASS' }],
     ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:url', content: 'https://geniuskey.github.io/compass/' }],
     ['meta', { property: 'og:image', content: '/compass/logo.svg' }],
     ['meta', { name: 'twitter:card', content: 'summary' }],
-    ['meta', { name: 'twitter:title', content: 'COMPASS' }],
+    ['meta', { name: 'twitter:title', content: 'COMPASS — Open-source CMOS image sensor optics platform' }],
     ['meta', { name: 'twitter:description', content: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation' }],
     ['meta', { name: 'theme-color', content: '#3451b2' }],
     ['meta', { name: 'keywords', content: 'RCWA, FDTD, image sensor, pixel simulation, quantum efficiency, optical simulation, CMOS' }],
@@ -555,6 +558,9 @@ export default withMermaid(defineConfig({
       { icon: 'github', link: 'https://github.com/geniuskey/compass' }
     ],
     search: { provider: 'local' },
+    footer: {
+      message: 'by <a href="https://euiyun.com">Euiyun Lab</a>',
+    },
   },
 
   vite: {
