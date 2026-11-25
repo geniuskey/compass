@@ -135,7 +135,7 @@ The biggest trend of 2024-2026. Built-in AD (automatic differentiation) is becom
 ### 3.3 License Distribution
 | License | Solver Count | Commercial Use |
 |----------|---------|----------|
-| **MIT** | 10 (meent, fmmax, fdtdz, FDTDX, ceviche, rcwa4d, EMpy, flaport, Khronos.jl, Luminescent.jl) | ✅ Free |
+| **MIT** | 12 (meent, fmmax, fdtdz, FDTDX, ceviche, rcwa4d, EMpy, flaport, Khronos.jl, Luminescent.jl, SPECTRA-RCWA, TorchFDTD) | ✅ Free |
 | **BSD-3** | 2 (rcwa_tf, EMOPT) | ✅ Free |
 | **GPL/LGPL** | 12+ (torcwa, grcwa, S4, nannos, RCWA.jl, Meep, openEMS, gprMax, torchrdit, etc.) | ⚠️ Restricted |
 | **AGPL** | 1 (inkstone) | ❌ Very restricted |
@@ -182,7 +182,7 @@ The biggest trend of 2024-2026. Built-in AD (automatic differentiation) is becom
 
 ## 5. Complete Solver Summary Tables
 
-### RCWA (20 solvers)
+### RCWA (21 solvers)
 
 | # | Solver | Language | GPU | AD | License | ⭐ | Status |
 |---|------|------|-----|-----|---------|-----|------|
@@ -201,11 +201,12 @@ The biggest trend of 2024-2026. Built-in AD (automatic differentiation) is becom
 | 13 | **[EMUstack](https://github.com/EMUstack/EMUstack)** | Fortran/Py | ❌ | ❌ | GPL-3.0 | 28 | ⚠️ |
 | 14 | **[nannos](https://gitlab.com/nannos/nannos)** | Py | ✅ | ✅ | GPL-3.0 | 20 | ⚠️ |
 | 15 | **[torchrdit](https://github.com/yi-huang-1/torchrdit)** | Py/PyTorch | ✅ | ✅ | GPL-3.0 | 11 | ✅ |
-| 16 | **RETICOLO** | MATLAB | ❌ | ❌ | Freeware | N/A | ✅ |
-| 17 | **PPML** | MATLAB | ❌ | ❌ | Free | N/A | ⚠️ |
-| 18-20 | 3 educational solvers | Py | ❌ | ❌ | Various | <10 | ⚠️ |
+| 16 | **[SPECTRA-RCWA](https://github.com/hyoseokp/SPECTRA-RCWA)** | Py/PyTorch | ✅ | ✅ | MIT | 3 | ✅ |
+| 17 | **RETICOLO** | MATLAB | ❌ | ❌ | Freeware | N/A | ✅ |
+| 18 | **PPML** | MATLAB | ❌ | ❌ | Free | N/A | ⚠️ |
+| 19-21 | 3 educational solvers | Py | ❌ | ❌ | Various | <10 | ⚠️ |
 
-### FDTD (17 solvers)
+### FDTD (18 solvers)
 
 | # | Solver | Language | GPU | AD | License | ⭐ | Status |
 |---|------|------|-----|-----|---------|-----|------|
@@ -222,10 +223,11 @@ The biggest trend of 2024-2026. Built-in AD (automatic differentiation) is becom
 | 11 | **PhotonTorch** | Py/PyTorch | ✅ | ✅ | MIT | 81 | ⚠️ (Circuit sim) |
 | 12 | **[Khronos.jl](https://github.com/facebookresearch/Khronos.jl)** | Julia | ✅ Multi-vendor | ✅ | MIT | 66 | ✅ |
 | 13 | **[Luminescent.jl](https://github.com/paulxshen/Luminescent.jl)** | Julia | ✅ | ✅ | MIT | 60 | ✅ |
-| 14 | **GSvit** | C/C++ | CUDA | ❌ | GPL-2.0 | N/A | ✅ |
-| 15 | **Angora** | C++ | ❌ | ❌ | GPL | Small | ⚠️ |
-| 16 | **MaxwellFDTD.jl** | Julia | ❌ | ❌ | N/A | Small | ⚠️ |
-| 17 | **REMS** | Rust | ❌ | ❌ | N/A | Tiny | ❌ (1D PoC) |
+| 14 | **[TorchFDTD](https://github.com/hyoseokp/TorchFDTD)** | Py/PyTorch | ✅ | ✅ | MIT | 30 | ✅ |
+| 15 | **GSvit** | C/C++ | CUDA | ❌ | GPL-2.0 | N/A | ✅ |
+| 16 | **Angora** | C++ | ❌ | ❌ | GPL | Small | ⚠️ |
+| 17 | **MaxwellFDTD.jl** | Julia | ❌ | ❌ | N/A | Small | ⚠️ |
+| 18 | **REMS** | Rust | ❌ | ❌ | N/A | Tiny | ❌ (1D PoC) |
 
 ---
 
