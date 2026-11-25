@@ -49,6 +49,7 @@
 | **RETICOLO** | MATLAB | ❌ | Freeware | N/A | **산업계 표준** (Zeiss, Intel, Apple, Samsung). V10(2025.01) 이방성 지원. 25년 역사 |
 | **[rcwa4d](https://github.com/fancompute/rcwa4d)** | Python | ❌ | **MIT** | ~40 | 비정합 주기 (뒤틀린 이중층/moiré 구조). Stanford Fan Group |
 | **[RCWA.jl](https://github.com/emmt/RCWA.jl)** | Julia | CUDA | GPL-3.0 | ~46 | S-matrix + ETM, 고유값-free 알고리즘, CUDA 5× 속도향상 |
+| **[SPECTRA-RCWA](https://github.com/hyoseokp/SPECTRA-RCWA)** | Python/PyTorch | CUDA | **MIT** | ~3 | 고유값 분해 없음 (행렬 함수), 여러 파장·각도를 한 GPU 배치로 계산, 인접법 그래디언트, 비스듬한 격자 |
 | **[EMpy](https://github.com/lbolla/EMpy)** | Python | ❌ | **MIT** | ~219 | TMM + RCWA + 모드 솔버. 가장 많은 GitHub 스타 |
 
 ---
@@ -97,6 +98,7 @@
 | **[fdtd3d](https://github.com/b-fg/fdtd3d)** | C++ | CUDA/MPI | GPL-3.0 | ~150 | MPI+OpenMP+CUDA, **크로스 아키텍처** (x64/ARM/RISC-V/Wasm) |
 | **GSvit** | C/C++ | CUDA | GPL-2.0 | N/A | 나노스케일 광학 (SNOM, 거칠기), GPU 가속 |
 | **[Luminescent.jl](https://github.com/paulxshen/Luminescent.jl)** | Julia | CUDA | **MIT** | ~60 | 미분가능 FDTD (Zygote.jl), 반도체 포토닉스+음향+RF |
+| **[TorchFDTD](https://github.com/hyoseokp/TorchFDTD)** | Python/PyTorch | CUDA | **MIT** | ~30 | 통합 CUDA 커널, PyTorch autograd 이산 인접법, 브라우저 CAD 작업대, Windows·Linux |
 | **Angora** | C++ | ❌ | GPL | Small | 생의학 산란 특화 |
 
 ### 2.4 상용 / 비오픈소스 (참고)

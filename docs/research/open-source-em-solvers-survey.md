@@ -49,6 +49,7 @@
 | **RETICOLO** | MATLAB | ❌ | Freeware | N/A | **Industry standard** (Zeiss, Intel, Apple, Samsung). V10 (2025.01) anisotropy support. 25-year history |
 | **[rcwa4d](https://github.com/fancompute/rcwa4d)** | Python | ❌ | **MIT** | ~40 | Incommensurate periodicity (twisted bilayer/moiré structures). Stanford Fan Group |
 | **[RCWA.jl](https://github.com/emmt/RCWA.jl)** | Julia | CUDA | GPL-3.0 | ~46 | S-matrix + ETM, eigenvalue-free algorithm, CUDA 5x speedup |
+| **[SPECTRA-RCWA](https://github.com/hyoseokp/SPECTRA-RCWA)** | Python/PyTorch | CUDA | **MIT** | ~3 | No eigendecomposition (matrix functions), many wavelengths and angles in one GPU batch, adjoint gradients, oblique lattices |
 | **[EMpy](https://github.com/lbolla/EMpy)** | Python | ❌ | **MIT** | ~219 | TMM + RCWA + mode solver. Most GitHub stars |
 
 ---
@@ -97,6 +98,7 @@
 | **[fdtd3d](https://github.com/b-fg/fdtd3d)** | C++ | CUDA/MPI | GPL-3.0 | ~150 | MPI+OpenMP+CUDA, **cross-architecture** (x64/ARM/RISC-V/Wasm) |
 | **GSvit** | C/C++ | CUDA | GPL-2.0 | N/A | Nanoscale optics (SNOM, roughness), GPU accelerated |
 | **[Luminescent.jl](https://github.com/paulxshen/Luminescent.jl)** | Julia | CUDA | **MIT** | ~60 | Differentiable FDTD (Zygote.jl), semiconductor photonics+acoustics+RF |
+| **[TorchFDTD](https://github.com/hyoseokp/TorchFDTD)** | Python/PyTorch | CUDA | **MIT** | ~30 | Fused CUDA kernels, discrete adjoints through PyTorch autograd, browser CAD workbench, Windows and Linux |
 | **Angora** | C++ | ❌ | GPL | Small | Biomedical scattering specialized |
 
 ### 2.4 Commercial / Non-Open-Source (Reference)
