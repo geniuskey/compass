@@ -109,7 +109,7 @@
 
       <!-- CIE 1931 -->
       <div class="chart-section chart-cie">
-        <h5>{{ t('CIE 1931 Chromaticity Diagram','CIE 1931 색도도') }}</h5>
+        <h5>{{ t('CIE 1931 Chromaticity Diagram','CIE 1931 색도도') }} <span class="h5-note">{{ t('(filter transmittance under equal-energy illuminant E)','(등에너지 광원 E 기준 필터 투과율)') }}</span></h5>
         <div class="svg-wrapper cie-wrapper">
           <svg :viewBox="`0 0 ${cieW} ${cieH}`" class="cie-svg">
             <line :x1="ciePad.left" :y1="ciePad.top" :x2="ciePad.left" :y2="ciePad.top+ciePlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
@@ -134,9 +134,9 @@
               <circle :cx="cieXScale(filterChroma[f.id].x)" :cy="cieYScale(filterChroma[f.id].y)" r="5" :fill="f.color" stroke="#fff" stroke-width="1.5" />
               <text :x="cieXScale(filterChroma[f.id].x)+(f.id==='r'?8:f.id==='b'?-8:0)" :y="cieYScale(filterChroma[f.id].y)+(f.id==='g'?-8:12)" :text-anchor="f.id==='b'?'end':'start'" class="point-label" :fill="f.color">{{ t(f.nameEn,f.nameKo) }}</text>
             </template>
-            <line :x1="cieXScale(0.3127)-5" :y1="cieYScale(0.329)" :x2="cieXScale(0.3127)+5" :y2="cieYScale(0.329)" stroke="var(--vp-c-text-2)" stroke-width="1.5" />
-            <line :x1="cieXScale(0.3127)" :y1="cieYScale(0.329)-5" :x2="cieXScale(0.3127)" :y2="cieYScale(0.329)+5" stroke="var(--vp-c-text-2)" stroke-width="1.5" />
-            <text :x="cieXScale(0.3127)+7" :y="cieYScale(0.329)-4" class="d65-label">D65</text>
+            <line :x1="cieXScale(1/3)-5" :y1="cieYScale(1/3)" :x2="cieXScale(1/3)+5" :y2="cieYScale(1/3)" stroke="var(--vp-c-text-2)" stroke-width="1.5" />
+            <line :x1="cieXScale(1/3)" :y1="cieYScale(1/3)-5" :x2="cieXScale(1/3)" :y2="cieYScale(1/3)+5" stroke="var(--vp-c-text-2)" stroke-width="1.5" />
+            <text :x="cieXScale(1/3)+7" :y="cieYScale(1/3)-4" class="d65-label">{{ t('E (white)','E (백색점)') }}</text>
           </svg>
         </div>
       </div>
@@ -146,21 +146,22 @@
         <div class="analysis-box">
           <h5>{{ t('Spectral Crosstalk Matrix','분광 크로스토크 매트릭스') }}</h5>
           <table class="xtalk-table">
-            <tr><th></th><th>B</th><th>G</th><th>R</th></tr>
-            <tr v-for="(f,i) in filters" :key="'xt-'+f.id">
+            <thead><tr><th></th><th>B</th><th>G</th><th>R</th><th :title="t('Response outside 400-700 nm (380-400 and 700-780 nm)','400-700 nm 밖(380-400, 700-780 nm)의 응답')">{{ t('Out','대역 외') }}</th></tr></thead>
+            <tbody><tr v-for="(f,i) in filters" :key="'xt-'+f.id">
               <td :style="{color:f.color,fontWeight:600}">{{ f.id.toUpperCase() }}</td>
               <td v-for="(v,j) in crosstalkMatrix[i]" :key="j" :class="{'xt-diag':(i===0&&j===2)||(i===1&&j===1)||(i===2&&j===0)}">{{ (v*100).toFixed(1) }}%</td>
-            </tr>
+            </tr></tbody>
           </table>
+          <p class="xt-note">{{ t('Share of each channel\'s total 380-780 nm response falling in the B (400-500), G (500-600) and R (600-700 nm) bands; "Out" is the remainder, so each row sums to 100%.','각 채널의 380-780 nm 전체 응답 중 B(400-500), G(500-600), R(600-700 nm) 대역에 들어오는 비율이며, "대역 외"는 나머지이므로 각 행의 합은 100%입니다.') }}</p>
         </div>
         <div class="analysis-box">
           <h5>{{ t('WB Coefficients','화이트 밸런스 계수') }}</h5>
           <table class="wb-table">
-            <tr><th>{{ t('Illum','광원') }}</th><th style="color:#e74c3c">R</th><th style="color:#27ae60">G</th><th style="color:#3498db">B</th></tr>
-            <tr v-for="wb in wbCoeffs" :key="wb.key">
-              <td class="wb-illum">{{ wb.label }}</td>
+            <thead><tr><th>{{ t('Illum','광원') }}</th><th style="color:#e74c3c">R</th><th style="color:#27ae60">G</th><th style="color:#3498db">B</th></tr></thead>
+            <tbody><tr v-for="wb in wbCoeffs" :key="wb.key">
+              <td class="wb-illum">{{ t(wb.label, wb.ko) }}</td>
               <td v-for="(g,i) in wb.gains" :key="i" :style="{color:filters[i].color}">{{ g.toFixed(2) }}</td>
-            </tr>
+            </tr></tbody>
           </table>
         </div>
       </div>
@@ -173,6 +174,7 @@ import { ref, computed, type Ref } from 'vue'
 import { useLocale } from '../composables/useLocale'
 import { CIE_WL, CIE_X, CIE_Y, CIE_Z, spectrumToXYZ, xyzToXy, getN, MATERIALS, tmmCalc, defaultBsiStack, SI_LAYER_IDX } from '../composables/tmm'
 import type { TmmLayer } from '../composables/tmm'
+import { cond2 } from '../composables/colorMath'
 import { useFullscreen } from '../composables/useFullscreen'
 
 const { t } = useLocale()
@@ -293,7 +295,9 @@ const crosstalkMatrix = computed(() => {
     const qe = channelQE.value[f.id]
     let total = 0; const bs = [0,0,0]
     for (let i=0;i<qe.length;i++) { total+=qe[i]; for (let b=0;b<3;b++) if (i>=bands[b][0]&&i<bands[b][1]) bs[b]+=qe[i] }
-    return total>0 ? bs.map(s=>s/total) : [0,0,0]
+    if (total<=0) return [0,0,0,0]
+    const inBand = bs.map(s=>s/total)
+    return [...inBand, Math.max(0, 1-inBand[0]-inBand[1]-inBand[2])]
   })
 })
 const avgCrosstalk = computed(() => {
@@ -344,19 +348,21 @@ const ccmCond = computed(() => {
   const M = [[0,0,0],[0,0,0],[0,0,0]]
   const ci = inv3(CtC)
   for (let i=0;i<3;i++) for (let j=0;j<3;j++) for (let k=0;k<3;k++) M[i][j]+=ci[i][k]*CtH[k][j]
-  const Mi = inv3(M)
-  let nM=0,nMi=0
-  for (let i=0;i<3;i++) for (let j=0;j<3;j++){nM+=M[i][j]**2;nMi+=Mi[i][j]**2}
-  return Math.sqrt(nM)*Math.sqrt(nMi)
+  // Spectral (2-norm) condition number sigma_max / sigma_min
+  const k = cond2(M)
+  return Number.isFinite(k) ? k : 999
 })
 
 // ---- WB coefficients (Planck illuminant) ----
 function planckRel(wl_um: number, T: number): number {
   return 1/(wl_um**5*(Math.exp(14388/(wl_um*T))-1))
 }
+// Planckian (blackbody) approximations; only CIE A is defined as a blackbody.
 const wbIlluminants = [
-  {key:'D65',label:'D65',temp:6500},{key:'A',label:'A',temp:2856},
-  {key:'F',label:'4100K',temp:4100},{key:'D50',label:'D50',temp:5000},
+  {key:'D65',label:'6500 K blackbody (≈D65)',ko:'6500 K 흑체 (≈D65)',temp:6500},
+  {key:'A',label:'A (2856 K blackbody)',ko:'A (2856 K 흑체)',temp:2856},
+  {key:'F',label:'4100 K blackbody',ko:'4100 K 흑체',temp:4100},
+  {key:'D50',label:'5000 K blackbody (≈D50)',ko:'5000 K 흑체 (≈D50)',temp:5000},
 ]
 const wbCoeffs = computed(() => wbIlluminants.map(ill => {
   const sigs = filters.map(f => {
@@ -450,17 +456,19 @@ const filterChroma = computed(() => {
     const spectrum = CIE_WL.map(wl=>getT(f, wl*1000))
     const [X,Y,Z] = spectrumToXYZ(spectrum)
     const [x,y] = xyzToXy(X,Y,Z)
-    const d65x=0.3127,d65y=0.3290
+    // Filter chromaticity is computed from raw transmittance (equal-energy illuminant E),
+    // so dominant wavelength and purity are referenced to the E white point (1/3, 1/3).
+    const wx=1/3,wy=1/3
     let domWl=f.center.value, bestDist=Infinity
     for (let i=0;i<CIE_WL.length;i++){
       const s=CIE_X[i]+CIE_Y[i]+CIE_Z[i]; if(s<0.001) continue
-      const lx=CIE_X[i]/s,ly=CIE_Y[i]/s,dx1=x-d65x,dy1=y-d65y,dx2=lx-d65x,dy2=ly-d65y
+      const lx=CIE_X[i]/s,ly=CIE_Y[i]/s,dx1=x-wx,dy1=y-wy,dx2=lx-wx,dy2=ly-wy
       if(dx1*dx2+dy1*dy2>0){const cr=Math.abs(dx1*dy2-dy1*dx2),len=Math.sqrt(dx2*dx2+dy2*dy2);if(len>0&&cr/len<bestDist){bestDist=cr/len;domWl=Math.round(CIE_WL[i]*1000)}}
     }
-    const distF=Math.sqrt((x-d65x)**2+(y-d65y)**2)
+    const distF=Math.sqrt((x-wx)**2+(y-wy)**2)
     const domIdx=Math.round((domWl/1000-0.380)/0.005)
     let purity=0
-    if(domIdx>=0&&domIdx<CIE_WL.length){const s=CIE_X[domIdx]+CIE_Y[domIdx]+CIE_Z[domIdx];if(s>0.001){const lx=CIE_X[domIdx]/s,ly=CIE_Y[domIdx]/s;purity=Math.min(1,distF/Math.sqrt((lx-d65x)**2+(ly-d65y)**2))}}
+    if(domIdx>=0&&domIdx<CIE_WL.length){const s=CIE_X[domIdx]+CIE_Y[domIdx]+CIE_Z[domIdx];if(s>0.001){const lx=CIE_X[domIdx]/s,ly=CIE_Y[domIdx]/s;purity=Math.min(1,distF/Math.sqrt((lx-wx)**2+(ly-wy)**2))}}
     result[f.id]={x,y,domWl,purity}
   }
   return result
@@ -593,6 +601,8 @@ function exportConfig() {
 .srgb-label { font-size:8px; fill:#888; font-style:italic; }
 .point-label { font-size:9px; font-weight:600; }
 .d65-label { font-size:8px; fill:var(--vp-c-text-2); font-weight:600; }
+.xt-note { margin:6px 0 0 0; font-size:0.72em; color:var(--vp-c-text-3); line-height:1.4; }
+.h5-note { font-size:0.8em; font-weight:400; color:var(--vp-c-text-3); }
 .analysis-row { display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
 .analysis-box { flex:1; min-width:220px; background:var(--vp-c-bg); border:1px solid var(--vp-c-divider); border-radius:8px; padding:12px; }
 .analysis-box h5 { margin:0 0 8px 0; font-size:0.85em; }

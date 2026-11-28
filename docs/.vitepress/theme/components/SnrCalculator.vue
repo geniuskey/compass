@@ -37,9 +37,28 @@
       </div>
       <div class="slider-group">
         <label>
-          {{ t('Scene Illuminance', '조도') }}: <strong>{{ illuminance.toFixed(0) }} lux</strong>
+          {{ illumMode === 'scene' ? t('Scene Illuminance', '장면 조도') : t('Sensor-plane Illuminance', '센서면 조도') }}: <strong>{{ fmtLux(illuminance) }} lux</strong>
         </label>
-        <input type="range" min="0" max="4" step="0.01" v-model.number="logIlluminance" class="ctrl-range" :aria-label="t('Scene Illuminance', '조도')" />
+        <input type="range" :min="LUX_LOG_MIN" :max="LUX_LOG_MAX" step="0.01" v-model.number="logIlluminance" class="ctrl-range" :aria-label="t('Illuminance', '조도')" />
+      </div>
+      <div class="slider-group">
+        <label>{{ t('Illuminance reference', '조도 기준') }}</label>
+        <div class="seg">
+          <button type="button" :class="{ active: illumMode === 'scene' }" :aria-pressed="illumMode === 'scene'" @click="illumMode = 'scene'">{{ t('Scene', '장면') }}</button>
+          <button type="button" :class="{ active: illumMode === 'sensor' }" :aria-pressed="illumMode === 'sensor'" @click="illumMode = 'sensor'">{{ t('Sensor plane', '센서면') }}</button>
+        </div>
+      </div>
+      <div v-if="illumMode === 'scene'" class="slider-group">
+        <label>
+          {{ t('Lens f-number', '렌즈 F값') }}: <strong>f/{{ fNumber.toFixed(1) }}</strong>
+        </label>
+        <input type="range" min="1.2" max="8" step="0.1" v-model.number="fNumber" class="ctrl-range" :aria-label="t('Lens f-number', '렌즈 F값')" />
+      </div>
+      <div class="slider-group">
+        <label>
+          PRNU: <strong>{{ prnu.toFixed(1) }}%</strong>
+        </label>
+        <input type="range" min="0" max="3" step="0.1" v-model.number="prnu" class="ctrl-range" aria-label="PRNU" />
       </div>
       <div class="slider-group">
         <label>
@@ -80,7 +99,12 @@
         <div class="result-label">{{ t('Dynamic Range', '다이나믹 레인지') }}</div>
         <div class="result-value">{{ dynamicRangeDb.toFixed(1) }} dB</div>
       </div>
+      <div v-if="illumMode === 'scene'" class="result-card">
+        <div class="result-label">{{ t('Sensor-plane illuminance', '센서면 조도') }}</div>
+        <div class="result-value">{{ fmtLux(sensorLux(illuminance)) }} lux</div>
+      </div>
     </div>
+    <p v-if="illumMode === 'scene'" class="hint">{{ t('Scene → sensor: E_sensor = E_scene · ρ · T / (4N²), with ρ = 18 % grey and T = 90 % lens transmission (on-axis, no vignetting).', '장면 → 센서: E_sensor = E_scene · ρ · T / (4N²), ρ = 18 % 회색, T = 렌즈 투과율 90 % (축상, 비네팅 없음).') }}</p>
 
     <!-- Saturation warning -->
     <div v-if="isSaturated" class="sat-notice">
@@ -133,6 +157,11 @@
           <text :x="ptcPad.left + ptcPlotW / 2" :y="ptcH - 2" text-anchor="middle" class="axis-title">{{ t('Signal (e⁻)', '신호 (e⁻)') }}</text>
           <text :x="12" :y="ptcPad.top + ptcPlotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 12, ${ptcPad.top + ptcPlotH / 2})`">{{ t('Noise (e⁻)', '잡음 (e⁻)') }}</text>
 
+          <!-- FWC -->
+          <line :x1="ptcXScale(Math.log10(fullWell))" :y1="ptcPad.top" :x2="ptcXScale(Math.log10(fullWell))" :y2="ptcPad.top + ptcPlotH" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,3" />
+          <text :x="ptcXScale(Math.log10(fullWell)) - 4" :y="ptcPad.top + ptcPlotH - 6" text-anchor="end" class="legend-label">FWC</text>
+          <!-- PRNU -->
+          <path v-if="prnu > 0" :d="prnuNoisePath" fill="none" stroke="#16a085" stroke-width="1.5" stroke-dasharray="2,2" />
           <!-- Read noise floor -->
           <path :d="readNoisePath" fill="none" stroke="#9b59b6" stroke-width="1.5" stroke-dasharray="6,3" />
           <!-- Dark noise -->
@@ -151,7 +180,7 @@
           />
 
           <!-- Legend -->
-          <g :transform="`translate(${ptcPad.left + ptcPlotW - 140}, ${ptcPad.top + 8})`">
+          <g :transform="`translate(${ptcPad.left + 8}, ${ptcPad.top + 6})`">
             <line x1="0" y1="6" x2="16" y2="6" stroke="#e74c3c" stroke-width="2.5" />
             <text x="20" y="10" class="legend-label">{{ t('Total', '합계') }}</text>
             <line x1="0" y1="20" x2="16" y2="20" stroke="#3498db" stroke-width="1.5" stroke-dasharray="8,4" />
@@ -160,6 +189,8 @@
             <text x="20" y="38" class="legend-label">{{ t('Read', '읽기') }}</text>
             <line x1="0" y1="48" x2="16" y2="48" stroke="#e67e22" stroke-width="1.5" stroke-dasharray="4,2" />
             <text x="20" y="52" class="legend-label">{{ t('Dark', '암전류') }}</text>
+            <line x1="0" y1="62" x2="16" y2="62" stroke="#16a085" stroke-width="1.5" stroke-dasharray="2,2" />
+            <text x="20" y="66" class="legend-label">PRNU</text>
           </g>
 
           <!-- PTC Hover tooltip -->
@@ -231,7 +262,7 @@
           </template>
 
           <!-- Axis titles -->
-          <text :x="snrPad.left + snrPlotW / 2" :y="snrH - 2" text-anchor="middle" class="axis-title">{{ t('Illuminance (lux)', '조도 (lux)') }}</text>
+          <text :x="snrPad.left + snrPlotW / 2" :y="snrH - 2" text-anchor="middle" class="axis-title">{{ illumMode === 'scene' ? t('Scene illuminance (lux)', '장면 조도 (lux)') : t('Sensor-plane illuminance (lux)', '센서면 조도 (lux)') }}</text>
           <text :x="12" :y="snrPad.top + snrPlotH / 2" text-anchor="middle" class="axis-title" :transform="`rotate(-90, 12, ${snrPad.top + snrPlotH / 2})`">{{ t('SNR (dB)', 'SNR (dB)') }}</text>
 
           <!-- SNR curve -->
@@ -248,7 +279,7 @@
           <template v-if="snrHover">
             <line :x1="snrHover.sx" :y1="snrPad.top" :x2="snrHover.sx" :y2="snrPad.top + snrPlotH" stroke="var(--vp-c-text-2)" stroke-width="0.8" stroke-dasharray="4,3" />
             <rect :x="snrHover.tx" :y="snrPad.top + 4" width="120" height="34" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
-            <text :x="snrHover.tx + 6" :y="snrPad.top + 18" class="tooltip-text">{{ snrHover.lux.toFixed(0) }} lux</text>
+            <text :x="snrHover.tx + 6" :y="snrPad.top + 18" class="tooltip-text">{{ fmtLux(snrHover.lux) }} lux</text>
             <text :x="snrHover.tx + 6" :y="snrPad.top + 30" class="tooltip-text">SNR: {{ snrHover.db.toFixed(1) }} dB</text>
           </template>
         </svg>
@@ -261,6 +292,7 @@
 import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
 import { useFullscreen } from '../composables/useFullscreen'
+import { PHOTONS_PER_LUX_S_UM2, sensorIlluminance } from '../composables/sensorNoise'
 
 const { t } = useLocale()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
@@ -273,8 +305,16 @@ const logIlluminance = ref(Math.log10(500))
 const darkCurrent = ref(5.0)
 const readNoise = ref(1.5)
 const fullWell = ref(6000)
+const prnu = ref(1.0)
+const fNumber = ref(2.0)
+const illumMode = ref<'scene' | 'sensor'>('scene')
+const LUX_LOG_MIN = -1
+const LUX_LOG_MAX = 5
 
 function resetControls() {
+  prnu.value = 1.0
+  fNumber.value = 2.0
+  illumMode.value = 'scene'
   qe.value = 60
   pitch.value = 1.0
   integrationTime.value = 33
@@ -287,20 +327,30 @@ function resetControls() {
 const illuminance = computed(() => Math.pow(10, logIlluminance.value))
 
 // ---- Physics ----
-const PHOTON_FLUX_PER_LUX = 4.09e11 // photons/s/cm²/lux at 555nm equiv
+/** Illuminance actually reaching the pixel. */
+function sensorLux(lux: number): number {
+  return illumMode.value === 'scene' ? sensorIlluminance(lux, fNumber.value) : lux
+}
+
+function fmtLux(v: number): string {
+  if (v >= 1000) return `${+(v / 1000).toPrecision(3)}k`
+  if (v >= 10) return v.toFixed(0)
+  if (v >= 1) return v.toFixed(1)
+  return `${+v.toPrecision(2)}`
+}
 
 function calcSignalAndNoise(lux: number) {
-  const pixelAreaCm2 = (pitch.value * 1e-4) ** 2
+  const pixelAreaUm2 = pitch.value ** 2
   const tInt = integrationTime.value / 1000
-  const photonFlux = lux * PHOTON_FLUX_PER_LUX
-  const signalPhotons = photonFlux * pixelAreaCm2 * tInt
+  const signalPhotons = sensorLux(lux) * PHOTONS_PER_LUX_S_UM2 * pixelAreaUm2 * tInt
   const rawSignal = (qe.value / 100) * signalPhotons
   const signal = Math.min(rawSignal, fullWell.value)
   const shotNoise = Math.sqrt(signal)
   const darkNoise = Math.sqrt(darkCurrent.value * tInt)
-  const totalNoise = Math.sqrt(shotNoise ** 2 + darkNoise ** 2 + readNoise.value ** 2)
+  const prnuNoise = (prnu.value / 100) * signal
+  const totalNoise = Math.sqrt(shotNoise ** 2 + darkNoise ** 2 + readNoise.value ** 2 + prnuNoise ** 2)
   const snr = signal > 0 ? signal / totalNoise : 0
-  const snrDb = snr > 0 ? 20 * Math.log10(snr) : 0
+  const snrDb = snr > 0 ? 20 * Math.log10(snr) : -Infinity
   return { signal, shotNoise, darkNoise, totalNoise, snr, snrDb, saturated: rawSignal > fullWell.value }
 }
 
@@ -310,7 +360,10 @@ const totalNoise = computed(() => metrics.value.totalNoise)
 const snrLinear = computed(() => metrics.value.snr)
 const snrDb = computed(() => metrics.value.snrDb)
 const isSaturated = computed(() => metrics.value.saturated)
-const dynamicRangeDb = computed(() => 20 * Math.log10(fullWell.value / readNoise.value))
+// DR = FWC / temporal dark noise floor (read + dark shot), so it responds to dark current and integration time.
+const dynamicRangeDb = computed(() =>
+  20 * Math.log10(fullWell.value / Math.sqrt(readNoise.value ** 2 + darkCurrent.value * integrationTime.value / 1000)),
+)
 
 // ---- PTC Chart ----
 const ptcW = 560
@@ -321,19 +374,20 @@ const ptcPlotH = ptcH - ptcPad.top - ptcPad.bottom
 
 // Log10 range
 const ptcXMin = computed(() => 0)  // 1 e-
-const ptcXMax = computed(() => Math.ceil(Math.log10(fullWell.value * 1.1)))
+const ptcXMax = computed(() => Math.log10(fullWell.value * 1.3))
 const ptcYMin = computed(() => {
-  const v = Math.log10(readNoise.value / 2)
+  const v = Math.log10(Math.min(readNoise.value, Math.max(0.05, darkNoiseVal.value)) / 2)
   return Math.floor(v * 2) / 2
 })
 const ptcYMax = computed(() => {
-  const v = Math.log10(Math.sqrt(fullWell.value) * 1.2)
+  const fw = fullWell.value
+  const v = Math.log10(Math.sqrt(fw + (prnu.value / 100 * fw) ** 2 + readNoise.value ** 2) * 1.2)
   return Math.ceil(v * 2) / 2
 })
 
 const ptcXTicks = computed(() => {
   const ticks: number[] = []
-  for (let i = Math.ceil(ptcXMin.value); i <= ptcXMax.value; i++) ticks.push(i)
+  for (let i = Math.ceil(ptcXMin.value); i <= Math.floor(ptcXMax.value); i++) ticks.push(i)
   return ticks
 })
 const ptcYTicks = computed(() => {
@@ -366,17 +420,20 @@ function buildPtcPath(noiseFn: (sig: number) => number): string {
   const steps = 200
   let d = ''
   const xMin = ptcXMin.value
-  const xMax = ptcXMax.value
+  // Curves stop at the full well: above it the signal no longer grows.
+  const xMax = Math.log10(fullWell.value)
+  let penUp = true
   for (let i = 0; i <= steps; i++) {
     const logSig = xMin + (i / steps) * (xMax - xMin)
     const sig = Math.pow(10, logSig)
     const noise = noiseFn(sig)
-    if (noise <= 0) continue
-    const logNoise = Math.log10(noise)
-    const clampedY = Math.max(ptcYMin.value, Math.min(ptcYMax.value, logNoise))
+    const logNoise = noise > 0 ? Math.log10(noise) : -Infinity
+    // Skip points outside the plot instead of clamping them onto the axes.
+    if (logNoise < ptcYMin.value || logNoise > ptcYMax.value) { penUp = true; continue }
     const x = ptcXScale(logSig)
-    const y = ptcYScale(clampedY)
-    d += d === '' ? `M${x.toFixed(1)},${y.toFixed(1)}` : ` L${x.toFixed(1)},${y.toFixed(1)}`
+    const y = ptcYScale(logNoise)
+    d += penUp ? `${d ? ' ' : ''}M${x.toFixed(1)},${y.toFixed(1)}` : ` L${x.toFixed(1)},${y.toFixed(1)}`
+    penUp = false
   }
   return d
 }
@@ -387,10 +444,11 @@ const darkNoiseVal = computed(() => Math.sqrt(darkCurrent.value * tIntSec.value)
 const readNoisePath = computed(() => buildPtcPath(() => readNoise.value))
 const darkNoisePath = computed(() => buildPtcPath(() => darkNoiseVal.value))
 const shotNoisePath = computed(() => buildPtcPath((sig) => Math.sqrt(sig)))
-const totalNoisePath = computed(() => buildPtcPath((sig) => {
-  const shot = Math.sqrt(sig)
-  return Math.sqrt(shot ** 2 + darkNoiseVal.value ** 2 + readNoise.value ** 2)
-}))
+const prnuNoisePath = computed(() => buildPtcPath((sig) => (prnu.value / 100) * sig))
+function totalNoiseAt(sig: number): number {
+  return Math.sqrt(sig + darkNoiseVal.value ** 2 + readNoise.value ** 2 + ((prnu.value / 100) * sig) ** 2)
+}
+const totalNoisePath = computed(() => buildPtcPath(totalNoiseAt))
 
 // PTC hover
 const ptcHover = ref<{ sx: number; tx: number; sig: number; noise: number } | null>(null)
@@ -402,10 +460,9 @@ function onPtcMouseMove(event: MouseEvent) {
   const mouseX = (event.clientX - rect.left) * scaleX
   const logSig = ptcXMin.value + ((mouseX - ptcPad.left) / ptcPlotW) * (ptcXMax.value - ptcXMin.value)
   if (logSig >= ptcXMin.value && logSig <= ptcXMax.value) {
-    const sig = Math.pow(10, logSig)
-    const shot = Math.sqrt(sig)
-    const noise = Math.sqrt(shot ** 2 + darkNoiseVal.value ** 2 + readNoise.value ** 2)
-    const sx = ptcXScale(logSig)
+    const sig = Math.min(Math.pow(10, logSig), fullWell.value)
+    const noise = totalNoiseAt(sig)
+    const sx = ptcXScale(Math.log10(sig))
     const tx = sx + 130 > ptcW - ptcPad.right ? sx - 130 : sx + 10
     ptcHover.value = { sx, tx, sig, noise }
   } else {
@@ -420,19 +477,22 @@ const snrPad = { top: 20, right: 40, bottom: 40, left: 55 }
 const snrPlotW = snrW - snrPad.left - snrPad.right
 const snrPlotH = snrH - snrPad.top - snrPad.bottom
 
-const snrXMin = 0  // log10(1) = 0
-const snrXMax = 4  // log10(10000) = 4
-const snrYMin = 0
-const snrYMax = 60
-
-const snrXTicks = [0, 1, 2, 3, 4]
-const snrYTicks = [0, 10, 20, 30, 40, 50, 60]
+const snrXMin = LUX_LOG_MIN
+const snrXMax = LUX_LOG_MAX
+const snrXTicks = Array.from({ length: LUX_LOG_MAX - LUX_LOG_MIN + 1 }, (_, i) => LUX_LOG_MIN + i)
+const snrYMin = computed(() => Math.max(-30, Math.floor(calcSignalAndNoise(10 ** snrXMin).snrDb / 10) * 10))
+const snrYMax = computed(() => Math.max(20, Math.ceil(calcSignalAndNoise(10 ** snrXMax).snrDb / 10) * 10 + 5))
+const snrYTicks = computed(() => {
+  const ticks: number[] = []
+  for (let v = snrYMin.value; v <= snrYMax.value; v += 10) ticks.push(v)
+  return ticks
+})
 
 function snrXScale(logLux: number): number {
   return snrPad.left + ((logLux - snrXMin) / (snrXMax - snrXMin)) * snrPlotW
 }
 function snrYScale(db: number): number {
-  return snrPad.top + snrPlotH - ((db - snrYMin) / (snrYMax - snrYMin)) * snrPlotH
+  return snrPad.top + snrPlotH - ((db - snrYMin.value) / (snrYMax.value - snrYMin.value)) * snrPlotH
 }
 
 const snrCurvePath = computed(() => {
@@ -442,7 +502,7 @@ const snrCurvePath = computed(() => {
     const logLux = snrXMin + (i / steps) * (snrXMax - snrXMin)
     const lux = Math.pow(10, logLux)
     const { snrDb: db } = calcSignalAndNoise(lux)
-    const clampedDb = Math.max(snrYMin, Math.min(snrYMax, db))
+    const clampedDb = Math.max(snrYMin.value, Math.min(snrYMax.value, db))
     const x = snrXScale(logLux)
     const y = snrYScale(clampedDb)
     d += i === 0 ? `M${x.toFixed(1)},${y.toFixed(1)}` : ` L${x.toFixed(1)},${y.toFixed(1)}`
@@ -610,6 +670,10 @@ function onSnrMouseMove(event: MouseEvent) {
   fill: var(--vp-c-text-2);
   font-weight: 600;
 }
+.seg { display: inline-flex; border: 1px solid var(--vp-c-divider); border-radius: 6px; overflow: hidden; }
+.seg button { padding: 3px 12px; font-size: 0.82em; background: var(--vp-c-bg); color: var(--vp-c-text-2); border: none; cursor: pointer; }
+.seg button.active { background: var(--vp-c-brand-1); color: var(--vp-c-white, #fff); }
+.hint { margin: 0 0 12px; font-size: 0.78em; color: var(--vp-c-text-2); }
 .legend-label {
   font-size: 9px;
   fill: var(--vp-c-text-2);

@@ -1942,7 +1942,7 @@ const theoryEntries: Record<string, TheoryEntry> = {
       {
         title: { en: 'Known Missing Physics', ko: '아직 빠진 물리' },
         items: [
-          { en: 'The compact model does not distinguish diffusion current, depletion current, surface generation, and trap-assisted tunneling.', ko: 'Compact model은 diffusion current, depletion current, surface generation, trap-assisted tunneling을 구분하지 않습니다.' },
+          { en: 'The compact model offers depletion generation (∝ nᵢ, Eₐ ≈ Eg/2), diffusion (∝ nᵢ², Eₐ ≈ Eg) or a 50/50 mix, but not surface generation or trap-assisted tunneling.', ko: 'Compact model은 공핍 생성(∝ nᵢ, Eₐ ≈ Eg/2), 확산(∝ nᵢ², Eₐ ≈ Eg), 50/50 혼합을 제공하지만 surface generation과 trap-assisted tunneling은 포함하지 않습니다.' },
           { en: 'It does not model random telegraph signal, hot-pixel distributions, or radiation/aging effects.', ko: 'Random telegraph signal, hot-pixel distribution, radiation/aging effect를 모델링하지 않습니다.' },
           { en: 'Dark-frame correction residuals depend on temperature matching and calibration cadence.', ko: 'Dark-frame correction 잔차는 temperature matching과 calibration cadence에 의존합니다.' },
         ],

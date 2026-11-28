@@ -193,7 +193,7 @@
         <strong>{{ roc.toFixed(2) }} um</strong>
       </div>
       <div class="metric-card">
-        <span>{{ t('f-number', 'f-number') }}</span>
+        <span :title="t('Object-space (in-air) focal length f = R/(n−1); the image-side focal length inside the lens medium is n·R/(n−1).', '물체 측(공기 중) 초점 거리 f = R/(n−1) 기준입니다. 렌즈 매질 내부의 상 측 초점 거리는 n·R/(n−1)입니다.')">{{ t('f-number (in air, f = R/(n−1))', 'f-number (공기 중, f = R/(n−1))') }}</span>
         <strong>f/{{ fNumber.toFixed(2) }}</strong>
       </div>
       <div class="metric-card">
@@ -1073,6 +1073,8 @@ const roc = computed(() => {
   const h = rep.finalHeight
   return (a * a + h * h) / Math.max(2 * h, 0.001)
 })
+// In-air (object-side) focal length f = R/(n−1); other simulators quote the
+// image-side n·R/(n−1). The metric label states which convention is used.
 const focalLength = computed(() => roc.value / Math.max(lensIndex.value - 1, 0.05))
 const fNumber = computed(() => focalLength.value / Math.max(finalWidth.value, 0.05))
 const fillFactor = computed(() => {

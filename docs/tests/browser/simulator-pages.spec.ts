@@ -123,4 +123,38 @@ test.describe('simulator pages', () => {
       await expect(page.getByText('Validation Example', { exact: true })).toBeVisible()
     })
   }
+
+  // Controls that previously had no effect on any output must now change the results.
+  const liveControls = [
+    { path: '/simulator/photon-transfer-curve.html', control: 'Conversion Gain', value: '150', results: '.results-grid' },
+    { path: '/simulator/pixel-snr-vs-illuminance.html', control: 'Pixel Area', value: '9', results: '.results-grid' },
+    { path: '/simulator/emva1288.html', control: 'Exposure Time', value: '2.5', results: '.param-grid' },
+    { path: '/simulator/linearity-analyzer.html', control: 'Full Well Capacity', value: '50000', results: '.results-grid' },
+    { path: '/simulator/dark-current.html', control: 'Dark current @ 27 °C', value: '20', results: '.results-grid' },
+  ]
+
+  for (const { path, control, value, results } of liveControls) {
+    test(`"${control}" changes the outputs on ${path}`, async ({ page }) => {
+      await gotoDocs(page, path)
+      const out = page.locator(results).first()
+      const before = await out.innerText()
+      await page.getByRole('slider', { name: control, exact: true }).first().fill(value)
+      await expect(out).not.toHaveText(before)
+    })
+  }
+
+  test('PRNU heatmap contrast follows the PRNU slider', async ({ page }) => {
+    await gotoDocs(page, '/simulator/prnu-visualizer.html')
+    const cells = page.locator('.pixel-cell')
+    const spread = async () =>
+      cells.evaluateAll(els => {
+        const v = els.map(e => Number(getComputedStyle(e).backgroundColor.match(/\d+/)?.[0] ?? 0))
+        return Math.max(...v) - Math.min(...v)
+      })
+    await page.getByRole('slider', { name: 'DSNU', exact: true }).fill('0')
+    await page.getByRole('slider', { name: 'PRNU', exact: true }).fill('0.5')
+    const low = await spread()
+    await page.getByRole('slider', { name: 'PRNU', exact: true }).fill('3')
+    await expect.poll(spread).toBeGreaterThan(low)
+  })
 })

@@ -36,6 +36,7 @@
           <div class="slider-group">
             <label>{{ t('Pixel pitch:', '픽셀 피치:') }} <strong>{{ pitch.toFixed(1) }} um</strong></label>
             <input type="range" min="0.5" max="2.0" step="0.1" v-model.number="pitch" class="ctrl-range" :aria-label="t('Pixel pitch', '픽셀 피치')" @input="markCustom" />
+            <div class="ctrl-note">{{ t('Geometry only — the 1D TMM ignores lateral size, so pitch does not change the spectra.', '형상 표시용 — 1D TMM은 측면 크기를 고려하지 않으므로 피치는 스펙트럼에 영향을 주지 않습니다.') }}</div>
           </div>
           <div class="slider-group">
             <label>{{ t('Silicon thickness:', '실리콘 두께:') }} <strong>{{ siThickness.toFixed(1) }} um</strong></label>
@@ -170,13 +171,13 @@
             <text :x="qePad.left+qePlotW/2" :y="qeH-2" text-anchor="middle" class="axis-title">{{ t('Wavelength (nm)', '파장 (nm)') }}</text>
             <text :x="12" :y="qePad.top+qePlotH/2" text-anchor="middle" class="axis-title" :transform="`rotate(-90,12,${qePad.top+qePlotH/2})`">QE (%)</text>
             <!-- Filled areas -->
-            <path :d="blueArea" fill="#3498db" opacity="0.08" />
-            <path :d="greenArea" fill="#27ae60" opacity="0.08" />
-            <path :d="redArea" fill="#e74c3c" opacity="0.08" />
+            <path :d="blueArea" fill="#3498db" :opacity="cfChannel === 'blue' ? 0.14 : 0.04" />
+            <path :d="greenArea" fill="#27ae60" :opacity="cfChannel === 'green' ? 0.14 : 0.04" />
+            <path :d="redArea" fill="#e74c3c" :opacity="cfChannel === 'red' ? 0.14 : 0.04" />
             <!-- Curves -->
-            <path :d="bluePath" fill="none" stroke="#3498db" stroke-width="2" opacity="0.9" />
-            <path :d="greenPath" fill="none" stroke="#27ae60" stroke-width="2" opacity="0.9" />
-            <path :d="redPath" fill="none" stroke="#e74c3c" stroke-width="2" opacity="0.9" />
+            <path :d="bluePath" fill="none" stroke="#3498db" :stroke-width="cfChannel === 'blue' ? 3 : 1.5" :opacity="cfChannel === 'blue' ? 1 : 0.4" />
+            <path :d="greenPath" fill="none" stroke="#27ae60" :stroke-width="cfChannel === 'green' ? 3 : 1.5" :opacity="cfChannel === 'green' ? 1 : 0.4" />
+            <path :d="redPath" fill="none" stroke="#e74c3c" :stroke-width="cfChannel === 'red' ? 3 : 1.5" :opacity="cfChannel === 'red' ? 1 : 0.4" />
             <!-- Hover -->
             <template v-if="qeHoverWl !== null">
               <line :x1="qeXScale(qeHoverWl)" :y1="qePad.top" :x2="qeXScale(qeHoverWl)" :y2="qePad.top+qePlotH" stroke="var(--vp-c-text-2)" stroke-width="0.8" stroke-dasharray="4,3" />
@@ -397,8 +398,8 @@ const qeH = 280
 const qePad = { top: 20, right: 20, bottom: 35, left: 50 }
 const qePlotW = qeW - qePad.left - qePad.right
 const qePlotH = qeH - qePad.top - qePad.bottom
-const qeYMax = 80
-const qeYTicks = [0, 20, 40, 60, 80]
+const qeYMax = 100
+const qeYTicks = [0, 20, 40, 60, 80, 100]
 const qeXTicks = [400, 450, 500, 550, 600, 650, 700, 750]
 
 function qeXScale(wlNm: number): number {
@@ -412,7 +413,8 @@ function buildPath(data: number[]): string {
   const wls = wavelengths.value
   return data.map((v, i) => {
     const cmd = i === 0 ? 'M' : 'L'
-    return `${cmd}${qeXScale(wls[i] * 1000).toFixed(1)},${qeYScale(v).toFixed(1)}`
+    const vc = Math.min(qeYMax, Math.max(0, v))
+    return `${cmd}${qeXScale(wls[i] * 1000).toFixed(1)},${qeYScale(vc).toFixed(1)}`
   }).join(' ')
 }
 
@@ -742,6 +744,12 @@ const spectrumStops = computed(() => {
 }
 .slider-group:last-child {
   margin-bottom: 0;
+}
+.ctrl-note {
+  margin-top: 2px;
+  font-size: 0.72em;
+  color: var(--vp-c-text-3);
+  line-height: 1.3;
 }
 .slider-group label {
   display: block;

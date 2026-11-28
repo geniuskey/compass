@@ -11,8 +11,8 @@
     >{{ isFullscreen ? '\u00d7' : '\u26f6' }}</button>
     <p class="component-description">
       {{ t(
-        'Compute color reproduction accuracy (deltaE) for ColorChecker patches using TMM-based QE spectra and a least-squares Color Correction Matrix.',
-        'TMM 기반 QE 스펙트럼과 최소제곱 색 보정 행렬(CCM)을 사용하여 ColorChecker 패치의 색 재현 정확도(deltaE)를 계산합니다.'
+        'Compute color reproduction accuracy (ΔE) for ColorChecker patches using TMM-based QE spectra, white balance and a white-preserving least-squares Color Correction Matrix (calibrated noise-free with ideal neutral-patch WB).',
+        'TMM 기반 QE 스펙트럼, 화이트 밸런스, 화이트 보존 최소제곱 색 보정 행렬(CCM, 노이즈 없이 이상적인 뉴트럴 패치 WB로 보정)을 사용하여 ColorChecker 패치의 색 재현 정확도(ΔE)를 계산합니다.'
       ) }}
     </p>
 
@@ -70,9 +70,9 @@
     <div class="controls-row">
       <div class="slider-group">
         <label>
-          {{ t('Shot Noise', '샷 노이즈') }}: <strong>{{ shotNoise }} e&minus;</strong>
+          {{ t('Shot noise scale', '샷 노이즈 배율') }}: <strong>{{ shotNoise }}% &times; &radic;N</strong>
         </label>
-        <input type="range" min="0" max="100" step="5" v-model.number="shotNoise" class="ctrl-range" :aria-label="t('Shot Noise', '샷 노이즈')" />
+        <input type="range" min="0" max="100" step="5" v-model.number="shotNoise" class="ctrl-range" :aria-label="t('Shot noise scale', '샷 노이즈 배율')" />
       </div>
       <div class="slider-group">
         <label>
@@ -82,6 +82,12 @@
       </div>
       <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
+    <p class="noise-hint">
+      {{ t(
+        'Full well 10,000 e⁻; exposure puts the white patch at 80% of full well. 100% shot noise = physical Poisson noise (σ = √N e⁻).',
+        '풀 웰 10,000 e⁻, 흰색 패치가 풀 웰의 80%가 되도록 노출합니다. 샷 노이즈 100% = 물리적 푸아송 노이즈 (σ = √N e⁻).'
+      ) }}
+    </p>
 
     <!-- Action row -->
     <div class="action-row">
@@ -98,6 +104,7 @@
     <!-- Optimization result -->
     <div class="opt-result" v-if="optResult">
       {{ t('Optimal', '최적') }}: Si={{ optResult.si.toFixed(1) }}&mu;m, BW={{ optResult.bw }}nm &rarr; {{ deAxisLabel }}={{ optResult.avgDE.toFixed(2) }}
+      <span class="opt-note">({{ t('noise-free; current illuminant and WB', '노이즈 제외, 현재 광원 및 WB 적용') }})</span>
     </div>
 
     <!-- Snapshot comparison -->
@@ -114,15 +121,15 @@
     <!-- Summary bar -->
     <div class="results-grid">
       <div class="result-card">
-        <div class="result-label">{{ t('Average deltaE', '평균 deltaE') }}</div>
+        <div class="result-label">{{ t('Average ΔE', '평균 ΔE') }}</div>
         <div class="result-value highlight">{{ avgDeltaE.toFixed(2) }}</div>
       </div>
       <div class="result-card">
-        <div class="result-label">{{ t('Max deltaE', '최대 deltaE') }}</div>
+        <div class="result-label">{{ t('Max ΔE', '최대 ΔE') }}</div>
         <div class="result-value">{{ maxDeltaE.toFixed(2) }}</div>
       </div>
       <div class="result-card">
-        <div class="result-label">{{ t('Excellent (deltaE < 3)', '우수 (deltaE < 3)') }}</div>
+        <div class="result-label">{{ t('Excellent (ΔE < 3)', '우수 (ΔE < 3)') }}</div>
         <div class="result-value highlight">{{ excellentPct.toFixed(0) }}%</div>
       </div>
     </div>
@@ -229,7 +236,7 @@
 
     <!-- DeltaE bar chart -->
     <div class="chart-section">
-      <h5>{{ t('deltaE per Patch', '패치별 deltaE') }}</h5>
+      <h5>{{ t('ΔE per Patch', '패치별 ΔE') }}</h5>
       <div class="svg-wrapper">
         <svg
           ref="deChartSvg"
@@ -383,6 +390,7 @@
         <span v-for="g in gamutStats" :key="g.name" class="gamut-tag" :style="{ borderColor: g.color }">
           {{ g.name }}: {{ g.pct.toFixed(0) }}%
         </span>
+        <span class="gamut-note">{{ t('share of corrected patch colours inside each gamut', '각 색역 안에 들어오는 보정 패치 색의 비율') }}</span>
       </div>
       <div class="svg-wrapper">
         <svg :viewBox="`0 0 ${xyW} ${xyH}`" class="ab-svg">
@@ -403,7 +411,7 @@
             :r="chartType === 'sg' ? 2 : 4"
             :fill="rgbStr(p.rgb)" stroke="var(--vp-c-text-3)" :stroke-width="chartType === 'sg' ? 0.3 : 0.5"
           />
-          <circle v-for="(p, idx) in xyCorrPoints" :key="'xycorr'+idx"
+          <circle v-for="(p, idx) in xyCorrPoints.filter(q => q.valid)" :key="'xycorr'+idx"
             :cx="xyXScale(p.x)" :cy="xyYScale(p.y)"
             :r="chartType === 'sg' ? 1.5 : 3"
             fill="none" :stroke="rgbStr(p.rgb)" :stroke-width="chartType === 'sg' ? 0.8 : 1.5"
@@ -464,6 +472,7 @@ import { ref, computed } from 'vue'
 import { useLocale } from '../composables/useLocale'
 import { useFullscreen } from '../composables/useFullscreen'
 import { tmmCalc, defaultBsiStack, SI_LAYER_IDX } from '../composables/tmm'
+import { interp1, mat3Vec, fitWhitePreservingCcm, type Mat3 } from '../composables/colorMath'
 
 const { t } = useLocale()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
@@ -474,7 +483,7 @@ const cfBandwidth = ref(100)
 const chartType = ref<'classic' | 'sg'>('classic')
 const patchView = ref<'swatch' | 'heatmap'>('swatch')
 const illuminant = ref('D65')
-const wbMethod = ref<'none' | 'grayworld' | 'patch'>('none')
+const wbMethod = ref<'none' | 'grayworld' | 'patch'>('patch')
 const WB_METHODS = [
   { key: 'none' as const, en: 'No WB', ko: 'WB 없음' },
   { key: 'grayworld' as const, en: 'Gray World', ko: '그레이 월드' },
@@ -491,7 +500,7 @@ function resetControls() {
   chartType.value = 'classic'
   patchView.value = 'swatch'
   illuminant.value = 'D65'
-  wbMethod.value = 'none'
+  wbMethod.value = 'patch'
   deMethod.value = 'ciede2000'
   shotNoise.value = 0
   readNoise.value = 0
@@ -592,7 +601,8 @@ const SG_NAMES: string[] = (() => {
   return names
 })()
 
-// ---- Illuminant data (7 wavelengths 400-700nm @ 50nm) ----
+// ---- Illuminant data (tabulated at 50nm, 400-700nm; linearly interpolated to the 10nm grid) ----
+// Note: 50nm sampling smooths out the F2 mercury lines -- treat F2 as a qualitative example.
 const ILLUMINANTS: Record<string, { spd: number[]; label: string; ko: string }> = {
   D65: { spd: [82.75, 109.35, 117.01, 114.86, 100.0, 90.01, 71.61], label: 'D65 (Daylight)', ko: 'D65 (주광)' },
   D50: { spd: [54.65, 100.27, 122.97, 112.59, 100.0, 78.66, 55.78], label: 'D50 (Warm)', ko: 'D50 (온백색)' },
@@ -600,16 +610,21 @@ const ILLUMINANTS: Record<string, { spd: number[]; label: string; ko: string }> 
   F2:  { spd: [24.82, 65.85, 80.03, 95.72, 100.0, 64.89, 17.22], label: 'F2 (Fluorescent)', ko: 'F2 (형광등)' },
 }
 
-const activeIlluminant = computed(() => ILLUMINANTS[illuminant.value].spd)
-
 // ---- Constants ----
-const WL_UM = [0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70]
+const DATA_WL_NM = [400, 450, 500, 550, 600, 650, 700] // grid of the tabulated reflectance / SPD data
 const LN2 = Math.log(2)
 const CF_CENTERS = { red: 0.620, green: 0.530, blue: 0.450 }
+const FULL_WELL = 10000 // e-
+const WHITE_LEVEL = 0.8 // exposure: brightest channel of the white patch at 80% of full well
 
-// ---- QE Spectrum (31 points, 400-700nm @ 10nm) ----
+// ---- Spectral grid (31 points, 400-700nm @ 10nm) used for all integrations ----
 const QE_WL_NM = Array.from({ length: 31 }, (_, i) => 400 + i * 10)
 const QE_WL_UM = QE_WL_NM.map(w => w / 1000)
+
+const activeIlluminant = computed(() => {
+  const spd = ILLUMINANTS[illuminant.value].spd
+  return QE_WL_NM.map(wl => interp1(DATA_WL_NM, spd, wl))
+})
 
 // ---- Color filter & TMM ----
 function cfTransmittance(wlUm: number, centerUm: number, fwhmNm: number): number {
@@ -617,26 +632,32 @@ function cfTransmittance(wlUm: number, centerUm: number, fwhmNm: number): number
   return Math.exp(-4 * LN2 * ((wlUm - centerUm) / fwhmUm) ** 2)
 }
 
-function computeQEAt(color: 'red' | 'green' | 'blue', wlUm: number, siThick: number): number {
-  const stack = defaultBsiStack(color, siThick)
-  const result = tmmCalc(stack, 'air', 'sio2', wlUm, 0, 'avg')
-  return result.layerA[SI_LAYER_IDX]
+// The colour filter is modelled by the Gaussian above, so the absorbing CF dye of the
+// default stack is replaced by a transparent polymer of the same thickness (otherwise the
+// filter would be applied twice). The remaining stack is identical for R/G/B, so the TMM
+// QE is computed once per Si thickness and cached.
+const baseQeCache = new Map<number, number[]>()
+function baseQe(siThick: number): number[] {
+  const key = Math.round(siThick * 1000)
+  let qe = baseQeCache.get(key)
+  if (!qe) {
+    const stack = defaultBsiStack('green', siThick)
+    stack[2] = { material: 'polymer', thickness: stack[2].thickness }
+    qe = QE_WL_UM.map(wl => tmmCalc(stack, 'air', 'sio2', wl, 0, 'avg').layerA[SI_LAYER_IDX])
+    baseQeCache.set(key, qe)
+  }
+  return qe
 }
 
-function sensorResponseAt(color: 'red' | 'green' | 'blue', wlUm: number, siThick: number, cfBw: number): number {
-  return computeQEAt(color, wlUm, siThick) * cfTransmittance(wlUm, CF_CENTERS[color], cfBw)
-}
-
-function sensorResponse(color: 'red' | 'green' | 'blue', wlUm: number): number {
-  return sensorResponseAt(color, wlUm, siThickness.value, cfBandwidth.value)
+type Curves = { r: number[]; g: number[]; b: number[] }
+function sensorCurves(siThick: number, cfBw: number): Curves {
+  const qe = baseQe(siThick)
+  const ch = (c: 'red' | 'green' | 'blue') => QE_WL_UM.map((wl, i) => qe[i] * cfTransmittance(wl, CF_CENTERS[c], cfBw))
+  return { r: ch('red'), g: ch('green'), b: ch('blue') }
 }
 
 // ---- QE Spectra computed ----
-const qeSpectra = computed(() => ({
-  r: QE_WL_UM.map(wl => sensorResponse('red', wl)),
-  g: QE_WL_UM.map(wl => sensorResponse('green', wl)),
-  b: QE_WL_UM.map(wl => sensorResponse('blue', wl)),
-}))
+const qeSpectra = computed(() => sensorCurves(siThickness.value, cfBandwidth.value))
 
 // QE chart dimensions
 const qeW = 600
@@ -831,8 +852,7 @@ function labToSrgb(lab: number[]): number[] {
 // ---- Gaussian basis spectral reconstruction ----
 function reconstructRefl(srgb: number[]): number[] {
   const r = srgbToLinear(srgb[0]), g = srgbToLinear(srgb[1]), b = srgbToLinear(srgb[2])
-  const wlNm = [400, 450, 500, 550, 600, 650, 700]
-  return wlNm.map(wl => {
+  return QE_WL_NM.map(wl => {
     const bR = Math.exp(-0.5 * ((wl - 610) / 55) ** 2)
     const bG = Math.exp(-0.5 * ((wl - 535) / 50) ** 2)
     const bB = Math.exp(-0.5 * ((wl - 445) / 35) ** 2)
@@ -856,127 +876,130 @@ function gaussRng(rng: () => number): number {
 }
 
 // ---- White Balance ----
-function applyWB(sensorRGB: number[][], patches: PatchData[]): number[][] {
-  if (wbMethod.value === 'none') return sensorRGB
-  if (wbMethod.value === 'grayworld') {
-    const n = sensorRGB.length
-    const avg = [0, 1, 2].map(ch => sensorRGB.reduce((s, v) => s + v[ch], 0) / n)
-    const mean = (avg[0] + avg[1] + avg[2]) / 3
-    const gains = avg.map(a => a > 0 ? mean / a : 1)
-    return sensorRGB.map(v => [v[0] * gains[0], v[1] * gains[1], v[2] * gains[2]])
-  }
-  // Neutral patch: find patches where R≈G≈B in reference
-  const neutralIdxs: number[] = []
+type WbMethod = 'none' | 'grayworld' | 'patch'
+
+function neutralIndices(patches: PatchData[]): number[] {
+  const idx: number[] = []
   for (let i = 0; i < patches.length; i++) {
     const s = patches[i].srgb
-    if (Math.max(Math.abs(s[0] - s[1]), Math.abs(s[1] - s[2]), Math.abs(s[0] - s[2])) < 10)
-      neutralIdxs.push(i)
+    if (Math.max(Math.abs(s[0] - s[1]), Math.abs(s[1] - s[2]), Math.abs(s[0] - s[2])) < 10) idx.push(i)
   }
-  if (neutralIdxs.length === 0) return sensorRGB
-  const avg = [0, 1, 2].map(ch => neutralIdxs.reduce((s, i) => s + sensorRGB[i][ch], 0) / neutralIdxs.length)
-  const mean = (avg[0] + avg[1] + avg[2]) / 3
-  const gains = avg.map(a => a > 0 ? mean / a : 1)
-  return sensorRGB.map(v => [v[0] * gains[0], v[1] * gains[1], v[2] * gains[2]])
+  return idx
 }
 
-// ---- Active patches ----
+/** Brightest neutral patch (the chart white); used for exposure and as the CCM white point. */
+function whiteIndex(patches: PatchData[]): number {
+  let best = 0, bestY = -1
+  for (const i of neutralIndices(patches)) {
+    const Y = srgbToXYZ(patches[i].srgb)[1]
+    if (Y > bestY) { bestY = Y; best = i }
+  }
+  return best
+}
+
+function gainsFrom(rgb: number[][], idxs: number[]): number[] {
+  if (idxs.length === 0) return [1, 1, 1]
+  const avg = [0, 1, 2].map(ch => idxs.reduce((s, i) => s + rgb[i][ch], 0) / idxs.length)
+  const mean = (avg[0] + avg[1] + avg[2]) / 3
+  return avg.map(a => a > 0 ? mean / a : 1)
+}
+
+function wbGains(method: WbMethod, rgb: number[][], patches: PatchData[]): number[] {
+  if (method === 'none') return [1, 1, 1]
+  if (method === 'grayworld') return gainsFrom(rgb, rgb.map((_, i) => i))
+  return gainsFrom(rgb, neutralIndices(patches))
+}
+
+// ---- Active patches (reflectance on the 10nm grid) ----
 interface PatchData { name: string; srgb: number[]; refl: number[] }
 
+const CLASSIC_PATCHES_10NM: PatchData[] = CLASSIC_PATCHES.map(p => ({
+  name: p.name, srgb: p.srgb, refl: QE_WL_NM.map(wl => interp1(DATA_WL_NM, p.refl, wl)),
+}))
+
 const activePatches = computed<PatchData[]>(() => {
-  if (chartType.value === 'classic') return CLASSIC_PATCHES
+  if (chartType.value === 'classic') return CLASSIC_PATCHES_10NM
   return SG_LAB.map((lab, idx) => {
     const srgb = labToSrgb(lab)
     return { name: SG_NAMES[idx], srgb, refl: reconstructRefl(srgb) }
   })
 })
 
-// ---- 3x3 matrix ops ----
-function mat3x3Inverse(m: number[][]): number[][] | null {
-  const [a,b,c] = m[0], [d,e,f] = m[1], [g,h,i] = m[2]
-  const det = a*(e*i-f*h) - b*(d*i-f*g) + c*(d*h-e*g)
-  if (Math.abs(det) < 1e-12) return null
-  const inv = 1 / det
-  return [
-    [(e*i-f*h)*inv, (c*h-b*i)*inv, (b*f-c*e)*inv],
-    [(f*g-d*i)*inv, (a*i-c*g)*inv, (c*d-a*f)*inv],
-    [(d*h-e*g)*inv, (b*g-a*h)*inv, (a*e-b*d)*inv],
-  ]
-}
+// ---- Pipeline ----
+// 1. Raw signal  = sum(refl * SPD * QE) over the 10nm grid.
+// 2. Exposure    : scaled so the white patch's brightest channel sits at 80% of full well.
+// 3. Calibration : CCM fitted noise-free on ideally white-balanced data (neutral-patch gains),
+//                  constrained so the chart white maps exactly to the reference white.
+// 4. Capture     : optional shot (sqrt(N)) + read noise in electrons, clipped at full well.
+// 5. ISP         : the selected WB method estimates gains from the captured data, then the
+//                  calibrated CCM is applied. A poor WB therefore leaves a colour cast.
+interface PipelineOut { ccm: Mat3 | null; sensorRGB: number[][]; targetLinear: number[][] }
 
-function matMul3x3(a: number[][], b: number[][]): number[][] {
-  const r: number[][] = [[0,0,0],[0,0,0],[0,0,0]]
-  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) for (let k = 0; k < 3; k++) r[i][j] += a[i][k] * b[k][j]
-  return r
-}
-
-function matTransposeMulNx3(s: number[][]): number[][] {
-  const n = s.length, r: number[][] = [[0,0,0],[0,0,0],[0,0,0]]
-  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) for (let k = 0; k < n; k++) r[i][j] += s[k][i] * s[k][j]
-  return r
-}
-
-function matSTmulT(s: number[][], tgt: number[][]): number[][] {
-  const n = s.length, r: number[][] = [[0,0,0],[0,0,0],[0,0,0]]
-  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) for (let k = 0; k < n; k++) r[i][j] += s[k][i] * tgt[k][j]
-  return r
-}
-
-function mat3Vec(m: number[][], v: number[]): number[] {
-  return [m[0][0]*v[0]+m[0][1]*v[1]+m[0][2]*v[2], m[1][0]*v[0]+m[1][1]*v[1]+m[1][2]*v[2], m[2][0]*v[0]+m[2][1]*v[1]+m[2][2]*v[2]]
-}
-
-// ---- Pipeline: compute CCM + sensor data once ----
-const pipeline = computed(() => {
-  const patches = activePatches.value
-  const illum = activeIlluminant.value
-  const sR = WL_UM.map(wl => sensorResponse('red', wl))
-  const sG = WL_UM.map(wl => sensorResponse('green', wl))
-  const sB = WL_UM.map(wl => sensorResponse('blue', wl))
-  let sensorRGB = patches.map(patch => {
+function runPipeline(
+  patches: PatchData[], illum: number[], siThick: number, cfBw: number,
+  wb: WbMethod, shotScale: number, readE: number,
+): PipelineOut {
+  const c = sensorCurves(siThick, cfBw)
+  const raw = patches.map(p => {
     let r = 0, g = 0, b = 0
-    for (let i = 0; i < 7; i++) { const w = patch.refl[i] * illum[i]; r += w * sR[i]; g += w * sG[i]; b += w * sB[i] }
+    for (let i = 0; i < QE_WL_NM.length; i++) { const w = p.refl[i] * illum[i]; r += w * c.r[i]; g += w * c.g[i]; b += w * c.b[i] }
     return [r, g, b]
   })
-  // Apply noise
-  if (shotNoise.value > 0 || readNoise.value > 0) {
+  const wi = whiteIndex(patches)
+  const wMax = Math.max(...raw[wi])
+  const k = wMax > 0 ? WHITE_LEVEL / wMax : 1
+  const clean = raw.map(v => v.map(x => Math.min(1, x * k))) // fraction of full well
+
+  const targetLinear = patches.map(p => [srgbToLinear(p.srgb[0]), srgbToLinear(p.srgb[1]), srgbToLinear(p.srgb[2])])
+  const calG = gainsFrom(clean, neutralIndices(patches))
+  const calRGB = clean.map(v => [v[0] * calG[0], v[1] * calG[1], v[2] * calG[2]])
+  const ccm = fitWhitePreservingCcm(calRGB, targetLinear, calRGB[wi], targetLinear[wi])
+
+  let captured = clean
+  if (shotScale > 0 || readE > 0) {
     const rng = mulberry32(42)
-    const fullWell = 10000
-    sensorRGB = sensorRGB.map(rgb => rgb.map(v => {
-      const signal = v * fullWell
-      const shotSigma = Math.sqrt(Math.max(0, signal)) * (shotNoise.value / 100)
-      const totalSigma = Math.sqrt(shotSigma ** 2 + readNoise.value ** 2)
-      return Math.max(0, (signal + totalSigma * gaussRng(rng)) / fullWell)
+    captured = clean.map(rgb => rgb.map(v => {
+      const e = v * FULL_WELL
+      const sigma = Math.sqrt(shotScale * shotScale * Math.max(0, e) + readE * readE)
+      return Math.min(FULL_WELL, Math.max(0, e + sigma * gaussRng(rng))) / FULL_WELL
     }))
   }
-  // Apply WB
-  sensorRGB = applyWB(sensorRGB, patches)
-  const targetLinear = patches.map(patch => [srgbToLinear(patch.srgb[0]), srgbToLinear(patch.srgb[1]), srgbToLinear(patch.srgb[2])])
-  const STS = matTransposeMulNx3(sensorRGB)
-  const STSinv = mat3x3Inverse(STS)
-  if (!STSinv) return { ccm: null as number[][] | null, sensorRGB, targetLinear }
-  const CCM = matMul3x3(STSinv, matSTmulT(sensorRGB, targetLinear))
-  return { ccm: CCM, sensorRGB, targetLinear }
-})
+  const g = wbGains(wb, captured, patches)
+  const sensorRGB = captured.map(v => [v[0] * g[0], v[1] * g[1], v[2] * g[2]])
+  return { ccm, sensorRGB, targetLinear }
+}
+
+function linearToLab(lin: number[]): number[] {
+  const cc = lin.map(v => Math.max(0, Math.min(1, v)))
+  return xyzToLab([0, 1, 2].map(r => SRGB_TO_XYZ[r][0] * cc[0] + SRGB_TO_XYZ[r][1] * cc[1] + SRGB_TO_XYZ[r][2] * cc[2]))
+}
+
+const pipeline = computed(() => runPipeline(
+  activePatches.value, activeIlluminant.value, siThickness.value, cfBandwidth.value,
+  wbMethod.value, shotNoise.value / 100, readNoise.value,
+))
 
 const ccmMatrix = computed(() => pipeline.value.ccm)
 
 // ---- Main patch results ----
-interface PatchResult { name: string; refSrgb: number[]; corrSrgb: number[]; refLab: number[]; corrLab: number[]; deltaE: number }
+interface PatchResult {
+  name: string; refSrgb: number[]; corrSrgb: number[]; corrLinear: number[]
+  refLab: number[]; corrLab: number[]; deltaE: number
+}
 
 const patchResults = computed<PatchResult[]>(() => {
   const patches = activePatches.value
   const { ccm, sensorRGB } = pipeline.value
-  if (!ccm) return patches.map(p => ({ name: p.name, refSrgb: p.srgb, corrSrgb: [128,128,128], refLab: [50,0,0], corrLab: [50,0,0], deltaE: 99 }))
+  if (!ccm) return patches.map(p => ({ name: p.name, refSrgb: p.srgb, corrSrgb: [128,128,128], corrLinear: [0.2,0.2,0.2], refLab: [50,0,0], corrLab: [50,0,0], deltaE: 99 }))
   return patches.map((patch, idx) => {
     const corrLinear = mat3Vec(ccm, sensorRGB[idx])
     const corrSrgb = [linearToSrgb(corrLinear[0]), linearToSrgb(corrLinear[1]), linearToSrgb(corrLinear[2])]
     const refLab = xyzToLab(srgbToXYZ(patch.srgb))
-    const cc = corrLinear.map(v => Math.max(0, Math.min(1, v)))
-    const corrXYZ = [0, 1, 2].map(r => SRGB_TO_XYZ[r][0]*cc[0] + SRGB_TO_XYZ[r][1]*cc[1] + SRGB_TO_XYZ[r][2]*cc[2])
-    const corrLab = xyzToLab(corrXYZ)
-    return { name: patch.name, refSrgb: patch.srgb, corrSrgb, refLab, corrLab, deltaE: calcDeltaE(refLab, corrLab) }
+    const corrLab = linearToLab(corrLinear)
+    return { name: patch.name, refSrgb: patch.srgb, corrSrgb, corrLinear, refLab, corrLab, deltaE: calcDeltaE(refLab, corrLab) }
   })
 })
+
 
 const avgDeltaE = computed(() => { const r = patchResults.value; return r.reduce((s, p) => s + p.deltaE, 0) / r.length })
 const maxDeltaE = computed(() => Math.max(...patchResults.value.map(p => p.deltaE)))
@@ -1161,59 +1184,52 @@ function takeSnapshot() {
 }
 
 // ---- Auto Optimization ----
-function computeAvgDE(patches: PatchData[], illum: number[], siThick: number, cfBw: number): number {
-  const sR = WL_UM.map(wl => sensorResponseAt('red', wl, siThick, cfBw))
-  const sG = WL_UM.map(wl => sensorResponseAt('green', wl, siThick, cfBw))
-  const sB = WL_UM.map(wl => sensorResponseAt('blue', wl, siThick, cfBw))
-  const sensorRGB = patches.map(p => {
-    let r = 0, g = 0, b = 0
-    for (let i = 0; i < 7; i++) { const w = p.refl[i] * illum[i]; r += w * sR[i]; g += w * sG[i]; b += w * sB[i] }
-    return [r, g, b]
-  })
-  const targetLinear = patches.map(p => [srgbToLinear(p.srgb[0]), srgbToLinear(p.srgb[1]), srgbToLinear(p.srgb[2])])
-  const STSinv = mat3x3Inverse(matTransposeMulNx3(sensorRGB))
-  if (!STSinv) return 99
-  const CCM = matMul3x3(STSinv, matSTmulT(sensorRGB, targetLinear))
+// Uses the same pipeline as the display (current illuminant, WB method and chart) but
+// noise-free, so the objective is deterministic.
+function computeAvgDE(patches: PatchData[], illum: number[], siThick: number, cfBw: number, wb: WbMethod): number {
+  const { ccm, sensorRGB } = runPipeline(patches, illum, siThick, cfBw, wb, 0, 0)
+  if (!ccm) return 99
   let total = 0
   for (let idx = 0; idx < patches.length; idx++) {
-    const corrLinear = mat3Vec(CCM, sensorRGB[idx])
     const refLab = xyzToLab(srgbToXYZ(patches[idx].srgb))
-    const cc = corrLinear.map(v => Math.max(0, Math.min(1, v)))
-    const corrXYZ = [0, 1, 2].map(r => SRGB_TO_XYZ[r][0] * cc[0] + SRGB_TO_XYZ[r][1] * cc[1] + SRGB_TO_XYZ[r][2] * cc[2])
-    total += calcDeltaE(refLab, xyzToLab(corrXYZ))
+    total += calcDeltaE(refLab, linearToLab(mat3Vec(ccm, sensorRGB[idx])))
   }
   return total / patches.length
 }
 
-function runOptimization() {
+const yieldToUi = () => new Promise<void>(r => setTimeout(r, 0))
+
+async function runOptimization() {
   optimizing.value = true
   optResult.value = null
-  requestAnimationFrame(() => {
-    const patches = activePatches.value
-    const illum = activeIlluminant.value
-    let bestAvg = Infinity, bestSi = 3.0, bestBw = 100
-    for (let si = 10; si <= 50; si += 2) {
-      for (let bw = 50; bw <= 150; bw += 5) {
-        const avg = computeAvgDE(patches, illum, si / 10, bw)
-        if (avg < bestAvg) { bestAvg = avg; bestSi = si / 10; bestBw = bw }
-      }
+  await yieldToUi() // let "Optimizing..." paint before the first heavy pass
+  const patches = activePatches.value
+  const illum = activeIlluminant.value
+  const wb = wbMethod.value
+  let bestAvg = Infinity, bestSi = 3.0, bestBw = 100
+  // Coarse pass: Si 1.0-5.0 um @ 0.2, BW 50-150 nm @ 5
+  for (let si = 10; si <= 50; si += 2) {
+    for (let bw = 50; bw <= 150; bw += 5) {
+      const avg = computeAvgDE(patches, illum, si / 10, bw, wb)
+      if (avg < bestAvg) { bestAvg = avg; bestSi = si / 10; bestBw = bw }
     }
-    // Fine pass
-    const siMin = Math.max(10, Math.round(bestSi * 10) - 2)
-    const siMax = Math.min(50, Math.round(bestSi * 10) + 2)
-    const bwMin = Math.max(50, bestBw - 5)
-    const bwMax = Math.min(150, bestBw + 5)
-    for (let si = siMin; si <= siMax; si++) {
-      for (let bw = bwMin; bw <= bwMax; bw += 5) {
-        const avg = computeAvgDE(patches, illum, si / 10, bw)
-        if (avg < bestAvg) { bestAvg = avg; bestSi = si / 10; bestBw = bw }
-      }
+    await yieldToUi()
+  }
+  // Fine pass: Si +/-0.2 um @ 0.1 around the best point
+  const siMin = Math.max(10, Math.round(bestSi * 10) - 2)
+  const siMax = Math.min(50, Math.round(bestSi * 10) + 2)
+  const bwMin = Math.max(50, bestBw - 5)
+  const bwMax = Math.min(150, bestBw + 5)
+  for (let si = siMin; si <= siMax; si++) {
+    for (let bw = bwMin; bw <= bwMax; bw += 5) {
+      const avg = computeAvgDE(patches, illum, si / 10, bw, wb)
+      if (avg < bestAvg) { bestAvg = avg; bestSi = si / 10; bestBw = bw }
     }
-    siThickness.value = bestSi
-    cfBandwidth.value = bestBw
-    optResult.value = { si: bestSi, bw: bestBw, avgDE: bestAvg }
-    optimizing.value = false
-  })
+  }
+  siThickness.value = bestSi
+  cfBandwidth.value = bestBw
+  optResult.value = { si: bestSi, bw: bestBw, avgDE: bestAvg }
+  optimizing.value = false
 }
 
 // ---- a*b* Chromaticity Diagram ----
@@ -1290,9 +1306,13 @@ const xyRefPoints = computed(() => patchResults.value.map(p => {
   return { x, y, rgb: p.refSrgb }
 }))
 
+// Corrected points use the *unclipped* CCM output so out-of-gamut colours land outside
+// the sRGB triangle (clipped sRGB values would always fall inside it).
 const xyCorrPoints = computed(() => patchResults.value.map(p => {
-  const { x, y } = xyzToXy(srgbToXYZ(p.corrSrgb))
-  return { x, y, rgb: p.corrSrgb }
+  const xyz = [0, 1, 2].map(r => SRGB_TO_XYZ[r][0] * p.corrLinear[0] + SRGB_TO_XYZ[r][1] * p.corrLinear[1] + SRGB_TO_XYZ[r][2] * p.corrLinear[2])
+  const valid = xyz[0] + xyz[1] + xyz[2] > 1e-6
+  const { x, y } = valid ? xyzToXy(xyz) : { x: NaN, y: NaN }
+  return { x, y, rgb: p.corrSrgb, valid }
 }))
 
 function pointInTriangle(px: number, py: number, v0: number[], v1: number[], v2: number[]): boolean {
@@ -1302,14 +1322,11 @@ function pointInTriangle(px: number, py: number, v0: number[], v1: number[], v2:
   return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0))
 }
 
+/** Share of corrected (sensor + CCM) patch colours that fall inside each gamut triangle. */
 const gamutStats = computed(() => {
-  const pts = xyRefPoints.value
-  if (pts.length === 0) return [
-    { name: 'sRGB', color: '#e74c3c', pct: 0 },
-    { name: 'DCI-P3', color: '#8e44ad', pct: 0 },
-    { name: 'BT.2020', color: '#2980b9', pct: 0 },
-  ]
-  const coverage = (prim: number[][]) => (pts.filter(p => pointInTriangle(p.x, p.y, prim[0], prim[1], prim[2])).length / pts.length) * 100
+  const pts = xyCorrPoints.value
+  const coverage = (prim: number[][]) => pts.length === 0 ? 0
+    : (pts.filter(p => p.valid && pointInTriangle(p.x, p.y, prim[0], prim[1], prim[2])).length / pts.length) * 100
   return [
     { name: 'sRGB', color: '#e74c3c', pct: coverage(SRGB_PRIM) },
     { name: 'DCI-P3', color: '#8e44ad', pct: coverage(P3_PRIM) },
@@ -1324,7 +1341,7 @@ function saveCondition() {
     bw: cfBandwidth.value,
     illuminant: illuminant.value,
     wb: wbMethod.value,
-    noiseLabel: shotNoise.value > 0 || readNoise.value > 0 ? `S${shotNoise.value}/R${readNoise.value}` : 'Off',
+    noiseLabel: shotNoise.value > 0 || readNoise.value > 0 ? `S${shotNoise.value}%/R${readNoise.value}e⁻` : t('Off', '끔'),
     avgDE: avgDeltaE.value,
     maxDE: maxDeltaE.value,
     excellentPct: excellentPct.value,
@@ -1696,6 +1713,22 @@ const bestSavedAvgDE = computed(() => {
   font-size: 0.85em;
   font-family: var(--vp-font-family-mono);
   color: var(--vp-c-brand-1);
+}
+
+.opt-note {
+  font-family: var(--vp-font-family-base);
+  font-size: 0.9em;
+  color: var(--vp-c-text-2);
+}
+.noise-hint {
+  margin: -4px 0 12px 0;
+  font-size: 0.8em;
+  color: var(--vp-c-text-2);
+}
+.gamut-note {
+  align-self: center;
+  font-size: 0.78em;
+  color: var(--vp-c-text-2);
 }
 
 /* Snapshot bar */

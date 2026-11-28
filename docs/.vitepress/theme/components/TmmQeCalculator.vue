@@ -33,6 +33,15 @@
         </label>
         <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="tmm-qe-range" :aria-label="t('Silicon thickness', '실리콘 두께')" />
       </div>
+      <div class="slider-group">
+        <label>
+          {{ t('PD collection depth:', 'PD 수집 깊이:') }}
+          <strong v-if="pdFullSi">{{ t('full Si', '전체 Si') }} ({{ siThickness.toFixed(1) }} &micro;m)</strong>
+          <strong v-else>{{ pdDepthEff.toFixed(1) }} &micro;m</strong>
+        </label>
+        <input type="range" min="0.5" max="5.0" step="0.1" v-model.number="pdDepth" class="tmm-qe-range" :aria-label="t('PD collection depth', 'PD 수집 깊이')" />
+        <span class="ctrl-hint">{{ t('QE counts only Si absorption above this depth (from the Si top).', 'Si 상단으로부터 이 깊이까지의 흡수만 QE로 계산합니다.') }}</span>
+      </div>
     </div>
 
     <div class="controls-row">
@@ -75,7 +84,7 @@
         <span class="info-value">{{ peakQeRed.toFixed(1) }}%</span>
       </div>
       <div class="info-card">
-        <span class="info-label">{{ t('Average QE:', '평균 QE:') }}</span>
+        <span class="info-label">{{ t('Avg peak QE:', '평균 피크 QE:') }}</span>
         <span class="info-value">{{ avgQe.toFixed(1) }}%</span>
       </div>
     </div>
@@ -275,7 +284,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useLocale } from '../composables/useLocale'
 import { useFullscreen } from '../composables/useFullscreen'
 import {
@@ -301,21 +310,28 @@ const cfOptions = computed(() => [
   { value: 'blue' as const, label: t('Blue', '파랑'), color: '#3498db' },
 ])
 
-// Sync preset -> silicon thickness
+// Sync preset -> silicon thickness. Watchers flush asynchronously, so the thickness
+// watcher cannot tell who changed the value; instead it compares against the active
+// preset's thickness and only switches to "Custom" when the user moved away from it.
+const PRESET_SI: Record<'bsi1um' | 'bsi08um', number> = { bsi1um: 3.0, bsi08um: 2.0 }
 watch(preset, (v) => {
-  if (v === 'bsi1um') siThickness.value = 3.0
-  else if (v === 'bsi08um') siThickness.value = 2.0
+  if (v !== 'custom') siThickness.value = PRESET_SI[v]
 })
-watch(siThickness, () => {
-  if (preset.value !== 'custom') preset.value = 'custom'
+watch(siThickness, (v) => {
+  if (preset.value !== 'custom' && Math.abs(v - PRESET_SI[preset.value]) > 1e-9) preset.value = 'custom'
 })
+
+// PD collection depth (um from the Si top). >= Si thickness means the whole Si layer.
+const pdDepth = ref(5.0)
+const pdDepthEff = computed(() => Math.min(pdDepth.value, siThickness.value))
+const pdFullSi = computed(() => pdDepth.value >= siThickness.value - 1e-9)
 
 function resetControls() {
   angleDeg.value = 0
   polarization.value = 'avg'
   siThickness.value = 3.0
-  // Restore preset after the thickness watcher has settled
-  nextTick(() => { preset.value = 'bsi1um' })
+  pdDepth.value = 5.0
+  preset.value = 'bsi1um'
 }
 
 // --- SVG layout ---
@@ -353,8 +369,17 @@ function yScaleRta(v: number): number {
 const wavelengths = computed(() => wlRange(0.38, 0.78, 0.005))
 const wavelengthsNm = computed(() => wavelengths.value.map(w => Math.round(w * 1000)))
 
+// When a PD collection depth is set, Si is split into a collected top part
+// (index SI_LAYER_IDX) and an uncollected remainder below it. Splitting a layer
+// into two of the same material leaves R/T and the field unchanged.
 function buildStack(cf: 'red' | 'green' | 'blue'): TmmLayer[] {
-  return defaultBsiStack(cf, siThickness.value)
+  const stack = defaultBsiStack(cf, siThickness.value)
+  if (!pdFullSi.value) {
+    const top = pdDepthEff.value
+    stack[SI_LAYER_IDX] = { material: 'silicon', thickness: top }
+    stack.push({ material: 'silicon', thickness: siThickness.value - top })
+  }
+  return stack
 }
 
 const spectraBlue = computed(() =>
@@ -532,6 +557,12 @@ const spectrumStops = computed(() => {
 .slider-group {
   flex: 1;
   min-width: 160px;
+}
+.ctrl-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75em;
+  color: var(--vp-c-text-3);
 }
 .slider-group label {
   display: block;

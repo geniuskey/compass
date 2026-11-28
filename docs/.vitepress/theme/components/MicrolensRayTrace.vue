@@ -33,7 +33,7 @@
         <label>
           {{ t('Lens radius R', '렌즈 반경 R') }}: <strong>{{ lensRadius.toFixed(2) }} um</strong>
         </label>
-        <input type="range" min="0.2" max="1.0" step="0.01" v-model.number="lensRadius" class="ctrl-range" :aria-label="t('Lens radius R', '렌즈 반경 R')" />
+        <input type="range" min="0.2" :max="lensRadiusMax" step="0.01" v-model.number="lensRadius" class="ctrl-range" :aria-label="t('Lens radius R', '렌즈 반경 R')" />
       </div>
     </div>
 
@@ -64,6 +64,12 @@
           {{ t('CRA angle', 'CRA 각도') }}: <strong>{{ cra }}&deg;</strong>
         </label>
         <input type="range" min="0" max="30" step="1" v-model.number="cra" class="ctrl-range" :aria-label="t('CRA angle', 'CRA 각도')" />
+      </div>
+      <div class="slider-group">
+        <label>
+          {{ t('Microlens shift', '마이크로렌즈 시프트') }}: <strong>{{ lensShift.toFixed(2) }} um</strong>
+        </label>
+        <input type="range" min="0" :max="lensShiftMax" step="0.01" v-model.number="lensShift" class="ctrl-range" :aria-label="t('Microlens shift', '마이크로렌즈 시프트')" />
       </div>
       <div class="slider-group">
         <label>
@@ -176,6 +182,12 @@
           fill="#f1c40f"
         >PD{{ i }}</text>
 
+        <!-- Collection test depth (PD mid-depth) -->
+        <line
+          :x1="margin" :y1="toSvgY(pdTestZ)" :x2="margin + drawWidth" :y2="toSvgY(pdTestZ)"
+          stroke="#f1c40f" stroke-width="0.6" stroke-dasharray="2,3" opacity="0.6"
+        />
+
         <!-- Microlens domes -->
         <path
           v-for="(dome, i) in lensDomes"
@@ -197,9 +209,17 @@
             stroke-width="1.5"
             :opacity="0.6"
           />
-          <!-- Refracted segment (below lens) -->
+          <!-- Refracted segment in the stack (lens → Si surface) -->
           <line
             :x1="ray.hitX" :y1="ray.hitY"
+            :x2="ray.siX" :y2="ray.siY"
+            :stroke="ray.hitsTarget ? '#27ae60' : '#e74c3c'"
+            stroke-width="1.5"
+            :opacity="0.6"
+          />
+          <!-- Refracted segment inside silicon -->
+          <line
+            :x1="ray.siX" :y1="ray.siY"
             :x2="ray.endX" :y2="ray.endY"
             :stroke="ray.hitsTarget ? '#27ae60' : '#e74c3c'"
             stroke-width="1.5"
@@ -249,12 +269,37 @@
         <span class="info-value">{{ crosstalkCount }}</span>
       </div>
     </div>
+    <div class="info-row">
+      <div class="info-card">
+        <span class="info-label">{{ t('Traced focus (z, x)', '추적 초점 (z, x)') }}</span>
+        <span class="info-value">{{ tracedFocus ? `${tracedFocus.z.toFixed(2)}, ${tracedFocus.x.toFixed(2)} um` : '—' }}</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">{{ t('PD span (z)', 'PD 범위 (z)') }}</span>
+        <span class="info-value">{{ pdBottom.toFixed(1) }}–{{ pdTop.toFixed(1) }} um</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">{{ t('Focus vs PD top', '초점 − PD 상단') }}</span>
+        <span class="info-value">{{ tracedFocus ? (tracedFocus.z - pdTop >= 0 ? '+' : '') + (tracedFocus.z - pdTop).toFixed(2) + ' um' : '—' }}</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">{{ t('Focus offset from PD0 centre', 'PD0 중심 대비 초점 오프셋') }}</span>
+        <span class="info-value">{{ tracedFocus ? (tracedFocus.x - pitch / 2).toFixed(2) + ' um' : '—' }}</span>
+      </div>
+    </div>
+    <p class="rt-note">
+      {{ t(
+        'Rays refract at the lens (n = 1.56; the stack above Si is treated as index-matched) and again at the Si surface (n ≈ ' + nSi.toFixed(2) + ' at 550 nm). Collection is tested at the PD mid-depth (dotted line). Shift the microlens toward the light source to compensate CRA.',
+        '광선은 렌즈(n = 1.56; Si 위 스택은 굴절률 정합으로 가정)와 Si 표면(550 nm에서 n ≈ ' + nSi.toFixed(2) + ')에서 굴절됩니다. 수집 여부는 PD 중간 깊이(점선)에서 판정합니다. CRA 보상을 위해 마이크로렌즈를 광원 쪽으로 시프트하세요.'
+      ) }}
+    </p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { getN, MATERIALS } from '../composables/tmm'
 import { useFullscreen } from '../composables/useFullscreen'
 
 const { t } = useLocale()
@@ -267,6 +312,25 @@ const lensRadius = ref(0.48)
 const shapeN = ref(2.5)
 const cra = ref(0)
 const numRays = ref(15)
+const lensShift = ref(0)
+
+// Lens footprint must fit inside the pixel: R ≤ pitch / 2
+const lensRadiusMax = computed(() => Math.round((pitch.value / 2) * 100) / 100)
+const lensShiftMax = computed(() => Math.round((pitch.value / 2) * 100) / 100)
+watch(pitch, () => {
+  if (lensRadius.value > lensRadiusMax.value) lensRadius.value = lensRadiusMax.value
+  if (lensShift.value > lensShiftMax.value) lensShift.value = lensShiftMax.value
+})
+
+// Silicon index at 550 nm (component has no wavelength control)
+const nSi = getN(MATERIALS.silicon, 0.55)[0]
+const nLens = 1.56
+
+// Photodiode geometry (um, z from Si bottom)
+const pdBottom = 0.3
+const pdHeight = 2.0
+const pdTop = pdBottom + pdHeight
+const pdTestZ = pdBottom + pdHeight / 2
 
 // Layer thicknesses (um)
 const siThickness = 3.0
@@ -281,6 +345,7 @@ function resetControls() {
   shapeN.value = 2.5
   cra.value = 0
   numRays.value = 15
+  lensShift.value = 0
   cfThickness.value = 0.8
   planThickness.value = 0.3
 }
@@ -328,6 +393,11 @@ function superellipseDzDx(x: number, cx: number, h: number, R: number, n: number
   return dz
 }
 
+// Lens centre; shifted toward −x (toward the incoming chief ray) by lensShift
+function lensCenter(idx: number): number {
+  return pitch.value * (idx + 0.5) - lensShift.value
+}
+
 // Lens dome SVG paths
 const lensDomes = computed(() => {
   const h = lensHeight.value
@@ -337,7 +407,7 @@ const lensDomes = computed(() => {
 
   const domes: string[] = []
   for (let lensIdx = 0; lensIdx < 2; lensIdx++) {
-    const cx = pitch.value * (lensIdx + 0.5)
+    const cx = lensCenter(lensIdx)
     const pts: Array<{ x: number; y: number }> = []
     const numPts = 100
     for (let i = 0; i <= numPts; i++) {
@@ -359,8 +429,6 @@ const lensDomes = computed(() => {
 // Photodiode rectangles
 const photodiodes = computed(() => {
   const pdWidth = 0.7 * pitch.value
-  const pdHeight = 2.0
-  const pdBottom = 0.3
 
   const pds = []
   for (let i = 0; i < 2; i++) {
@@ -381,48 +449,65 @@ interface TracedRay {
   startY: number
   hitX: number
   hitY: number
+  siX: number
+  siY: number
   endX: number
   endY: number
   hitsTarget: boolean
+  testX: number
 }
 
-const tracedRays = computed((): TracedRay[] => {
+// Vector Snell refraction of unit direction d at a surface with unit normal nrm
+// (any orientation), from index n1 into n2. Returns null on TIR.
+function refract(dx: number, dz: number, nx: number, nz: number, n1: number, n2: number):
+  [number, number] | null {
+  if (dx * nx + dz * nz > 0) { nx = -nx; nz = -nz }
+  const cosI = -(dx * nx + dz * nz)
+  const ratio = n1 / n2
+  const sin2T = ratio * ratio * (1 - cosI * cosI)
+  if (sin2T > 1) return null
+  const cosT = Math.sqrt(1 - sin2T)
+  let rx = ratio * dx + (ratio * cosI - cosT) * nx
+  let rz = ratio * dz + (ratio * cosI - cosT) * nz
+  const rl = Math.hypot(rx, rz)
+  rx /= rl; rz /= rl
+  return [rx, rz]
+}
+
+interface PhysRay {
+  xStart: number; zStart: number
+  hitX: number; hitZ: number; hitLens: number
+  mDx: number; mDz: number // direction in the stack (n = nLens)
+  siX: number; siDx: number; siDz: number // entry x at Si top and direction in Si
+  testX: number; endX: number
+}
+
+const physRays = computed((): PhysRay[] => {
   const h = lensHeight.value
   const R = lensRadius.value
   const n = shapeN.value
   const lensBase = planTop.value
   const craRad = (cra.value * Math.PI) / 180
-  const nLens = 1.56
   const nAir = 1.0
 
   // Ray direction (unit vector): tilted right by CRA from vertical downward
   const dx = Math.sin(craRad)
   const dz = -Math.cos(craRad)
 
-  const rays: TracedRay[] = []
+  const rays: PhysRay[] = []
   const nR = numRays.value
-  const pdWidth = 0.7 * pitch.value
-  const pdBottom = 0.3
-  const pdTop = pdBottom + 2.0
-  const pd0Left = pitch.value * 0.5 - pdWidth / 2
-  const pd0Right = pitch.value * 0.5 + pdWidth / 2
 
   for (let i = 0; i < nR; i++) {
-    // Distribute rays across left pixel (0 to pitch), with some margin
+    // Distribute rays across left pixel (0 to pitch)
     const xStart = (pitch.value * (i + 0.5)) / nR
     const zStart = totalHeight.value - 0.1
 
-    // Find intersection with either microlens dome
     let hitX = -1
     let hitZ = -1
     let hitLens = -1
 
     for (let lensIdx = 0; lensIdx < 2; lensIdx++) {
-      const cx = pitch.value * (lensIdx + 0.5)
-
-      // March along the ray from top downward to find lens surface intersection
-      // Ray parametric: x(t) = xStart + t*dx, z(t) = zStart + t*dz
-      // We need to find when z(t) = lensBase + superellipseZ(x(t))
+      const cx = lensCenter(lensIdx)
       const tMax = (zStart - lensBase + 1) / Math.abs(dz)
       const dt = 0.005
 
@@ -433,7 +518,6 @@ const tracedRays = computed((): TracedRay[] => {
         const lensZ = lensBase + superellipseZ(rx, cx, h, R, n)
 
         if (rz <= lensZ) {
-          // Bisection refinement
           let tLow = Math.max(0, (step - 1) * dt)
           let tHigh = tt
           for (let b = 0; b < 20; b++) {
@@ -441,17 +525,13 @@ const tracedRays = computed((): TracedRay[] => {
             const mx = xStart + tMid * dx
             const mz = zStart + tMid * dz
             const mlz = lensBase + superellipseZ(mx, cx, h, R, n)
-            if (mz <= mlz) {
-              tHigh = tMid
-            } else {
-              tLow = tMid
-            }
+            if (mz <= mlz) tHigh = tMid
+            else tLow = tMid
           }
           const tFinal = (tLow + tHigh) / 2
           const fx = xStart + tFinal * dx
           const fz = zStart + tFinal * dz
-          // Only accept if within this lens region
-          if (Math.abs(fx - cx) < R) {
+          if (Math.abs(fx - cx) < R && fz > lensBase + 1e-6) {
             if (hitZ < 0 || tFinal < ((hitZ - zStart) / dz)) {
               hitX = fx
               hitZ = fz
@@ -463,107 +543,82 @@ const tracedRays = computed((): TracedRay[] => {
       }
     }
 
-    // If no lens hit, ray goes straight through
+    // Refraction into the lens / planarization medium
+    let mDx: number, mDz: number
     if (hitZ < 0) {
-      // No lens intersection, straight ray to bottom
-      const tBottom = (zStart - 0) / Math.abs(dz)
-      const endXPhys = xStart + tBottom * dx
-      const hitsTarget = endXPhys >= pd0Left && endXPhys <= pd0Right
-      rays.push({
-        startX: toSvgX(xStart),
-        startY: toSvgY(zStart),
-        hitX: toSvgX(xStart + (zStart - lensBase) / Math.abs(dz) * dx),
-        hitY: toSvgY(lensBase),
-        endX: toSvgX(endXPhys),
-        endY: toSvgY(0),
-        hitsTarget,
-      })
-      continue
-    }
-
-    // Compute refracted direction using vector Snell's law
-    const cx = pitch.value * (hitLens + 0.5)
-    const dzdx = superellipseDzDx(hitX, cx, h, R, n)
-
-    // Surface tangent: (1, dzdx), Normal pointing outward (into air): (-dzdx, 1), normalized
-    const nLen = Math.sqrt(dzdx * dzdx + 1)
-    let normX = -dzdx / nLen
-    let normZ = 1 / nLen
-
-    // Ensure normal points towards the incoming ray (into air, upward)
-    // Dot product of normal with incident direction should be negative
-    const dotDN = dx * normX + dz * normZ
-    if (dotDN > 0) {
-      normX = -normX
-      normZ = -normZ
-    }
-
-    const cosI = -(dx * normX + dz * normZ)
-    const ratio = nAir / nLens
-    const sin2T = ratio * ratio * (1 - cosI * cosI)
-
-    let refDx: number
-    let refDz: number
-
-    if (sin2T > 1) {
-      // Total internal reflection (shouldn't normally happen air->lens)
-      refDx = dx
-      refDz = dz
+      // Missed both domes: flat planarization surface at lensBase
+      const tTop = (zStart - lensBase) / Math.abs(dz)
+      hitX = xStart + tTop * dx
+      hitZ = lensBase
+      const r = refract(dx, dz, 0, 1, nAir, nLens) ?? [dx, dz]
+      ;[mDx, mDz] = r
     } else {
-      const cosT = Math.sqrt(1 - sin2T)
-      refDx = ratio * dx + (ratio * cosI - cosT) * normX
-      refDz = ratio * dz + (ratio * cosI - cosT) * normZ
-      // Normalize
-      const rl = Math.sqrt(refDx * refDx + refDz * refDz)
-      refDx /= rl
-      refDz /= rl
+      const cx = lensCenter(hitLens)
+      const dzdx = superellipseDzDx(hitX, cx, h, R, n)
+      const nLen = Math.sqrt(dzdx * dzdx + 1)
+      const r = refract(dx, dz, -dzdx / nLen, 1 / nLen, nAir, nLens) ?? [dx, dz]
+      ;[mDx, mDz] = r
     }
+    if (mDz > -1e-6) { mDz = -1e-6 } // keep marching downward
 
-    // Trace refracted ray to the bottom of silicon (z=0)
-    // Compute t where hitZ + t*refDz = 0
-    let endXPhys: number
-    let endZPhys: number
-    if (Math.abs(refDz) < 1e-10) {
-      // Nearly horizontal, just extend
-      endXPhys = hitX + refDx * 10
-      endZPhys = 0
-    } else {
-      const tEnd = -hitZ / refDz
-      if (tEnd < 0) {
-        // Ray going upward after refraction, extend downward anyway
-        const tDown = hitZ / Math.abs(refDz)
-        endXPhys = hitX + refDx * tDown
-        endZPhys = 0
-      } else {
-        endXPhys = hitX + tEnd * refDx
-        endZPhys = hitZ + tEnd * refDz
-      }
-    }
+    // Propagate to the Si surface (z = siThickness) and refract into silicon
+    const tSi = (hitZ - siThickness) / -mDz
+    const siX = hitX + tSi * mDx
+    const rSi = refract(mDx, mDz, 0, 1, nLens, nSi) ?? [mDx, mDz]
+    const [siDx, siDz] = rSi
 
-    // Clamp end position to silicon bottom
-    if (endZPhys > 0 && refDz < 0) {
-      const tBottom = (hitZ - 0) / Math.abs(refDz)
-      endXPhys = hitX + tBottom * refDx
-      endZPhys = 0
-    } else if (endZPhys < 0) {
-      endZPhys = 0
-    }
+    // Collection is tested at the PD mid-depth; drawing continues to Si bottom
+    const testX = siX + ((siThickness - pdTestZ) / -siDz) * siDx
+    const endX = siX + (siThickness / -siDz) * siDx
 
-    // Check if ray hits PD0
-    const hitsTarget = endXPhys >= pd0Left && endXPhys <= pd0Right && endZPhys <= pdTop
-
-    rays.push({
-      startX: toSvgX(xStart),
-      startY: toSvgY(zStart),
-      hitX: toSvgX(hitX),
-      hitY: toSvgY(hitZ),
-      endX: toSvgX(endXPhys),
-      endY: toSvgY(Math.max(0, endZPhys)),
-      hitsTarget,
-    })
+    rays.push({ xStart, zStart, hitX, hitZ, hitLens, mDx, mDz, siX, siDx, siDz, testX, endX })
   }
-
   return rays
+})
+
+const tracedRays = computed((): TracedRay[] => {
+  const pdWidth = 0.7 * pitch.value
+  const pd0Left = pitch.value * 0.5 - pdWidth / 2
+  const pd0Right = pitch.value * 0.5 + pdWidth / 2
+  return physRays.value.map((r) => ({
+    startX: toSvgX(r.xStart),
+    startY: toSvgY(r.zStart),
+    hitX: toSvgX(r.hitX),
+    hitY: toSvgY(r.hitZ),
+    siX: toSvgX(r.siX),
+    siY: toSvgY(siThickness),
+    endX: toSvgX(r.endX),
+    endY: toSvgY(0),
+    hitsTarget: r.testX >= pd0Left && r.testX <= pd0Right,
+    testX: r.testX,
+  }))
+})
+
+// Least-squares point closest to a set of 2D lines (point p, unit direction d)
+function lsCrossing(lines: Array<{ px: number; pz: number; dx: number; dz: number }>):
+  { x: number; z: number } | null {
+  if (lines.length < 2) return null
+  let a11 = 0, a12 = 0, a22 = 0, b1 = 0, b2 = 0
+  for (const l of lines) {
+    const m11 = 1 - l.dx * l.dx, m12 = -l.dx * l.dz, m22 = 1 - l.dz * l.dz
+    a11 += m11; a12 += m12; a22 += m22
+    b1 += m11 * l.px + m12 * l.pz
+    b2 += m12 * l.px + m22 * l.pz
+  }
+  const det = a11 * a22 - a12 * a12
+  if (Math.abs(det) < 1e-12) return null
+  return { x: (a22 * b1 - a12 * b2) / det, z: (a11 * b2 - a12 * b1) / det }
+}
+
+// Focus of lens 0 from the actually traced rays: first in the stack medium;
+// if that lies below the Si surface, re-solve with the rays refracted into Si.
+const tracedFocus = computed(() => {
+  const lens0 = physRays.value.filter((r) => r.hitLens === 0)
+  if (lens0.length < 2) return null
+  const inStack = lsCrossing(lens0.map((r) => ({ px: r.hitX, pz: r.hitZ, dx: r.mDx, dz: r.mDz })))
+  if (!inStack) return null
+  if (inStack.z >= siThickness) return inStack
+  return lsCrossing(lens0.map((r) => ({ px: r.siX, pz: siThickness, dx: r.siDx, dz: r.siDz })))
 })
 
 // Statistics
@@ -581,9 +636,7 @@ const crosstalkCount = computed(() => {
 
   let count = 0
   for (const ray of tracedRays.value) {
-    // Convert end SVG position back to physical x
-    const physX = ((ray.endX - margin) / drawWidth.value) * 2 * pitch.value
-    if (physX >= pd1Left && physX <= pd1Right) {
+    if (ray.testX >= pd1Left && ray.testX <= pd1Right) {
       count++
     }
   }
@@ -594,7 +647,6 @@ const focalLength = computed(() => {
   // Best-fit spherical cap through apex and rim: R_c = (a² + h²) / 2h.
   // Single refracting surface with the image formed inside the lens medium
   // (object at infinity): f = n_lens · R_c / (n_lens − 1), measured from the vertex.
-  const nLens = 1.56
   const h = Math.max(lensHeight.value, 1e-6)
   const a = lensRadius.value
   const Rc = (a * a + h * h) / (2 * h)
@@ -712,6 +764,11 @@ const fNumber = computed(() => {
   font-size: 9px;
   fill: var(--vp-c-text-2);
   font-weight: 600;
+}
+.rt-note {
+  margin: 8px 0 0;
+  font-size: 0.8em;
+  color: var(--vp-c-text-2);
 }
 .info-row {
   display: flex;

@@ -49,7 +49,7 @@
       </div>
       <div class="slider-group">
         <label>
-          {{ t('Silicon thickness:', '실리콘 두께:') }} <strong>{{ siThickness.toFixed(1) }} um</strong>
+          {{ t('Silicon thickness:', '실리콘 두께:') }} <strong>{{ siThickness.toFixed(1) }} &micro;m</strong>
         </label>
         <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="ctrl-range" :aria-label="t('Silicon thickness', '실리콘 두께')" />
       </div>
@@ -91,8 +91,8 @@
       </div>
       <div class="summary-text">
         {{ t(
-          `At \u03BB=${wavelength}nm: QE=${singleResult.qe.toFixed(1)}%, R=${singleResult.R.toFixed(1)}%, Other losses=${singleResult.otherLoss.toFixed(1)}%`,
-          `\u03BB=${wavelength}nm: QE=${singleResult.qe.toFixed(1)}%, R=${singleResult.R.toFixed(1)}%, \uAE30\uD0C0 \uC190\uC2E4=${singleResult.otherLoss.toFixed(1)}%`
+          `At \u03BB=${wavelength}nm: QE=${singleResult.qe.toFixed(1)}%, R=${singleResult.R.toFixed(1)}%, T=${singleResult.Tpct.toFixed(1)}%, absorbed in other layers=${singleResult.otherLoss.toFixed(1)}%`,
+          `\u03BB=${wavelength}nm: QE=${singleResult.qe.toFixed(1)}%, R=${singleResult.R.toFixed(1)}%, T=${singleResult.Tpct.toFixed(1)}%, \uAE30\uD0C0 \uCE35 \uD761\uC218=${singleResult.otherLoss.toFixed(1)}%`
         ) }}
       </div>
     </template>
@@ -304,8 +304,10 @@ const singleResult = computed(() => {
   const bd = resultToBreakdown(r)
   const qe = bd.silicon * 100
   const R = bd.reflection * 100
-  const otherLoss = 100 - qe - R
-  return { ...bd, qe, R, otherLoss }
+  const Tpct = bd.transmission * 100
+  // Absorption in the non-silicon layers (microlens, planarization, CF, BARL)
+  const otherLoss = Math.max(0, 100 - qe - R - Tpct)
+  return { ...bd, qe, R, Tpct, otherLoss }
 })
 
 const singleBarSegments = computed(() => {

@@ -36,6 +36,12 @@
         </label>
         <input type="range" min="400" max="700" step="10" v-model.number="wavelengthNm" class="ctrl-range" :aria-label="t('Wavelength', '파장')" />
       </div>
+      <div class="slider-group">
+        <label>
+          {{ t('Pixel aperture', '픽셀 개구') }}: <strong>{{ apertureUm.toFixed(2) }} &mu;m ({{ (apertureFrac * 100).toFixed(0) }}%)</strong>
+        </label>
+        <input type="range" min="0.3" max="1.0" step="0.05" v-model.number="apertureFrac" class="ctrl-range" :aria-label="t('Pixel aperture', '픽셀 개구')" />
+      </div>
       <div class="check-group">
         <label>
           <input type="checkbox" v-model="showComponents" />
@@ -58,11 +64,11 @@
         <div class="result-value">{{ cutoffLpmm.toFixed(0) }} lp/mm</div>
       </div>
       <div class="result-card">
-        <div class="result-label">MTF@Nyquist</div>
+        <div class="result-label">{{ t('MTF @ Nyquist', '나이퀴스트 MTF') }}</div>
         <div class="result-value highlight">{{ (mtfAtNyquist * 100).toFixed(1) }}%</div>
       </div>
       <div class="result-card">
-        <div class="result-label">MTF@Nyquist/2</div>
+        <div class="result-label">{{ t('MTF @ Nyquist/2', '나이퀴스트/2 MTF') }}</div>
         <div class="result-value">{{ (mtfAtHalfNyquist * 100).toFixed(1) }}%</div>
       </div>
     </div>
@@ -132,7 +138,7 @@
             {{ t('Spatial Frequency (cycles/\u00B5m)', '\uACF5\uAC04 \uC8FC\uD30C\uC218 (cycles/\u00B5m)') }}
           </text>
           <text :x="pad.left + plotW / 2" :y="pad.top - 16" text-anchor="middle" class="axis-title" fill="var(--vp-c-text-3)">
-            (lp/mm)
+            {{ t('(lp/mm)', '(lp/mm)') }}
           </text>
           <text :x="12" :y="pad.top + plotH / 2" text-anchor="middle" class="axis-title"
             :transform="`rotate(-90, 12, ${pad.top + plotH / 2})`">
@@ -155,9 +161,9 @@
           />
           <text
             v-if="nyquistFreq <= xMax"
-            :x="xScale(nyquistFreq)" :y="pad.top + plotH + 26"
-            text-anchor="middle" class="marker-label" fill="#e74c3c"
-          >Nyquist</text>
+            :x="xScale(nyquistFreq) + markerLabelDx.nyq" :y="pad.top + plotH + 26"
+            :text-anchor="markerLabelDx.nyqAnchor" class="marker-label" fill="#e74c3c"
+          >{{ t('Nyquist', '나이퀴스트') }}</text>
 
           <!-- Optical cutoff vertical line -->
           <line
@@ -168,8 +174,8 @@
           />
           <text
             v-if="cutoffFreq <= xMax"
-            :x="xScale(cutoffFreq)" :y="pad.top + plotH + 26"
-            text-anchor="middle" class="marker-label" fill="#27ae60"
+            :x="xScale(cutoffFreq) + markerLabelDx.cut" :y="pad.top + plotH + 26"
+            :text-anchor="markerLabelDx.cutAnchor" class="marker-label" fill="#27ae60"
           >{{ t('Cutoff', '차단') }}</text>
 
           <!-- Legend -->
@@ -213,8 +219,8 @@
       <h5>{{ t('Bar Target Simulation', '바 타겟 시뮬레이션') }}</h5>
       <p class="bar-description">
         {{ t(
-          'Shows how contrast degrades at increasing spatial frequencies. Each group shows bars at a fraction of the Nyquist frequency.',
-          '공간 주파수가 증가함에 따라 대비가 어떻게 저하되는지 보여줍니다. 각 그룹은 나이퀴스트 주파수의 일부에서 바를 나타냅니다.'
+          'Shows how contrast degrades at increasing spatial frequencies. Each group spans 16 pixels with a sinusoidal target at a fraction of the Nyquist frequency (fN): the upper strip is the optical image, the lower strip the sampled pixel values. Above fN the pattern aliases to a lower frequency.',
+          '공간 주파수가 증가함에 따라 대비가 어떻게 저하되는지 보여줍니다. 각 그룹은 16개 픽셀 폭에 나이퀴스트 주파수(fN)의 일부에 해당하는 정현파 타겟을 표시합니다. 위쪽 띠는 광학 이미지, 아래쪽 띠는 샘플링된 픽셀 값입니다. fN을 넘으면 패턴이 더 낮은 주파수로 에일리어싱됩니다.'
         ) }}
       </p>
       <div class="svg-wrapper">
@@ -233,8 +239,17 @@
               :x="bar.x"
               :y="barPad.top"
               :width="bar.w"
-              :height="barPlotH"
+              :height="barOptH"
               :fill="bar.fill"
+            />
+            <!-- Sampled pixel values -->
+            <rect
+              v-for="(px, pi) in group.pixels" :key="'p'+gi+'-'+pi"
+              :x="px.x"
+              :y="barPad.top + barOptH + barGap"
+              :width="px.w"
+              :height="barPixH"
+              :fill="px.fill"
             />
           </template>
         </svg>
@@ -255,12 +270,14 @@ const { isFullscreen, toggleFullscreen } = useFullscreen()
 const pitch = ref(1.0)
 const fNumber = ref(2.8)
 const wavelengthNm = ref(550)
+const apertureFrac = ref(1.0)
 const showComponents = ref(true)
 
 function resetControls() {
   pitch.value = 1.0
   fNumber.value = 2.8
   wavelengthNm.value = 550
+  apertureFrac.value = 1.0
   showComponents.value = true
 }
 
@@ -276,8 +293,11 @@ function sinc(x: number): number {
   return Math.sin(Math.PI * x) / (Math.PI * x)
 }
 
+// Pixel aperture width a ≤ pitch (fill factor in 1D): MTF_pix = |sinc(a·f)|
+const apertureUm = computed(() => apertureFrac.value * pitch.value)
+
 function mtfPixel(f: number): number {
-  return Math.abs(sinc(f * pitch.value))
+  return Math.abs(sinc(f * apertureUm.value))
 }
 
 function mtfOptical(f: number): number {
@@ -315,12 +335,30 @@ const xMax = computed(() => {
 
 const xTicks = computed(() => {
   const max = xMax.value
-  const step = max <= 1.0 ? 0.2 : max <= 2.0 ? 0.4 : max <= 3.0 ? 0.5 : 1.0
+  // Steps that divide the nice axis maxima exactly, so the end tick is drawn
+  const step = max <= 0.5 ? 0.1 : max <= 1.0 ? 0.2 : max <= 1.5 ? 0.3 : max <= 2.0 ? 0.4 : max <= 3.0 ? 0.5 : 1.0
   const ticks: number[] = []
-  for (let v = 0; v <= max + step * 0.01; v += step) {
-    ticks.push(Math.round(v * 100) / 100)
+  for (let i = 0; i * step <= max + step * 0.01; i++) {
+    ticks.push(Math.round(i * step * 100) / 100)
   }
+  if (max - ticks[ticks.length - 1] > step * 0.01) ticks.push(max)
   return ticks
+})
+
+// Stagger the Nyquist / Cutoff marker labels when the lines are close
+const markerLabelDx = computed(() => {
+  const xn = xScale(nyquistFreq.value)
+  const xc = xScale(cutoffFreq.value)
+  if (Math.abs(xn - xc) >= 60) {
+    return { nyq: 0, cut: 0, nyqAnchor: 'middle', cutAnchor: 'middle' }
+  }
+  const nyqLeft = xn <= xc
+  return {
+    nyq: nyqLeft ? -3 : 3,
+    cut: nyqLeft ? 3 : -3,
+    nyqAnchor: nyqLeft ? 'end' : 'start',
+    cutAnchor: nyqLeft ? 'start' : 'end',
+  }
 })
 
 const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
@@ -382,6 +420,10 @@ const barW = 600
 const barH = 120
 const barPad = { top: 8, bottom: 22, left: 10, right: 10 }
 const barPlotH = barH - barPad.top - barPad.bottom
+const barGap = 4
+const barOptH = Math.round((barPlotH - barGap) * 0.6)
+const barPixH = barPlotH - barGap - barOptH
+const PIXELS_PER_GROUP = 16
 
 const barFreqMultipliers = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2]
 
@@ -398,31 +440,41 @@ const barGroups = computed(() => {
     const groupStartX = barPad.left + gi * groupW + gapW / 2
     const availW = groupW - gapW
 
-    // Create thin vertical bars to simulate sinusoidal pattern
-    const numBars = 40
+    // Each group spans PIXELS_PER_GROUP pixels, so the number of cycles shown
+    // scales with frequency: cycles = f · (N · pitch) = mult · N / 2.
+    const spanUm = PIXELS_PER_GROUP * pitch.value
+    const mtfOpt = mtfOptical(freq)
+    // Phase: target peak on the first pixel centre (avoids a null at exactly fN)
+    const x0 = 0.5 * pitch.value
+    const toGray = (v: number) => {
+      const g = Math.round(Math.max(0, Math.min(1, v)) * 255)
+      return `rgb(${g},${g},${g})`
+    }
+
+    // Optical image (continuous, optics MTF only), finely rasterised
+    const numBars = 160
     const barWidth = availW / numBars
     const bars: { x: number; w: number; fill: string }[] = []
-
     for (let bi = 0; bi < numBars; bi++) {
-      const xPos = groupStartX + bi * barWidth
-      // Position within the group as spatial coordinate
-      const spatialX = bi / numBars
-      // I(x) = 0.5 + 0.5 * MTF * cos(2*pi*f_rel*x)
-      // Use a few cycles within the group width
-      const numCycles = 3
-      const intensity = 0.5 + 0.5 * mtf * Math.cos(2 * Math.PI * numCycles * spatialX)
-      const gray = Math.round(intensity * 255)
-      bars.push({
-        x: xPos,
-        w: barWidth + 0.5, // slight overlap to avoid gaps
-        fill: `rgb(${gray},${gray},${gray})`
-      })
+      const xUm = ((bi + 0.5) / numBars) * spanUm
+      const intensity = 0.5 + 0.5 * mtfOpt * Math.cos(2 * Math.PI * freq * (xUm - x0))
+      bars.push({ x: groupStartX + bi * barWidth, w: barWidth + 0.5, fill: toGray(intensity) })
+    }
+
+    // Sampled pixel values: aperture-integrated (pixel MTF × optics) at each
+    // pixel centre; above Nyquist this aliases to a lower apparent frequency.
+    const pxW = availW / PIXELS_PER_GROUP
+    const pixels: { x: number; w: number; fill: string }[] = []
+    for (let pi = 0; pi < PIXELS_PER_GROUP; pi++) {
+      const xUm = (pi + 0.5) * pitch.value
+      const v = 0.5 + 0.5 * mtf * Math.cos(2 * Math.PI * freq * (xUm - x0))
+      pixels.push({ x: groupStartX + pi * pxW, w: pxW + 0.5, fill: toGray(v) })
     }
 
     const label = `${mult.toFixed(1)}fN`
     const cx = groupStartX + availW / 2
 
-    return { bars, label, cx }
+    return { bars, pixels, label, cx }
   })
 })
 </script>

@@ -44,9 +44,35 @@
       </div>
       <div class="slider-group">
         <label>
-          {{ t('Scene Illuminance', '조도') }}: <strong>{{ illuminance }} lux</strong>
+          {{ t('Sensor-plane Illuminance', '센서면 조도') }}: <strong>{{ illuminance }} lux</strong>
         </label>
-        <input type="range" min="1" max="1000" step="1" v-model.number="illuminance" class="ctrl-range" :aria-label="t('Scene Illuminance', '조도')" />
+        <input type="range" min="1" max="1000" step="1" v-model.number="illuminance" class="ctrl-range" :aria-label="t('Sensor-plane Illuminance', '센서면 조도')" />
+      </div>
+      <div class="slider-group">
+        <label>
+          {{ t('Dark current @ 27 °C', '암전류 @ 27 °C') }}: <strong>{{ jRef.toFixed(1) }} e&minus;/s/&mu;m&sup2;</strong>
+        </label>
+        <input type="range" min="0.1" max="50" step="0.1" v-model.number="jRef" class="ctrl-range" :aria-label="t('Dark current @ 27 °C', '암전류 @ 27 °C')" />
+      </div>
+      <div class="slider-group">
+        <label>{{ t('Mechanism', '발생 메커니즘') }}</label>
+        <select v-model="mechanism" class="ctrl-select" :aria-label="t('Mechanism', '발생 메커니즘')">
+          <option value="generation">{{ t('Depletion generation (∝ nᵢ, Eₐ ≈ Eg/2)', '공핍 생성 (∝ nᵢ, Eₐ ≈ Eg/2)') }}</option>
+          <option value="diffusion">{{ t('Diffusion (∝ nᵢ², Eₐ ≈ Eg)', '확산 (∝ nᵢ², Eₐ ≈ Eg)') }}</option>
+          <option value="mixed">{{ t('Mixed (50/50 at 27 °C)', '혼합 (27 °C에서 50/50)') }}</option>
+        </select>
+      </div>
+      <div class="slider-group">
+        <label>
+          QE: <strong>{{ qe }}%</strong>
+        </label>
+        <input type="range" min="10" max="95" step="1" v-model.number="qe" class="ctrl-range" aria-label="QE" />
+      </div>
+      <div class="slider-group">
+        <label>
+          {{ t('Full Well Capacity', '풀 웰 용량') }}: <strong>{{ fullWell.toLocaleString() }} e&minus;</strong>
+        </label>
+        <input type="range" min="1000" max="30000" step="500" v-model.number="fullWell" class="ctrl-range" :aria-label="t('Full Well Capacity', '풀 웰 용량')" />
       </div>
       <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
     </div>
@@ -72,6 +98,11 @@
       <div class="result-card">
         <div class="result-label">SNR</div>
         <div class="result-value highlight">{{ snrDb.toFixed(1) }} dB</div>
+        <div v-if="photonSaturated" class="result-sub warn">{{ t('saturated at FWC', 'FWC에서 포화') }}</div>
+      </div>
+      <div class="result-card">
+        <div class="result-label">{{ t('Doubling temperature', '2배 증가 온도') }}</div>
+        <div class="result-value">{{ doublingTemp.toFixed(1) }} &deg;C</div>
       </div>
     </div>
 
@@ -251,8 +282,8 @@
       <h5>{{ t('Dark Frame Visualization', '암전류 프레임 시각화') }}</h5>
       <p class="frame-desc">
         {{ t(
-          'Simulated dark frame image showing noise pattern at current temperature and integration time.',
-          '현재 온도와 적분 시간에서의 잡음 패턴을 보여주는 시뮬레이션된 암전류 프레임 이미지.'
+          'Simulated dark frame (Poisson dark signal + Gaussian read noise, 15 hot pixels) on a fixed grey scale: black = 0 e⁻, white = 40 e⁻ above a 10 e⁻ black-level pedestal. Raise the temperature to watch the frame brighten.',
+          '고정 회색 스케일로 표시한 암전류 프레임입니다 (푸아송 암신호 + 가우시안 읽기 잡음, 핫픽셀 15개). 검정 = 0 e⁻, 흰색 = 10 e⁻ 블랙 레벨 위 40 e⁻. 온도를 올리면 프레임이 밝아집니다.'
         ) }}
       </p>
       <div class="canvas-wrapper">
@@ -266,6 +297,7 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useLocale } from '../composables/useLocale'
 import { useFullscreen } from '../composables/useFullscreen'
+import { PHOTONS_PER_LUX_S_UM2 } from '../composables/sensorNoise'
 
 const { t } = useLocale()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
@@ -276,8 +308,16 @@ const pitch = ref(1.0)
 const integrationTime = ref(33)
 const readNoise = ref(1.5)
 const illuminance = ref(100)
+const jRef = ref(5)
+const mechanism = ref<'generation' | 'diffusion' | 'mixed'>('generation')
+const qe = ref(60)
+const fullWell = ref(6000)
 
 function resetControls() {
+  jRef.value = 5
+  mechanism.value = 'generation'
+  qe.value = 60
+  fullWell.value = 6000
   temperature.value = 25
   pitch.value = 1.0
   integrationTime.value = 33
@@ -294,15 +334,28 @@ function bandgap(T: number): number {
   return 1.166 - 4.73e-4 * T * T / (T + 636)
 }
 
-// Calibrate J0 so Jd = 5 e-/s/um^2 at T=300K
-// Jd(T) = J0 * T^1.5 * exp(-Eg(T)/(2*kB*T))   (diffusion-dominated, ∝ n_i)
+// Two dark-current mechanisms, both normalised to jRef at T_ref = 300 K:
+//   depletion generation  Jgen ∝ n_i      ∝ T^1.5 · exp(−Eg/(2kT))
+//   diffusion             Jdiff ∝ n_i²    ∝ T^3   · exp(−Eg/(kT))
 const T_ref = 300
-const J0 = 5 / (Math.pow(T_ref, 1.5) * Math.exp(-bandgap(T_ref) / (2 * kB * T_ref)))
+function genShape(T: number): number { return Math.pow(T, 1.5) * Math.exp(-bandgap(T) / (2 * kB * T)) }
+function diffShape(T: number): number { return Math.pow(T, 3) * Math.exp(-bandgap(T) / (kB * T)) }
 
 function darkCurrentDensity(tempC: number): number {
   const T = tempC + 273.15
-  return J0 * Math.pow(T, 1.5) * Math.exp(-bandgap(T) / (2 * kB * T))
+  const gen = jRef.value * genShape(T) / genShape(T_ref)
+  const diff = jRef.value * diffShape(T) / diffShape(T_ref)
+  if (mechanism.value === 'generation') return gen
+  if (mechanism.value === 'diffusion') return diff
+  return 0.5 * gen + 0.5 * diff
 }
+
+/** Temperature increase that doubles the dark current at the current temperature. */
+const doublingTemp = computed(() => {
+  const T = temperature.value
+  const dlnJ = (Math.log(darkCurrentDensity(T + 0.5)) - Math.log(darkCurrentDensity(T - 0.5)))
+  return dlnJ > 0 ? Math.LN2 / dlnJ : Infinity
+})
 
 function darkCurrentPixel(tempC: number, pitchUm: number): number {
   return darkCurrentDensity(tempC) * pitchUm * pitchUm
@@ -315,11 +368,12 @@ const darkSignal = computed(() => darkCurrentAtT.value * tIntSec.value)
 const darkNoise = computed(() => Math.sqrt(darkSignal.value))
 const totalNoise = computed(() => Math.sqrt(readNoise.value ** 2 + darkSignal.value))
 
-// Photon signal (simplified)
-const photonSignal = computed(() => {
-  const QE = 0.6 // assume 60% average QE
-  return QE * illuminance.value * (pitch.value * 1e-4) ** 2 * tIntSec.value * 4e11
-})
+// Photon signal at the sensor plane (555 nm equivalent), capped at the full well
+const rawPhotonSignal = computed(() =>
+  (qe.value / 100) * illuminance.value * PHOTONS_PER_LUX_S_UM2 * pitch.value ** 2 * tIntSec.value,
+)
+const photonSaturated = computed(() => rawPhotonSignal.value + darkSignal.value > fullWell.value)
+const photonSignal = computed(() => Math.max(0, Math.min(rawPhotonSignal.value, fullWell.value - darkSignal.value)))
 
 const snrDb = computed(() => {
   const sig = photonSignal.value
@@ -498,13 +552,36 @@ const hotPixels: { x: number; y: number; factor: number }[] = []
   }
 }
 
-// Box-Muller gaussian
-function gaussRandom(): number {
+// Seeded RNG so the frame only changes when a parameter changes
+function mulberry32(seed: number): () => number {
+  let a = seed | 0
+  return () => {
+    a = a + 0x6D2B79F5 | 0
+    let q = Math.imul(a ^ a >>> 15, 1 | a)
+    q = q + Math.imul(q ^ q >>> 7, 61 | q) ^ q
+    return ((q ^ q >>> 14) >>> 0) / 4294967296
+  }
+}
+
+function gaussRandom(rng: () => number): number {
   let u = 0, v = 0
-  while (u === 0) u = Math.random()
-  while (v === 0) v = Math.random()
+  while (u === 0) u = rng()
+  while (v === 0) v = rng()
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
 }
+
+/** Poisson sample: Knuth for small means, Gaussian approximation above 30. */
+function poisson(mean: number, rng: () => number): number {
+  if (mean <= 0) return 0
+  if (mean > 30) return Math.max(0, Math.round(mean + Math.sqrt(mean) * gaussRandom(rng)))
+  const L = Math.exp(-mean)
+  let k = 0, p = 1
+  do { k++; p *= rng() } while (p > L)
+  return k - 1
+}
+
+const FRAME_PEDESTAL = 10 // e⁻ black-level offset so negative read noise stays visible
+const FRAME_WHITE = 40 // e⁻ above pedestal mapped to white
 
 function renderDarkFrame() {
   const canvas = darkFrameCanvas.value
@@ -513,13 +590,10 @@ function renderDarkFrame() {
   if (!ctx) return
 
   const ds = darkSignal.value
-  const dn = darkNoise.value
+  const rn = readNoise.value
+  const rng = mulberry32(2024)
 
-  // Build pixel values
   const values: number[] = new Array(frameW * frameH)
-  let maxVal = 0
-
-  // Create a set for fast hot pixel lookup
   const hotSet = new Map<number, number>()
   for (const hp of hotPixels) {
     hotSet.set(hp.y * frameW + hp.x, hp.factor)
@@ -529,22 +603,17 @@ function renderDarkFrame() {
     for (let x = 0; x < frameW; x++) {
       const idx = y * frameW + x
       const factor = hotSet.get(idx) || 1
-      const pixelDarkSignal = ds * factor
-      const pixelDarkNoise = Math.sqrt(pixelDarkSignal > 0 ? pixelDarkSignal : 0)
-      const noiseVal = pixelDarkNoise > 0 ? gaussRandom() * pixelDarkNoise : 0
-      const val = Math.max(0, pixelDarkSignal + noiseVal)
-      values[idx] = val
-      if (val > maxVal) maxVal = val
+      values[idx] = FRAME_PEDESTAL + poisson(ds * factor, rng) + rn * gaussRandom(rng)
     }
   }
 
-  // Auto-scale to 0-255
-  const scale = maxVal > 0 ? 255 / maxVal : 0
+  // Fixed scale: 0 e⁻ → black, pedestal + FRAME_WHITE → white
+  const scale = 255 / (FRAME_PEDESTAL + FRAME_WHITE)
   const imageData = ctx.createImageData(canvasW, canvasH)
 
   for (let y = 0; y < frameH; y++) {
     for (let x = 0; x < frameW; x++) {
-      const v = Math.min(255, Math.round(values[y * frameW + x] * scale))
+      const v = Math.max(0, Math.min(255, Math.round(values[y * frameW + x] * scale)))
       // Fill a pixelSize x pixelSize block
       for (let dy = 0; dy < pixelSize; dy++) {
         for (let dx = 0; dx < pixelSize; dx++) {
@@ -567,7 +636,7 @@ function renderDarkFrame() {
 
 // Watch reactive values and re-render
 watch(
-  [temperature, pitch, integrationTime],
+  [temperature, pitch, integrationTime, readNoise, jRef, mechanism],
   () => { nextTick(renderDarkFrame) },
   { immediate: false }
 )
@@ -578,6 +647,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.ctrl-select { width: 100%; padding: 3px 6px; border: 1px solid var(--vp-c-divider); border-radius: 6px; background: var(--vp-c-bg); color: var(--vp-c-text-1); font-size: 0.82em; }
+.result-sub { font-size: 0.72em; color: var(--vp-c-text-3); margin-top: 2px; }
+.result-sub.warn { color: #e67e22; font-weight: 600; }
 .dc-container {
   border: 1px solid var(--vp-c-divider);
   border-radius: 12px;

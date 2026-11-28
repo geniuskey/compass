@@ -30,6 +30,18 @@
         <input type="range" min="100" max="4000" step="50" v-model.number="signalLevel" class="ctrl-range" :aria-label="t('Signal Level', '신호 레벨')" />
       </div>
       <div class="slider-group">
+        <label>{{ t('Row FPN', '행 FPN') }}: <strong>{{ rowFpn.toFixed(1) }} DN</strong></label>
+        <input type="range" min="0" max="20" step="0.5" v-model.number="rowFpn" class="ctrl-range" :aria-label="t('Row FPN', '행 FPN')" />
+      </div>
+      <div class="slider-group">
+        <label>{{ t('Column FPN', '열 FPN') }}: <strong>{{ colFpn.toFixed(1) }} DN</strong></label>
+        <input type="range" min="0" max="20" step="0.5" v-model.number="colFpn" class="ctrl-range" :aria-label="t('Column FPN', '열 FPN')" />
+      </div>
+      <div class="slider-group">
+        <label>{{ t('Display window', '표시 범위') }}: <strong>&plusmn;{{ displayWindow }} DN</strong></label>
+        <input type="range" min="5" max="300" step="5" v-model.number="displayWindow" class="ctrl-range" :aria-label="t('Display window', '표시 범위')" />
+      </div>
+      <div class="slider-group">
         <label>{{ t('View', '보기') }}</label>
         <div class="view-toggle">
           <button type="button" :class="['toggle-btn', { active: viewMode === 'fpn' }]" :aria-pressed="viewMode === 'fpn'" @click="viewMode = 'fpn'">FPN</button>
@@ -57,6 +69,14 @@
         <div class="result-label">{{ t('Peak-to-Peak', '피크투피크') }}</div>
         <div class="result-value">{{ p2p.toFixed(1) }} DN</div>
       </div>
+      <div class="result-card">
+        <div class="result-label">{{ t('Row / Column FPN', '행 / 열 FPN') }}</div>
+        <div class="result-value">{{ rowFpn.toFixed(1) }} / {{ colFpn.toFixed(1) }} DN</div>
+      </div>
+      <div v-if="clippedCount > 0" class="result-card warn">
+        <div class="result-label">{{ t('Clipped at 12-bit', '12비트에서 클리핑') }}</div>
+        <div class="result-value">{{ clippedCount }} px</div>
+      </div>
     </div>
 
     <div class="prnu-visuals">
@@ -80,12 +100,20 @@
             :x="hPad.left + i * binW" :y="hPad.top + hPlotH - (bin / histMax) * hPlotH"
             :width="Math.max(1, binW - 1)" :height="(bin / histMax) * hPlotH"
             fill="var(--vp-c-brand-1)" opacity="0.7" />
+          <line :x1="hPad.left + hPlotW / 2" :y1="hPad.top" :x2="hPad.left + hPlotW / 2" :y2="hPad.top + hPlotH" stroke="var(--vp-c-text-3)" stroke-width="0.6" stroke-dasharray="2,2" />
+          <text :x="hPad.left + hPlotW / 2" :y="hPad.top + hPlotH + 12" text-anchor="middle" class="tick-label">{{ center.toFixed(0) }}</text>
           <text :x="hPad.left" :y="hPad.top + hPlotH + 12" class="tick-label">{{ histRange[0].toFixed(0) }}</text>
           <text :x="hPad.left + hPlotW" :y="hPad.top + hPlotH + 12" text-anchor="end" class="tick-label">{{ histRange[1].toFixed(0) }}</text>
           <text :x="hPad.left + hPlotW / 2" :y="hPad.top + hPlotH + 24" text-anchor="middle" class="axis-title">DN</text>
         </svg>
+        <div class="colorbar">
+          <span>{{ histRange[0].toFixed(0) }}</span>
+          <div class="colorbar-ramp"></div>
+          <span>{{ histRange[1].toFixed(0) }} DN</span>
+        </div>
       </div>
     </div>
+    <p class="hint">{{ t('The heatmap and histogram use a fixed window centred on the mean, so raising PRNU or DSNU visibly increases contrast. Values outside the window saturate to black or white. Row and column FPN appear as stripes and are far more visible than random pixel FPN of the same rms.', '히트맵과 히스토그램은 평균을 중심으로 한 고정 범위를 사용하므로, PRNU나 DSNU를 높이면 대비가 눈에 띄게 커집니다. 범위를 벗어난 값은 흑/백으로 포화됩니다. 행·열 FPN은 줄무늬로 나타나며, 같은 rms의 랜덤 픽셀 FPN보다 훨씬 잘 보입니다.') }}</p>
   </div>
 </template>
 
@@ -100,14 +128,22 @@ const { isFullscreen, toggleFullscreen } = useFullscreen()
 const prnu = ref(1.0)
 const dsnu = ref(5)
 const signalLevel = ref(1000)
+const rowFpn = ref(0)
+const colFpn = ref(0)
+const displayWindow = ref(50)
 const viewMode = ref<'fpn' | 'prnu' | 'dsnu'>('fpn')
 
 function resetControls() {
   prnu.value = 1.0
   dsnu.value = 5
   signalLevel.value = 1000
+  rowFpn.value = 0
+  colFpn.value = 0
+  displayWindow.value = 50
   viewMode.value = 'fpn'
 }
+
+const ADC_MAX = 4095
 
 function mulberry32(seed: number): () => number {
   let a = seed | 0
@@ -146,8 +182,17 @@ const dsnuMap = computed(() => {
   return map
 })
 
+function noiseVector(seed: number): number[] {
+  const rng = mulberry32(seed)
+  return Array.from({ length: GRID }, () => gaussRng(rng))
+}
+const rowOffsets = computed(() => noiseVector(789))
+const colOffsets = computed(() => noiseVector(1011))
+
 const prnuRms = computed(() => signalLevel.value * prnu.value / 100)
-const fpnRms = computed(() => Math.sqrt(prnuRms.value ** 2 + dsnu.value ** 2))
+const fpnRms = computed(() => Math.sqrt(prnuRms.value ** 2 + dsnu.value ** 2 + rowFpn.value ** 2 + colFpn.value ** 2))
+
+const center = computed(() => (viewMode.value === 'fpn' ? signalLevel.value : 0))
 
 const pixelGrid = computed(() => {
   const s = signalLevel.value
@@ -155,9 +200,10 @@ const pixelGrid = computed(() => {
   const dSigma = dsnu.value
   return prnuMap.value.map((row, ri) =>
     row.map((pVal, ci) => {
+      const dark = dSigma * dsnuMap.value[ri][ci] + rowFpn.value * rowOffsets.value[ri] + colFpn.value * colOffsets.value[ci]
       if (viewMode.value === 'prnu') return s * pSigma * pVal
-      if (viewMode.value === 'dsnu') return dSigma * dsnuMap.value[ri][ci]
-      return s + s * pSigma * pVal + dSigma * dsnuMap.value[ri][ci]
+      if (viewMode.value === 'dsnu') return dark
+      return Math.min(ADC_MAX, Math.max(0, s + s * pSigma * pVal + dark))
     })
   )
 })
@@ -166,26 +212,31 @@ const flatValues = computed(() => pixelGrid.value.flat())
 const gridMin = computed(() => Math.min(...flatValues.value))
 const gridMax = computed(() => Math.max(...flatValues.value))
 const p2p = computed(() => gridMax.value - gridMin.value)
+const clippedCount = computed(() =>
+  viewMode.value === 'fpn' ? flatValues.value.filter(v => v >= ADC_MAX || v <= 0).length : 0
+)
+
+/** Fixed display window centred on the mean signal. */
+const histRange = computed<[number, number]>(() => [center.value - displayWindow.value, center.value + displayWindow.value])
 
 function cellColor(val: number): string {
-  const lo = gridMin.value, hi = gridMax.value
-  const norm = hi > lo ? (val - lo) / (hi - lo) : 0.5
+  const [lo, hi] = histRange.value
+  const norm = Math.min(1, Math.max(0, (val - lo) / (hi - lo)))
   const v = Math.round(norm * 255)
   return `rgb(${v},${v},${v})`
 }
 
 const BINS = 30
-const histRange = computed<[number, number]>(() => [gridMin.value, gridMax.value])
 const histBins = computed(() => {
   const bins = new Array(BINS).fill(0)
   const lo = histRange.value[0], range = histRange.value[1] - lo
-  if (range === 0) return bins
   for (const v of flatValues.value) {
-    const idx = Math.min(BINS - 1, Math.floor(((v - lo) / range) * BINS))
+    const idx = Math.min(BINS - 1, Math.max(0, Math.floor(((v - lo) / range) * BINS)))
     bins[idx]++
   }
   return bins
 })
+
 const histMax = computed(() => Math.max(1, ...histBins.value))
 
 const HW = 260, HH = 160
@@ -196,6 +247,10 @@ const binW = computed(() => hPlotW / BINS)
 </script>
 
 <style scoped>
+.result-card.warn .result-value { color: #e67e22; }
+.colorbar { display: flex; align-items: center; gap: 6px; font-size: 0.72em; color: var(--vp-c-text-3); margin-top: 4px; font-family: var(--vp-font-family-mono); }
+.colorbar-ramp { flex: 1; height: 8px; border-radius: 2px; background: linear-gradient(to right, #000, #fff); border: 1px solid var(--vp-c-divider); }
+.hint { margin: 8px 0 0; font-size: 0.78em; color: var(--vp-c-text-2); }
 .prnu-container { border: 1px solid var(--vp-c-divider); border-radius: 12px; padding: 24px; margin: 24px 0; background: var(--vp-c-bg-soft); }
 .prnu-container h4 { margin: 0 0 4px 0; font-size: 1.1em; color: var(--vp-c-brand-1); }
 .prnu-container h5 { margin: 8px 0 6px 0; font-size: 0.9em; color: var(--vp-c-text-1); }

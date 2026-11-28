@@ -104,7 +104,7 @@
 
           <!-- Air region -->
           <rect x="0" y="0" :width="waveW" :height="filmTopY" fill="none" />
-          <text x="16" y="20" class="medium-label">n<tspan font-size="7" dy="2">1</tspan><tspan dy="-2">=1.00</tspan></text>
+          <text :x="waveW - 8" y="20" text-anchor="end" class="medium-label">n<tspan font-size="7" dy="2">1</tspan><tspan dy="-2">=1.00</tspan></text>
 
           <!-- Film region -->
           <rect
@@ -206,13 +206,13 @@
             marker-end="url(#fpRayColor0)"
           />
 
-          <!-- Phase label -->
+          <!-- Phase label (in the substrate region, clear of the rays) -->
           <text
-            :x="waveW / 2"
-            :y="(filmTopY + filmBottomY) / 2 + 4"
-            text-anchor="middle"
+            :x="waveW - 8"
+            :y="filmBottomY + 20"
+            text-anchor="end"
             class="phase-label"
-          >delta = {{ phaseDelta.toFixed(2) }} rad</text>
+          >&delta; = {{ phaseDelta.toFixed(2) }} rad</text>
         </svg>
       </div>
 
@@ -451,7 +451,7 @@
         <div class="info-value">{{ (transmittanceExact * 100).toFixed(1) }}%</div>
       </div>
       <div class="info-card">
-        <div class="info-label">{{ t('Phase', '위상') }} delta</div>
+        <div class="info-label">{{ t('Phase', '위상') }} &delta;</div>
         <div class="info-value">{{ phaseDelta.toFixed(3) }} rad</div>
       </div>
       <div class="info-card">

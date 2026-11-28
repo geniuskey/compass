@@ -77,7 +77,7 @@ const filtered = computed(() => {
       ...cat,
       items: cat.items.filter((s) => {
         if (!q) return true
-        const hay = `${s.en.title} ${s.en.desc} ${s.ko.title} ${s.ko.desc} ${s.slug}`.toLowerCase()
+        const hay = `${s.en.title} ${s.en.desc} ${s.ko.title} ${s.ko.desc} ${s.slug} ${cat.en} ${cat.ko}`.toLowerCase()
         return hay.includes(q)
       }),
     }))

@@ -82,7 +82,7 @@
             <div class="segmented-row">
               <button type="button" :class="['seg-btn', { active: liner === 'oxide' }]" :aria-pressed="liner === 'oxide'" @click="setLiner('oxide')">SiO2</button>
               <button type="button" :class="['seg-btn', { active: liner === 'nitride' }]" :aria-pressed="liner === 'nitride'" @click="setLiner('nitride')">SiN</button>
-              <button type="button" :class="['seg-btn', { active: liner === 'metal' }]" :aria-pressed="liner === 'metal'" @click="setLiner('metal')">Metal</button>
+              <button type="button" :class="['seg-btn', { active: liner === 'metal' }]" :aria-pressed="liner === 'metal'" @click="setLiner('metal')">{{ t('Metal', '메탈') }}</button>
             </div>
           </div>
         </div>
@@ -103,6 +103,7 @@
           <div class="slider-group">
             <label>{{ t('Lens offset', '렌즈 오프셋') }} <strong>{{ lensOffset.toFixed(2) }} um</strong></label>
             <input v-model.number="lensOffset" class="ctrl-range" type="range" min="-0.25" max="0.25" step="0.01" :aria-label="t('Lens offset', '렌즈 오프셋')" @input="markCustom" />
+            <div class="locked-depth">{{ t('Shift the lens opposite to the CRA sign (toward the incoming light) to re-centre the spot.', '스폿을 다시 중앙에 맞추려면 렌즈를 CRA 부호와 반대 방향(입사광 쪽)으로 이동하세요.') }}</div>
           </div>
         </div>
       </div>
@@ -259,6 +260,7 @@
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useLocale } from '../composables/useLocale'
 import { useFullscreen } from '../composables/useFullscreen'
+import { getN, MATERIALS } from '../composables/tmm'
 
 type IsolationMode = 'fdti' | 'bdti'
 type LinerKey = 'oxide' | 'nitride' | 'metal'
@@ -300,7 +302,7 @@ const trenchWidth = ref(0.12)
 const liner = ref<LinerKey>('oxide')
 const wavelengthNm = ref(550)
 const craDeg = ref(7)
-const lensOffset = ref(0.04)
+const lensOffset = ref(-0.04)
 
 const cfThickness = 0.55
 const frontOxideThickness = 0.28
@@ -316,7 +318,7 @@ const presets: Record<string, SimParams> = {
     liner: 'oxide',
     wavelengthNm: 550,
     craDeg: 7,
-    lensOffset: 0.04,
+    lensOffset: -0.04,
   },
   deep: {
     isolationMode: 'fdti',
@@ -328,7 +330,7 @@ const presets: Record<string, SimParams> = {
     liner: 'nitride',
     wavelengthNm: 530,
     craDeg: 10,
-    lensOffset: 0.06,
+    lensOffset: -0.06,
   },
   shallow: {
     isolationMode: 'bdti',
@@ -340,7 +342,7 @@ const presets: Record<string, SimParams> = {
     liner: 'oxide',
     wavelengthNm: 620,
     craDeg: 14,
-    lensOffset: 0.02,
+    lensOffset: -0.02,
   },
   oblique: {
     isolationMode: 'bdti',
@@ -352,7 +354,7 @@ const presets: Record<string, SimParams> = {
     liner: 'metal',
     wavelengthNm: 450,
     craDeg: 20,
-    lensOffset: 0.12,
+    lensOffset: -0.12,
   },
 }
 
@@ -526,10 +528,38 @@ function insideTrench(x: number, z: number, p: SimParams): boolean {
   return Math.abs(x - p.pitch / 2) < half || Math.abs(x + p.pitch / 2) < half
 }
 
+const N_LENS = 1.56
+
+// Silicon intensity absorption coefficient α = 4πk/λ (1/um, λ in um)
+function siAlphaFor(p: SimParams): number {
+  const wlUm = p.wavelengthNm / 1000
+  const k = getN(MATERIALS.silicon, wlUm)[1]
+  return (4 * Math.PI * k) / wlUm
+}
+
+// Focus depth (z measured downward from the top) from the drawn lens dome:
+// half-width r = 0.45·pitch, sag s = 0.88·lensHeight → R = (r² + s²)/(2s),
+// image-side f = n·R/(n − 1) from the vertex, in an index-matched (n = 1.56) stack.
+// Beyond the Si surface the paraxial focus distance stretches by n_Si / n_stack.
+function focusZFor(p: SimParams): number {
+  const r = p.pitch * 0.45
+  const sag = Math.max(1e-3, p.lensHeight * 0.88)
+  const Rc = (r * r + sag * sag) / (2 * sag)
+  const f = (N_LENS * Rc) / (N_LENS - 1)
+  const vertexZ = p.lensHeight - sag
+  const siTop = siliconTopFor(p)
+  let z = vertexZ + f
+  if (z > siTop) {
+    const nSi = getN(MATERIALS.silicon, p.wavelengthNm / 1000)[0]
+    z = siTop + (z - siTop) * (nSi / N_LENS)
+  }
+  return clamp(z, p.lensHeight * 0.25 + 0.2, totalHeightFor(p) - 0.1)
+}
+
 function opticalFieldAt(x: number, z: number, p: SimParams): number {
   const siTop = siliconTopFor(p)
   const total = totalHeightFor(p)
-  const focusZ = siTop + p.siliconThickness * 0.5
+  const focusZ = focusZFor(p)
   const craRad = (p.craDeg * Math.PI) / 180
   const travel = Math.max(0, z - p.lensHeight * 0.35)
   const beamCenter = p.lensOffset + Math.tan(craRad) * travel * 0.22
@@ -542,7 +572,7 @@ function opticalFieldAt(x: number, z: number, p: SimParams): number {
 
   const gaussian = Math.exp(-((x - beamCenter) ** 2) / (2 * sigma * sigma))
   const zInSi = Math.max(0, z - siTop)
-  const absorption = z < siTop ? 0.88 : Math.exp(-0.16 * zInSi) * (1.06 + 0.22 * Math.exp(-((z - focusZ) ** 2) / 0.55))
+  const absorption = z < siTop ? 0.88 : Math.exp(-siAlphaFor(p) * zInSi) * (1.06 + 0.22 * Math.exp(-((z - focusZ) ** 2) / 0.55))
   const fringe = 1 + 0.08 * Math.sin((z * 2 * Math.PI * 3.6) / (p.wavelengthNm / 1000) + x * 8.5)
   let value = gaussian * absorption * fringe
 
@@ -651,7 +681,7 @@ const layerRects = computed(() => {
     },
     {
       key: 'oxide',
-      label: t('Front oxide / gate stack', '전면 산화막 / 게이트 스택'),
+      label: t('Backside oxide / BARL', '후면 산화막 / BARL'),
       x,
       y: structureY(p.lensHeight + cfThickness),
       w,
@@ -735,7 +765,7 @@ const structureRays = computed(() => {
   const p = params.value
   const rays: Array<{ key: string; path: string; color: string }> = []
   const top = 0.08
-  const focusZ = siliconTopFor(p) + p.siliconThickness * 0.5
+  const focusZ = focusZFor(p)
   const craRad = (p.craDeg * Math.PI) / 180
   for (let i = 0; i < 9; i++) {
     const u = -0.42 + (0.84 * i) / 8
@@ -846,8 +876,9 @@ function drawFieldCanvas() {
 
   ctx.fillStyle = 'rgba(255,255,255,0.84)'
   ctx.font = '11px Inter, system-ui, sans-serif'
-  ctx.fillText('I(x,z)', 12, 18)
-  ctx.fillText(`${currentMetrics.value.crosstalkPct.toFixed(1)}% XT`, cssW - 70, 18)
+  ctx.fillText(t('I(x,z)', '강도 I(x,z)'), 12, 18)
+  ctx.textAlign = 'right'
+  ctx.fillText(`${t('XT', '크로스토크')} ${currentMetrics.value.crosstalkPct.toFixed(1)}%`, cssW - 12, 18)
   ctx.restore()
 }
 
@@ -888,7 +919,7 @@ const qaScenarios = computed(() => {
     {
       key: 'deep-cra',
       label: t('Full FDTI + oblique', '관통 FDTI + 경사 입사'),
-      metrics: simulateCoreMetrics({ ...p, isolationMode: 'fdti', fdtiDepth: p.siliconThickness, craDeg: clamp(p.craDeg + 8, -24, 24), lensOffset: clamp(p.lensOffset + 0.05, -0.25, 0.25) }),
+      metrics: simulateCoreMetrics({ ...p, isolationMode: 'fdti', fdtiDepth: p.siliconThickness, craDeg: clamp(p.craDeg + 8, -24, 24), lensOffset: clamp(p.lensOffset - Math.sign(clamp(p.craDeg + 8, -24, 24)) * 0.05, -0.25, 0.25) }),
       targetCenter: 40,
       targetCross: 18,
     },

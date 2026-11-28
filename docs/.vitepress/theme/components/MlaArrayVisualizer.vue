@@ -215,6 +215,11 @@
 
       <!-- 2D Ray Trace View -->
       <svg v-if="viewMode === 'ray'" :viewBox="`0 0 ${svgW} ${svgH}`" class="mla-svg">
+        <defs>
+          <clipPath id="mla-ray-clip">
+            <rect :x="rPad.left" :y="rPad.top" :width="rayDrawW" :height="rayDrawH" />
+          </clipPath>
+        </defs>
         <rect x="0" y="0" :width="svgW" :height="svgH" fill="var(--vp-c-bg)" />
         <line v-for="gy in rayGridY" :key="'rgy-' + gy.v"
           :x1="rPad.left" :y1="gy.y" :x2="svgW - rPad.right" :y2="gy.y"
@@ -226,6 +231,7 @@
           stroke="var(--vp-c-divider)" stroke-width="0.5" />
         <text v-for="gx in rayGridX" :key="'rgxt-' + gx.v"
           :x="gx.x" :y="svgH - rPad.bottom + 14" text-anchor="middle" class="axis-label">{{ gx.label }}</text>
+        <g clip-path="url(#mla-ray-clip)">
         <!-- Lens profiles -->
         <path v-for="(lp, lpi) in lensProfiles" :key="'lp-' + lpi"
           :d="lp" fill="#dda0dd" fill-opacity="0.4" stroke="#8e44ad" stroke-width="2" />
@@ -237,12 +243,13 @@
           <line v-if="ray.hitSurface" :x1="ray.x1" :y1="ray.y1" :x2="ray.x2" :y2="ray.y2"
             :stroke="ray.color" stroke-width="1.2" opacity="0.7" />
         </template>
-        <!-- Focal point -->
-        <template v-if="focalPoint2D">
-          <circle :cx="focalPoint2D.svgX" :cy="focalPoint2D.svgY" r="5" fill="none" stroke="#e74c3c" stroke-width="2" />
-          <line :x1="focalPoint2D.svgX - 7" :y1="focalPoint2D.svgY" :x2="focalPoint2D.svgX + 7" :y2="focalPoint2D.svgY" stroke="#e74c3c" stroke-width="1.5" />
-          <line :x1="focalPoint2D.svgX" :y1="focalPoint2D.svgY - 7" :x2="focalPoint2D.svgX" :y2="focalPoint2D.svgY + 7" stroke="#e74c3c" stroke-width="1.5" />
+        <!-- Focal point (one marker per lens) -->
+        <template v-for="(fp, fi) in focalMarkers2D" :key="'fp-' + fi">
+          <circle :cx="fp.svgX" :cy="fp.svgY" r="5" fill="none" stroke="#e74c3c" stroke-width="2" />
+          <line :x1="fp.svgX - 7" :y1="fp.svgY" :x2="fp.svgX + 7" :y2="fp.svgY" stroke="#e74c3c" stroke-width="1.5" />
+          <line :x1="fp.svgX" :y1="fp.svgY - 7" :x2="fp.svgX" :y2="fp.svgY + 7" stroke="#e74c3c" stroke-width="1.5" />
         </template>
+        </g>
         <!-- Legend -->
         <line :x1="svgW - 140" y1="16" :x2="svgW - 120" y2="16" stroke="#3498db" stroke-width="1.5" opacity="0.7" />
         <text :x="svgW - 116" y="20" class="legend-label">{{ t('Focused', '집속') }}</text>
@@ -283,14 +290,20 @@
         <span class="info-value">{{ focalPoint2D ? focalPoint2D.z.toFixed(3) + ' um' : '—' }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">{{ t('Back focal dist.', '후면 초점 거리') }}</span>
-        <span class="info-value">{{ focalPoint2D ? Math.abs(focalPoint2D.z).toFixed(3) + ' um' : '—' }}</span>
+        <span class="info-label">{{ t('Back focal dist. (from vertex)', '후면 초점 거리 (정점 기준)') }}</span>
+        <span class="info-value">{{ focalPoint2D ? (h - focalPoint2D.z).toFixed(3) + ' um' : '—' }}</span>
       </div>
       <div class="info-card">
         <span class="info-label">{{ t('Focus efficiency', '집속 효율') }}</span>
         <span class="info-value">{{ focusEfficiency.toFixed(1) }}%</span>
       </div>
     </div>
+    <p v-if="viewMode === 'ray'" class="loading-text">
+      {{ t(
+        'Ray trace is a 2D XZ cut at y = 0 through each lens: only Rx, h and α shape it (Ry and n do not affect this section). The focal point is where the refracted near-axis rays actually cross; the lens medium is assumed to extend below the lens.',
+        '광선 추적은 각 렌즈의 y = 0 XZ 단면(2D)입니다. Rx, h, α만 영향을 주며 Ry와 n은 이 단면에 영향을 주지 않습니다. 집속점은 굴절된 근축 광선들이 실제로 교차하는 위치이며, 렌즈 아래는 렌즈와 같은 매질로 가정합니다.'
+      ) }}
+    </p>
 
     <div class="formula-box">
       <strong>{{ t('Superellipse', '초타원') }}:</strong> |x/Rx|<sup>n</sup> + |y/Ry|<sup>n</sup> = 1 &nbsp;|&nbsp;
@@ -628,8 +641,10 @@ const diagProfile = computed(() => {
   const pts: Array<{ x: number; z: number }> = []
   const range = sectionRange.value
   for (let i = 0; i <= sectionRes; i++) {
+    // s is the distance along the 45° diagonal → sample at (s/√2, s/√2)
     const p = -range + (2 * range * i) / sectionRes
-    const r = superDist(p, p, Rx.value, Ry.value, n.value)
+    const q = p / Math.SQRT2
+    const r = superDist(q, q, Rx.value, Ry.value, n.value)
     pts.push({ x: p, z: lensZ(r, h.value, alpha.value) })
   }
   return pts
@@ -949,7 +964,6 @@ const rayXRange = computed(() => {
   return (cols * spacingX.value) / 2 + Rx.value * 0.3
 })
 
-const rayZMin = computed(() => -propDist.value * 0.8)
 const rayZMax = computed(() => h.value + 1.5)
 const rayDrawW = computed(() => svgW - rPad.left - rPad.right)
 const rayDrawH = computed(() => svgH - rPad.top - rPad.bottom)
@@ -1005,31 +1019,43 @@ const lensProfiles = computed(() => {
   return paths
 })
 
+interface PhysRay {
+  startX: number; startZ: number; surfX: number; surfZ: number
+  endX: number; endZ: number; dx: number; dz: number
+  hitSurface: boolean; focused: boolean; lensCx: number; localX: number
+}
+
 interface Ray2D {
   x0: number; y0: number; x1: number; y1: number; x2: number; y2: number
   hitSurface: boolean; color: string; endPhysZ: number; endPhysX: number
 }
 
-const rays2D = computed((): Ray2D[] => {
+function lensCenters(): number[] {
   const cols = arrCols.value
-  const result: Ray2D[] = []
-  const nLens = refIdx.value
-
+  const cs: number[] = []
   for (let lc = 0; lc < cols; lc++) {
-    const cx = arrayConfig.value === '1x1' ? 0 : (lc - (cols - 1) / 2) * spacingX.value
+    cs.push(arrayConfig.value === '1x1' ? 0 : (lc - (cols - 1) / 2) * spacingX.value)
+  }
+  return cs
+}
 
+// Physical ray paths (um). Rays stop at the "Propagation" plane z = surfZ − propDist.
+const physRays = computed((): PhysRay[] => {
+  const result: PhysRay[] = []
+  const nLens = refIdx.value
+  const startZ = rayZMax.value - 0.1
+
+  for (const cx of lensCenters()) {
     for (let ri = 0; ri < numRays.value; ri++) {
       const localX = ((ri + 0.5) / numRays.value - 0.5) * Rx.value * 1.6
       const startX = cx + localX
-      const startZ = rayZMax.value - 0.1
       const r = Math.abs(localX / Rx.value)
 
       if (r >= 1) {
         result.push({
-          x0: rayXScale(startX), y0: rayYScale(startZ),
-          x1: rayXScale(startX), y1: rayYScale(-propDist.value),
-          x2: rayXScale(startX), y2: rayYScale(-propDist.value),
-          hitSurface: false, color: '#95a5a6', endPhysZ: -propDist.value, endPhysX: startX,
+          startX, startZ, surfX: startX, surfZ: -propDist.value,
+          endX: startX, endZ: -propDist.value, dx: 0, dz: -1,
+          hitSurface: false, focused: false, lensCx: cx, localX,
         })
         continue
       }
@@ -1063,27 +1089,73 @@ const rays2D = computed((): Ray2D[] => {
       const tProp = propDist.value / Math.max(Math.abs(refDz), 0.01)
       const endX = startX + refDx * tProp
       const endZ = surfZ + refDz * tProp
-      const focused = Math.abs(endX - cx) < Rx.value * 0.3
-
       result.push({
-        x0: rayXScale(startX), y0: rayYScale(startZ),
-        x1: rayXScale(startX), y1: rayYScale(surfZ),
-        x2: rayXScale(endX), y2: rayYScale(endZ),
-        hitSurface: true, color: focused ? '#3498db' : '#95a5a6',
-        endPhysZ: endZ, endPhysX: endX,
+        startX, startZ, surfX: startX, surfZ, endX, endZ, dx: refDx, dz: refDz,
+        hitSurface: true, focused: Math.abs(endX - cx) < Rx.value * 0.3, lensCx: cx, localX,
       })
     }
   }
   return result
 })
 
+// Actual focus of one lens: least-squares point closest to the refracted
+// near-axis rays (|x| ≤ 0.5·Rx; falls back to all refracted rays). Independent
+// of where the rays are cut off by the propagation slider.
+function lensFocus(cx: number): { x: number; z: number } | null {
+  const hits = physRays.value.filter(r => r.hitSurface && r.lensCx === cx && r.dz < 0)
+  let use = hits.filter(r => Math.abs(r.localX) <= 0.5 * Rx.value && Math.abs(r.localX) > 1e-9)
+  if (use.length < 2) use = hits
+  if (use.length < 2) return null
+  // Minimise Σ |(I − d dᵀ)(p − a)|² → A p = b with A = Σ(I − d dᵀ)
+  let a11 = 0, a12 = 0, a22 = 0, b1 = 0, b2 = 0
+  for (const r of use) {
+    const m11 = 1 - r.dx * r.dx, m12 = -r.dx * r.dz, m22 = 1 - r.dz * r.dz
+    a11 += m11; a12 += m12; a22 += m22
+    b1 += m11 * r.surfX + m12 * r.surfZ
+    b2 += m12 * r.surfX + m22 * r.surfZ
+  }
+  const det = a11 * a22 - a12 * a12
+  if (Math.abs(det) < 1e-12) return null
+  const x = (a22 * b1 - a12 * b2) / det
+  const z = (a11 * b2 - a12 * b1) / det
+  if (!Number.isFinite(x) || !Number.isFinite(z) || z > h.value) return null
+  return { x, z }
+}
+
+const focusPhys = computed(() => lensCenters().map(cx => lensFocus(cx)))
+
+// Plot extends below the propagation plane and (within reason) down to the focus
+const rayZMin = computed(() => {
+  const zf = focusPhys.value.find(f => f)?.z ?? -propDist.value
+  return Math.min(-propDist.value, Math.max(zf, -2.5 * propDist.value)) - 0.3
+})
+
+const rays2D = computed((): Ray2D[] =>
+  physRays.value.map(r => ({
+    x0: rayXScale(r.startX), y0: rayYScale(r.startZ),
+    x1: rayXScale(r.surfX), y1: rayYScale(r.surfZ),
+    x2: rayXScale(r.endX), y2: rayYScale(r.endZ),
+    hitSurface: r.hitSurface, color: r.focused ? '#3498db' : '#95a5a6',
+    endPhysZ: r.endZ, endPhysX: r.endX,
+  })),
+)
+
+const focalMarkers2D = computed(() =>
+  focusPhys.value
+    .filter((f): f is { x: number; z: number } => !!f)
+    .map(f => ({ svgX: rayXScale(f.x), svgY: rayYScale(f.z), x: f.x, z: f.z })),
+)
+
+// Representative focus for the info cards: lens closest to x = 0
 const focalPoint2D = computed(() => {
-  const focused = rays2D.value.filter(r => r.hitSurface && r.color === '#3498db')
-  if (focused.length < 2) return null
-  let sumX = 0, sumZ = 0
-  for (const r of focused) { sumX += r.endPhysX; sumZ += r.endPhysZ }
-  const fpx = sumX / focused.length, fpz = sumZ / focused.length
-  return { svgX: rayXScale(fpx), svgY: rayYScale(fpz), x: fpx, z: fpz }
+  const cs = lensCenters()
+  let best = -1
+  for (let i = 0; i < cs.length; i++) {
+    if (focusPhys.value[i] && (best < 0 || Math.abs(cs[i]) < Math.abs(cs[best]))) best = i
+  }
+  if (best < 0) return null
+  const f = focusPhys.value[best]!
+  return { svgX: rayXScale(f.x), svgY: rayYScale(f.z), x: f.x, z: f.z }
 })
 
 // ===== Focus Efficiency =====
@@ -1109,11 +1181,23 @@ const fNumber = computed(() => {
   return estFocalLength.value / (2 * avgR)
 })
 
+// Fraction of the array's cell area covered by the (possibly overlapping)
+// superellipse footprints, sampled on a grid. For 1x1 the cell is the lens's
+// bounding box 2Rx × 2Ry.
 const fillFactor = computed(() => {
-  if (arrayConfig.value === '1x1') return 100
-  const lensArea = Math.PI * Rx.value * Ry.value
-  const cellArea = spacingX.value * spacingY.value
-  return Math.min(100, (lensArea / cellArea) * 100)
+  const single = arrayConfig.value === '1x1'
+  const W = single ? 2 * Rx.value : arrCols.value * spacingX.value
+  const H = single ? 2 * Ry.value : arrRows.value * spacingY.value
+  const N = 160
+  let covered = 0
+  for (let i = 0; i < N; i++) {
+    const py = -H / 2 + ((i + 0.5) / N) * H
+    for (let j = 0; j < N; j++) {
+      const px = -W / 2 + ((j + 0.5) / N) * W
+      if (arrayZ(px, py) > 0) covered++
+    }
+  }
+  return (covered / (N * N)) * 100
 })
 </script>
 

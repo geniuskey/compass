@@ -34,7 +34,7 @@
       </div>
       <div class="slider-group">
         <label>
-          {{ t('Si Thickness', 'Si 두께') }}: <strong>{{ siThickness.toFixed(1) }} um</strong>
+          {{ t('Si Thickness', 'Si 두께') }}: <strong>{{ siThickness.toFixed(1) }} &micro;m</strong>
         </label>
         <input
           type="range"
@@ -48,7 +48,7 @@
       </div>
       <div class="slider-group">
         <label>
-          {{ t('Photodiode Depth', '포토다이오드 깊이') }}: <strong>{{ pdDepth.toFixed(1) }} um</strong>
+          {{ t('Photodiode Depth', '포토다이오드 깊이') }}: <strong>{{ pdDepth.toFixed(1) }} &micro;m</strong>
         </label>
         <input
           type="range"
@@ -78,7 +78,7 @@
                 :stop-opacity="stop.opacity"
               />
             </linearGradient>
-            <marker id="siAbsLightArrow" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
+            <marker id="siAbsLightArrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
               <polygon :points="'0 0, 8 3, 0 6'" :fill="wlColor" />
             </marker>
           </defs>
@@ -88,7 +88,7 @@
             :x1="siRectX + siRectW / 2"
             :y1="12"
             :x2="siRectX + siRectW / 2"
-            :y2="crossTopY - 4"
+            :y2="crossTopY - 1"
             :stroke="wlColor"
             stroke-width="2.5"
             marker-end="url(#siAbsLightArrow)"
@@ -133,7 +133,7 @@
           />
           <text
             :x="siRectX + siRectW + 12"
-            :y="pdLineY + 4"
+            :y="pdLabelY"
             class="pd-label"
             v-if="pdDepth <= siThickness"
           >{{ t('PD depth', 'PD 깊이') }}</text>
@@ -153,7 +153,7 @@
               :y="crossTopY + (d / siThickness) * siRectH + 3"
               text-anchor="end"
               class="depth-tick-label"
-            >{{ d }} um</text>
+            >{{ d }} &micro;m</text>
           </template>
 
           <!-- Penetration depth marker (if within Si) -->
@@ -170,9 +170,9 @@
           <text
             v-if="penetrationDepth <= siThickness"
             :x="siRectX + siRectW + 12"
-            :y="crossTopY + (penetrationDepth / siThickness) * siRectH + 4"
+            :y="deltaLabelY"
             class="delta-label"
-          >delta = {{ penetrationDepth.toFixed(2) }} um</text>
+          >&delta; = {{ penetrationDepth.toFixed(2) }} &micro;m</text>
         </svg>
       </div>
 
@@ -242,7 +242,7 @@
             text-anchor="middle"
             :transform="`rotate(-90, 10, ${chartPadT + chartPlotH / 2})`"
             class="axis-label"
-          >alpha (cm-1)</text>
+          >&alpha; (cm<tspan dy="-4" font-size="7">&minus;1</tspan><tspan dy="4">)</tspan></text>
 
           <!-- Right Y-axis labels (penetration depth in um) -->
           <template v-for="exp in [1, 2, 3, 4, 5, 6]" :key="'yr' + exp">
@@ -267,7 +267,7 @@
             text-anchor="middle"
             :transform="`rotate(90, ${chartW - 8}, ${chartPadT + chartPlotH / 2})`"
             class="axis-label"
-          >delta (um)</text>
+          >&delta; (&micro;m)</text>
 
           <!-- X-axis ticks -->
           <template v-for="wl in [400, 500, 600, 700, 800, 900, 1000]" :key="'xt' + wl">
@@ -321,11 +321,11 @@
     <!-- Info cards row -->
     <div class="info-cards">
       <div class="info-card">
-        <div class="info-label">{{ t('Absorption coeff.', '흡수 계수') }} alpha</div>
+        <div class="info-label">{{ t('Absorption coeff.', '흡수 계수') }} &alpha;</div>
         <div class="info-value">{{ alphaDisplay }} cm<sup>-1</sup></div>
       </div>
       <div class="info-card">
-        <div class="info-label">{{ t('Penetration depth', '침투 깊이') }} delta</div>
+        <div class="info-label">{{ t('Penetration depth', '침투 깊이') }} &delta;</div>
         <div class="info-value">{{ penetrationDisplay }}</div>
       </div>
       <div class="info-card">
@@ -396,8 +396,9 @@ const penetrationDepth = computed(() => {
   return 1 / alphaUm.value
 })
 
+// The PD cannot collect below the Si bottom, so clamp its depth to the Si thickness
 const absorbedInPD = computed(() => {
-  return 1 - Math.exp(-alphaUm.value * pdDepth.value)
+  return 1 - Math.exp(-alphaUm.value * Math.min(pdDepth.value, siThickness.value))
 })
 
 const absorbedInSi = computed(() => {
@@ -407,7 +408,7 @@ const absorbedInSi = computed(() => {
 // Display-only guard: when absorption is effectively zero (k = 0), show infinity
 const penetrationDisplay = computed(() => {
   if (alphaUm.value <= 0) return '∞'
-  return `${penetrationDepth.value.toFixed(3)} um`
+  return `${penetrationDepth.value.toFixed(3)} µm`
 })
 
 const alphaDisplay = computed(() => {
@@ -497,6 +498,18 @@ const pdLineY = computed(() => {
   return crossTopY + (pdDepth.value / siThickness.value) * siRectH
 })
 
+// Labels for the PD line and the penetration-depth line share x; push them apart
+// vertically when the two lines are close so the text does not overlap.
+const deltaLineY = computed(() => crossTopY + (penetrationDepth.value / siThickness.value) * siRectH)
+const LABEL_GAP = 12
+const pdLabelY = computed(() => {
+  const y = pdLineY.value + 4
+  const dy = deltaLineY.value + 4
+  if (penetrationDepth.value > siThickness.value || Math.abs(y - dy) >= LABEL_GAP) return y
+  return pdLineY.value >= deltaLineY.value ? dy + LABEL_GAP : dy - LABEL_GAP
+})
+const deltaLabelY = computed(() => deltaLineY.value + 4)
+
 // Depth axis ticks
 const depthTicks = computed(() => {
   const ticks: number[] = [0]
@@ -525,10 +538,10 @@ function alphaToY(alphaCmVal: number): number {
 function depthLabel(alphaCmVal: number): string {
   // alpha_um = alpha_cm / 1e4, delta_um = 1 / alpha_um = 1e4 / alpha_cm
   const delta = 1e4 / alphaCmVal
-  if (delta >= 100) return `${Math.round(delta)} um`
-  if (delta >= 1) return `${delta.toFixed(1)} um`
+  if (delta >= 100) return `${Math.round(delta)} µm`
+  if (delta >= 1) return `${delta.toFixed(1)} µm`
   if (delta >= 0.01) return `${(delta * 1000).toFixed(0)} nm`
-  return `${delta.toExponential(1)} um`
+  return `${delta.toExponential(1)} µm`
 }
 
 // Alpha curve path across all wavelengths

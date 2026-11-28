@@ -34,16 +34,28 @@
 
     <div class="results-grid">
       <div class="result-card">
-        <div class="result-label">{{ t('Max Non-linearity', '최대 비선형성') }}</div>
-        <div class="result-value highlight">{{ maxNL.toFixed(2) }}%</div>
+        <div class="result-label">{{ t('Linearity Error LE (EMVA)', '선형성 오차 LE (EMVA)') }}</div>
+        <div class="result-value highlight">&plusmn;{{ linearityError.toFixed(2) }}%</div>
+        <div class="result-sub">{{ t('fit 5–95 % of saturation', '포화의 5–95 % 구간 피팅') }}</div>
       </div>
       <div class="result-card">
-        <div class="result-label">{{ t('Linear Range', '선형 범위') }}</div>
+        <div class="result-label">{{ t('Max deviation from ideal', '이상 직선 대비 최대 편차') }}</div>
+        <div class="result-value">{{ maxNL.toFixed(2) }}% FS</div>
+      </div>
+      <div class="result-card">
+        <div class="result-label">{{ t('Linear range (<1 % FS)', '선형 범위 (<1 % FS)') }}</div>
         <div class="result-value">{{ linearRange.toFixed(0) }}%</div>
+        <div class="result-sub">{{ fmtE(linearRange / 100 * fwc) }} e&minus;</div>
       </div>
       <div class="result-card">
-        <div class="result-label">{{ t('RMS Error', 'RMS 오차') }}</div>
-        <div class="result-value">{{ rmsError.toFixed(3) }}%</div>
+        <div class="result-label">{{ t('Output saturates at', '출력 포화 입력') }}</div>
+        <div class="result-value">{{ satInput.toFixed(0) }}%</div>
+        <div class="result-sub">{{ fmtE(satInput / 100 * fwc) }} e&minus;</div>
+      </div>
+      <div class="result-card">
+        <div class="result-label">{{ t('Fitted responsivity', '피팅 응답도') }}</div>
+        <div class="result-value">{{ fit.slope.toFixed(3) }}</div>
+        <div class="result-sub">{{ t('output/input slope', '출력/입력 기울기') }}</div>
       </div>
     </div>
 
@@ -52,31 +64,40 @@
       <div class="chart-col">
         <h5>{{ t('Transfer Curve', '전달 곡선') }}</h5>
         <svg :viewBox="`0 0 ${CW} ${CH}`" class="lin-svg">
-          <line v-for="tick in aTicks" :key="'ag'+tick"
+          <rect :x="axScale(fitWindow.x0)" :y="aPad.top" :width="Math.max(0, axScale(fitWindow.x1) - axScale(fitWindow.x0))" :height="aPlotH"
+            fill="var(--vp-c-brand-1)" opacity="0.06" />
+          <line v-for="tick in xTicks" :key="'ag'+tick"
             :x1="axScale(tick)" :y1="aPad.top" :x2="axScale(tick)" :y2="aPad.top + aPlotH"
             stroke="var(--vp-c-divider)" stroke-width="0.5" stroke-dasharray="3,3" />
-          <line v-for="tick in aTicks" :key="'ayg'+tick"
+          <line v-for="tick in yTicks" :key="'ayg'+tick"
             :x1="aPad.left" :y1="ayScale(tick)" :x2="aPad.left + aPlotW" :y2="ayScale(tick)"
             stroke="var(--vp-c-divider)" stroke-width="0.5" stroke-dasharray="3,3" />
           <line :x1="aPad.left" :y1="aPad.top" :x2="aPad.left" :y2="aPad.top + aPlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
           <line :x1="aPad.left" :y1="aPad.top + aPlotH" :x2="aPad.left + aPlotW" :y2="aPad.top + aPlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
           <!-- Ideal line -->
-          <line :x1="aPad.left" :y1="aPad.top + aPlotH" :x2="aPad.left + aPlotW" :y2="aPad.top"
+          <line :x1="axScale(0)" :y1="ayScale(0)" :x2="axScale(100)" :y2="ayScale(100)"
             stroke="var(--vp-c-text-3)" stroke-width="1" stroke-dasharray="4,3" />
+          <!-- Least-squares fit over the EMVA window -->
+          <line :x1="axScale(0)" :y1="ayScale(fit.intercept * 100)" :x2="axScale(X_MAX)" :y2="ayScale((fit.intercept + fit.slope * X_MAX / 100) * 100)"
+            stroke="#8e44ad" stroke-width="1" stroke-dasharray="2,2" />
           <!-- Actual curve -->
           <path :d="transferPath" fill="none" stroke="var(--vp-c-brand-1)" stroke-width="2" />
-          <text v-for="tick in aTicks" :key="'axl'+tick"
+          <text v-for="tick in xTicks" :key="'axl'+tick"
             :x="axScale(tick)" :y="aPad.top + aPlotH + 12" text-anchor="middle" class="tick-label">{{ tick }}%</text>
-          <text v-for="tick in aTicks" :key="'ayl'+tick"
+          <text v-for="tick in yTicks" :key="'ayl'+tick"
             :x="aPad.left - 4" :y="ayScale(tick) + 3" text-anchor="end" class="tick-label">{{ tick }}%</text>
           <text :x="aPad.left + aPlotW / 2" :y="aPad.top + aPlotH + 24" text-anchor="middle" class="axis-title">{{ t('Input (%FWC)', '입력 (%FWC)') }}</text>
+          <text :x="9" :y="aPad.top + aPlotH / 2" text-anchor="middle" class="axis-title"
+            :transform="`rotate(-90, 9, ${aPad.top + aPlotH / 2})`">{{ t('Output (%FS)', '출력 (%FS)') }}</text>
         </svg>
       </div>
 
-      <!-- Residual -->
+      <!-- Relative deviation from the fit -->
       <div class="chart-col">
-        <h5>{{ t('Residual (Deviation)', '잔차 (편차)') }}</h5>
+        <h5>{{ t('Deviation from linear fit', '선형 피팅 대비 편차') }}</h5>
         <svg :viewBox="`0 0 ${CW} ${CH}`" class="lin-svg">
+          <rect :x="axScale(fitWindow.x0)" :y="aPad.top" :width="Math.max(0, axScale(fitWindow.x1) - axScale(fitWindow.x0))" :height="aPlotH"
+            fill="var(--vp-c-brand-1)" opacity="0.06" />
           <line :x1="aPad.left" :y1="resYScale(0)" :x2="aPad.left + aPlotW" :y2="resYScale(0)"
             stroke="var(--vp-c-text-3)" stroke-width="1" />
           <line v-for="tick in resTicks" :key="'rg'+tick"
@@ -85,14 +106,17 @@
           <line :x1="aPad.left" :y1="aPad.top" :x2="aPad.left" :y2="aPad.top + aPlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
           <line :x1="aPad.left" :y1="aPad.top + aPlotH" :x2="aPad.left + aPlotW" :y2="aPad.top + aPlotH" stroke="var(--vp-c-text-2)" stroke-width="1" />
           <path :d="residualPath" fill="none" stroke="#e74c3c" stroke-width="2" />
-          <text v-for="tick in aTicks" :key="'rxl'+tick"
+          <text v-for="tick in xTicks" :key="'rxl'+tick"
             :x="axScale(tick)" :y="aPad.top + aPlotH + 12" text-anchor="middle" class="tick-label">{{ tick }}%</text>
           <text v-for="tick in resTicks" :key="'ryl'+tick"
-            :x="aPad.left - 4" :y="resYScale(tick) + 3" text-anchor="end" class="tick-label">{{ tick.toFixed(1) }}%</text>
+            :x="aPad.left - 4" :y="resYScale(tick) + 3" text-anchor="end" class="tick-label">{{ fmtTick(tick) }}%</text>
           <text :x="aPad.left + aPlotW / 2" :y="aPad.top + aPlotH + 24" text-anchor="middle" class="axis-title">{{ t('Input (%FWC)', '입력 (%FWC)') }}</text>
+          <text :x="9" :y="aPad.top + aPlotH / 2" text-anchor="middle" class="axis-title"
+            :transform="`rotate(-90, 9, ${aPad.top + aPlotH / 2})`">&delta; (%)</text>
         </svg>
       </div>
     </div>
+    <p class="hint">{{ t('Shaded: EMVA 1288 fit window (output between 5 % and 95 % of saturation). δ = (y − y_fit)/y_fit and LE = (max δ − min δ)/2 inside the window.', '음영: EMVA 1288 피팅 구간 (출력이 포화의 5 %–95 %). δ = (y − y_fit)/y_fit 이며 LE = (max δ − min δ)/2 (구간 내).') }}</p>
   </div>
 </template>
 
@@ -114,51 +138,96 @@ function resetControls() {
   kneePoint.value = 80
 }
 
-function sensorOutput(inputPct: number): number {
+/** Normalised output (fraction of full scale) for normalised input (fraction of FWC); clips at 1. */
+function sensorOutput(input: number): number {
   const knee = kneePoint.value / 100
   const nl = nonlin.value / 100
-  if (inputPct <= knee) {
-    return inputPct * (1 - nl * (inputPct / knee) ** 2)
+  if (input <= knee) {
+    return Math.min(1, input * (1 - nl * (input / knee) ** 2))
   }
   const atKnee = knee * (1 - nl)
-  const remaining = 1 - knee
-  const compressionFactor = (1 - nl * 3)
-  const aboveKnee = (inputPct - knee) * Math.max(0.1, compressionFactor)
+  // Slope just below the knee is (1 − 3·nl); keep it continuous above the knee.
+  const compressionFactor = 1 - nl * 3
+  const aboveKnee = (input - knee) * Math.max(0.1, compressionFactor)
   return Math.min(1, atKnee + aboveKnee)
 }
 
-const STEPS = 100
+const X_MAX = 120 // % of FWC on the input axis, so output clipping is visible
+const STEPS = 240
 const transferData = computed(() => {
-  const pts: { input: number; output: number; residual: number }[] = []
+  const pts: { input: number; output: number }[] = []
   for (let i = 0; i <= STEPS; i++) {
-    const input = i / STEPS
-    const output = sensorOutput(input)
-    pts.push({ input, output, residual: (output - input) * 100 })
+    const input = (i / STEPS) * (X_MAX / 100)
+    pts.push({ input, output: sensorOutput(input) })
   }
   return pts
 })
 
-const maxNL = computed(() => Math.max(...transferData.value.map(p => Math.abs(p.residual))))
-const rmsError = computed(() => {
-  const sum = transferData.value.reduce((s, p) => s + p.residual ** 2, 0)
-  return Math.sqrt(sum / transferData.value.length)
+const satInput = computed(() => {
+  const hit = transferData.value.find(p => p.output >= 0.9995)
+  return hit ? hit.input * 100 : X_MAX
 })
+
+/** EMVA 1288 window: output between 5 % and 95 % of saturation output. */
+const windowPts = computed(() => transferData.value.filter(p => p.output >= 0.05 && p.output <= 0.95 && p.input * 100 < satInput.value))
+const fitWindow = computed(() => {
+  const w = windowPts.value
+  return w.length ? { x0: w[0].input * 100, x1: w[w.length - 1].input * 100 } : { x0: 0, x1: 0 }
+})
+
+const fit = computed(() => {
+  const w = windowPts.value
+  const n = w.length
+  if (n < 2) return { slope: 1, intercept: 0 }
+  let sx = 0, sy = 0, sxx = 0, sxy = 0
+  for (const p of w) { sx += p.input; sy += p.output; sxx += p.input ** 2; sxy += p.input * p.output }
+  const slope = (n * sxy - sx * sy) / (n * sxx - sx * sx)
+  return { slope, intercept: (sy - slope * sx) / n }
+})
+
+const deviations = computed(() =>
+  windowPts.value.map(p => {
+    const yFit = fit.value.intercept + fit.value.slope * p.input
+    return { input: p.input, delta: yFit > 0 ? ((p.output - yFit) / yFit) * 100 : 0 }
+  })
+)
+
+const linearityError = computed(() => {
+  const d = deviations.value.map(v => v.delta)
+  if (!d.length) return 0
+  return (Math.max(...d) - Math.min(...d)) / 2
+})
+
+/** Deviation from the ideal y = x, in % of full scale, below saturation. */
+const maxNL = computed(() =>
+  Math.max(0, ...transferData.value.filter(p => p.input <= 1).map(p => Math.abs(p.output - p.input) * 100))
+)
 const linearRange = computed(() => {
-  let last = 100
-  for (let i = transferData.value.length - 1; i >= 0; i--) {
-    if (Math.abs(transferData.value[i].residual) < 1) { last = transferData.value[i].input * 100; break }
+  let last = 0
+  for (const p of transferData.value) {
+    if (p.input > 1) break
+    if (Math.abs(p.output - p.input) * 100 < 1) last = p.input * 100
+    else break
   }
   return last
 })
 
+function fmtE(v: number): string {
+  return v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toFixed(0)
+}
+function fmtTick(v: number): string {
+  return Math.abs(v) >= 1 ? v.toFixed(1) : v.toFixed(2)
+}
+
 const CW = 280, CH = 200
-const aPad = { top: 12, right: 8, bottom: 30, left: 36 }
+const aPad = { top: 12, right: 16, bottom: 30, left: 40 }
 const aPlotW = CW - aPad.left - aPad.right
 const aPlotH = CH - aPad.top - aPad.bottom
-const aTicks = [0, 25, 50, 75, 100]
+const xTicks = [0, 30, 60, 90, 120]
+const yTicks = [0, 25, 50, 75, 100]
 
-function axScale(pct: number): number { return aPad.left + (pct / 100) * aPlotW }
-function ayScale(pct: number): number { return aPad.top + aPlotH - (pct / 100) * aPlotH }
+function axScale(pct: number): number { return aPad.left + (pct / X_MAX) * aPlotW }
+function ayScale(pct: number): number { return aPad.top + aPlotH - (pct / 110) * aPlotH }
 
 const transferPath = computed(() =>
   transferData.value.map((p, i) =>
@@ -166,7 +235,11 @@ const transferPath = computed(() =>
   ).join('')
 )
 
-const resRange = computed(() => Math.max(1, Math.ceil(maxNL.value + 0.5)))
+const resRange = computed(() => {
+  const m = Math.max(0.1, ...deviations.value.map(d => Math.abs(d.delta)))
+  const nice = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50]
+  return nice.find(v => v >= m * 1.1) ?? 50
+})
 const resTicks = computed(() => {
   const r = resRange.value
   return [-r, -r / 2, 0, r / 2, r]
@@ -177,8 +250,8 @@ function resYScale(v: number): number {
 }
 
 const residualPath = computed(() =>
-  transferData.value.map((p, i) =>
-    `${i === 0 ? 'M' : 'L'}${axScale(p.input * 100).toFixed(1)},${resYScale(p.residual).toFixed(1)}`
+  deviations.value.map((p, i) =>
+    `${i === 0 ? 'M' : 'L'}${axScale(p.input * 100).toFixed(1)},${resYScale(p.delta).toFixed(1)}`
   ).join('')
 )
 </script>
@@ -200,6 +273,8 @@ const residualPath = computed(() =>
 .result-label { font-size: 0.8em; color: var(--vp-c-text-2); margin-bottom: 4px; }
 .result-value { font-weight: 600; font-family: var(--vp-font-family-mono); }
 .result-value.highlight { color: var(--vp-c-brand-1); }
+.result-sub { font-size: 0.72em; color: var(--vp-c-text-3); margin-top: 2px; }
+.hint { margin: 8px 0 0; font-size: 0.78em; color: var(--vp-c-text-2); }
 .charts-row { display: flex; gap: 16px; flex-wrap: wrap; }
 .chart-col { flex: 1; min-width: 260px; }
 .lin-svg { width: 100%; max-width: 280px; display: block; margin: 0 auto; }

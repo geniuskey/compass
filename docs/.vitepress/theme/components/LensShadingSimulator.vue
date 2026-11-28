@@ -18,8 +18,8 @@
 
     <div class="controls-grid">
       <div class="slider-group">
-        <label>{{ t('Max CRA (edge)', '최대 CRA (에지)') }}: <strong>{{ maxCRA }}&deg;</strong></label>
-        <input type="range" min="5" max="40" step="1" v-model.number="maxCRA" class="ctrl-range" :aria-label="t('Max CRA (edge)', '최대 CRA (에지)')" />
+        <label>{{ t('Max CRA (corner)', '최대 CRA (코너)') }}: <strong>{{ maxCRA }}&deg;</strong></label>
+        <input type="range" min="5" max="40" step="1" v-model.number="maxCRA" class="ctrl-range" :aria-label="t('Max CRA (corner)', '최대 CRA (코너)')" />
       </div>
       <div class="slider-group">
         <label>{{ t('Pixel Pitch', '픽셀 피치') }}: <strong>{{ pitch.toFixed(2) }} &mu;m</strong></label>
@@ -74,7 +74,7 @@
           </div>
         </div>
         <div class="shade-bar">
-          <span>{{ cornerRI.toFixed(0) }}%</span>
+          <span>{{ mapMinRI.toFixed(0) }}%</span>
           <div class="shade-gradient"></div>
           <span>100%</span>
         </div>
@@ -149,7 +149,7 @@ function riAtRadius(rNorm: number, chOffset: number): number {
   const pdHalfWidth = (PD_APERTURE_FRACTION * pitch.value) / 2
   const mlCoupling = Math.exp(-((spotShift / pdHalfWidth) ** 2))
   const cfShift = 1 - chOffset * rNorm * 0.02
-  return cos4 * mlCoupling * Math.max(0.5, cfShift) * 100
+  return Math.min(100, cos4 * mlCoupling * Math.max(0.5, cfShift) * 100)
 }
 
 function riR(r: number): number { return riAtRadius(r, -1) }
@@ -167,9 +167,12 @@ const shadingGrid = computed(() => {
   for (let y = 0; y < GRID; y++) {
     const row: number[] = []
     for (let x = 0; x < GRID; x++) {
-      const nx = (x - GRID / 2) / (GRID / 2)
-      const ny = (y - GRID / 2) / (GRID / 2)
-      const r = Math.min(1, Math.sqrt(nx ** 2 + ny ** 2))
+      // Cell centres span [-1, 1]; r is normalised so the corner is r = 1
+      // (edge midpoint r = 1/√2), matching the Corner/Edge RI cards.
+      const half = (GRID - 1) / 2
+      const nx = (x - half) / half
+      const ny = (y - half) / half
+      const r = Math.min(1, Math.hypot(nx, ny) / Math.SQRT2)
       row.push(fn(r))
     }
     grid.push(row)
@@ -177,9 +180,16 @@ const shadingGrid = computed(() => {
   return grid
 })
 
+// Per-channel normalisation: the darkest value of the displayed channel (its
+// corner) maps to the bottom of the colour scale.
+const mapMinRI = computed(() => {
+  const fn = channel.value === 'r' ? riR : channel.value === 'b' ? riB : riG
+  return fn(1)
+})
+
 function shadeCellColor(val: number): string {
-  const minRI = cornerRI.value
-  const t = Math.max(0, Math.min(1, (val - minRI) / (100 - minRI)))
+  const minRI = mapMinRI.value
+  const t = Math.max(0, Math.min(1, (val - minRI) / Math.max(1e-6, 100 - minRI)))
   if (channel.value === 'r') return `rgba(231,76,60,${0.3 + t * 0.7})`
   if (channel.value === 'b') return `rgba(52,152,219,${0.3 + t * 0.7})`
   const g = Math.round(80 + t * 175)

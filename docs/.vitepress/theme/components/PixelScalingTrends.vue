@@ -105,17 +105,18 @@
             </template>
 
             <!-- Reference data points -->
-            <template v-for="sensor in sensors" :key="'fwcd-'+sensor.name">
+            <template v-for="(sensor, si) in sensors" :key="'fwcd-'+sensor.name">
               <circle
                 v-if="sensor.pitch >= pitchMin && sensor.pitch <= pitchMax"
                 :cx="miniXScale(sensor.pitch)"
                 :cy="fwcYScale(sensor.fwc / 1000)"
                 r="3.5" fill="#e74c3c" stroke="#fff" stroke-width="1"
-              />
+              ><title>{{ sensor.name }} ({{ sensor.pitch }} µm)</title></circle>
+              <!-- Alternate labels above / below the point so neighbouring sensors don't overlap -->
               <text
                 v-if="sensor.pitch >= pitchMin && sensor.pitch <= pitchMax"
                 :x="miniXScale(sensor.pitch) + 5"
-                :y="fwcYScale(sensor.fwc / 1000) - 5"
+                :y="fwcYScale(sensor.fwc / 1000) + (si % 2 === 0 ? -5 : 12)"
                 class="sensor-label"
               >{{ sensor.name }}</text>
             </template>
@@ -186,17 +187,18 @@
             <path :d="snrPath" fill="none" stroke="#27ae60" stroke-width="2" />
 
             <!-- Reference data points -->
-            <template v-for="sensor in sensors" :key="'snrd-'+sensor.name">
+            <template v-for="(sensor, si) in sensors" :key="'snrd-'+sensor.name">
               <circle
                 v-if="sensor.pitch >= pitchMin && sensor.pitch <= pitchMax"
                 :cx="miniXScale(sensor.pitch)"
                 :cy="snrYScale(sensor.snr)"
                 r="3.5" fill="#e74c3c" stroke="#fff" stroke-width="1"
-              />
+              ><title>{{ sensor.name }} ({{ sensor.pitch }} µm)</title></circle>
+              <!-- Alternate labels above / below the point so neighbouring sensors don't overlap -->
               <text
                 v-if="sensor.pitch >= pitchMin && sensor.pitch <= pitchMax"
                 :x="miniXScale(sensor.pitch) + 5"
-                :y="snrYScale(sensor.snr) - 5"
+                :y="snrYScale(sensor.snr) + (si % 2 === 0 ? -5 : 12)"
                 class="sensor-label"
               >{{ sensor.name }}</text>
             </template>

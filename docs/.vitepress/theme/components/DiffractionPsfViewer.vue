@@ -214,7 +214,7 @@
               :y="eeMarginT + 10"
               class="tiny-label"
               fill="var(--vp-c-brand-1)"
-            >{{ t('pixel', '픽셀') }}</text>
+            >r = p/2</text>
 
             <!-- X axis ticks -->
             <template v-for="xt in eeXTicks" :key="'eegx-' + xt">
@@ -250,7 +250,7 @@
             <!-- EE at pixel boundary marker -->
             <circle
               :cx="eeScaleX(pixelPitch / 2)"
-              :cy="eeScaleY(energyInPixel * 100)"
+              :cy="eeScaleY(energyInCircle * 100)"
               r="3"
               fill="#27ae60"
               stroke="#fff"
@@ -258,10 +258,10 @@
             />
             <text
               :x="eeScaleX(pixelPitch / 2) + 8"
-              :y="eeScaleY(energyInPixel * 100) + 3"
+              :y="eeScaleY(energyInCircle * 100) + 3"
               class="tiny-label"
               fill="#27ae60"
-            >{{ (energyInPixel * 100).toFixed(1) }}%</text>
+            >{{ (energyInCircle * 100).toFixed(1) }}%</text>
 
             <!-- Axis labels -->
             <text
@@ -292,11 +292,11 @@
         <span class="info-value">{{ airyPixelRatio.toFixed(2) }}</span>
       </div>
       <div class="info-card">
-        <span class="info-label">{{ t('Energy in pixel', '픽셀 내 에너지') }}</span>
+        <span class="info-label">{{ t('Ensquared energy (pixel)', '픽셀 내 에너지 (정사각형)') }}</span>
         <span class="info-value">{{ (energyInPixel * 100).toFixed(1) }}%</span>
       </div>
       <div class="info-card">
-        <span class="info-label">{{ t('Resolution (lp/mm)', '분해능 (lp/mm)') }}</span>
+        <span class="info-label">{{ t('Rayleigh resolution (lp/mm)', '레일리 분해능 (lp/mm)') }}</span>
         <span class="info-value">{{ diffractionResolution.toFixed(0) }}</span>
       </div>
     </div>
@@ -307,6 +307,11 @@
 import { ref, computed, watchEffect, onMounted } from 'vue'
 import { useLocale } from '../composables/useLocale'
 import { useFullscreen } from '../composables/useFullscreen'
+import {
+  airyIntensity,
+  airyEncircledEnergy,
+  airyEnsquaredEnergy,
+} from '../composables/specialFunctions'
 
 const { t } = useLocale()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
@@ -329,54 +334,25 @@ const wavelengthUm = computed(() => wavelengthNm.value / 1000)
 const airyRadius = computed(() => 1.22 * wavelengthUm.value * fNumber.value)
 const airyPixelRatio = computed(() => (2 * airyRadius.value) / pixelPitch.value)
 const diffractionResolution = computed(() => {
-  // lp/mm = 1/(2.44 * lambda * F) * 1000, with lambda in mm
+  // Rayleigh criterion: two points resolved at separation 1.22·λ·N
+  // → 1 / (1.22 λ N) line pairs per mm (λ in mm)
   const lambdaMm = wavelengthNm.value * 1e-6
-  return 1 / (2.44 * lambdaMm * fNumber.value)
+  return 1 / (1.22 * lambdaMm * fNumber.value)
 })
 
-// Bessel functions
-function besselJ0(x: number): number {
-  let sum = 1
-  let term = 1
-  for (let m = 1; m <= 25; m++) {
-    term *= -(x * x) / (4 * m * m)
-    sum += term
-    if (Math.abs(term) < 1e-15) break
-  }
-  return sum
-}
+// Encircled energy within the inscribed circle r = p/2 (shown on the EE curve)
+const energyInCircle = computed(() =>
+  airyEncircledEnergy(pixelPitch.value / 2, wavelengthUm.value, fNumber.value),
+)
 
-function besselJ1(x: number): number {
-  if (Math.abs(x) < 1e-10) return 0
-  let sum = x / 2
-  let term = x / 2
-  for (let m = 1; m <= 25; m++) {
-    term *= -(x * x) / (4 * m * (m + 1))
-    sum += term
-    if (Math.abs(term) < 1e-15) break
-  }
-  return sum
-}
+// True ensquared energy over the square pixel (side = pitch) centred on the PSF
+const energyInPixel = computed(() =>
+  airyEnsquaredEnergy(pixelPitch.value, wavelengthUm.value, fNumber.value),
+)
 
-function airyIntensity(r: number, wlUm: number, fNum: number): number {
-  if (r < 1e-10) return 1.0
-  const x = Math.PI * r / (wlUm * fNum)
-  const j1 = besselJ1(x)
-  return Math.pow(2 * j1 / x, 2)
-}
-
-// Encircled energy: EE(r) = 1 - J0(x)^2 - J1(x)^2
 function encircledEnergy(r: number, wlUm: number, fNum: number): number {
-  if (r < 1e-10) return 0
-  const x = Math.PI * r / (wlUm * fNum)
-  const j0 = besselJ0(x)
-  const j1 = besselJ1(x)
-  return 1 - j0 * j0 - j1 * j1
+  return airyEncircledEnergy(r, wlUm, fNum)
 }
-
-const energyInPixel = computed(() => {
-  return encircledEnergy(pixelPitch.value / 2, wavelengthUm.value, fNumber.value)
-})
 
 // Canvas rendering
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -450,8 +426,9 @@ function renderCanvas() {
     ctx.lineWidth = 1
     const pp = pixelPitch.value
 
+    // Pixel boundaries at (k + 1/2)·pitch so the PSF sits at a pixel centre
+    const startX = -(Math.ceil(range / pp - 0.5) + 0.5) * pp
     // Vertical lines
-    const startX = -Math.ceil(range / pp) * pp
     for (let gx = startX; gx <= range; gx += pp) {
       const canvasX = ((gx / (2 * range)) + 0.5) * size
       ctx.beginPath()
@@ -502,10 +479,20 @@ const profMarginR = 10
 const profMarginB = 28
 const profPlotW = profileW - profMarginL - profMarginR
 const profPlotH = profileH - profMarginT - profMarginB
-const profXMax = 3 // um
 const profYMinLog = -4 // log10
 
-const profXTicks = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+// Radial axis extent grows with the Airy radius so slow systems are not clipped
+const xAxisMax = computed(() => Math.max(3, 2.5 * airyRadius.value))
+function niceTicks(max: number): number[] {
+  const raw = max / 6
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)))
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? raw
+  const ticks: number[] = []
+  for (let v = 0; v <= max + 1e-9; v += step) ticks.push(Number(v.toFixed(3)))
+  return ticks
+}
+const profXMax = computed(() => xAxisMax.value)
+const profXTicks = computed(() => niceTicks(profXMax.value))
 const profYTicks = [
   { val: 0, label: '1' },
   { val: -1, label: '10\u207B\u00B9' },
@@ -515,7 +502,7 @@ const profYTicks = [
 ]
 
 function profScaleX(r: number): number {
-  return profMarginL + (r / profXMax) * profPlotW
+  return profMarginL + (r / profXMax.value) * profPlotW
 }
 
 function profScaleY(logVal: number): number {
@@ -531,7 +518,7 @@ const radialProfilePath = computed(() => {
   const pts: string[] = []
 
   for (let i = 0; i <= numPts; i++) {
-    const r = (profXMax * i) / numPts
+    const r = (profXMax.value * i) / numPts
     const I = airyIntensity(r, wlUm, fNum)
     const logI = Math.max(profYMinLog, Math.log10(Math.max(I, 1e-10)))
     const sx = profScaleX(r)
@@ -550,12 +537,11 @@ const eeMarginR = 10
 const eeMarginB = 28
 const eePlotW = eeW - eeMarginL - eeMarginR
 const eePlotH = eeH - eeMarginT - eeMarginB
-const eeXMax = 3
-
-const eeXTicks = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+const eeXMax = computed(() => xAxisMax.value)
+const eeXTicks = computed(() => niceTicks(eeXMax.value))
 
 function eeScaleX(r: number): number {
-  return eeMarginL + (r / eeXMax) * eePlotW
+  return eeMarginL + (r / eeXMax.value) * eePlotW
 }
 
 function eeScaleY(pct: number): number {
@@ -569,7 +555,7 @@ const eeCurvePath = computed(() => {
   const pts: string[] = []
 
   for (let i = 0; i <= numPts; i++) {
-    const r = (eeXMax * i) / numPts
+    const r = (eeXMax.value * i) / numPts
     const ee = encircledEnergy(r, wlUm, fNum) * 100
     const sx = eeScaleX(r)
     const sy = eeScaleY(Math.min(100, Math.max(0, ee)))

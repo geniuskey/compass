@@ -22,13 +22,25 @@
       <div class="media-group">
         <label>{{ t('Incident medium:', '입사 매질:') }}</label>
         <select v-model="incidentMat" class="bo-select" :aria-label="t('Incident medium', '입사 매질')">
-          <option v-for="k in substrateMats" :key="'inc'+k" :value="k">{{ matName(k) }}</option>
+          <option v-for="k in incidentMats" :key="'inc'+k" :value="k">{{ matName(k) }}</option>
         </select>
       </div>
       <div class="media-group">
         <label>{{ t('Substrate:', '기판:') }}</label>
         <select v-model="substrateMat" class="bo-select" :aria-label="t('Substrate', '기판')">
           <option v-for="k in substrateMats" :key="'sub'+k" :value="k">{{ matName(k) }}</option>
+        </select>
+      </div>
+      <div class="media-group">
+        <label>{{ t('Angle of incidence:', '입사각:') }} <strong>{{ angleDeg }}&deg;</strong></label>
+        <input type="range" min="0" max="40" step="1" v-model.number="angleDeg" class="bo-range angle-range" :aria-label="t('Angle of incidence', '입사각')" />
+      </div>
+      <div class="media-group">
+        <label>{{ t('Polarization:', '편광:') }}</label>
+        <select v-model="polarization" class="bo-select" :aria-label="t('Polarization', '편광')">
+          <option value="avg">{{ t('Unpolarized (avg)', '비편광 (평균)') }}</option>
+          <option value="s">s</option>
+          <option value="p">p</option>
         </select>
       </div>
     </div>
@@ -89,10 +101,11 @@
             />
             <input
               type="number" min="0" max="500" step="1"
-              v-model.number="layer.thicknessNm"
+              :value="layer.thicknessNm"
               class="thickness-input"
               :aria-label="t(`Layer ${idx + 1} thickness (nm)`, `${idx + 1}번 레이어 두께 (nm)`)"
-              @input="markCustom"
+              @input="setThicknessInput(idx, $event)"
+              @change="syncThicknessInput(idx, $event)"
             />
             <span class="unit">nm</span>
           </div>
@@ -251,6 +264,11 @@ const { isFullscreen, toggleFullscreen } = useFullscreen()
 // --- Material helpers ---
 const coatingMats = COATING_MATERIALS
 const substrateMats = SUBSTRATE_MATERIALS
+// The incident medium must be lossless: R/T are referenced to a propagating plane wave in it.
+const incidentMats = SUBSTRATE_MATERIALS.filter(k => {
+  const m = MATERIALS[k]
+  return m.type === 'sellmeier' || (m.type === 'constant' && (m.k ?? 0) === 0)
+})
 
 function matName(key: string): string {
   return MATERIALS[key]?.name ?? key
@@ -271,11 +289,12 @@ function matColor(key: string): string {
 interface LayerEntry { id: number; material: string; thicknessNm: number }
 let nextId = 0
 
+// Default BARL, top -> bottom, matching defaultBsiStack() in tmm.ts (Si3N4 / SiO2 / HfO2 / SiO2 on Si)
 const layers = reactive<LayerEntry[]>([
-  { id: nextId++, material: 'sio2', thicknessNm: 10 },
-  { id: nextId++, material: 'hfo2', thicknessNm: 25 },
-  { id: nextId++, material: 'sio2', thicknessNm: 15 },
   { id: nextId++, material: 'si3n4', thicknessNm: 30 },
+  { id: nextId++, material: 'sio2', thicknessNm: 15 },
+  { id: nextId++, material: 'hfo2', thicknessNm: 25 },
+  { id: nextId++, material: 'sio2', thicknessNm: 10 },
 ])
 
 const incidentMat = ref('air')
@@ -283,6 +302,8 @@ const substrateMat = ref('silicon')
 const selectedPreset = ref('barl4')
 const targetBand = ref<string>('visible')
 const optimizing = ref(false)
+const angleDeg = ref(0)
+const polarization = ref<'s' | 'p' | 'avg'>('avg')
 
 function markCustom() { selectedPreset.value = 'custom' }
 
@@ -305,9 +326,30 @@ function moveLayer(idx: number, dir: number) {
   markCustom()
 }
 
+const MAX_THICKNESS_NM = 500
+
+function clampThickness(v: number): number {
+  return Math.min(MAX_THICKNESS_NM, Math.max(0, Math.round(v)))
+}
+
 function setThickness(idx: number, event: Event) {
-  layers[idx].thicknessNm = parseInt((event.target as HTMLInputElement).value)
+  const v = parseFloat((event.target as HTMLInputElement).value)
+  if (!Number.isFinite(v)) return
+  layers[idx].thicknessNm = clampThickness(v)
   markCustom()
+}
+
+// Number box: ignore transient empty/invalid text while typing; never store a string.
+function setThicknessInput(idx: number, event: Event) {
+  const v = parseFloat((event.target as HTMLInputElement).value)
+  if (!Number.isFinite(v)) return
+  layers[idx].thicknessNm = clampThickness(v)
+  markCustom()
+}
+
+// On commit, show the stored (clamped) value again, e.g. after clearing the box.
+function syncThicknessInput(idx: number, event: Event) {
+  (event.target as HTMLInputElement).value = String(layers[idx].thicknessNm)
 }
 
 // --- Presets ---
@@ -317,8 +359,9 @@ function applyPreset() {
   incidentMat.value = 'air'
   substrateMat.value = 'silicon'
   layers.length = 0
+  // Stacks are listed top -> bottom (light direction)
   const presets: Record<string, { inc?: string; sub?: string; stack: [string, number][] }> = {
-    barl4: { stack: [['sio2',10],['hfo2',25],['sio2',15],['si3n4',30]] },
+    barl4: { stack: [['si3n4',30],['sio2',15],['hfo2',25],['sio2',10]] },
     ar2: { stack: [['mgf2',95],['tio2',15]] },
     broadband: { stack: [['mgf2',90],['al2o3',30],['zro2',15],['mgf2',45]] },
     hr_blue: { stack: [['tio2',55],['sio2',90],['tio2',55],['sio2',90],['tio2',55],['sio2',90]] },
@@ -366,7 +409,7 @@ function buildStack(): TmmLayer[] {
 
 const spectra = computed((): TmmResult[] => {
   if (layers.length === 0) return wavelengths.value.map(() => ({ R: 0, T: 1, A: 0, layerA: [] }))
-  return tmmSpectrum(buildStack(), incidentMat.value, substrateMat.value, wavelengths.value, 0, 'avg')
+  return tmmSpectrum(buildStack(), incidentMat.value, substrateMat.value, wavelengths.value, angleDeg.value, polarization.value)
 })
 
 const reflectances = computed(() => spectra.value.map(r => r.R * 100))
@@ -444,79 +487,82 @@ function onMouseMove(event: MouseEvent) {
   }
 }
 
-// --- Auto Optimize (minimize avg R in band) ---
-function computeAvgR(thickArr: number[]): number {
-  const stack: TmmLayer[] = thickArr.map((th, i) => ({
-    material: layers[i].material, thickness: th / 1000,
-  }))
-  const results = tmmSpectrum(stack, incidentMat.value, substrateMat.value, wavelengths.value, 0, 'avg')
+// --- Auto Optimize (minimize avg R in band at the selected angle / polarization) ---
+const OPT_MIN_NM = 1
+const OPT_MAX_NM = 200
+const OPT_EVAL_BUDGET = 3000
+const OPT_RESTARTS = 5
+
+function makeAvgR(): (thickArr: number[]) => number {
   const [lo, hi] = bandRange.value
-  let sum = 0, cnt = 0
-  for (let i = 0; i < wavelengthsNm.value.length; i++) {
-    if (wavelengthsNm.value[i] >= lo && wavelengthsNm.value[i] <= hi) { sum += results[i].R; cnt++ }
+  const bandWls = wavelengths.value.filter((_, i) => wavelengthsNm.value[i] >= lo && wavelengthsNm.value[i] <= hi)
+  const mats = layers.map(l => l.material)
+  const inc = incidentMat.value, sub = substrateMat.value
+  const ang = angleDeg.value, pol = polarization.value
+  return (thickArr: number[]) => {
+    if (bandWls.length === 0) return 1
+    const stack: TmmLayer[] = thickArr.map((th, i) => ({ material: mats[i], thickness: th / 1000 }))
+    const res = tmmSpectrum(stack, inc, sub, bandWls, ang, pol)
+    return res.reduce((acc, r) => acc + r.R, 0) / res.length
   }
-  return cnt > 0 ? sum / cnt : 1
 }
 
+const yieldToUi = () => new Promise<void>(r => setTimeout(r, 0))
+
+/**
+ * Bounded optimiser: integer-nm coordinate descent with a shrinking step
+ * (32 -> 1 nm), started from the current design and from a few random points.
+ * The total number of TMM spectrum evaluations is capped at OPT_EVAL_BUDGET and
+ * the UI is yielded to periodically, so it never freezes the page.
+ */
 async function runOptimize() {
   if (layers.length === 0) return
   optimizing.value = true
-  await new Promise(r => requestAnimationFrame(r))
+  await yieldToUi() // let "Optimizing..." paint first
 
   const n = layers.length
-  const maxPerLayer = 200
-
-  // Phase 1: coarse (step = max(3, total_combinations < 500000))
-  let step = 5
-  let totalCombs = 1
-  for (let i = 0; i < n; i++) totalCombs *= Math.floor(maxPerLayer / step) + 1
-  while (totalCombs > 300000 && step < 20) { step += 2; totalCombs = 1; for (let i = 0; i < n; i++) totalCombs *= Math.floor(maxPerLayer / step) + 1 }
-
-  const coarseVals: number[][] = []
-  for (let i = 0; i < n; i++) {
-    const vals: number[] = []
-    for (let v = 1; v <= maxPerLayer; v += step) vals.push(v)
-    coarseVals.push(vals)
+  const f = makeAvgR()
+  let evals = 0
+  const clampOpt = (v: number) => Math.min(OPT_MAX_NM, Math.max(OPT_MIN_NM, Math.round(v)))
+  const evaluate = async (x: number[]) => {
+    evals++
+    if (evals % 40 === 0) await yieldToUi()
+    return f(x)
   }
 
-  let bestR = Infinity
-  let best = layers.map(l => l.thicknessNm)
+  let best = layers.map(l => clampOpt(l.thicknessNm))
+  let bestR = await evaluate(best)
 
-  // Recursive grid search
-  function searchCoarse(idx: number, current: number[]) {
-    if (idx === n) {
-      const r = computeAvgR(current)
-      if (r < bestR) { bestR = r; best = [...current] }
-      return
-    }
-    for (const v of coarseVals[idx]) {
-      current[idx] = v
-      searchCoarse(idx + 1, current)
-    }
+  const starts: number[][] = [best.slice()]
+  for (let k = 0; k < OPT_RESTARTS; k++) {
+    starts.push(Array.from({ length: n }, () => clampOpt(OPT_MIN_NM + Math.random() * (OPT_MAX_NM - OPT_MIN_NM))))
   }
-  searchCoarse(0, new Array(n))
 
-  await new Promise(r => requestAnimationFrame(r))
-
-  // Phase 2: fine search (step 1nm, +/- step around best)
-  const fineRange = step
-  function searchFine(idx: number, current: number[]) {
-    if (idx === n) {
-      const r = computeAvgR(current)
-      if (r < bestR) { bestR = r; best = [...current] }
-      return
+  for (const start of starts) {
+    if (evals >= OPT_EVAL_BUDGET) break
+    const x = start.slice()
+    let fx = await evaluate(x)
+    for (let step = 32; step >= 1 && evals < OPT_EVAL_BUDGET; ) {
+      let improved = false
+      for (let i = 0; i < n && evals < OPT_EVAL_BUDGET; i++) {
+        for (const dir of [1, -1]) {
+          const cand = x.slice()
+          cand[i] = clampOpt(x[i] + dir * step)
+          if (cand[i] === x[i]) continue
+          const fc = await evaluate(cand)
+          if (fc < fx) { x[i] = cand[i]; fx = fc; improved = true; break }
+        }
+      }
+      if (!improved) step = Math.floor(step / 2)
     }
-    const lo = Math.max(1, best[idx] - fineRange)
-    const hi = Math.min(maxPerLayer, best[idx] + fineRange)
-    for (let v = lo; v <= hi; v++) {
-      current[idx] = v
-      searchFine(idx + 1, current)
-    }
+    if (fx < bestR) { bestR = fx; best = x.slice() }
   }
-  searchFine(0, new Array(n))
 
-  for (let i = 0; i < n; i++) layers[i].thicknessNm = best[i]
-  markCustom()
+  // Apply only if the stack was not edited while optimising
+  if (layers.length === n) {
+    for (let i = 0; i < n; i++) layers[i].thicknessNm = best[i]
+    markCustom()
+  }
   optimizing.value = false
 }
 
@@ -580,6 +626,10 @@ const spectrumStops = computed(() => {
   font-size: 0.85em;
   font-weight: 600;
   white-space: nowrap;
+}
+.angle-range {
+  width: 120px;
+  flex: none;
 }
 .controls-row {
   display: flex;

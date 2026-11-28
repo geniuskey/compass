@@ -60,7 +60,7 @@
       </div>
       <div class="slider-group">
         <label>
-          {{ t('Silicon thickness:', '\uC2E4\uB9AC\uCF58 \uB450\uAED8:') }} <strong>{{ siThickness.toFixed(1) }} um</strong>
+          {{ t('Silicon thickness:', '\uC2E4\uB9AC\uCF58 \uB450\uAED8:') }} <strong>{{ siThickness.toFixed(1) }} &micro;m</strong>
         </label>
         <input type="range" min="1.0" max="5.0" step="0.1" v-model.number="siThickness" class="ctrl-range" :aria-label="t('Silicon thickness', '실리콘 두께')" />
       </div>
@@ -71,6 +71,33 @@
         <input type="range" min="30" max="80" step="5" v-model.number="maxAngle" class="ctrl-range" :aria-label="t('Max angle', '최대 각도')" />
       </div>
       <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
+    </div>
+
+    <div class="controls-row">
+      <label class="radio-label">
+        <input type="checkbox" v-model="mlEnabled" />
+        {{ t('Microlens acceptance (Gaussian spot, geometric approx.)', '마이크로렌즈 수광 (가우시안 스팟, 기하 근사)') }}
+      </label>
+    </div>
+    <div class="controls-row" v-if="mlEnabled">
+      <div class="slider-group">
+        <label>{{ t('Stack height (ML → PD):', '스택 높이 (ML → PD):') }} <strong>{{ mlStackHeight.toFixed(1) }} &micro;m</strong></label>
+        <input type="range" min="0.5" max="5.0" step="0.1" v-model.number="mlStackHeight" class="ctrl-range" :aria-label="t('Stack height', '스택 높이')" />
+      </div>
+      <div class="slider-group">
+        <label>{{ t('Microlens shift:', '마이크로렌즈 시프트:') }} <strong>{{ mlShift.toFixed(2) }} &micro;m</strong></label>
+        <input type="range" min="0" max="1.0" step="0.02" v-model.number="mlShift" class="ctrl-range" :aria-label="t('Microlens shift', '마이크로렌즈 시프트')" />
+      </div>
+      <div class="slider-group">
+        <label>{{ t('PD aperture width:', 'PD 개구 폭:') }} <strong>{{ pdAperture.toFixed(2) }} &micro;m</strong></label>
+        <input type="range" min="0.2" max="1.5" step="0.05" v-model.number="pdAperture" class="ctrl-range" :aria-label="t('PD aperture width', 'PD 개구 폭')" />
+      </div>
+      <p class="ml-note">
+        {{ t(
+          `QE(θ) × spot overlap: a Gaussian spot (1/e² radius ${ML_SPOT_W0} µm) is displaced by d = h·tan(θ_stack) − shift, with sin θ_stack = sin θ / ${ML_STACK_N}, and integrated over the PD aperture (1D). Normalised to perfect alignment; ignores diffraction and DTI.`,
+          `QE(θ) × 스팟 겹침: 가우시안 스팟(1/e² 반경 ${ML_SPOT_W0} µm)이 d = h·tan(θ_stack) − 시프트만큼 이동하며 (sin θ_stack = sin θ / ${ML_STACK_N}), PD 개구에 대해 1차원 적분합니다. 완전 정렬 기준으로 정규화하며 회절과 DTI는 무시합니다.`
+        ) }}
+      </p>
     </div>
     </div>
 
@@ -92,7 +119,7 @@
         </div>
         <div class="info-card">
           <span class="info-label">{{ t('Half-power angle', '\uBC18\uAC10 \uAC01\uB3C4') }}</span>
-          <span class="info-value">{{ infoSingle.halfPower }}°</span>
+          <span class="info-value">{{ fmtHalf(infoSingle.halfPower) }}</span>
         </div>
       </template>
       <template v-else>
@@ -110,7 +137,7 @@
         </div>
         <div class="info-card">
           <span class="info-label">{{ t('Worst half-power', '\uCD5C\uC800 \uBC18\uAC10') }}</span>
-          <span class="info-value">{{ infoRgb.worstHalf }}°</span>
+          <span class="info-value">{{ fmtHalf(infoRgb.worstHalf) }}</span>
         </div>
       </template>
     </div>
@@ -283,6 +310,37 @@ const polarization = ref<'s' | 'p' | 'avg'>('avg')
 const siThickness = ref(3.0)
 const maxAngle = ref(60)
 
+// --- Microlens acceptance (geometric approximation) ---
+const ML_SPOT_W0 = 0.3 // um, 1/e^2 intensity radius of the focused spot
+const ML_STACK_N = 1.5 // average index of the stack above the PD
+const mlEnabled = ref(false)
+const mlStackHeight = ref(2.0)
+const mlShift = ref(0)
+const pdAperture = ref(0.8)
+
+// Abramowitz-Stegun 7.1.26 (|error| < 1.5e-7)
+function erf(x: number): number {
+  const sgn = x < 0 ? -1 : 1
+  const a = Math.abs(x)
+  const tt = 1 / (1 + 0.3275911 * a)
+  const y = 1 - (((((1.061405429 * tt - 1.453152027) * tt) + 1.421413741) * tt - 0.284496736) * tt + 0.254829592) * tt * Math.exp(-a * a)
+  return sgn * y
+}
+
+/** Fraction of a 1D Gaussian spot (centre offset d) falling inside [-a/2, a/2]. */
+function spotOverlap(d: number, a: number): number {
+  const s = (ML_SPOT_W0 / 2) * Math.SQRT2 // sigma*sqrt(2), with sigma = w0/2
+  return 0.5 * (erf((a / 2 - d) / s) + erf((a / 2 + d) / s))
+}
+
+function mlAcceptance(angleDeg: number): number {
+  if (!mlEnabled.value) return 1
+  const sinIn = Math.sin(angleDeg * Math.PI / 180) / ML_STACK_N
+  const d = mlStackHeight.value * Math.tan(Math.asin(sinIn)) - mlShift.value
+  const ref0 = spotOverlap(0, pdAperture.value)
+  return ref0 > 0 ? spotOverlap(d, pdAperture.value) / ref0 : 0
+}
+
 function resetControls() {
   displayMode.value = 'single'
   singleWl.value = 550
@@ -290,6 +348,10 @@ function resetControls() {
   polarization.value = 'avg'
   siThickness.value = 3.0
   maxAngle.value = 60
+  mlEnabled.value = false
+  mlStackHeight.value = 2.0
+  mlShift.value = 0
+  pdAperture.value = 0.8
 }
 
 const cfColorMap: Record<string, string> = { red: '#e74c3c', green: '#27ae60', blue: '#3498db' }
@@ -310,15 +372,20 @@ const yMax = computed(() => {
   // Find max QE across all data to set appropriate y scale
   const allData = displayMode.value === 'single' ? singleData.value : [...rgbData.value.red, ...rgbData.value.green, ...rgbData.value.blue]
   const maxVal = Math.max(...allData.map(d => d.qe), 10)
-  return Math.ceil(maxVal / 10) * 10
+  const step = yStep(Math.ceil(maxVal / 10) * 10)
+  // Round up to a multiple of the tick step so the top tick is always drawn
+  return Math.ceil(maxVal / step) * step
 })
+function yStep(max: number): number {
+  return max <= 30 ? 5 : max <= 60 ? 10 : 20
+}
 function yScale(pct: number): number {
   return pad.top + plotH - (pct / yMax.value) * plotH
 }
 
 const yTicks = computed(() => {
   const max = yMax.value
-  const step = max <= 30 ? 5 : max <= 60 ? 10 : 20
+  const step = yStep(Math.ceil(max / 10) * 10)
   const ticks: number[] = []
   for (let v = 0; v <= max; v += step) ticks.push(v)
   return ticks
@@ -342,7 +409,7 @@ function computeAngularQe(cfColor: 'red' | 'green' | 'blue', wlNm: number): Angl
   const data: AngleQe[] = []
   for (let ang = 0; ang <= maxAngle.value; ang += 1) {
     const result = tmmCalc(stack, 'air', 'sio2', wl, ang, pol)
-    data.push({ angle: ang, qe: result.layerA[SI_LAYER_IDX] * 100 })
+    data.push({ angle: ang, qe: result.layerA[SI_LAYER_IDX] * 100 * mlAcceptance(ang) })
   }
   return data
 }
@@ -386,13 +453,17 @@ function findQeAtAngle(data: AngleQe[], angle: number): number {
   const pt = data.find(d => d.angle === angle)
   return pt ? pt.qe : 0
 }
-function findHalfPower(data: AngleQe[]): number {
+/** First angle where QE drops to half of QE(0°); null if not reached within the plotted range. */
+function findHalfPower(data: AngleQe[]): number | null {
   const qe0 = data[0]?.qe ?? 0
   const threshold = qe0 * 0.5
   for (const d of data) {
     if (d.qe <= threshold) return d.angle
   }
-  return maxAngle.value
+  return null
+}
+function fmtHalf(v: number | null): string {
+  return v === null ? `> ${maxAngle.value}°` : `${v}°`
 }
 
 const infoSingle = computed(() => ({
@@ -408,7 +479,10 @@ const infoRgb = computed(() => {
     red0: findQeAtAngle(rd.red, 0),
     green0: findQeAtAngle(rd.green, 0),
     blue0: findQeAtAngle(rd.blue, 0),
-    worstHalf: Math.min(findHalfPower(rd.red), findHalfPower(rd.green), findHalfPower(rd.blue)),
+    worstHalf: (() => {
+      const hs = [findHalfPower(rd.red), findHalfPower(rd.green), findHalfPower(rd.blue)].filter((h): h is number => h !== null)
+      return hs.length ? Math.min(...hs) : null
+    })(),
   }
 })
 
@@ -472,6 +546,12 @@ function onMouseMove(event: MouseEvent) {
   margin: 0 0 4px 0;
   font-size: 1.1em;
   color: var(--vp-c-brand-1);
+}
+.ml-note {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.78em;
+  color: var(--vp-c-text-2);
 }
 .component-description {
   margin: 0 0 16px 0;
