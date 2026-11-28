@@ -275,6 +275,31 @@ class TestFieldProfile:
         assert np.all(intensity >= 0)
 
 
+    @pytest.mark.parametrize("pol", ["TE", "TM"])
+    @pytest.mark.parametrize("theta_deg", [0.0, 30.0, 60.0])
+    def test_substrate_intensity_carries_transmitted_power(self, pol, theta_deg):
+        """In a lossless substrate T = n_s Re(cos t_s) |E|^2 / cos t_0 (|E0| = 1).
+
+        For TM this needs the full |Ex|^2 + |Ez|^2; the tangential field
+        alone (the previous output) under-reports the oblique intensity.
+        """
+        n_layers = np.array([1.0, 2.0, 1.5], dtype=complex)
+        d_layers = np.array([np.inf, 0.13, np.inf])
+        theta = np.deg2rad(theta_deg)
+        _, T, _ = transfer_matrix_1d(n_layers, d_layers, 0.55, theta, pol)
+        e2 = tmm_field_profile(n_layers, d_layers, 0.55, theta, pol, np.array([0.5]))[0]
+        cos_s = np.sqrt(1 - (np.sin(theta) / 1.5) ** 2)
+        assert 1.5 * cos_s * e2 / np.cos(theta) == pytest.approx(T, rel=1e-9)
+
+    def test_tm_matches_te_at_normal_incidence(self):
+        n_layers = np.array([1.0, 2.0 + 0.1j, 1.5], dtype=complex)
+        d_layers = np.array([np.inf, 0.2, np.inf])
+        z = np.linspace(-0.3, 0.6, 50)
+        te = tmm_field_profile(n_layers, d_layers, 0.55, 0.0, "TE", z)
+        tm = tmm_field_profile(n_layers, d_layers, 0.55, 0.0, "TM", z)
+        np.testing.assert_allclose(tm, te, rtol=1e-12)
+
+
 # ---------------------------------------------------------------------------
 # Test: Spectrum computation
 # ---------------------------------------------------------------------------
@@ -567,3 +592,68 @@ class TestTMMSolverAdapter:
         })
         result = solver.run()
         assert solver.validate_energy_balance(result) is True
+
+
+class TestTMMFieldFrame:
+    """TMM field slices use the COMPASS frame (z up from the silicon bottom)."""
+
+    @staticmethod
+    def _solver(polarization="TE", theta=0.0):
+        from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.tmm.tmm_solver import TMMSolver
+
+        solver = TMMSolver({"name": "tmm", "type": "tmm", "params": {"field_resolution": 80}})
+        ps = PixelStack(
+            {"pixel": {"pitch": 1.0, "unit_cell": [2, 2], "layers": {"silicon": {"thickness": 2.0}}}}
+        )
+        solver.setup_geometry(ps)
+        solver.setup_source(
+            {
+                "wavelength": {"mode": "single", "value": 0.45},
+                "angle": {"theta_deg": theta},
+                "polarization": polarization,
+            }
+        )
+        solver.run()
+        return solver, ps
+
+    def test_xz_column_runs_bottom_to_top(self):
+        solver, _ = self._solver()
+        col = solver.get_field_distribution("|E|2", "xz", 0.0)[0]
+        # Blue light is absorbed within ~0.5 um of the silicon top, so the
+        # bottom of the 2 um silicon (first samples) must be dark while the
+        # air above the stack (last samples) carries ~|E0|^2.
+        assert col[:5].max() < 1e-3
+        assert col[-5:].mean() > 0.3
+
+    def test_xy_position_is_compass_height(self):
+        solver, ps = self._solver()
+        _, z_max = ps.z_range
+        deep = solver.get_field_distribution("|E|2", "xy", 0.05)  # near Si bottom
+        top = solver.get_field_distribution("|E|2", "xy", z_max - 0.05)  # in air
+        assert deep.shape == (64, 64)
+        assert deep.max() < 1e-3 < top.min()
+        with pytest.raises(ValueError, match="outside the stack"):
+            solver.get_field_distribution("|E|2", "xy", z_max + 1.0)
+
+    def test_unpolarized_averages_te_and_tm(self):
+        te, _ = self._solver("TE", theta=40.0)
+        tm, _ = self._solver("TM", theta=40.0)
+        unpol, _ = self._solver("unpolarized", theta=40.0)
+        expected = 0.5 * (
+            te.get_field_distribution("|E|2", "xz", 0.0)
+            + tm.get_field_distribution("|E|2", "xz", 0.0)
+        )
+        np.testing.assert_allclose(unpol.get_field_distribution("|E|2", "xz", 0.0), expected)
+
+    def test_polarization_average_flag_follows_source(self):
+        from compass.geometry.pixel_stack import PixelStack
+        from compass.solvers.tmm.tmm_solver import TMMSolver
+
+        solver = TMMSolver({"name": "tmm", "type": "tmm", "params": {}})
+        solver.setup_geometry(PixelStack({"pixel": {"pitch": 1.0, "unit_cell": [1, 1]}}))
+        solver.setup_source({"wavelength": {"value": 0.55}, "polarization": "TE"})
+        assert solver.run().metadata["polarization_average"] is False
+        # A solver reused for an unpolarized source must average again.
+        solver.setup_source({"wavelength": {"value": 0.55}, "polarization": "unpolarized"})
+        assert solver.run().metadata["polarization_average"] is True

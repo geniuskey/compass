@@ -242,7 +242,8 @@ class ConeConfig(StrictModel):
     f_number: float = 2.0
     pupil_shape: Literal["circular", "elliptical"] = "circular"
     sampling: ConeSamplingConfig = Field(default_factory=ConeSamplingConfig)
-    weighting: str = "cosine"
+    # A free string let typos (e.g. "cosin") silently fall back to uniform.
+    weighting: Literal["uniform", "cosine", "cos4", "gaussian"] = "cosine"
 
 
 class RayFileConfig(StrictModel):

@@ -10,6 +10,10 @@ from compass.core.units import deg_to_rad
 
 logger = logging.getLogger(__name__)
 
+#: String weightings understood by :meth:`ConeIllumination._compute_weight`
+#: ("custom" without a callable is uniform).
+_KNOWN_WEIGHTINGS = frozenset({"uniform", "cosine", "cos4", "gaussian", "custom"})
+
 
 class ConeIllumination:
     """Model cone illumination from lens exit pupil.
@@ -31,6 +35,10 @@ class ConeIllumination:
         self.n_points = n_points
         self.sampling = sampling
         self.weighting = weighting
+        if isinstance(weighting, str) and weighting not in _KNOWN_WEIGHTINGS:
+            logger.warning(
+                f"ConeIllumination: unknown weighting {weighting!r}; using uniform weights"
+            )
         self.half_cone_rad = np.arcsin(1.0 / (2.0 * f_number))
 
     def get_sampling_points(self) -> list[tuple[float, float, float]]:
@@ -51,6 +59,7 @@ class ConeIllumination:
         elif sampling in {"hammersley", "hammersley_point_set"}:
             return self._hammersley_sampling()
         else:
+            logger.warning(f"ConeIllumination: unknown sampling {self.sampling!r}; using fibonacci")
             return self._fibonacci_sampling()
 
     def _fibonacci_sampling(self) -> list[tuple[float, float, float]]:

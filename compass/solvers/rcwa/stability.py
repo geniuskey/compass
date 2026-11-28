@@ -463,16 +463,25 @@ class EigenvalueStabilizer:
         Returns:
             Validation result dict.
         """
-        total = np.asarray(R) + np.asarray(T)
+        R = np.asarray(R, dtype=float)
+        T = np.asarray(T, dtype=float)
+        total = R + T
         max_violation = float(np.max(np.abs(total - 1.0)))
 
-        # For absorbing media, R+T < 1 is expected
-        over_unity = total > 1.0 + tolerance
+        # For absorbing media, R+T < 1 is expected. NaN/Inf (a diverged
+        # eigendecomposition) and negative R or T are violations too: NaN
+        # compares False against any threshold and used to pass as valid.
+        bad = (
+            ~np.isfinite(total)
+            | (total > 1.0 + tolerance)
+            | (R + tolerance < 0.0)
+            | (T + tolerance < 0.0)
+        )
 
         return {
-            "valid": not np.any(over_unity),
+            "valid": not np.any(bad),
             "max_violation": max_violation,
-            "violation_indices": np.where(over_unity)[0].tolist() if np.any(over_unity) else [],
+            "violation_indices": np.where(bad)[0].tolist() if np.any(bad) else [],
         }
 
 
@@ -625,8 +634,10 @@ class StabilityDiagnostics:
 
         # QE range check
         for pixel_name, qe in result.qe_per_pixel.items():
-            qe_arr = np.asarray(qe)
-            if np.any(qe_arr < -0.01) or np.any(qe_arr > 1.01):
+            qe_arr = np.asarray(qe, dtype=float)
+            if not np.all(np.isfinite(qe_arr)):
+                report[pixel_name] = {"status": "FAILED", "issue": "NaN or Inf QE detected"}
+            elif np.any(qe_arr < -0.01) or np.any(qe_arr > 1.01):
                 report[pixel_name] = {
                     "status": "FAILED",
                     "issue": f"QE out of range [{qe_arr.min():.4f}, {qe_arr.max():.4f}]",

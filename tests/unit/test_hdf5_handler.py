@@ -291,3 +291,42 @@ class TestRoundTripRegressions:
         np.testing.assert_array_equal(fd.Ex, np.ones((2, 2, 2)))
         np.testing.assert_array_equal(fd.z, np.arange(2.0))
         np.testing.assert_array_equal(loaded.poynting["Sz"], np.ones((2, 2)))
+
+
+class TestResultSchemaMatchesHandler:
+    """ResultSchema must describe the layout HDF5Handler actually writes."""
+
+    def test_handler_output_validates(self, tmp_path):
+        from compass.io.result_schema import ResultSchema
+
+        filepath = str(tmp_path / "result.h5")
+        HDF5Handler.save_result(_make_result(), _make_config(), filepath)
+        # Previously failed: the schema required a /metadata config_yaml
+        # attribute that format version 2 no longer writes.
+        assert ResultSchema.validate(filepath) == []
+
+    def test_missing_root_config_is_reported(self, tmp_path):
+        import h5py
+
+        from compass.io.result_schema import ResultSchema
+
+        filepath = str(tmp_path / "result.h5")
+        HDF5Handler.save_result(_make_result(), _make_config(), filepath)
+        with h5py.File(filepath, "a") as f:
+            del f.attrs["config_json"]
+        errors = ResultSchema.validate(filepath)
+        assert any("config_json" in e for e in errors)
+
+    def test_legacy_v1_layout_still_validates(self, tmp_path):
+        import h5py
+
+        from compass.io.result_schema import ResultSchema
+
+        filepath = str(tmp_path / "legacy.h5")
+        with h5py.File(filepath, "w") as f:
+            f.create_group("metadata").attrs["config_yaml"] = "pixel: {}"
+            qe = f.create_group("qe")
+            qe.create_dataset("wavelengths", data=np.array([0.5, 0.6]))
+            qe.create_dataset("pixel_R_0_0", data=np.array([0.1, 0.2]))
+            f.create_group("energy_balance")
+        assert ResultSchema.validate(filepath) == []

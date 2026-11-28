@@ -299,3 +299,30 @@ class TestCusolverEigendecomp:
             PrecisionManager.mixed_precision_eigen_torch(None)
 
 
+
+
+class TestNonFiniteEnergyValidation:
+    """NaN from a diverged run must not be reported as energy-conserving."""
+
+    def test_nan_is_invalid(self):
+        result = EigenvalueStabilizer.validate_energy_conservation(
+            np.array([0.2, np.nan]), np.array([0.3, 0.3])
+        )
+        assert not result["valid"]
+        assert result["violation_indices"] == [1]
+
+    def test_negative_reflection_is_invalid(self):
+        result = EigenvalueStabilizer.validate_energy_conservation(
+            np.array([-0.2]), np.array([0.5]), tolerance=0.05
+        )
+        assert not result["valid"]
+
+    def test_post_simulation_check_flags_nan_qe(self):
+        from compass.core.types import SimulationResult
+        from compass.solvers.rcwa.stability import StabilityDiagnostics
+
+        result = SimulationResult(
+            qe_per_pixel={"G_0_0": np.array([0.5, np.nan])}, wavelengths=np.array([0.5, 0.6])
+        )
+        report = StabilityDiagnostics.post_simulation_check(result)
+        assert report["G_0_0"]["status"] == "FAILED"

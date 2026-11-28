@@ -191,8 +191,10 @@ class MaximizePeakQE(ObjectiveFunction):
 class EnergyBalanceRegularizer(ObjectiveFunction):
     """Penalize energy conservation violations.
 
-    Computes max |R + T + A - 1| and applies a quadratic penalty if it
-    exceeds the tolerance threshold.
+    Computes max |R + T + A - 1| (or, without an independent A, the amount
+    by which R, T leave the physical range 0 <= R, T and R + T <= 1) and
+    applies a quadratic penalty if it exceeds the tolerance threshold.
+    Non-finite R/T/A return ``inf``.
 
     Args:
         tolerance: Acceptable deviation from unity (default 0.01).
@@ -210,15 +212,15 @@ class EnergyBalanceRegularizer(ObjectiveFunction):
 
         R = np.asarray(result.reflection)
         T = np.asarray(result.transmission)
-        A = (
-            np.asarray(result.absorption)
-            if result.absorption is not None
-            else 1.0 - R - T
-        )
-
-        total = R + T + A
-        error = np.abs(total - 1.0)
+        if result.absorption is not None:
+            error = np.abs(R + T + np.asarray(result.absorption) - 1.0)
+        else:
+            # A = 1 - R - T would make the balance hold trivially; penalize
+            # only unphysical R, T < 0 or R + T > 1 (as EnergyBalance.check).
+            error = np.maximum.reduce([-R, -T, R + T - 1.0, np.zeros_like(R)])
         max_err = float(np.max(error))
+        if not np.isfinite(max_err):
+            return float("inf")
 
         if max_err <= self.tolerance:
             return 0.0

@@ -86,6 +86,31 @@ def locate_slice(layer_info: Sequence[LayerSlice], z: float) -> tuple[int, float
     raise ValueError(f"z={z} um is outside the simulated stack")
 
 
+def footprint_index_range(center: float, size: float, cell: float, n: int) -> tuple[int, int]:
+    """Half-open index range ``[i0, i1)`` of cells whose centres lie in a footprint.
+
+    Cell ``b`` is centred at ``(b + 0.5) * cell`` (the COMPASS cell-centre
+    convention of ``PixelStack`` grids). Counting a cell only when its centre
+    is inside ``[center - size / 2, center + size / 2]`` keeps the summed
+    area within one cell of ``size``; rounding the edges outward with
+    floor/ceil instead added up to a full cell on each side (a 0.7 um
+    photodiode sampled on 31 nm cells integrated over 0.75 um).
+
+    Args:
+        center: Footprint centre in um.
+        size: Footprint width in um.
+        cell: Cell size in um.
+        n: Number of cells along the axis.
+
+    Returns:
+        ``(i0, i1)`` clipped to ``[0, n]``; empty when ``i1 <= i0``.
+    """
+    eps = 1e-9
+    i0 = int(np.ceil((center - size / 2.0) / cell - 0.5 - eps))
+    i1 = int(np.floor((center + size / 2.0) / cell - 0.5 + eps)) + 1
+    return max(0, i0), min(n, i1)
+
+
 def column_heights(layer_info: Sequence[LayerSlice], n_z: int = FIELD_N_Z) -> np.ndarray:
     """COMPASS heights sampled for xz/yz slices, bottom to top."""
     z_bot, z_top = stack_z_range(layer_info)
@@ -157,8 +182,10 @@ def integrate_photodiode_qe(
         theta_rad: Polar incidence angle in radians.
         e2_dz: Callback ``(index, slice) -> array`` returning the
             depth-integrated ``|E|^2`` (um) on the slice's eps grid,
-            indexed [row=y, col=x], with sample (a, b) at
-            (b * lx / n1, a * ly / n0).
+            indexed [row=y, col=x], with sample (a, b) at the COMPASS
+            cell centre ((b + 0.5) * lx / n1, (a + 0.5) * ly / n0)
+            (backend position (b * lx / n1, a * ly / n0), see
+            :func:`backend_grid_shift`).
         total_absorption: A = 1 - R - T, for an energy cross-check.
         solver_name: Name used in log messages.
         slice_absorption: Optional callback ``(index, slice) -> fraction``
@@ -228,10 +255,8 @@ def integrate_photodiode_qe(
         # PhotodiodeSpec.position is the offset from the pixel center.
         x_c = (c + 0.5) * pitch + pd.position[0]
         y_c = (r + 0.5) * pitch + pd.position[1]
-        iy0 = max(0, int(np.floor((y_c - pd.size[1] / 2) / ly * n0)))
-        iy1 = min(n0, int(np.ceil((y_c + pd.size[1] / 2) / ly * n0)))
-        ix0 = max(0, int(np.floor((x_c - pd.size[0] / 2) / lx * n1)))
-        ix1 = min(n1, int(np.ceil((x_c + pd.size[0] / 2) / lx * n1)))
+        iy0, iy1 = footprint_index_range(y_c, pd.size[1], ly / n0, n0)
+        ix0, ix1 = footprint_index_range(x_c, pd.size[0], lx / n1, n1)
         key = f"{pd.color}_{r}_{c}"
         if ix1 <= ix0 or iy1 <= iy0:
             qe_per_pixel[key] = 0.0
@@ -291,10 +316,8 @@ def eps_imag_weight_qe(
                 continue
             # eps grids are indexed [row=y, col=x] (shape (ny, nx))
             ny_s, nx_s = s.eps_grid.shape
-            ix_min = max(0, int(((pd_cx - pd.size[0] / 2) / lx) * nx_s))
-            ix_max = min(nx_s, int(np.ceil(((pd_cx + pd.size[0] / 2) / lx) * nx_s)))
-            iy_min = max(0, int(((pd_cy - pd.size[1] / 2) / ly) * ny_s))
-            iy_max = min(ny_s, int(np.ceil(((pd_cy + pd.size[1] / 2) / ly) * ny_s)))
+            ix_min, ix_max = footprint_index_range(pd_cx, pd.size[0], lx / nx_s, nx_s)
+            iy_min, iy_max = footprint_index_range(pd_cy, pd.size[1], ly / ny_s, ny_s)
             if ix_max <= ix_min or iy_max <= iy_min:
                 continue
             eps_region = s.eps_grid[iy_min:iy_max, ix_min:ix_max]

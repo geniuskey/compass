@@ -226,6 +226,14 @@ class MeentSolver(SolverBase):
 
     def __init__(self, config: dict, device: str = "cpu"):
         super().__init__(config, device)
+        # The meent adapter always computes in complex128. A lower-precision
+        # request (the schema default is complex64) is ignored, not rejected,
+        # so configs built from schema defaults keep working.
+        dtype = config.get("params", {}).get("dtype")
+        if dtype not in (None, "complex128"):
+            logger.warning(
+                "meent always runs in complex128; ignoring params.dtype=%r", dtype
+            )
         self._source: PlanewaveSource | None = None
         self._backend = config.get("params", {}).get("backend", "numpy")
         self._last_layer_slices: list | None = None

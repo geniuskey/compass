@@ -2,8 +2,9 @@
 
 Supports three material definition types:
 1. Constant: Fixed n, k values (e.g., air n=1.0, k=0.0)
-2. Tabulated: CSV file with wavelength-dependent n, k (cubic spline interpolation)
-3. Analytical: Cauchy, Sellmeier, or Drude-Lorentz models
+2. Tabulated: CSV file with wavelength-dependent n, k (shape-preserving PCHIP
+   interpolation, or linear; clamped to the tabulated range)
+3. Analytical: Cauchy or Sellmeier models (lossless, k = 0)
 """
 
 from __future__ import annotations
@@ -499,7 +500,7 @@ class MaterialDB:
             # Long-pass: transmissive from the passband through the NIR
             k = np.where(wl > peak_wl, 0.003, k)
         else:
-            # NIR leakage: blocking dies off beyond ~0.78 um
+            # NIR leakage: blocking dye absorption dies off beyond ~0.78 um
             k = k / (1.0 + np.exp((wl - 0.80) / 0.05)) + 0.003
         n = np.full_like(wl, n_base)
 
@@ -551,9 +552,14 @@ class MaterialDB:
         if not path.exists():
             raise FileNotFoundError(f"Material CSV not found: {filepath}")
 
-        data = np.loadtxt(filepath, delimiter=",", comments="#")
+        data = np.loadtxt(filepath, delimiter=",", comments="#", ndmin=2)
         if data.shape[1] < 3:
             raise ValueError(f"CSV must have 3 columns (wavelength, n, k), got {data.shape[1]}")
+        if data.shape[0] < 2:
+            raise ValueError(
+                f"Material CSV {filepath} needs at least 2 wavelength rows to interpolate, "
+                f"got {data.shape[0]}"
+            )
 
         # Sort by wavelength
         sort_idx = np.argsort(data[:, 0])

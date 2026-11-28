@@ -130,3 +130,19 @@ class TestMaterialDB:
         materials = db.list_materials()
         assert isinstance(materials, list)
         assert len(materials) >= 8
+
+
+class TestLoadCSVEdgeCases:
+    def test_single_row_csv_raises_clear_error(self, tmp_path):
+        path = tmp_path / "one.csv"
+        path.write_text("# wl,n,k\n0.55,1.5,0.0\n")
+        with pytest.raises(ValueError, match="at least 2 wavelength rows"):
+            MaterialDB().load_csv("one", str(path))
+
+    def test_two_row_csv_interpolates_linearly(self, tmp_path):
+        path = tmp_path / "two.csv"
+        path.write_text("0.5,1.5,0.0\n0.6,1.7,0.02\n")
+        db = MaterialDB()
+        db.load_csv("two", str(path))
+        n, k = db.get_nk("two", 0.55)
+        assert n == pytest.approx(1.6) and k == pytest.approx(0.01)

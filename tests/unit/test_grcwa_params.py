@@ -116,5 +116,27 @@ def test_shipped_grcwa_configs_use_nG():
         assert "fourier_order" not in params
 
 
+
+
+class TestComplex128OnlyDtype:
+    """grcwa and meent always compute in complex128; other dtypes warn, not fail."""
+
+    @pytest.mark.parametrize("module, cls_name", [
+        ("compass.solvers.rcwa.grcwa_solver", "GrcwaSolver"),
+        ("compass.solvers.rcwa.meent_solver", "MeentSolver"),
+    ])
+    def test_dtype_validation(self, module, cls_name, caplog):
+        import importlib
+
+        cls = getattr(importlib.import_module(module), cls_name)
+        cls({"name": "x", "params": {}})
+        cls({"name": "x", "params": {"dtype": "complex128"}})
+        assert "complex128" not in caplog.text
+        # The schema default is complex64; it must still construct (grcwa is
+        # the cross-validation reference) but warn that it is ignored.
+        cls({"name": "x", "params": {"dtype": "complex64"}})
+        assert "ignoring params.dtype='complex64'" in caplog.text
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

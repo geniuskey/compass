@@ -214,8 +214,17 @@ class PixelOptimizer:
             logger.warning(f"Simulation failed for params {x_clipped.tolist()}: {e}")
             return 1e6  # Large penalty for failed simulations
 
-        # Evaluate objective
-        obj_value = self.objective.evaluate(result)
+        # Evaluate objective. Solvers report failed (wavelength, polarization)
+        # runs as NaN instead of raising; a NaN objective never compares as
+        # "best" and stalls/derails the scipy simplex, so penalize it like a
+        # failed simulation.
+        obj_value = float(self.objective.evaluate(result))
+        if not np.isfinite(obj_value):
+            logger.warning(
+                f"Non-finite objective {obj_value} for params {x_clipped.tolist()}; "
+                "treating as a failed simulation"
+            )
+            obj_value = 1e6
         self._n_evals += 1
 
         # Track best

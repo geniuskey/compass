@@ -226,6 +226,21 @@ class TestEnergyBalanceRegularizer:
         obj = EnergyBalanceRegularizer()
         assert obj.evaluate(result) == 0.0
 
+    def test_without_absorption_checks_physical_bounds(self):
+        """Without A the balance is not trivially satisfied: R + T > 1 is penalized."""
+        result = _make_result()
+        result.absorption = None
+        obj = EnergyBalanceRegularizer(tolerance=0.01, penalty_weight=10.0)
+        assert obj.evaluate(result) == 0.0  # R + T = 0.4 is physical
+        result.reflection = np.full(5, 0.7)
+        result.transmission = np.full(5, 0.5)
+        assert obj.evaluate(result) == pytest.approx(10.0 * (0.2 - 0.01) ** 2)
+
+    def test_nan_returns_inf(self):
+        result = _make_result()
+        result.reflection = np.array([0.1, np.nan, 0.1, 0.1, 0.1])
+        assert EnergyBalanceRegularizer().evaluate(result) == float("inf")
+
     def test_name(self):
         obj = EnergyBalanceRegularizer()
         assert obj.name() == "EnergyBalanceRegularizer"
@@ -622,6 +637,30 @@ class TestPixelOptimizer:
         # Should not raise; penalty is returned
         result = optimizer.optimize()
         assert result.best_objective >= 1e6 or result.n_evaluations >= 1
+
+    @patch("compass.optimization.optimizer.SingleRunner")
+    def test_nan_objective_is_penalized(self, mock_runner):
+        """A NaN result (failed solver run) is penalized, not recorded as NaN."""
+        results = iter([_make_result(qe_value=float("nan"))])
+
+        def fake_run(config):
+            return next(results, _make_result(qe_value=0.5))
+
+        mock_runner.run.side_effect = fake_run
+
+        cfg = _base_config()
+        ps = ParameterSpace([MicrolensHeight(cfg)])
+        optimizer = PixelOptimizer(
+            base_config=cfg,
+            parameter_space=ps,
+            objective=MaximizeQE(),
+            max_iterations=5,
+        )
+        result = optimizer.optimize()
+        objectives = result.history.objectives()
+        assert objectives[0] == pytest.approx(1e6)
+        assert np.all(np.isfinite(objectives))
+        assert result.best_objective == pytest.approx(-0.5)
 
     @patch("compass.optimization.optimizer.SingleRunner")
     def test_differential_evolution_method(self, mock_runner):

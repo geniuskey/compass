@@ -218,8 +218,10 @@ def layer_absorption_1d(
         delta = k0 * n_layers[j] * cos_theta[j] * d_layers[j]
         eta_j = _eta(n_layers[j], cos_theta[j], polarization)
         m_j = np.array(
-            [[np.cos(delta), -1j * np.sin(delta) / eta_j],
-             [-1j * eta_j * np.sin(delta), np.cos(delta)]],
+            [
+                [np.cos(delta), -1j * np.sin(delta) / eta_j],
+                [-1j * eta_j * np.sin(delta), np.cos(delta)],
+            ],
             dtype=complex,
         )
         eh = m_j @ eh
@@ -302,7 +304,9 @@ def tmm_field_profile(
             z=0 is at the first interface.
 
     Returns:
-        Array of |E|^2 values at each z_point, normalized to incident intensity.
+        Array of |E|^2 = |Ex|^2 + |Ey|^2 + |Ez|^2 at each z_point for an
+        incident plane wave with |E0| = 1. For TM this includes the
+        normal component Ez, not just the tangential field.
     """
     if polarization not in ("TE", "TM"):
         raise ValueError(f"polarization must be 'TE' or 'TM', got '{polarization}'")
@@ -325,13 +329,6 @@ def tmm_field_profile(
     # Compute kz for each layer
     kz = k0 * n_layers * cos_theta
 
-    # --- Fresnel coefficients at each interface ---
-    r_intf = np.zeros(n_total - 1, dtype=complex)
-    t_intf = np.zeros(n_total - 1, dtype=complex)
-    for j in range(n_total - 1):
-        r_intf[j] = (eta_vals[j] - eta_vals[j + 1]) / (eta_vals[j] + eta_vals[j + 1])
-        t_intf[j] = 2.0 * eta_vals[j] / (eta_vals[j] + eta_vals[j + 1])
-
     # --- Numerically stable S-matrix (scattering matrix) approach ---
     # For each internal layer j, compute the reflection coefficient r_j
     # "looking right" from the left boundary of layer j toward the substrate.
@@ -346,10 +343,6 @@ def tmm_field_profile(
     #     r_prime = r_{j,j+1} + t_{j,j+1} * r_next * exp(2i*kz_{j+1}*d_{j+1}) * t_{j+1,j}
     #              / (1 - r_{j+1,j} * r_next * exp(2i*kz_{j+1}*d_{j+1}))
     #
-    # Actually, we use a simpler approach: for each layer j (internal),
-    # compute the local reflection coefficient from the RIGHT side of layer j
-    # looking rightward (toward substrate). This uses the standard Airy formula.
-
     # r_right[j] = effective Fresnel reflection looking right from the
     # right boundary of layer j (j = 0..n_total-2)
     # We build from the substrate side backward.
@@ -369,11 +362,8 @@ def tmm_field_profile(
             # Layer j+1 is an internal layer with finite thickness
             phase = np.exp(2j * kz[j + 1] * d_layers[j + 1])
             r_next = r_right[j + 1]
-            # Airy formula for combining interface with slab
-            r_right[j] = r_jk + (1 - r_jk**2) * r_next * phase / (
-                1 - r_jk * r_next * phase  # note: r_jk here is r_{j+1,j} = -r_jk
-            )
-            # Correction: r_{j+1,j} = -r_jk, so:
+            # Airy formula for an interface followed by a slab
+            # (r_{j+1,j} = -r_jk).
             r_right[j] = (r_jk + r_next * phase) / (1 + r_jk * r_next * phase)
         else:
             r_right[j] = r_jk
@@ -439,13 +429,28 @@ def tmm_field_profile(
     # For numerical stability with absorbing media, compute the backward wave
     # by propagating FROM the right boundary.
 
+    # For TM the interface coefficients above act on the *tangential* field
+    # E_x (admittance n / cos(theta)). Each plane wave also carries E_z:
+    # forward (x, z) = (A, -A tan(theta)), backward (B, +B tan(theta)), so
+    # |E|^2 = |A + B|^2 + |tan(theta)|^2 |A - B|^2. A unit tangential
+    # incident amplitude is |E0| = 1 / |cos(theta_0)|, hence the rescale.
+    sin_theta = n_layers[0] * np.sin(theta_inc) / n_layers
+    tan_theta = sin_theta / cos_theta
+    tm_norm = float(np.abs(cos_theta[0]) ** 2)
+
+    def _intensity(j: int, fwd_amp: complex, bwd_amp: complex) -> float:
+        e_tan = fwd_amp + bwd_amp
+        if polarization == "TE":
+            return float(np.abs(e_tan) ** 2)
+        e_z = -tan_theta[j] * (fwd_amp - bwd_amp)
+        return float((np.abs(e_tan) ** 2 + np.abs(e_z) ** 2) * tm_norm)
+
     intensity = np.zeros(len(z_points))
 
     for idx, z in enumerate(z_points):
         if z <= 0:
             # Incident medium: E = exp(ikz*z) + r_sys * exp(-ikz*z)
-            E = np.exp(1j * kz[0] * z) + r_sys * np.exp(-1j * kz[0] * z)
-            intensity[idx] = float(np.abs(E) ** 2)
+            intensity[idx] = _intensity(0, np.exp(1j * kz[0] * z), r_sys * np.exp(-1j * kz[0] * z))
             continue
 
         # Find which layer
@@ -463,44 +468,20 @@ def tmm_field_profile(
 
         if layer_j == n_total - 1:
             # Substrate: only forward wave
-            E = t_into[layer_j] * np.exp(1j * kz[layer_j] * dz)
-            intensity[idx] = float(np.abs(E) ** 2)
+            intensity[idx] = _intensity(
+                layer_j, t_into[layer_j] * np.exp(1j * kz[layer_j] * dz), 0.0
+            )
             continue
 
-        # Internal layer j: compute field at position dz from left boundary.
-        # Forward wave at dz: A_fwd(dz) = t_into[j] * exp(i*kz*dz)
-        # Backward wave at dz: the backward wave at the RIGHT boundary of j is
-        #   b_right = (forward at right boundary) * r_right[j]
-        #           = t_into[j] * exp(i*kz*d_j) * r_right[j]
-        # Then b at dz = b_right * exp(-i*kz*(d_j - dz))  [propagate backward]
-        #             = t_into[j] * r_right[j] * exp(i*kz*(2*d_j - d_j + dz - d_j))
-        # Wait, let me be more careful.
-        #
-        # Let the forward wave be A*exp(i*kz*x) and backward be B*exp(-i*kz*x)
-        # where x is measured from the left boundary of layer j.
-        # At x=0 (left boundary): forward = A = t_into[j]
-        # At x=d_j (right boundary): forward arriving = A*exp(i*kz*d_j)
-        # The backward wave at x=d_j is: B_right = A*exp(i*kz*d_j) * r_right[j]
-        # Propagating the backward wave from x=d_j back to x:
-        #   B(x) = B_right * exp(-i*kz*(d_j - x)) * ... NO, the backward wave
-        #   is B*exp(-i*kz*x). At x=d_j: B*exp(-i*kz*d_j) = B_right
-        #   So B = B_right * exp(i*kz*d_j) = A*exp(2i*kz*d_j)*r_right[j]
-        #
-        # Then: E(x) = A*exp(i*kz*x) + B*exp(-i*kz*x)
-        #            = t_into[j]*exp(i*kz*x) + t_into[j]*r_right[j]*exp(2i*kz*d_j)*exp(-i*kz*x)
-        #            = t_into[j] * [exp(i*kz*x) + r_right[j]*exp(i*kz*(2*d_j - x))]
-        #
-        # For numerical stability in absorbing media (Im(kz) > 0):
-        # - exp(i*kz*x) has factor exp(-Im(kz)*x) which decays -> OK
-        # - exp(i*kz*(2*d_j - x)) has factor exp(-Im(kz)*(2*d_j - x))
-        #   which also decays as long as x < 2*d_j -> OK for x in [0, d_j]
-        #
-        # So this formulation is numerically stable!
-
+        # Internal layer j, x = dz from its left boundary, forward amplitude
+        # A = t_into[j] there. The backward wave B exp(-i kz x) equals
+        # r_right[j] times the forward wave at x = d_j, so
+        #   E(x) = A [exp(i kz x) + r_right[j] exp(i kz (2 d_j - x))].
+        # Both exponentials decay for Im(kz) > 0 and 0 <= x <= d_j, so this
+        # stays finite in thick absorbing layers.
         d_j = d_layers[layer_j]
-        fwd = np.exp(1j * kz[layer_j] * dz)
-        bwd = r_right[layer_j] * np.exp(1j * kz[layer_j] * (2 * d_j - dz))
-        E = t_into[layer_j] * (fwd + bwd)
-        intensity[idx] = float(np.abs(E) ** 2)
+        fwd = t_into[layer_j] * np.exp(1j * kz[layer_j] * dz)
+        bwd = t_into[layer_j] * r_right[layer_j] * np.exp(1j * kz[layer_j] * (2 * d_j - dz))
+        intensity[idx] = _intensity(layer_j, fwd, bwd)
 
     return intensity

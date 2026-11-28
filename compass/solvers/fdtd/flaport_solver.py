@@ -33,7 +33,11 @@ import numpy as np
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
-from compass.solvers.rcwa.fields import approximate_field, validate_field_request
+from compass.solvers.rcwa.fields import (
+    approximate_field,
+    footprint_index_range,
+    validate_field_request,
+)
 from compass.sources.planewave import PlanewaveSource
 
 logger = logging.getLogger(__name__)
@@ -380,10 +384,8 @@ class FlaportFdtdSolver(SolverBase):
             r, c = pd.pixel_index
             x_c = (c + 0.5) * pitch + pd.position[0]
             y_c = (r + 0.5) * pitch + pd.position[1]
-            ix0 = max(0, int(np.floor((x_c - pd.size[0] / 2) / gs)))
-            ix1 = min(n_x, int(np.ceil((x_c + pd.size[0] / 2) / gs)))
-            iy0 = max(0, int(np.floor((y_c - pd.size[1] / 2) / gs)))
-            iy1 = min(n_y, int(np.ceil((y_c + pd.size[1] / 2) / gs)))
+            ix0, ix1 = footprint_index_range(x_c, pd.size[0], gs, n_x)
+            iy0, iy1 = footprint_index_range(y_c, pd.size[1], gs, n_y)
             val = k0 * float(si_density[ix0:ix1, iy0:iy1].sum()) * dv / (p_inc * a_pixel)
             qe[f"{pd.color}_{r}_{c}"] = float(np.clip(val, 0.0, 1.0))
         return qe

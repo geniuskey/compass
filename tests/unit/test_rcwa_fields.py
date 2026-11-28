@@ -9,6 +9,7 @@ from compass.core.types import LayerSlice, PhotodiodeSpec
 from compass.solvers.rcwa.fields import (
     approximate_field,
     eps_imag_weight_qe,
+    footprint_index_range,
     integrate_photodiode_qe,
 )
 
@@ -107,3 +108,33 @@ class TestSliceAbsorption:
             slice_absorption=lambda _li, _s: -1e-9,
         )
         assert pinned == {"R_0_0": 0.0, "G_0_1": 0.0}
+
+
+class TestPhotodiodeFootprint:
+    def test_counts_cells_whose_centres_are_inside(self):
+        # 1 um pitch on 32 cells: a 0.7 um PD centred at 0.5 covers centres
+        # 0.171875 ... 0.828125, i.e. 22 cells (0.6875 um), not 24 (0.75 um).
+        i0, i1 = footprint_index_range(0.5, 0.7, 1.0 / 32, 32)
+        assert (i0, i1) == (5, 27)
+
+    def test_full_pixel_is_exact_and_clipped(self):
+        assert footprint_index_range(0.5, 1.0, 0.125, 8) == (0, 8)
+        assert footprint_index_range(1.5, 1.0, 0.125, 16) == (8, 16)
+        assert footprint_index_range(0.0, 1.0, 0.125, 8) == (0, 4)
+
+    def test_qe_integrates_only_the_photodiode_footprint(self):
+        stack = SimpleNamespace(
+            domain_size=(1.0, 1.0),
+            pitch=1.0,
+            unit_cell=(1, 1),
+            bayer_map=[["G"]],
+            layers=[SimpleNamespace(name="silicon", z_end=1.0)],
+            photodiodes=[PhotodiodeSpec((0.0, 0.0, 0.5), (0.5, 0.5, 1.0), (0, 0), "G")],
+        )
+        n = 20  # 0.05 um cells: the 0.5 um PD spans exactly 10 x 10 cells
+        slices = [LayerSlice(0.0, 1.0, 1.0, np.full((n, n), 16.0 + 1.0j), "silicon")]
+        e2 = np.full((n, n), 1e-3)
+        qe = integrate_photodiode_qe(stack, slices, 0.55, 0.0, lambda _li, _s: e2, 0.5, "t")
+        k0 = 2 * np.pi / 0.55
+        # uniform density: QE = k0 * eps'' * e2 * (PD area / pixel area)
+        assert qe["G_0_0"] == pytest.approx(k0 * 1e-3 * 0.25)

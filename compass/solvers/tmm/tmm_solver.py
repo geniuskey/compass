@@ -60,9 +60,13 @@ class TMMSolver(SolverBase):
         self._layer_materials: list[str] = []
         self._layer_thicknesses: np.ndarray = np.array([])
         self._field_resolution: int = config.get("params", {}).get("field_resolution", 200)
-        self._polarization_average: bool = config.get("params", {}).get(
-            "polarization_average", True
+        # Polarization averaging follows the source: unpolarized sources
+        # always average TE and TM. The param is kept for config
+        # compatibility; False cannot turn averaging off.
+        self._requested_polarization_average: bool = bool(
+            config.get("params", {}).get("polarization_average", True)
         )
+        self._polarization_average: bool = self._requested_polarization_average
         # "air": finite silicon over an air half-space, the same stack the
         # RCWA / FDTD adapters simulate. "silicon": silicon as a semi-infinite
         # substrate (all transmitted light is absorbed; QE is an upper bound).
@@ -122,34 +126,20 @@ class TMMSolver(SolverBase):
             raise ValueError("all wavelengths must be positive")
         self._source_config = source_config
 
-        # Override polarization averaging from config if specified
-        if self._polarization_average and self._source.polarization != "unpolarized":
-            self._polarization_average = False
+        # Re-derived on every call: a solver reused across sources (cone
+        # runner) must not keep the flag of a previous polarized source.
+        self._polarization_average = self._source.is_unpolarized
+        if self._source.is_unpolarized and not self._requested_polarization_average:
+            logger.warning(
+                "TMM: params.polarization_average=false is ignored for an unpolarized "
+                "source (TE and TM are averaged); set source.polarization to TE or TM "
+                "for a single polarization"
+            )
 
         logger.info(
             f"TMM: source setup - {self._source.n_wavelengths} wavelengths, "
             f"theta={self._source.theta_deg:.1f} deg"
         )
-
-    def _get_n_layers_at_wavelength(self, wavelength: float) -> np.ndarray:
-        """Get complex refractive indices for all layers at a given wavelength.
-
-        Args:
-            wavelength: Wavelength in um.
-
-        Returns:
-            Array of complex n + ik for each layer.
-        """
-        if self._pixel_stack is None:
-            raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        material_db = self._pixel_stack.material_db
-
-        n_complex = np.zeros(len(self._layer_materials), dtype=complex)
-        for i, mat_name in enumerate(self._layer_materials):
-            n, k = material_db.get_nk(mat_name, wavelength)
-            n_complex[i] = n + 1j * k
-
-        return n_complex
 
     def _tmm_stack(self, wavelength: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """TMM arrays (incident air first) from the PixelStack's layer slices.
@@ -188,32 +178,6 @@ class TMMSolver(SolverBase):
         d = np.array([np.inf, *d_film, np.inf])
         si_mask = np.array([False, *is_si, False])
         return n, d, si_mask
-
-    def _build_d_layers(self) -> np.ndarray:
-        """Build the thickness array for TMM.
-
-        The first and last layers are treated as semi-infinite.
-        Their thicknesses are set to np.inf.
-
-        Returns:
-            Thickness array with inf at boundaries.
-        """
-        d = self._layer_thicknesses.copy()
-        # First layer (bottom = silicon in BSI) and last layer (top = air)
-        # are semi-infinite in TMM. However, COMPASS convention has light
-        # entering from air (top/last layer) through the stack to silicon
-        # (bottom/first layer).
-        #
-        # For TMM: incident medium = air (top), substrate = silicon (bottom).
-        # We need to reverse the layer order for TMM convention where
-        # layer[0] = incident medium, layer[-1] = substrate.
-        d_tmm = d[::-1].copy()
-        d_tmm[0] = np.inf  # incident medium (air)
-        if self._substrate == "air":
-            d_tmm = np.append(d_tmm, np.inf)  # finite silicon, air half-space below
-        else:
-            d_tmm[-1] = np.inf  # semi-infinite silicon substrate
-        return d_tmm
 
     def run(self) -> SimulationResult:
         """Execute TMM simulation over all wavelengths.
@@ -338,71 +302,83 @@ class TMMSolver(SolverBase):
         plane: str = "xz",
         position: float = 0.0,
     ) -> np.ndarray:
-        """Extract field profile from the TMM solution.
+        """Extract the |E|^2 profile of the last simulated wavelength.
 
         For TMM, only the z-profile (through the stack) is physically meaningful.
         The xz and yz planes show the 1D field profile replicated laterally.
         The xy plane returns a uniform array (no lateral variation in TMM).
 
+        Coordinates follow the COMPASS frame used by the other solvers: z is
+        measured from the silicon bottom (z=0) upward, so ``position`` of an
+        "xy" plane is a COMPASS height and xz/yz columns run bottom to top.
+        The incident plane wave has |E0| = 1; an unpolarized source averages
+        the TE and TM intensities.
+
         Args:
             component: Field component ("Ex", "Ey", "Ez", "|E|2").
                 For TMM, only "|E|2" is computed; others return zeros.
             plane: Slice plane ("xy", "xz", "yz").
-            position: Position along the normal axis in um.
+            position: Position along the normal axis in um (a COMPASS
+                height for "xy"; ignored for "xz"/"yz").
 
         Returns:
-            2D field array.
+            ``(64, 64)`` for "xy"; ``(64, field_resolution)`` for "xz"/"yz"
+            with z increasing upward.
+
+        Raises:
+            ValueError: Unknown plane, or an "xy" position outside the stack.
         """
-        if self._last_n_layers is None or self._last_d_layers is None:
-            logger.warning("TMM: no simulation data, returning zeros")
-            return np.zeros((64, 64))
-
-        if self._source is None:
-            return np.zeros((64, 64))
-
+        if plane not in ("xy", "xz", "yz"):
+            raise ValueError(f"Unknown plane {plane!r}; expected 'xy', 'xz' or 'yz'")
         nz = self._field_resolution
         nx_out = 64
+        empty = np.zeros((nx_out, nx_out)) if plane == "xy" else np.zeros((nx_out, nz))
+
+        if (
+            self._last_n_layers is None
+            or self._last_d_layers is None
+            or self._source is None
+            or self._pixel_stack is None
+        ):
+            logger.warning("TMM: no simulation data, returning zeros")
+            return empty
 
         if component != "|E|2":
             # TMM only computes |E|^2 profile
             logger.info(f"TMM: component '{component}' not available, returning zeros")
-            return np.zeros((nx_out, nz))
+            return empty
 
-        # Compute z_points spanning the internal layers (skip semi-infinite boundaries)
-        # Sum of internal layer thicknesses
-        internal_d = self._last_d_layers[1:-1]
-        total_internal = float(np.sum(internal_d))
-
-        if total_internal <= 0:
-            return np.zeros((nx_out, nz))
-
-        z_points = np.linspace(0, total_internal, nz)
+        z_min, z_max = self._pixel_stack.z_range
+        if plane == "xy":
+            if not z_min <= position <= z_max:
+                raise ValueError(
+                    f"xy-plane position z={position} um is outside the stack [{z_min}, {z_max}]"
+                )
+            z_compass = np.array([float(position)])
+        else:
+            z_compass = np.linspace(z_min, z_max, nz)
+        # TMM depth is 0 at the top of the stack (incident side) and grows
+        # toward the silicon, i.e. opposite to COMPASS z.
+        depth = z_max - z_compass
 
         wl = self._last_wavelength or 0.55
         theta_rad = self._source.theta_rad
-        pol = self._source.polarization if self._source.polarization != "unpolarized" else "TE"
-
-        intensity_1d = tmm_field_profile(
-            self._last_n_layers,
-            self._last_d_layers,
-            wl,
-            theta_rad,
-            pol,
-            z_points,
+        pol_runs = self._source.get_polarization_runs()
+        intensity_1d = np.mean(
+            [
+                tmm_field_profile(
+                    self._last_n_layers, self._last_d_layers, wl, theta_rad, pol, depth
+                )
+                for pol in pol_runs
+            ],
+            axis=0,
         )
 
         if plane == "xy":
             # Uniform field in xy plane (no lateral variation)
-            val = np.interp(
-                position, z_points, intensity_1d, left=intensity_1d[0], right=intensity_1d[-1]
-            )
-            return np.full((nx_out, nx_out), val)
-        elif plane in ("xz", "yz"):
-            # Replicate 1D z-profile across lateral dimension
-            field_2d = np.tile(intensity_1d, (nx_out, 1))
-            return field_2d
-        else:
-            return np.zeros((nx_out, nz))
+            return np.full((nx_out, nx_out), float(intensity_1d[0]))
+        # Replicate 1D z-profile across lateral dimension
+        return np.tile(intensity_1d, (nx_out, 1))
 
 
 # Register with SolverFactory

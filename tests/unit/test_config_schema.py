@@ -1,5 +1,6 @@
 """Unit tests for configuration schema."""
 
+import pytest
 
 from compass.core.config_schema import (
     ColorFilterConfig,
@@ -80,3 +81,20 @@ class TestConfigSchema:
         assert "pixel" in d
         assert "solver" in d
         assert "source" in d
+
+
+class TestConeWeightingValidation:
+    def test_known_weightings_accepted(self):
+        from compass.core.config_schema import ConeConfig
+
+        for w in ("uniform", "cosine", "cos4", "gaussian"):
+            assert ConeConfig(weighting=w).weighting == w
+
+    def test_weighting_typo_rejected(self):
+        import pydantic
+
+        from compass.core.config_schema import ConeConfig
+
+        # Previously a free string: "cosin" silently ran with uniform weights.
+        with pytest.raises(pydantic.ValidationError):
+            ConeConfig(weighting="cosin")

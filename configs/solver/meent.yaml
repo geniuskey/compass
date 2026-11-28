@@ -5,5 +5,5 @@ solver:
 
   params:
     fourier_order: [9, 9]
-    dtype: "complex64"
+    dtype: "complex128"         # meent adapter always computes in complex128
     backend: "torch"

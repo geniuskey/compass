@@ -11,12 +11,10 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-# Re-export core types for convenience
-
 logger = logging.getLogger(__name__)
 
-# Bump this when the HDF5 layout changes in a backwards-incompatible way.
-SCHEMA_VERSION: str = "1.0"
+# Bump this together with hdf5_handler.FORMAT_VERSION when the layout changes.
+SCHEMA_VERSION: str = "2.0"  # tracks hdf5_handler.FORMAT_VERSION
 
 
 @dataclass
@@ -46,9 +44,10 @@ class ResultSchema:
 
     .. code-block:: text
 
-        /
+        /                       attrs: format_version, config_json
         +-- metadata/           (group)
-        |   attrs: config_yaml, solver, runtime_seconds, ...
+        |   attrs: solver_name, runtime_seconds, ...
+        +-- metadata_json/      (group, optional; non-scalar metadata)
         +-- qe/                 (group)
         |   +-- wavelengths     (dataset, float64, 1-D)
         |   +-- pixel_*         (datasets, float64, 1-D per pixel)
@@ -69,8 +68,7 @@ class ResultSchema:
         _GroupDef(
             name="metadata",
             required=True,
-            attrs={"config_yaml": "YAML string of run configuration"},
-            description="Simulation metadata and configuration.",
+            description="Scalar simulation metadata (solver, runtime, ...).",
         ),
         _GroupDef(
             name="qe",
@@ -105,6 +103,12 @@ class ResultSchema:
         ),
     ]
 
+    #: Root attributes written by format version 2 of HDF5Handler.
+    ROOT_ATTRS: dict[str, str] = {
+        "format_version": "Integer HDF5 layout version",
+        "config_json": "JSON string of the run configuration",
+    }
+
     # Public API -----------------------------------------------------------
 
     @classmethod
@@ -128,6 +132,14 @@ class ResultSchema:
             return [f"Cannot open file: {exc}"]
 
         try:
+            # Version-2 files keep the config as root attribute config_json;
+            # version-1 files stored it as /metadata attribute config_yaml.
+            legacy = "metadata" in f and "config_yaml" in f["metadata"].attrs
+            if not legacy:
+                for attr_name in cls.ROOT_ATTRS:
+                    if attr_name not in f.attrs:
+                        errors.append(f"Missing root attribute '{attr_name}'.")
+
             for group_def in cls.GROUPS:
                 if group_def.name not in f:
                     if group_def.required:
@@ -207,7 +219,10 @@ class ResultSchema:
         lines: list[str] = [
             f"COMPASS HDF5 Result Schema v{SCHEMA_VERSION}",
             "=" * 50,
+            "\n/  (root)",
         ]
+        for attr_name, attr_desc in cls.ROOT_ATTRS.items():
+            lines.append(f"  attr  {attr_name}: {attr_desc}")
         for gdef in cls.GROUPS:
             req = "required" if gdef.required else "optional"
             lines.append(f"\n/{gdef.name}/  ({req})")
