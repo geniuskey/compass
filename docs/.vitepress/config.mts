@@ -1,5 +1,8 @@
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
+import { simulatorSidebar } from './simulators'
+
+const SITE_URL = 'https://geniuskey.github.io/compass/'
 
 const theorySidebar = [
   { text: 'Theory', items: [
@@ -78,27 +81,6 @@ const guideSidebar = [
     { text: 'TMM Validation Results', link: '/cookbook/tmm-validation-results' },
     { text: 'Convergence Study', link: '/cookbook/convergence-study' },
   ]}
-]
-
-const cookbookSidebar = [
-  { text: 'Cookbook', collapsed: false, items: [
-    { text: 'BSI 2x2 Basic', link: '/cookbook/bsi-2x2-basic' },
-    { text: 'Metal Grid Effect', link: '/cookbook/metal-grid-effect' },
-    { text: 'Microlens & CRA', link: '/cookbook/microlens-optimization' },
-    { text: 'Wavelength Sweep', link: '/cookbook/wavelength-sweep' },
-    { text: 'Solver Comparison', link: '/cookbook/solver-benchmark' },
-    { text: 'BARL Design', link: '/cookbook/barl-design' },
-    { text: 'DTI Crosstalk', link: '/cookbook/dti-crosstalk' },
-    { text: 'Signal Chain Color Accuracy', link: '/cookbook/signal-chain-color-accuracy' },
-    { text: 'TMM Validation Results', link: '/cookbook/tmm-validation-results' },
-    { text: 'Convergence Study', link: '/cookbook/convergence-study' },
-  ]},
-  { text: 'Related guides', collapsed: true, items: [
-    { text: 'Quick Start', link: '/guide/quickstart' },
-    { text: 'Choosing a Solver', link: '/guide/choosing-solver' },
-    { text: 'Cross-Validation', link: '/guide/cross-validation' },
-    { text: 'Inverse Design', link: '/guide/inverse-design' },
-  ]},
 ]
 
 const referenceSidebar = [
@@ -249,27 +231,6 @@ const guideSidebarKo = [
   ]}
 ]
 
-const cookbookSidebarKo = [
-  { text: '쿡북', collapsed: false, items: [
-    { text: 'BSI 2x2 기본', link: '/ko/cookbook/bsi-2x2-basic' },
-    { text: '메탈 그리드 효과', link: '/ko/cookbook/metal-grid-effect' },
-    { text: '마이크로렌즈 & CRA', link: '/ko/cookbook/microlens-optimization' },
-    { text: '파장 스윕', link: '/ko/cookbook/wavelength-sweep' },
-    { text: '솔버 비교 가이드', link: '/ko/cookbook/solver-benchmark' },
-    { text: 'BARL 설계', link: '/ko/cookbook/barl-design' },
-    { text: 'DTI 크로스토크', link: '/ko/cookbook/dti-crosstalk' },
-    { text: '신호 체인 색 정확도', link: '/ko/cookbook/signal-chain-color-accuracy' },
-    { text: 'TMM 검증 결과', link: '/ko/cookbook/tmm-validation-results' },
-    { text: '수렴 연구', link: '/ko/cookbook/convergence-study' },
-  ]},
-  { text: '관련 가이드', collapsed: true, items: [
-    { text: '빠른 시작', link: '/ko/guide/quickstart' },
-    { text: '솔버 선택', link: '/ko/guide/choosing-solver' },
-    { text: '교차 검증', link: '/ko/guide/cross-validation' },
-    { text: '역설계', link: '/ko/guide/inverse-design' },
-  ]},
-]
-
 const referenceSidebarKo = [
   { text: 'API 레퍼런스', items: [
     { text: '개요', link: '/ko/reference/' },
@@ -338,86 +299,6 @@ const aboutSidebarKo = [
   ]}
 ]
 
-const simulatorSidebar = [
-  { text: 'Overview', link: '/simulator/' },
-  { text: 'Optical Stack Analysis', collapsed: false, items: [
-    { text: 'TMM QE Calculator', link: '/simulator/tmm-qe' },
-    { text: 'Thin Film Stack Designer', link: '/simulator/barl-optimizer' },
-    { text: 'Energy Budget', link: '/simulator/energy-budget' },
-  ]},
-  { text: 'Performance Analysis', collapsed: false, items: [
-    { text: 'Angular Response', link: '/simulator/angular-response' },
-    { text: 'SNR Calculator', link: '/simulator/snr-calculator' },
-    { text: 'Photon Transfer Curve', link: '/simulator/photon-transfer-curve' },
-    { text: 'SNR vs Illuminance', link: '/simulator/pixel-snr-vs-illuminance' },
-    { text: 'Dynamic Range', link: '/simulator/dynamic-range' },
-    { text: 'Responsivity', link: '/simulator/responsivity-calculator' },
-  ]},
-  { text: 'Design Tools', collapsed: false, items: [
-    { text: 'Color Filter Designer', link: '/simulator/color-filter' },
-    { text: 'Pixel Design Playground', link: '/simulator/pixel-playground' },
-  ]},
-  { text: 'Optics & Wave Physics', collapsed: false, items: [
-    { text: 'Si Absorption Depth', link: '/simulator/si-absorption' },
-    { text: 'Microlens Ray Trace', link: '/simulator/microlens-raytrace' },
-    { text: 'Microlens Process Shape', link: '/simulator/microlens-process-shape' },
-    { text: 'MLA Array Visualizer', link: '/simulator/mla-array' },
-    { text: 'FDTI / BDTI Pixel Simulator', link: '/simulator/fdti-pixel' },
-    { text: 'Fabry-Pérot Visualizer', link: '/simulator/fabry-perot' },
-    { text: 'Diffraction PSF', link: '/simulator/diffraction-psf' },
-    { text: 'Lens Shading', link: '/simulator/lens-shading' },
-  ]},
-  { text: 'System Analysis', collapsed: false, items: [
-    { text: 'MTF Analyzer', link: '/simulator/mtf-analyzer' },
-    { text: 'Pixel Scaling Trends', link: '/simulator/pixel-scaling' },
-    { text: 'Color Accuracy (ΔE)', link: '/simulator/color-accuracy' },
-    { text: 'Dark Current & Temp', link: '/simulator/dark-current' },
-    { text: 'Linearity Analyzer', link: '/simulator/linearity-analyzer' },
-    { text: 'EMVA 1288 Dashboard', link: '/simulator/emva1288' },
-    { text: 'PRNU / DSNU', link: '/simulator/prnu-visualizer' },
-  ]},
-]
-
-const simulatorSidebarKo = [
-  { text: '개요', link: '/ko/simulator/' },
-  { text: '광학 스택 분석', collapsed: false, items: [
-    { text: 'TMM QE 계산기', link: '/ko/simulator/tmm-qe' },
-    { text: '박막 스택 설계기', link: '/ko/simulator/barl-optimizer' },
-    { text: '에너지 버짓', link: '/ko/simulator/energy-budget' },
-  ]},
-  { text: '성능 분석', collapsed: false, items: [
-    { text: '각도 응답', link: '/ko/simulator/angular-response' },
-    { text: 'SNR 계산기', link: '/ko/simulator/snr-calculator' },
-    { text: '광자 전달 곡선', link: '/ko/simulator/photon-transfer-curve' },
-    { text: 'SNR vs 조도', link: '/ko/simulator/pixel-snr-vs-illuminance' },
-    { text: '다이나믹 레인지', link: '/ko/simulator/dynamic-range' },
-    { text: '응답도 계산기', link: '/ko/simulator/responsivity-calculator' },
-  ]},
-  { text: '설계 도구', collapsed: false, items: [
-    { text: '컬러 필터 설계', link: '/ko/simulator/color-filter' },
-    { text: '픽셀 설계 놀이터', link: '/ko/simulator/pixel-playground' },
-  ]},
-  { text: '광학 & 파동 물리', collapsed: false, items: [
-    { text: 'Si 흡수 깊이', link: '/ko/simulator/si-absorption' },
-    { text: '마이크로렌즈 광선추적', link: '/ko/simulator/microlens-raytrace' },
-    { text: '마이크로렌즈 공정 형상', link: '/ko/simulator/microlens-process-shape' },
-    { text: 'MLA 어레이 시각화', link: '/ko/simulator/mla-array' },
-    { text: 'FDTI / BDTI 픽셀 시뮬레이터', link: '/ko/simulator/fdti-pixel' },
-    { text: '파브리-페로 시각화', link: '/ko/simulator/fabry-perot' },
-    { text: '회절 PSF', link: '/ko/simulator/diffraction-psf' },
-    { text: '렌즈 쉐이딩', link: '/ko/simulator/lens-shading' },
-  ]},
-  { text: '시스템 분석', collapsed: false, items: [
-    { text: 'MTF 분석기', link: '/ko/simulator/mtf-analyzer' },
-    { text: '픽셀 스케일링', link: '/ko/simulator/pixel-scaling' },
-    { text: '색 정확도 (ΔE)', link: '/ko/simulator/color-accuracy' },
-    { text: '암전류 & 온도', link: '/ko/simulator/dark-current' },
-    { text: '선형성 분석기', link: '/ko/simulator/linearity-analyzer' },
-    { text: 'EMVA 1288 대시보드', link: '/ko/simulator/emva1288' },
-    { text: 'PRNU / DSNU', link: '/ko/simulator/prnu-visualizer' },
-  ]},
-]
-
 export default withMermaid(defineConfig({
   base: '/compass/',
   title: 'COMPASS',
@@ -451,9 +332,12 @@ export default withMermaid(defineConfig({
     ['meta', { property: 'og:description', content: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation' }],
     ['meta', { property: 'og:site_name', content: 'COMPASS' }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:url', content: 'https://geniuskey.github.io/compass/' }],
-    ['meta', { property: 'og:image', content: '/compass/logo.svg' }],
-    ['meta', { name: 'twitter:card', content: 'summary' }],
+    ['meta', { property: 'og:url', content: SITE_URL }],
+    ['meta', { property: 'og:image', content: `${SITE_URL}og-image.png` }],
+    ['meta', { property: 'og:image:width', content: '1200' }],
+    ['meta', { property: 'og:image:height', content: '630' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:image', content: `${SITE_URL}og-image.png` }],
     ['meta', { name: 'twitter:title', content: 'COMPASS — Open-source CMOS image sensor optics platform' }],
     ['meta', { name: 'twitter:description', content: 'Cross-solver Optical Modeling Platform for Advanced Sensor Simulation' }],
     ['meta', { name: 'theme-color', content: '#3451b2' }],
@@ -507,7 +391,7 @@ export default withMermaid(defineConfig({
           '/research/': researchSidebar,
           '/reports/': reportsSidebar,
           '/about/': aboutSidebar,
-          '/simulator/': simulatorSidebar,
+          '/simulator/': simulatorSidebar('en'),
         },
       },
     },
@@ -540,11 +424,15 @@ export default withMermaid(defineConfig({
           '/ko/research/': researchSidebarKo,
           '/ko/reports/': reportsSidebarKo,
           '/ko/about/': aboutSidebarKo,
-          '/ko/simulator/': simulatorSidebarKo,
+          '/ko/simulator/': simulatorSidebar('ko'),
         },
         docFooter: { prev: '이전', next: '다음' },
-        outline: { label: '목차' },
-        lastUpdated: { text: '최종 수정' },
+        outline: { level: [2, 3], label: '목차' },
+        lastUpdated: { text: '최종 수정', formatOptions: { dateStyle: 'medium' } },
+        editLink: {
+          pattern: 'https://github.com/geniuskey/compass/edit/main/docs/:path',
+          text: 'GitHub에서 이 페이지 수정',
+        },
         returnToTopLabel: '맨 위로',
         sidebarMenuLabel: '메뉴',
         darkModeSwitchLabel: '다크 모드',
@@ -553,13 +441,41 @@ export default withMermaid(defineConfig({
     },
   },
 
+  lastUpdated: true,
+  sitemap: { hostname: SITE_URL },
+
   themeConfig: {
+    logo: { src: '/favicon.svg', alt: '' },
+    outline: { level: [2, 3] },
+    lastUpdated: { formatOptions: { dateStyle: 'medium' } },
+    editLink: {
+      pattern: 'https://github.com/geniuskey/compass/edit/main/docs/:path',
+      text: 'Edit this page on GitHub',
+    },
     socialLinks: [
       { icon: 'github', link: 'https://github.com/geniuskey/compass' }
     ],
-    search: { provider: 'local' },
+    search: {
+      provider: 'local',
+      options: {
+        locales: {
+          ko: {
+            translations: {
+              button: { buttonText: '검색', buttonAriaLabel: '검색' },
+              modal: {
+                displayDetails: '상세 보기',
+                resetButtonTitle: '검색어 지우기',
+                backButtonTitle: '닫기',
+                noResultsText: '결과가 없습니다',
+                footer: { selectText: '선택', navigateText: '이동', closeText: '닫기' },
+              },
+            },
+          },
+        },
+      },
+    },
     footer: {
-      message: 'by <a href="https://euiyun.com">Euiyun Lab</a>',
+      message: 'Released under the MIT License · by <a href="https://euiyun.com">Euiyun Lab</a>',
     },
   },
 

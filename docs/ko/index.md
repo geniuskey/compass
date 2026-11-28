@@ -17,99 +17,122 @@ hero:
     - theme: alt
       text: 이미지 센서가 처음이라면
       link: /ko/theory/basics/what-is-cmos-sensor
+    - theme: alt
+      text: GitHub
+      link: https://github.com/geniuskey/compass
+
 features:
-  - title: "📖 입문자 친화적"
-    details: 처음부터 시작하세요 — 시뮬레이션에 들어가기 전에 이미지 센서 광학 기초를 배우세요
-    link: /ko/theory/basics/what-is-cmos-sensor
+  - icon: 📖
+    title: 물리부터 배우기
+    details: 픽셀 구조, 박막, 회절, QE, RCWA와 FDTD까지 — 이미지 센서 광학을 기초부터 설명합니다.
+    link: /ko/theory/
+    linkText: 학습 시작
+  - icon: 🐍
+    title: Python 파이프라인 실행
+    details: YAML 설정 하나로 9개 솔버를 실행하고, 픽셀별 QE·크로스토크·필드 맵을 비교합니다.
+    link: /ko/guide/
+    linkText: 가이드 보기
+  - icon: 🧪
+    title: 브라우저에서 바로 실험
+    details: TMM QE, SNR, MTF, 마이크로렌즈 광선추적 등 26개 시뮬레이터 — 설치가 필요 없습니다.
+    link: /ko/simulator/
+    linkText: 시뮬레이터 열기
+  - icon: ✅
+    title: 검증 근거 확인
+    details: 솔버 간 일치도, 수렴 연구, 벤치마크를 생성 스크립트와 함께 공개합니다.
+    link: /ko/reports/
+    linkText: 리포트 보기
 ---
+
+<div class="home-stats">
+  <div class="home-stat"><strong>9</strong><span>EM 솔버 백엔드</span></div>
+  <div class="home-stat"><strong>3</strong><span>방법: RCWA · FDTD · TMM</span></div>
+  <div class="home-stat"><strong>26</strong><span>브라우저 시뮬레이터</span></div>
+  <div class="home-stat"><strong>EN · KO</strong><span>이중 언어 문서</span></div>
+</div>
+
+<div class="home-eyebrow">문제 정의</div>
+
+## 광자에서 전자까지
+
+빛은 마이크로렌즈, 컬러 필터, 반사 방지막을 지나 실리콘에서 흡수됩니다. 서브마이크론 피치에서는 모든 층이 파동광학 문제가 되고, 솔버마다 답이 달라질 수 있습니다. COMPASS는 스택을 한 번만 모델링하고 여러 독립적인 방법으로 결과를 교차 확인하게 해줍니다.
 
 <HeroAnimation />
 
-## COMPASS를 선택하는 이유
+<div class="home-eyebrow">왜 COMPASS인가</div>
 
-COMPASS는 전자기 이론과 실용적인 CMOS 이미지 센서 설계 사이의 간극을 해소합니다. 픽셀 스택을 한 번 정의하고, 모든 솔버로 실행하고, 결과를 비교하세요 -- 모두 Python에서 가능합니다.
+## 교차 검증을 위한 픽셀 광학 플랫폼
 
 <FeatureShowcase />
 
-## 아키텍처
+<div class="home-eyebrow">아키텍처</div>
 
-깔끔한 5단계 파이프라인이 YAML 설정에서 출판 가능한 결과까지 안내합니다. 각 단계를 클릭하면 자세히 알아볼 수 있습니다.
+## 5단계 파이프라인
+
+YAML 설정에서 출판 가능한 결과까지. 각 단계를 클릭하면 자세히 볼 수 있습니다.
 
 <ArchitectureOverview />
 
-## 솔버 백엔드
+<div class="home-eyebrow">백엔드</div>
 
-COMPASS는 세 가지 전자기 방법에 걸쳐 **9개 솔버 백엔드**에 대한 통합 인터페이스를 제공합니다. 솔버를 클릭하면 세부 정보를 확인할 수 있습니다.
+## 하나의 인터페이스, 9개의 솔버
+
+세 가지 전자기 방법을 하나의 `SolverBase` API로 다룹니다. 솔버를 클릭하면 세부 정보를 확인할 수 있습니다.
 
 <SolverShowcase />
 
-## 브라우저 기반 시뮬레이터
+<div class="home-eyebrow">빠른 예제</div>
 
-Python 솔버 파이프라인 외에도, COMPASS는 빠른 탐색과 직관 형성을 위한 **20+ 개의 브라우저 기반 시뮬레이터**를 제공합니다. 전부 클라이언트에서 실행되어 설치나 Python이 필요 없으며, 교육·설계 공간 탐색·본격 RCWA/FDTD 실행 전 sanity check 용도로 적합합니다.
+## 한 번 정의하고 어디서나 실행
 
-- **광학 스택** — TMM QE, 박막 설계기, 에너지 버짓
-- **성능** — SNR, 다이나믹 레인지, EMVA 1288, 광자 전달 곡선
-- **파동 물리** — Si 흡수, 마이크로렌즈 광선 추적, 파브리-페로, 회절 PSF
-- **시스템** — MTF, 색 정확도(ΔE), 픽셀 스케일링, 암전류
+픽셀을 YAML로 기술하고 몇 줄의 Python으로 실행합니다. `solver.name`만 바꾸면 같은 구조를 다른 백엔드로 교차 확인할 수 있습니다.
 
-[모든 시뮬레이터 둘러보기 →](/ko/simulator/)
+::: code-group
 
-## 빠른 예제
-
-하나의 YAML 설정으로 시뮬레이션을 정의하고 세 줄의 Python으로 실행하세요:
-
-```yaml
-# config.yaml
+```yaml [config.yaml]
 pixel:
   pitch: 1.0          # um
   unit_cell: [2, 2]   # 2x2 베이어 패턴
 
 solver:
-  name: torcwa
+  name: torcwa        # 또는 grcwa, meent, fmmax, fdtd_flaport, meep, tmm ...
   type: rcwa
-  fourier_order: 9
+  params:
+    fourier_order: [9, 9]
 
 source:
   wavelength:
     mode: sweep
-    sweep: { start: 0.4, stop: 0.7, step: 0.01 }
+    sweep: { start: 0.40, stop: 0.70, step: 0.01 }
   polarization: unpolarized
 ```
 
-```python
+```python [run.py]
+import yaml
 from compass.runners.single_run import SingleRunner
 
-result = SingleRunner.run("config.yaml")
+with open("config.yaml") as f:
+    config = yaml.safe_load(f)
+
+result = SingleRunner.run(config)
 
 for pixel, qe in result.qe_per_pixel.items():
     print(f"{pixel}: peak QE = {qe.max():.2%}")
 ```
 
+```bash [CLI (Hydra)]
+python scripts/run_simulation.py solver=torcwa source=wavelength_sweep
+python scripts/run_simulation.py solver=grcwa  source=wavelength_sweep  # 교차 확인
+```
+
+:::
+
 <div class="landing-cta-section">
 
 ## 시작하기
 
-<div class="cta-grid">
-<a href="/ko/guide/quickstart" class="cta-card">
-  <strong>빠른 시작</strong>
-  <span>몇 분 안에 첫 번째 시뮬레이션을 실행하세요</span>
-</a>
-<a href="/ko/guide/installation" class="cta-card">
-  <strong>설치 가이드</strong>
-  <span>COMPASS와 솔버 백엔드를 설정하세요</span>
-</a>
-<a href="/ko/theory/basics/what-is-cmos-sensor" class="cta-card">
-  <strong>이미지 센서 기초</strong>
-  <span>이미지 센서가 처음이라면 여기서 시작하세요</span>
-</a>
-<a href="/ko/theory/simulation/rcwa-vs-fdtd" class="cta-card">
-  <strong>RCWA vs FDTD</strong>
-  <span>상황에 맞는 솔버를 선택하세요</span>
-</a>
-<a href="/ko/cookbook/bsi-2x2-basic" class="cta-card">
-  <strong>쿡북</strong>
-  <span>일반적인 작업을 위한 실용적인 레시피</span>
-</a>
-</div>
+원하는 지점에서 시작하세요 — 모든 페이지는 언어 메뉴에서 영어로 전환할 수 있습니다.
+
+<HomeCta />
 
 </div>

@@ -17,99 +17,122 @@ hero:
     - theme: alt
       text: New to image sensors?
       link: /theory/basics/what-is-cmos-sensor
+    - theme: alt
+      text: GitHub
+      link: https://github.com/geniuskey/compass
+
 features:
-  - title: "📖 Beginner Friendly"
-    details: Start from zero — learn image sensor optics fundamentals before diving into simulation
-    link: /theory/basics/what-is-cmos-sensor
+  - icon: 📖
+    title: Learn the physics
+    details: Image sensor optics from first principles — pixel anatomy, thin films, diffraction, QE, RCWA and FDTD.
+    link: /theory/
+    linkText: Start learning
+  - icon: 🐍
+    title: Run the Python pipeline
+    details: One YAML config, nine solver backends. Get per-pixel QE, crosstalk and field maps you can compare.
+    link: /guide/
+    linkText: Read the guide
+  - icon: 🧪
+    title: Try it in the browser
+    details: 26 client-side simulators for TMM QE, SNR, MTF, microlens ray tracing and more — no install required.
+    link: /simulator/
+    linkText: Open simulators
+  - icon: ✅
+    title: Check the evidence
+    details: Cross-solver parity, convergence studies and benchmarks, with the scripts that produced them.
+    link: /reports/
+    linkText: See reports
 ---
+
+<div class="home-stats">
+  <div class="home-stat"><strong>9</strong><span>EM solver backends</span></div>
+  <div class="home-stat"><strong>3</strong><span>methods: RCWA · FDTD · TMM</span></div>
+  <div class="home-stat"><strong>26</strong><span>browser simulators</span></div>
+  <div class="home-stat"><strong>EN · KO</strong><span>bilingual documentation</span></div>
+</div>
+
+<div class="home-eyebrow">The problem</div>
+
+## From photon to electron
+
+Light passes through a microlens, color filter and anti-reflection stack before it is absorbed in silicon. At sub-micron pitch every layer is a wave-optics problem — and different solvers can disagree. COMPASS lets you model the stack once and check the answer against several independent methods.
 
 <HeroAnimation />
 
-## Why COMPASS?
+<div class="home-eyebrow">Why COMPASS</div>
 
-COMPASS bridges the gap between electromagnetic theory and practical CMOS image sensor design. Define your pixel stack once, run it through any solver, and compare results -- all from Python.
+## Built for cross-validated pixel optics
 
 <FeatureShowcase />
 
-## Architecture
+<div class="home-eyebrow">Architecture</div>
 
-A clean five-stage pipeline takes you from YAML configuration to publication-ready results. Click any stage to learn more.
+## A five-stage pipeline
+
+From YAML configuration to publication-ready results. Click any stage to learn more.
 
 <ArchitectureOverview />
 
-## Solver Backends
+<div class="home-eyebrow">Backends</div>
 
-COMPASS provides a unified interface to **9 solver backends** across three electromagnetic methods. Click any solver to see details.
+## Nine solvers, one interface
+
+Three electromagnetic methods behind a single `SolverBase` API. Click any solver to see details.
 
 <SolverShowcase />
 
-## Browser-Based Simulators
+<div class="home-eyebrow">Quick example</div>
 
-In addition to the Python solver pipeline, COMPASS ships with **20+ browser-based simulators** for quick exploration and intuition-building. They run entirely client-side -- no install, no Python required -- and are designed for teaching, design-space exploration, and sanity checks before committing to a full RCWA/FDTD run.
+## Define once, run anywhere
 
-- **Optical stack** -- TMM QE, thin-film designer, energy budget
-- **Performance** -- SNR, dynamic range, EMVA 1288, photon transfer curve
-- **Wave physics** -- Si absorption, microlens raytrace, Fabry-Pérot, diffraction PSF
-- **System** -- MTF, color accuracy (ΔE), pixel scaling, dark current
+Describe the pixel in YAML, then run it with a few lines of Python. Switch `solver.name` to cross-check the same structure with another backend.
 
-[Browse all simulators →](/simulator/)
+::: code-group
 
-## Quick Example
-
-Define your simulation in a single YAML config and run it with three lines of Python:
-
-```yaml
-# config.yaml
+```yaml [config.yaml]
 pixel:
   pitch: 1.0          # um
   unit_cell: [2, 2]   # 2x2 Bayer pattern
 
 solver:
-  name: torcwa
+  name: torcwa        # or grcwa, meent, fmmax, fdtd_flaport, meep, tmm ...
   type: rcwa
-  fourier_order: 9
+  params:
+    fourier_order: [9, 9]
 
 source:
   wavelength:
     mode: sweep
-    sweep: { start: 0.4, stop: 0.7, step: 0.01 }
+    sweep: { start: 0.40, stop: 0.70, step: 0.01 }
   polarization: unpolarized
 ```
 
-```python
+```python [run.py]
+import yaml
 from compass.runners.single_run import SingleRunner
 
-result = SingleRunner.run("config.yaml")
+with open("config.yaml") as f:
+    config = yaml.safe_load(f)
+
+result = SingleRunner.run(config)
 
 for pixel, qe in result.qe_per_pixel.items():
     print(f"{pixel}: peak QE = {qe.max():.2%}")
 ```
 
+```bash [CLI (Hydra)]
+python scripts/run_simulation.py solver=torcwa source=wavelength_sweep
+python scripts/run_simulation.py solver=grcwa  source=wavelength_sweep  # cross-check
+```
+
+:::
+
 <div class="landing-cta-section">
 
-## Get Started
+## Get started
 
-<div class="cta-grid">
-<a href="/guide/quickstart" class="cta-card">
-  <strong>Quick Start</strong>
-  <span>Run your first simulation in minutes</span>
-</a>
-<a href="/guide/installation" class="cta-card">
-  <strong>Installation Guide</strong>
-  <span>Set up COMPASS and solver backends</span>
-</a>
-<a href="/theory/basics/what-is-cmos-sensor" class="cta-card">
-  <strong>Image Sensor Basics</strong>
-  <span>New to image sensors? Start here</span>
-</a>
-<a href="/theory/simulation/rcwa-vs-fdtd" class="cta-card">
-  <strong>RCWA vs FDTD</strong>
-  <span>Pick the right solver for the job</span>
-</a>
-<a href="/cookbook/bsi-2x2-basic" class="cta-card">
-  <strong>Cookbook</strong>
-  <span>Practical recipes for common tasks</span>
-</a>
-</div>
+Pick an entry point — every page has a Korean translation via the language menu.
+
+<HomeCta />
 
 </div>

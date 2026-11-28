@@ -12,33 +12,9 @@ The simulators are **lightweight pedagogical tools**: TMM, geometric optics, ana
 
 ## Available Simulators
 
-### Optical Stack Analysis
-- **[TMM QE Calculator](./tmm-qe)** — Configure a BSI pixel layer stack and compute quantum efficiency spectra in real time
-- **[BARL Optimizer](./barl-optimizer)** — Tune anti-reflection coating layer thicknesses to minimize reflectance
-- **[Energy Budget Analyzer](./energy-budget)** — Visualize where photon energy goes at each wavelength
+Pick a tool by category, or filter by keyword.
 
-### Performance Analysis
-- **[Angular Response](./angular-response)** — Study how QE changes with angle of incidence (CRA effects)
-- **[SNR Calculator](./snr-calculator)** — Compute signal-to-noise ratio, dynamic range, and photon transfer curves
-
-### Design Tools
-- **[Color Filter Designer](./color-filter)** — Design RGB filter spectra and visualize CIE chromaticity gamut
-- **[Pixel Design Playground](./pixel-playground)** — Comprehensive pixel designer combining all parameters with multi-panel results
-
-### Optics & Wave Physics
-- **[Si Absorption Depth](./si-absorption)** — Visualize Beer-Lambert absorption in silicon and understand wavelength-dependent penetration depth
-- **[Microlens Ray Trace](./microlens-raytrace)** — Trace rays through superellipse microlens geometry with Snell's law refraction and CRA effects
-- **[Microlens Process Shape](./microlens-process-shape)** — Estimate final microlens gap, height, curvature, and profile from layout, reflow, and etch-transfer parameters
-- **[MLA Array Visualizer](./mla-array)** — Visualize micro lens array geometry with configurable array patterns, asymmetric radii, height maps, and 2D ray tracing
-- **[FDTI / BDTI Pixel Simulator](./fdti-pixel)** — Compare full-depth front DTI with selectable-depth back DTI and visualize optical field confinement and crosstalk
-- **[Fabry-P&eacute;rot Visualizer](./fabry-perot)** — Explore thin film interference with phasor diagrams and quarter-wave anti-reflection conditions
-- **[Diffraction PSF Viewer](./diffraction-psf)** — View Airy patterns, encircled energy, and pixel grid overlay for collection efficiency analysis
-
-### System Analysis
-- **[MTF Analyzer](./mtf-analyzer)** — Compute pixel aperture, diffraction, and combined system MTF with Nyquist frequency analysis
-- **[Pixel Scaling Trends](./pixel-scaling)** — Explore how FWC, SNR, and diffraction limits scale with pixel pitch
-- **[Color Accuracy Analyzer](./color-accuracy)** — Evaluate color reproduction with CCM computation and Delta E analysis on ColorChecker patches
-- **[Dark Current & Temperature](./dark-current)** — Simulate Arrhenius dark current model and visualize thermal noise impact on image quality
+<SimulatorGallery />
 
 ## Quick Validation Examples
 

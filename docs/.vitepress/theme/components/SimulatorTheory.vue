@@ -2966,6 +2966,7 @@ const entry = computed(() => {
 }
 
 .sim-theory-card {
+  min-width: 0;
   padding: 14px;
   border: 1px solid var(--vp-c-divider);
   border-radius: 8px;

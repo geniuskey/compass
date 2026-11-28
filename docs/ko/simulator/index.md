@@ -12,33 +12,9 @@ title: 시뮬레이터
 
 ## 사용 가능한 시뮬레이터
 
-### 광학 스택 분석
-- **[TMM QE 계산기](./tmm-qe)** — BSI 픽셀 레이어 스택을 구성하고 양자 효율 스펙트럼을 실시간으로 계산
-- **[BARL 최적화](./barl-optimizer)** — 반사 방지 코팅 레이어 두께를 조정하여 반사율 최소화
-- **[에너지 버짓 분석기](./energy-budget)** — 각 파장에서 광자 에너지가 어디로 가는지 시각화
+카테고리를 고르거나 키워드로 찾아보세요.
 
-### 성능 분석
-- **[각도 응답](./angular-response)** — 입사각에 따른 QE 변화 (CRA 효과) 분석
-- **[SNR 계산기](./snr-calculator)** — 신호 대 잡음비, 다이나믹 레인지, 광자 전달 곡선 계산
-
-### 설계 도구
-- **[컬러 필터 설계](./color-filter)** — RGB 필터 스펙트럼 설계 및 CIE 색도 가멋 시각화
-- **[픽셀 설계 놀이터](./pixel-playground)** — 모든 파라미터를 조합한 종합 픽셀 설계 도구
-
-### 광학 & 파동 물리
-- **[Si 흡수 깊이](./si-absorption)** — Beer-Lambert 법칙 기반 파장별 실리콘 흡수계수와 광 침투 깊이 시각화
-- **[마이크로렌즈 광선 추적](./microlens-raytrace)** — 초타원체 마이크로렌즈의 2D 광선 추적과 집광 효율 분석
-- **[마이크로렌즈 공정 형상](./microlens-process-shape)** — layout, reflow, etch-transfer 조건에서 최종 microlens gap, height, curvature, profile 추정
-- **[MLA 어레이 시각화](./mla-array)** — 마이크로 렌즈 어레이의 배열 패턴, 비대칭 반경, 높이맵, 2D 광선 추적 시각화
-- **[FDTI / BDTI 픽셀 시뮬레이터](./fdti-pixel)** — 관통형 전면 DTI와 깊이 선택형 후면 DTI를 비교하고 광학장 구속과 크로스토크를 시각화
-- **[파브리-페로 시각화](./fabry-perot)** — 단층 박막 간섭, 프레넬 계수, 페이저 다이어그램
-- **[회절 PSF 뷰어](./diffraction-psf)** — 에어리 패턴과 픽셀 그리드 오버레이로 에너지 수집 효율 확인
-
-### 시스템 분석
-- **[MTF 분석기](./mtf-analyzer)** — 픽셀 개구, 광학 회절, 결합 시스템 MTF와 나이퀴스트 분석
-- **[픽셀 스케일링 트렌드](./pixel-scaling)** — 픽셀 피치 축소에 따른 FWC, SNR, 해상도, QE 스케일링
-- **[색 정확도 분석기](./color-accuracy)** — 분광 감도, CCM, ΔE*ab 기반 색 재현 정확도 평가
-- **[암전류 & 온도](./dark-current)** — 아레니우스 모델 기반 온도별 암전류와 SNR 영향 분석
+<SimulatorGallery />
 
 ## 빠른 검증 예제
 

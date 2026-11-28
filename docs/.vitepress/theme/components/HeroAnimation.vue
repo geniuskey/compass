@@ -242,7 +242,7 @@ const lightRays = computed(() => {
   --hero-pd-stroke: #f1c40f;
 
   max-width: 700px;
-  margin: -20px auto 32px auto;
+  margin: 8px auto 0;
   padding: 0 16px;
 }
 
