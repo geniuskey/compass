@@ -255,18 +255,18 @@
             {{ hoverAngle }}°
           </text>
           <template v-if="displayMode === 'single'">
-            <text :x="ttX + 6" :y="pad.top + 32" class="tooltip-text" :fill="singleColor">
+            <text :x="ttX + 6" :y="pad.top + 32" class="tooltip-text" :style="{ fill: singleColor }">
               QE: {{ hoverQeSingle.toFixed(1) }}%
             </text>
           </template>
           <template v-else>
-            <text :x="ttX + 6" :y="pad.top + 32" class="tooltip-text" fill="#e74c3c">
+            <text :x="ttX + 6" :y="pad.top + 32" class="tooltip-text" :style="{ fill: '#e74c3c' }">
               R: {{ hoverQeRgb.red.toFixed(1) }}%
             </text>
-            <text :x="ttX + 6" :y="pad.top + 44" class="tooltip-text" fill="#27ae60">
+            <text :x="ttX + 6" :y="pad.top + 44" class="tooltip-text" :style="{ fill: '#27ae60' }">
               G: {{ hoverQeRgb.green.toFixed(1) }}%
             </text>
-            <text :x="ttX + 6" :y="pad.top + 56" class="tooltip-text" fill="#3498db">
+            <text :x="ttX + 6" :y="pad.top + 56" class="tooltip-text" :style="{ fill: '#3498db' }">
               B: {{ hoverQeRgb.blue.toFixed(1) }}%
             </text>
           </template>

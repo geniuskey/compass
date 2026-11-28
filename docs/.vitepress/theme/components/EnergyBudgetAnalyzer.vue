@@ -197,22 +197,22 @@
             <text :x="tooltipX + 6" :y="pad.top + 17" class="tooltip-text" font-weight="600">
               {{ (spectrumWls[hoverIdx] * 1000).toFixed(0) }} nm
             </text>
-            <text :x="tooltipX + 6" :y="pad.top + 31" class="tooltip-text" :fill="colors.silicon">
+            <text :x="tooltipX + 6" :y="pad.top + 31" class="tooltip-text" :style="{ fill: colors.silicon }">
               {{ t('Silicon (QE)', '실리콘 (QE)') }}: {{ (hoverBreakdown.silicon * 100).toFixed(1) }}%
             </text>
-            <text :x="tooltipX + 6" :y="pad.top + 44" class="tooltip-text" :fill="colors.barl">
+            <text :x="tooltipX + 6" :y="pad.top + 44" class="tooltip-text" :style="{ fill: colors.barl }">
               BARL: {{ (hoverBreakdown.barl * 100).toFixed(1) }}%
             </text>
-            <text :x="tooltipX + 6" :y="pad.top + 57" class="tooltip-text" :fill="cfColorHex">
+            <text :x="tooltipX + 6" :y="pad.top + 57" class="tooltip-text" :style="{ fill: cfColorHex }">
               CF: {{ (hoverBreakdown.cf * 100).toFixed(1) }}%
             </text>
-            <text :x="tooltipX + 6" :y="pad.top + 70" class="tooltip-text" :fill="colors.planarization">
+            <text :x="tooltipX + 6" :y="pad.top + 70" class="tooltip-text" :style="{ fill: colors.planarization }">
               {{ t('Plnr', '평탄화') }}: {{ (hoverBreakdown.planarization * 100).toFixed(1) }}%
             </text>
-            <text :x="tooltipX + 6" :y="pad.top + 83" class="tooltip-text" :fill="colors.microlens">
+            <text :x="tooltipX + 6" :y="pad.top + 83" class="tooltip-text" :style="{ fill: colors.microlens }">
               {{ t('Microlens', '마이크로렌즈') }}: {{ (hoverBreakdown.microlens * 100).toFixed(1) }}%
             </text>
-            <text :x="tooltipX + 6" :y="pad.top + 96" class="tooltip-text" :fill="colors.reflection">
+            <text :x="tooltipX + 6" :y="pad.top + 96" class="tooltip-text" :style="{ fill: colors.reflection }">
               R: {{ (hoverBreakdown.reflection * 100).toFixed(1) }}%
               T: {{ (hoverBreakdown.transmission * 100).toFixed(1) }}%
             </text>

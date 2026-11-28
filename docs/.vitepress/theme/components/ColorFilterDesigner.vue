@@ -82,13 +82,13 @@
               <line :x1="specHover.sx" :y1="specPad.top" :x2="specHover.sx" :y2="specPad.top+specPlotH" stroke="var(--vp-c-text-2)" stroke-width="0.8" stroke-dasharray="4,3" />
               <rect :x="specHover.tx" :y="specPad.top+4" width="140" :height="showQE?86:50" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
               <text :x="specHover.tx+6" :y="specPad.top+16" class="tooltip-text">&lambda; = {{ specHover.wl }} nm</text>
-              <text :x="specHover.tx+6" :y="specPad.top+28" class="tooltip-text" fill="#e74c3c">R: {{ specHover.r.toFixed(1) }}%</text>
-              <text :x="specHover.tx+6" :y="specPad.top+40" class="tooltip-text" fill="#27ae60">G: {{ specHover.g.toFixed(1) }}%</text>
-              <text :x="specHover.tx+6" :y="specPad.top+52" class="tooltip-text" fill="#3498db">B: {{ specHover.b.toFixed(1) }}%</text>
+              <text :x="specHover.tx+6" :y="specPad.top+28" class="tooltip-text" :style="{ fill: '#e74c3c' }">R: {{ specHover.r.toFixed(1) }}%</text>
+              <text :x="specHover.tx+6" :y="specPad.top+40" class="tooltip-text" :style="{ fill: '#27ae60' }">G: {{ specHover.g.toFixed(1) }}%</text>
+              <text :x="specHover.tx+6" :y="specPad.top+52" class="tooltip-text" :style="{ fill: '#3498db' }">B: {{ specHover.b.toFixed(1) }}%</text>
               <template v-if="showQE">
-                <text :x="specHover.tx+74" :y="specPad.top+28" class="tooltip-text" fill="#e74c3c">QE {{ specHover.qr.toFixed(1) }}%</text>
-                <text :x="specHover.tx+74" :y="specPad.top+40" class="tooltip-text" fill="#27ae60">QE {{ specHover.qg.toFixed(1) }}%</text>
-                <text :x="specHover.tx+74" :y="specPad.top+52" class="tooltip-text" fill="#3498db">QE {{ specHover.qb.toFixed(1) }}%</text>
+                <text :x="specHover.tx+74" :y="specPad.top+28" class="tooltip-text" :style="{ fill: '#e74c3c' }">QE {{ specHover.qr.toFixed(1) }}%</text>
+                <text :x="specHover.tx+74" :y="specPad.top+40" class="tooltip-text" :style="{ fill: '#27ae60' }">QE {{ specHover.qg.toFixed(1) }}%</text>
+                <text :x="specHover.tx+74" :y="specPad.top+52" class="tooltip-text" :style="{ fill: '#3498db' }">QE {{ specHover.qb.toFixed(1) }}%</text>
               </template>
             </template>
           </svg>

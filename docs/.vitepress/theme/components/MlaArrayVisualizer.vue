@@ -195,8 +195,8 @@
           <line :x1="sectionHoverSvgX" :y1="secPad.top" :x2="sectionHoverSvgX" :y2="secSvgH - secPad.bottom" stroke="var(--vp-c-text-2)" stroke-width="0.5" stroke-dasharray="3,2" />
           <rect :x="Math.min(sectionHoverSvgX + 6, secSvgW - 106)" :y="secPad.top" width="100" height="46" rx="4" fill="var(--vp-c-bg-soft)" stroke="var(--vp-c-divider)" />
           <text :x="Math.min(sectionHoverSvgX + 10, secSvgW - 102)" :y="secPad.top + 13" class="tooltip-text">r = {{ sectionHoverR }}</text>
-          <text :x="Math.min(sectionHoverSvgX + 10, secSvgW - 102)" :y="secPad.top + 26" class="tooltip-text" fill="#3498db">XZ: {{ sectionHoverXZ }}</text>
-          <text :x="Math.min(sectionHoverSvgX + 10, secSvgW - 102)" :y="secPad.top + 39" class="tooltip-text" fill="#e74c3c">YZ: {{ sectionHoverYZ }}</text>
+          <text :x="Math.min(sectionHoverSvgX + 10, secSvgW - 102)" :y="secPad.top + 26" class="tooltip-text" :style="{ fill: '#3498db' }">XZ: {{ sectionHoverXZ }}</text>
+          <text :x="Math.min(sectionHoverSvgX + 10, secSvgW - 102)" :y="secPad.top + 39" class="tooltip-text" :style="{ fill: '#e74c3c' }">YZ: {{ sectionHoverYZ }}</text>
         </template>
         <text :x="(secPad.left + secSvgW - secPad.right) / 2" :y="secSvgH - 2" text-anchor="middle" class="axis-label">{{ t('Distance (um)', '거리 (um)') }}</text>
         <text x="10" :y="(secPad.top + secSvgH - secPad.bottom) / 2" text-anchor="middle" class="axis-label" :transform="`rotate(-90, 10, ${(secPad.top + secSvgH - secPad.bottom) / 2})`">Z (um)</text>

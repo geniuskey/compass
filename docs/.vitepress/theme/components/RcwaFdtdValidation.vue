@@ -134,23 +134,23 @@
           <rect :x="tooltipX" :y="pad.top + 4" :width="tooltipWidth" :height="activeTab === 'qe_cf' ? 120 : 68" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
           <template v-if="activeTab !== 'cone' && activeTab !== 'qe_cf'">
             <text :x="tooltipX + 8" :y="pad.top + 18" class="tooltip-text">{{ wavelengths[hoverIdx] }} nm</text>
-            <text :x="tooltipX + 8" :y="pad.top + 36" class="tooltip-text" fill="#27ae60">grcwa: {{ grcwa[activeTab][hoverIdx].toFixed(4) }}</text>
-            <text :x="tooltipX + 8" :y="pad.top + 54" class="tooltip-text" fill="#3451b2">fdtd: {{ fdtd[activeTab][hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 36" class="tooltip-text" :style="{ fill: '#27ae60' }">grcwa: {{ grcwa[activeTab][hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 54" class="tooltip-text" :style="{ fill: '#3451b2' }">fdtd: {{ fdtd[activeTab][hoverIdx].toFixed(4) }}</text>
           </template>
           <template v-else-if="activeTab === 'qe_cf'">
             <text :x="tooltipX + 8" :y="pad.top + 18" class="tooltip-text">{{ wavelengths[hoverIdx] }} nm</text>
-            <text :x="tooltipX + 8" :y="pad.top + 34" class="tooltip-text" fill="#e74c3c">grcwa R: {{ qeCf.grcwa.R[hoverIdx].toFixed(4) }}</text>
-            <text :x="tooltipX + 8" :y="pad.top + 48" class="tooltip-text" fill="#27ae60">grcwa G: {{ qeCf.grcwa.G[hoverIdx].toFixed(4) }}</text>
-            <text :x="tooltipX + 8" :y="pad.top + 62" class="tooltip-text" fill="#2980b9">grcwa B: {{ qeCf.grcwa.B[hoverIdx].toFixed(4) }}</text>
-            <text :x="tooltipX + 8" :y="pad.top + 78" class="tooltip-text" fill="#e74c3c">fdtd R: {{ qeCf.fdtd.R[hoverIdx].toFixed(4) }}</text>
-            <text :x="tooltipX + 8" :y="pad.top + 92" class="tooltip-text" fill="#27ae60">fdtd G: {{ qeCf.fdtd.G[hoverIdx].toFixed(4) }}</text>
-            <text :x="tooltipX + 8" :y="pad.top + 106" class="tooltip-text" fill="#2980b9">fdtd B: {{ qeCf.fdtd.B[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 34" class="tooltip-text" :style="{ fill: '#e74c3c' }">grcwa R: {{ qeCf.grcwa.R[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 48" class="tooltip-text" :style="{ fill: '#27ae60' }">grcwa G: {{ qeCf.grcwa.G[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 62" class="tooltip-text" :style="{ fill: '#2980b9' }">grcwa B: {{ qeCf.grcwa.B[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 78" class="tooltip-text" :style="{ fill: '#e74c3c' }">fdtd R: {{ qeCf.fdtd.R[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 92" class="tooltip-text" :style="{ fill: '#27ae60' }">fdtd G: {{ qeCf.fdtd.G[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 106" class="tooltip-text" :style="{ fill: '#2980b9' }">fdtd B: {{ qeCf.fdtd.B[hoverIdx].toFixed(4) }}</text>
           </template>
           <template v-else>
             <text :x="tooltipX + 8" :y="pad.top + 18" class="tooltip-text">{{ wavelengths[hoverIdx] }} nm</text>
-            <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" fill="#27ae60">{{ t('Direct', '직광') }}: {{ cone.direct[hoverIdx].toFixed(4) }}</text>
-            <text :x="tooltipX + 8" :y="pad.top + 46" class="tooltip-text" fill="#e67e22">F/2.0 CRA=0°: {{ cone.f2_cra0[hoverIdx].toFixed(4) }}</text>
-            <text :x="tooltipX + 8" :y="pad.top + 60" class="tooltip-text" fill="#8e44ad">F/2.0 CRA=15°: {{ cone.f2_cra15[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" :style="{ fill: '#27ae60' }">{{ t('Direct', '직광') }}: {{ cone.direct[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 46" class="tooltip-text" :style="{ fill: '#e67e22' }">F/2.0 CRA=0°: {{ cone.f2_cra0[hoverIdx].toFixed(4) }}</text>
+            <text :x="tooltipX + 8" :y="pad.top + 60" class="tooltip-text" :style="{ fill: '#8e44ad' }">F/2.0 CRA=15°: {{ cone.f2_cra15[hoverIdx].toFixed(4) }}</text>
           </template>
         </template>
 

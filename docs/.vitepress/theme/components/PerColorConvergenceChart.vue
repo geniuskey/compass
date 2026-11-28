@@ -178,7 +178,7 @@
             :x="grcwaXScale(81) + 4"
             :y="grcwaYScale(0.5) - 6"
             class="bar-label"
-            fill="#E53935"
+            :style="{ fill: '#E53935' }"
           >{{ t('TM unstable', 'TM 불안정') }}</text>
 
           <!-- Legend -->
@@ -358,7 +358,7 @@
             :x="hoverInfo.tooltipX + 8"
             :y="hoverInfo.tooltipY + 30"
             class="tooltip-text"
-            :fill="hoverInfo.color"
+            :style="{ fill: hoverInfo.color }"
           >{{ hoverInfo.line2 }}</text>
         </template>
       </svg>

@@ -200,13 +200,13 @@
             <text :x="chartHover.tx + 6" :y="pad.top + 17" class="tooltip-text">
               f: {{ chartHover.freq.toFixed(3) }} cy/&mu;m ({{ (chartHover.freq * 1000).toFixed(0) }} lp/mm)
             </text>
-            <text :x="chartHover.tx + 6" :y="pad.top + 29" class="tooltip-text" fill="#3498db">
+            <text :x="chartHover.tx + 6" :y="pad.top + 29" class="tooltip-text" :style="{ fill: '#3498db' }">
               {{ t('Pixel', '픽셀') }}: {{ (chartHover.pixelMtf * 100).toFixed(1) }}%
             </text>
-            <text :x="chartHover.tx + 6" :y="pad.top + 41" class="tooltip-text" fill="#27ae60">
+            <text :x="chartHover.tx + 6" :y="pad.top + 41" class="tooltip-text" :style="{ fill: '#27ae60' }">
               {{ t('Optical', '광학') }}: {{ (chartHover.optMtf * 100).toFixed(1) }}%
             </text>
-            <text :x="chartHover.tx + 6" :y="pad.top + 53" class="tooltip-text" fill="#8e44ad">
+            <text :x="chartHover.tx + 6" :y="pad.top + 53" class="tooltip-text" :style="{ fill: '#8e44ad' }">
               {{ t('Combined', '합성') }}: {{ (chartHover.combMtf * 100).toFixed(1) }}%
             </text>
           </template>

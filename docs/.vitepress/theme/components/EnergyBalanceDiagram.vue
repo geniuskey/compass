@@ -148,9 +148,9 @@
           <!-- Tooltip -->
           <rect :x="tooltipX" :y="pad.top + 4" width="130" height="72" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
           <text :x="tooltipX + 8" :y="pad.top + 18" class="tooltip-text">{{ hoverWl }} nm</text>
-          <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" fill="#3498db">R: {{ hoverData.R.toFixed(4) }}</text>
-          <text :x="tooltipX + 8" :y="pad.top + 44" class="tooltip-text" fill="#27ae60">T: {{ hoverData.T.toFixed(4) }}</text>
-          <text :x="tooltipX + 8" :y="pad.top + 56" class="tooltip-text" fill="#e67e22">A: {{ hoverData.A.toFixed(4) }}</text>
+          <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" :style="{ fill: '#3498db' }">R: {{ hoverData.R.toFixed(4) }}</text>
+          <text :x="tooltipX + 8" :y="pad.top + 44" class="tooltip-text" :style="{ fill: '#27ae60' }">T: {{ hoverData.T.toFixed(4) }}</text>
+          <text :x="tooltipX + 8" :y="pad.top + 56" class="tooltip-text" :style="{ fill: '#e67e22' }">A: {{ hoverData.A.toFixed(4) }}</text>
           <text :x="tooltipX + 8" :y="pad.top + 68" class="tooltip-text" fill="var(--vp-c-text-2)">{{ t('Sum:', '합:') }} {{ (hoverData.R + hoverData.T + hoverData.A).toFixed(6) }}</text>
         </template>
 

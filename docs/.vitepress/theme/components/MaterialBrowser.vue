@@ -56,7 +56,7 @@
         <line :x1="padL" :y1="plotBottom" :x2="padL + plotW" :y2="plotBottom" stroke="var(--vp-c-text-3)" stroke-width="1" />
 
         <!-- Left Y-axis label (n) -->
-        <text :x="10" :y="padT + plotH / 2" text-anchor="middle" transform-origin="10 160" :transform="`rotate(-90, 10, ${padT + plotH / 2})`" class="axis-label" fill="#3498db">{{ t('n (refractive index)', 'n (굴절률)') }}</text>
+        <text :x="10" :y="padT + plotH / 2" text-anchor="middle" transform-origin="10 160" :transform="`rotate(-90, 10, ${padT + plotH / 2})`" class="axis-label" :style="{ fill: '#3498db' }">{{ t('n (refractive index)', 'n (굴절률)') }}</text>
 
         <!-- Left Y-axis ticks -->
         <template v-for="tick in yTicksN" :key="'yn' + tick">
@@ -65,7 +65,7 @@
         </template>
 
         <!-- Right Y-axis label (k) -->
-        <text :x="W - 6" :y="padT + plotH / 2" text-anchor="middle" :transform="`rotate(90, ${W - 6}, ${padT + plotH / 2})`" class="axis-label" fill="#e74c3c">{{ t('k (extinction coeff.)', 'k (소광 계수)') }}</text>
+        <text :x="W - 6" :y="padT + plotH / 2" text-anchor="middle" :transform="`rotate(90, ${W - 6}, ${padT + plotH / 2})`" class="axis-label" :style="{ fill: '#e74c3c' }">{{ t('k (extinction coeff.)', 'k (소광 계수)') }}</text>
 
         <!-- Right Y-axis ticks -->
         <template v-for="tick in yTicksK" :key="'yk' + tick">

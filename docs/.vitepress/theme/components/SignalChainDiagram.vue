@@ -165,8 +165,8 @@
           <line :x1="xScale(hoverWl)" :y1="pad.top" :x2="xScale(hoverWl)" :y2="pad.top + plotH" stroke="var(--vp-c-text-2)" stroke-width="0.8" stroke-dasharray="4,3" />
           <rect :x="tooltipX" :y="pad.top + 4" width="130" height="58" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
           <text :x="tooltipX + 6" :y="pad.top + 16" class="tooltip-text">{{ hoverWl }} nm</text>
-          <text :x="tooltipX + 6" :y="pad.top + 28" class="tooltip-text" fill="#8e44ad">{{ t('Source', '광원') }}: {{ hoverSource.toFixed(3) }}</text>
-          <text :x="tooltipX + 6" :y="pad.top + 40" class="tooltip-text" fill="#e67e22">+{{ t('Scene', '장면') }}: {{ hoverScene.toFixed(3) }}</text>
+          <text :x="tooltipX + 6" :y="pad.top + 28" class="tooltip-text" :style="{ fill: '#8e44ad' }">{{ t('Source', '광원') }}: {{ hoverSource.toFixed(3) }}</text>
+          <text :x="tooltipX + 6" :y="pad.top + 40" class="tooltip-text" :style="{ fill: '#e67e22' }">+{{ t('Scene', '장면') }}: {{ hoverScene.toFixed(3) }}</text>
           <text :x="tooltipX + 6" :y="pad.top + 52" class="tooltip-text" fill="var(--vp-c-brand-1)">+IR: {{ hoverIR.toFixed(3) }}</text>
         </template>
 

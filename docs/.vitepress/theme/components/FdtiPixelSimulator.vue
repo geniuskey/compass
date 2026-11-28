@@ -162,7 +162,7 @@
                 rx="3"
               />
 
-              <text v-for="pd in photodiodeRects" :key="pd.key + '-label'" :x="pd.x + pd.w / 2" :y="pd.y + pd.h / 2 + 4" text-anchor="middle" class="tiny-label" fill="#facc15">
+              <text v-for="pd in photodiodeRects" :key="pd.key + '-label'" :x="pd.x + pd.w / 2" :y="pd.y + pd.h / 2 + 4" text-anchor="middle" class="tiny-label" :style="{ fill: '#facc15' }">
                 {{ pd.label }}
               </text>
 

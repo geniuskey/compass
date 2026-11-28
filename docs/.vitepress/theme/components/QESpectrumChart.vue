@@ -144,9 +144,9 @@
           <!-- Tooltip -->
           <rect :x="tooltipX" :y="pad.top + 4" width="120" height="58" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
           <text :x="tooltipX + 8" :y="pad.top + 18" class="tooltip-text">{{ hoverWl }} nm</text>
-          <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" fill="#3498db">B: {{ hoverQE.blue.toFixed(1) }}%</text>
-          <text :x="tooltipX + 8" :y="pad.top + 44" class="tooltip-text" fill="#27ae60">G: {{ hoverQE.green.toFixed(1) }}%</text>
-          <text :x="tooltipX + 8" :y="pad.top + 56" class="tooltip-text" fill="#e74c3c">R: {{ hoverQE.red.toFixed(1) }}%</text>
+          <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" :style="{ fill: '#3498db' }">B: {{ hoverQE.blue.toFixed(1) }}%</text>
+          <text :x="tooltipX + 8" :y="pad.top + 44" class="tooltip-text" :style="{ fill: '#27ae60' }">G: {{ hoverQE.green.toFixed(1) }}%</text>
+          <text :x="tooltipX + 8" :y="pad.top + 56" class="tooltip-text" :style="{ fill: '#e74c3c' }">R: {{ hoverQE.red.toFixed(1) }}%</text>
         </template>
 
         <!-- Legend -->

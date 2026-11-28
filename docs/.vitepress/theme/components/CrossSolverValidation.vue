@@ -205,13 +205,13 @@
           <text :x="tooltipX + 8" :y="pad.top + 18" class="tooltip-text">
             {{ wavelengths[hoverIdx] }} nm
           </text>
-          <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" fill="#3451b2">
+          <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" :style="{ fill: '#3451b2' }">
             TMM: {{ tmm[activeTab][hoverIdx].toFixed(4) }}
           </text>
-          <text :x="tooltipX + 8" :y="pad.top + 46" class="tooltip-text" fill="#e67e22">
+          <text :x="tooltipX + 8" :y="pad.top + 46" class="tooltip-text" :style="{ fill: '#e67e22' }">
             torcwa: {{ torcwa[activeTab][hoverIdx].toFixed(4) }}
           </text>
-          <text :x="tooltipX + 8" :y="pad.top + 60" class="tooltip-text" fill="#27ae60">
+          <text :x="tooltipX + 8" :y="pad.top + 60" class="tooltip-text" :style="{ fill: '#27ae60' }">
             grcwa: {{ grcwa[activeTab][hoverIdx].toFixed(4) }}
           </text>
         </template>

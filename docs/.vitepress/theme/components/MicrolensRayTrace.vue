@@ -77,6 +77,12 @@
         </label>
         <input type="range" min="5" max="30" step="1" v-model.number="numRays" class="ctrl-range" :aria-label="t('Number of rays', '광선 수')" />
       </div>
+      <div class="slider-group">
+        <label class="check-label">
+          <input type="checkbox" v-model="dtiOn" />
+          {{ t('Full-depth DTI (oxide, TIR)', '전체 깊이 DTI (산화막, 전반사)') }}
+        </label>
+      </div>
       <div class="slider-group reset-group">
         <button type="button" class="reset-btn" @click="resetControls">{{ t('Reset', '초기화') }}</button>
       </div>
@@ -110,7 +116,7 @@
           fill="#5d6d7e"
           opacity="0.6"
         />
-        <text :x="margin + 6" :y="toSvgY(siThickness / 2)" class="layer-label-text" fill="#fff">
+        <text :x="margin + 6" :y="toSvgY(siThickness / 2)" class="layer-label-text" :style="{ fill: '#fff' }">
           {{ t('Silicon', '실리콘') }}
         </text>
 
@@ -133,7 +139,7 @@
           fill="#27ae60"
           opacity="0.35"
         />
-        <text :x="margin + 6" :y="toSvgY(siThickness + barlThickness + cfThickness / 2)" class="layer-label-text" fill="#27ae60">
+        <text :x="margin + 6" :y="toSvgY(siThickness + barlThickness + cfThickness / 2)" class="layer-label-text" :style="{ fill: '#27ae60' }">
           {{ t('Color filter', '컬러 필터') }}
         </text>
 
@@ -147,17 +153,21 @@
           opacity="0.4"
         />
 
-        <!-- DTI wall -->
-        <line
-          :x1="toSvgX(pitch)"
-          :y1="toSvgY(0)"
-          :x2="toSvgX(pitch)"
-          :y2="toSvgY(siThickness)"
-          stroke="#fff"
-          stroke-width="2"
-          opacity="0.8"
-        />
-        <text :x="toSvgX(pitch) + 3" :y="toSvgY(siThickness * 0.7)" class="tiny-label" fill="#fff">DTI</text>
+        <!-- DTI walls at the pixel boundaries -->
+        <template v-if="dtiOn">
+          <line
+            v-for="k in [0, 1, 2]"
+            :key="'dti-' + k"
+            :x1="toSvgX(k * pitch)"
+            :y1="toSvgY(0)"
+            :x2="toSvgX(k * pitch)"
+            :y2="toSvgY(siThickness)"
+            stroke="#fff"
+            stroke-width="2"
+            opacity="0.8"
+          />
+          <text :x="toSvgX(pitch) + 3" :y="toSvgY(siThickness * 0.7)" class="tiny-label" fill="#fff">DTI</text>
+        </template>
 
         <!-- Photodiode boxes -->
         <rect
@@ -217,10 +227,10 @@
             stroke-width="1.5"
             :opacity="0.6"
           />
-          <!-- Refracted segment inside silicon -->
-          <line
-            :x1="ray.siX" :y1="ray.siY"
-            :x2="ray.endX" :y2="ray.endY"
+          <!-- Refracted path inside silicon (reflects off the DTI walls) -->
+          <polyline
+            :points="ray.siPoints"
+            fill="none"
             :stroke="ray.hitsTarget ? '#27ae60' : '#e74c3c'"
             stroke-width="1.5"
             :opacity="0.6"
@@ -268,6 +278,10 @@
         <span class="info-label">{{ t('Crosstalk rays', '크로스토크 광선') }}</span>
         <span class="info-value">{{ crosstalkCount }}</span>
       </div>
+      <div class="info-card">
+        <span class="info-label">{{ t('DTI reflections', 'DTI 반사') }}</span>
+        <span class="info-value">{{ dtiReflections }}</span>
+      </div>
     </div>
     <div class="info-row">
       <div class="info-card">
@@ -289,8 +303,8 @@
     </div>
     <p class="rt-note">
       {{ t(
-        'Rays refract at the lens (n = 1.56; the stack above Si is treated as index-matched) and again at the Si surface (n ≈ ' + nSi.toFixed(2) + ' at 550 nm). Collection is tested at the PD mid-depth (dotted line). Shift the microlens toward the light source to compensate CRA.',
-        '광선은 렌즈(n = 1.56; Si 위 스택은 굴절률 정합으로 가정)와 Si 표면(550 nm에서 n ≈ ' + nSi.toFixed(2) + ')에서 굴절됩니다. 수집 여부는 PD 중간 깊이(점선)에서 판정합니다. CRA 보상을 위해 마이크로렌즈를 광원 쪽으로 시프트하세요.'
+        'Rays refract at the lens (n = 1.56; the stack above Si is treated as index-matched) and again at the Si surface (n ≈ ' + nSi.toFixed(2) + ' at 550 nm). Collection is tested at the PD mid-depth (dotted line). Full-depth oxide DTI reflects rays in Si by total internal reflection (critical angle ≈ ' + (Math.asin(1.46 / nSi) * 180 / Math.PI).toFixed(0) + '°), but cannot stop crosstalk that crosses the boundary above the Si. Shift the microlens toward the light source to compensate CRA.',
+        '광선은 렌즈(n = 1.56; Si 위 스택은 굴절률 정합으로 가정)와 Si 표면(550 nm에서 n ≈ ' + nSi.toFixed(2) + ')에서 굴절됩니다. 수집 여부는 PD 중간 깊이(점선)에서 판정합니다. 전체 깊이 산화막 DTI는 Si 내부 광선을 전반사로 되돌리지만(임계각 ≈ ' + (Math.asin(1.46 / nSi) * 180 / Math.PI).toFixed(0) + '°), Si 위 스택에서 경계를 넘은 크로스토크는 막지 못합니다. CRA 보상을 위해 마이크로렌즈를 광원 쪽으로 시프트하세요.'
       ) }}
     </p>
   </div>
@@ -346,6 +360,7 @@ function resetControls() {
   cra.value = 0
   numRays.value = 15
   lensShift.value = 0
+  dtiOn.value = true
   cfThickness.value = 0.8
   planThickness.value = 0.3
 }
@@ -453,6 +468,7 @@ interface TracedRay {
   siY: number
   endX: number
   endY: number
+  siPoints: string
   hitsTarget: boolean
   testX: number
 }
@@ -480,6 +496,54 @@ interface PhysRay {
   mDx: number; mDz: number // direction in the stack (n = nLens)
   siX: number; siDx: number; siDz: number // entry x at Si top and direction in Si
   testX: number; endX: number
+  siPath: Array<[number, number]> // physical (x, z) polyline inside Si, incl. DTI reflections
+  reflections: number
+}
+
+const N_OXIDE = 1.46
+const dtiOn = ref(true)
+
+/**
+ * March a ray through silicon from (x0, siThickness) to the Si bottom (z = 0).
+ * Full-depth DTI walls sit at every pixel boundary x = k·pitch. A ray hitting a wall
+ * is totally internally reflected when nSi·sin(θ) > nOxide (θ measured from the wall
+ * normal, i.e. the horizontal); otherwise it passes through (partial reflection ignored).
+ * Returns the polyline and the x position at the PD test depth.
+ */
+function traceInSilicon(x0: number, dx0: number, dz0: number) {
+  const p = pitch.value
+  const path: Array<[number, number]> = [[x0, siThickness]]
+  let x = x0, z = siThickness, dx = dx0, dz = dz0
+  let testX = NaN
+  let reflections = 0
+  for (let guard = 0; guard < 50; guard++) {
+    const tBottom = z / -dz
+    let tWall = Infinity
+    let wallX = NaN
+    if (dtiOn.value && Math.abs(dx) > 1e-9) {
+      // Next wall in the direction of travel, ignoring the one we are on
+      const k = dx > 0 ? Math.floor(x / p + 1e-9) + 1 : Math.ceil(x / p - 1e-9) - 1
+      wallX = k * p
+      tWall = (wallX - x) / dx
+      if (tWall <= 1e-9) tWall = Infinity
+    }
+    const tPd = (z - pdTestZ) / -dz
+    if (Number.isNaN(testX) && tPd >= 0 && tPd <= Math.min(tWall, tBottom)) testX = x + tPd * dx
+    if (tBottom <= tWall) {
+      x += tBottom * dx
+      z = 0
+      path.push([x, z])
+      break
+    }
+    x = wallX
+    z += tWall * dz
+    path.push([x, z])
+    const sinTheta = Math.abs(dz) // angle from the horizontal wall normal
+    if (nSi * sinTheta > N_OXIDE) { dx = -dx; reflections++ }
+    else x += Math.sign(dx) * 1e-6 // transmitted: continue into the next pixel
+  }
+  if (Number.isNaN(testX)) testX = x
+  return { path, testX, endX: x, reflections }
 }
 
 const physRays = computed((): PhysRay[] => {
@@ -498,9 +562,12 @@ const physRays = computed((): PhysRay[] => {
   const nR = numRays.value
 
   for (let i = 0; i < nR; i++) {
-    // Distribute rays across left pixel (0 to pitch)
-    const xStart = (pitch.value * (i + 0.5)) / nR
-    const zStart = totalHeight.value - 0.1
+    // Rays fill pixel 0's aperture (0..pitch) at the lens-base plane. Launch them a little
+    // above the lens apex, displaced back along the chief-ray direction so oblique bundles
+    // still land on pixel 0 instead of walking off into the neighbour.
+    const zStart = Math.min(totalHeight.value - 0.1, lensBase + h + 0.3)
+    const xAtBase = (pitch.value * (i + 0.5)) / nR
+    const xStart = xAtBase - (zStart - lensBase) * (dx / Math.abs(dz))
 
     let hitX = -1
     let hitZ = -1
@@ -567,11 +634,10 @@ const physRays = computed((): PhysRay[] => {
     const rSi = refract(mDx, mDz, 0, 1, nLens, nSi) ?? [mDx, mDz]
     const [siDx, siDz] = rSi
 
-    // Collection is tested at the PD mid-depth; drawing continues to Si bottom
-    const testX = siX + ((siThickness - pdTestZ) / -siDz) * siDx
-    const endX = siX + (siThickness / -siDz) * siDx
+    // Propagate through silicon; collection is tested at the PD mid-depth
+    const si = traceInSilicon(siX, siDx, siDz)
 
-    rays.push({ xStart, zStart, hitX, hitZ, hitLens, mDx, mDz, siX, siDx, siDz, testX, endX })
+    rays.push({ xStart, zStart, hitX, hitZ, hitLens, mDx, mDz, siX, siDx, siDz, testX: si.testX, endX: si.endX, siPath: si.path, reflections: si.reflections })
   }
   return rays
 })
@@ -589,6 +655,7 @@ const tracedRays = computed((): TracedRay[] => {
     siY: toSvgY(siThickness),
     endX: toSvgX(r.endX),
     endY: toSvgY(0),
+    siPoints: r.siPath.map(([px, pz]) => `${toSvgX(px).toFixed(1)},${toSvgY(pz).toFixed(1)}`).join(' '),
     hitsTarget: r.testX >= pd0Left && r.testX <= pd0Right,
     testX: r.testX,
   }))
@@ -622,6 +689,8 @@ const tracedFocus = computed(() => {
 })
 
 // Statistics
+const dtiReflections = computed(() => physRays.value.reduce((n, r) => n + r.reflections, 0))
+
 const collectionEfficiency = computed(() => {
   if (tracedRays.value.length === 0) return 0
   const hits = tracedRays.value.filter((r) => r.hitsTarget).length
@@ -682,6 +751,7 @@ const fNumber = computed(() => {
   flex-wrap: wrap;
   margin-bottom: 12px;
 }
+.check-label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .slider-group {
   flex: 1;
   min-width: 150px;

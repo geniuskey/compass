@@ -473,6 +473,7 @@ import { useLocale } from '../composables/useLocale'
 import { useFullscreen } from '../composables/useFullscreen'
 import { tmmCalc, defaultBsiStack, SI_LAYER_IDX } from '../composables/tmm'
 import { interp1, mat3Vec, fitWhitePreservingCcm, type Mat3 } from '../composables/colorMath'
+import { cmfOn, daylightSpd, fitReflectanceToXyz, illuminantA } from '../composables/spectral'
 
 const { t } = useLocale()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
@@ -527,8 +528,9 @@ const DE_METHODS = [
 // ---- ColorChecker Classic 24 data (standard 24 patches, 7 wavelengths 400-700nm @ 50nm) ----
 // srgb: nominal post-2014 X-Rite sRGB(D65) values (approximate; X-Rite specifies the
 // chart in L*a*b* D50/2 -- see the official ColorChecker data sheet).
-// refl: coarse 50nm-sampled reflectance approximations for spectral simulation,
-// NOT measured X-Rite spectra; adequate for relative CCM/Delta-E exploration only.
+// refl: coarse 50nm-sampled starting shapes, NOT measured X-Rite spectra. At load time each
+// shape is colorimetrically corrected (fitReflectanceToXyz) so that under D65 it reproduces
+// the patch's reference sRGB exactly; the spectra are therefore metamers of the real patches.
 const CLASSIC_PATCHES: { name: string; srgb: number[]; refl: number[] }[] = [
   { name: 'Dark Skin',     srgb: [115,82,68],   refl: [0.055,0.058,0.069,0.099,0.132,0.143,0.146] },
   { name: 'Light Skin',    srgb: [194,150,130],  refl: [0.092,0.107,0.152,0.191,0.260,0.286,0.275] },
@@ -601,14 +603,17 @@ const SG_NAMES: string[] = (() => {
   return names
 })()
 
-// ---- Illuminant data (tabulated at 50nm, 400-700nm; linearly interpolated to the 10nm grid) ----
-// Note: 50nm sampling smooths out the F2 mercury lines -- treat F2 as a qualitative example.
-const ILLUMINANTS: Record<string, { spd: number[]; label: string; ko: string }> = {
-  D65: { spd: [82.75, 109.35, 117.01, 114.86, 100.0, 90.01, 71.61], label: 'D65 (Daylight)', ko: 'D65 (주광)' },
-  D50: { spd: [54.65, 100.27, 122.97, 112.59, 100.0, 78.66, 55.78], label: 'D50 (Warm)', ko: 'D50 (온백색)' },
-  A:   { spd: [11.46, 25.62, 51.12, 72.17, 100.0, 125.75, 145.11], label: 'A (Tungsten)', ko: 'A (텅스텐)' },
-  F2:  { spd: [24.82, 65.85, 80.03, 95.72, 100.0, 64.89, 17.22], label: 'F2 (Fluorescent)', ko: 'F2 (형광등)' },
+// ---- Illuminants ----
+// D65 / D50 come from the CIE daylight basis (S0, S1, S2) and A from its defining Planck
+// formula, evaluated directly on the 10nm grid. F2 is a coarse 50nm approximation that
+// smooths out the mercury lines -- treat it as a qualitative example only.
+const ILLUMINANTS: Record<string, { label: string; ko: string }> = {
+  D65: { label: 'D65 (Daylight)', ko: 'D65 (주광)' },
+  D50: { label: 'D50 (Warm)', ko: 'D50 (온백색)' },
+  A:   { label: 'A (Tungsten)', ko: 'A (텅스텐)' },
+  F2:  { label: 'F2 (Fluorescent, approx.)', ko: 'F2 (형광등, 근사)' },
 }
+const F2_COARSE = [24.82, 65.85, 80.03, 95.72, 100.0, 64.89, 17.22] // 400-700nm @ 50nm
 
 // ---- Constants ----
 const DATA_WL_NM = [400, 450, 500, 550, 600, 650, 700] // grid of the tabulated reflectance / SPD data
@@ -621,10 +626,15 @@ const WHITE_LEVEL = 0.8 // exposure: brightest channel of the white patch at 80%
 const QE_WL_NM = Array.from({ length: 31 }, (_, i) => 400 + i * 10)
 const QE_WL_UM = QE_WL_NM.map(w => w / 1000)
 
-const activeIlluminant = computed(() => {
-  const spd = ILLUMINANTS[illuminant.value].spd
-  return QE_WL_NM.map(wl => interp1(DATA_WL_NM, spd, wl))
-})
+const ILLUMINANT_SPD: Record<string, number[]> = {
+  D65: daylightSpd(6504, QE_WL_NM),
+  D50: daylightSpd(5003, QE_WL_NM),
+  A: illuminantA(QE_WL_NM),
+  F2: QE_WL_NM.map(wl => interp1(DATA_WL_NM, F2_COARSE, wl)),
+}
+const CMF_10NM = cmfOn(QE_WL_NM)
+
+const activeIlluminant = computed(() => ILLUMINANT_SPD[illuminant.value])
 
 // ---- Color filter & TMM ----
 function cfTransmittance(wlUm: number, centerUm: number, fwhmNm: number): number {
@@ -913,15 +923,21 @@ function wbGains(method: WbMethod, rgb: number[][], patches: PatchData[]): numbe
 // ---- Active patches (reflectance on the 10nm grid) ----
 interface PatchData { name: string; srgb: number[]; refl: number[] }
 
+/** Correct a starting spectrum so that under D65 it reproduces the patch's reference sRGB. */
+function colorimetricRefl(srgb: number[], start: number[]): number[] {
+  return fitReflectanceToXyz(start, QE_WL_NM, srgbToXYZ(srgb), ILLUMINANT_SPD.D65, CMF_10NM)
+}
+
 const CLASSIC_PATCHES_10NM: PatchData[] = CLASSIC_PATCHES.map(p => ({
-  name: p.name, srgb: p.srgb, refl: QE_WL_NM.map(wl => interp1(DATA_WL_NM, p.refl, wl)),
+  name: p.name, srgb: p.srgb,
+  refl: colorimetricRefl(p.srgb, QE_WL_NM.map(wl => interp1(DATA_WL_NM, p.refl, wl))),
 }))
 
 const activePatches = computed<PatchData[]>(() => {
   if (chartType.value === 'classic') return CLASSIC_PATCHES_10NM
   return SG_LAB.map((lab, idx) => {
     const srgb = labToSrgb(lab)
-    return { name: SG_NAMES[idx], srgb, refl: reconstructRefl(srgb) }
+    return { name: SG_NAMES[idx], srgb, refl: colorimetricRefl(srgb, reconstructRefl(srgb)) }
   })
 })
 

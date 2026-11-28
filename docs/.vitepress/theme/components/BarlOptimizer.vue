@@ -240,8 +240,8 @@
           <rect :x="tooltipX" :y="pad.top+4" width="140" height="48" rx="4"
             fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
           <text :x="tooltipX+8" :y="pad.top+17" class="tooltip-text">{{ hoverWl }} nm</text>
-          <text :x="tooltipX+8" :y="pad.top+30" class="tooltip-text" fill="#3498db">R: {{ hoverR.toFixed(2) }}%</text>
-          <text :x="tooltipX+8" :y="pad.top+43" class="tooltip-text" fill="#e67e22">T: {{ hoverT.toFixed(2) }}%</text>
+          <text :x="tooltipX+8" :y="pad.top+30" class="tooltip-text" :style="{ fill: '#3498db' }">R: {{ hoverR.toFixed(2) }}%</text>
+          <text :x="tooltipX+8" :y="pad.top+43" class="tooltip-text" :style="{ fill: '#e67e22' }">T: {{ hoverT.toFixed(2) }}%</text>
         </template>
       </svg>
     </div>

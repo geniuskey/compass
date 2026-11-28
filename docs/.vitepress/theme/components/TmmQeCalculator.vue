@@ -249,14 +249,14 @@
           />
           <text :x="tooltipX + 8" :y="pad.top + 18" class="tooltip-text">{{ hoverWl }} nm</text>
           <template v-if="viewMode === 'qe'">
-            <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" fill="#3498db">B: {{ hoverQeB.toFixed(1) }}%</text>
-            <text :x="tooltipX + 8" :y="pad.top + 44" class="tooltip-text" fill="#27ae60">G: {{ hoverQeG.toFixed(1) }}%</text>
-            <text :x="tooltipX + 8" :y="pad.top + 56" class="tooltip-text" fill="#e74c3c">R: {{ hoverQeR.toFixed(1) }}%</text>
+            <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" :style="{ fill: '#3498db' }">B: {{ hoverQeB.toFixed(1) }}%</text>
+            <text :x="tooltipX + 8" :y="pad.top + 44" class="tooltip-text" :style="{ fill: '#27ae60' }">G: {{ hoverQeG.toFixed(1) }}%</text>
+            <text :x="tooltipX + 8" :y="pad.top + 56" class="tooltip-text" :style="{ fill: '#e74c3c' }">R: {{ hoverQeR.toFixed(1) }}%</text>
           </template>
           <template v-if="viewMode === 'rta'">
-            <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" fill="#3498db">R: {{ (hoverR * 100).toFixed(1) }}%</text>
-            <text :x="tooltipX + 8" :y="pad.top + 44" class="tooltip-text" fill="#27ae60">T: {{ (hoverT * 100).toFixed(1) }}%</text>
-            <text :x="tooltipX + 8" :y="pad.top + 56" class="tooltip-text" fill="#e74c3c">A: {{ (hoverA * 100).toFixed(1) }}%</text>
+            <text :x="tooltipX + 8" :y="pad.top + 32" class="tooltip-text" :style="{ fill: '#3498db' }">R: {{ (hoverR * 100).toFixed(1) }}%</text>
+            <text :x="tooltipX + 8" :y="pad.top + 44" class="tooltip-text" :style="{ fill: '#27ae60' }">T: {{ (hoverT * 100).toFixed(1) }}%</text>
+            <text :x="tooltipX + 8" :y="pad.top + 56" class="tooltip-text" :style="{ fill: '#e74c3c' }">A: {{ (hoverA * 100).toFixed(1) }}%</text>
           </template>
         </template>
 

@@ -186,9 +186,9 @@
               <circle :cx="qeXScale(qeHoverWl)" :cy="qeYScale(qeHoverVals.r)" r="4" fill="#e74c3c" stroke="#fff" stroke-width="1" />
               <rect :x="qeTooltipX" :y="qePad.top+4" width="120" height="58" rx="4" fill="var(--vp-c-bg)" stroke="var(--vp-c-divider)" stroke-width="0.8" opacity="0.95" />
               <text :x="qeTooltipX+8" :y="qePad.top+18" class="tooltip-text">{{ qeHoverWl }} nm</text>
-              <text :x="qeTooltipX+8" :y="qePad.top+32" class="tooltip-text" fill="#3498db">B: {{ qeHoverVals.b.toFixed(1) }}%</text>
-              <text :x="qeTooltipX+8" :y="qePad.top+44" class="tooltip-text" fill="#27ae60">G: {{ qeHoverVals.g.toFixed(1) }}%</text>
-              <text :x="qeTooltipX+8" :y="qePad.top+56" class="tooltip-text" fill="#e74c3c">R: {{ qeHoverVals.r.toFixed(1) }}%</text>
+              <text :x="qeTooltipX+8" :y="qePad.top+32" class="tooltip-text" :style="{ fill: '#3498db' }">B: {{ qeHoverVals.b.toFixed(1) }}%</text>
+              <text :x="qeTooltipX+8" :y="qePad.top+44" class="tooltip-text" :style="{ fill: '#27ae60' }">G: {{ qeHoverVals.g.toFixed(1) }}%</text>
+              <text :x="qeTooltipX+8" :y="qePad.top+56" class="tooltip-text" :style="{ fill: '#e74c3c' }">R: {{ qeHoverVals.r.toFixed(1) }}%</text>
             </template>
             <!-- Legend -->
             <line :x1="qePad.left+qePlotW-90" :y1="qePad.top+12" :x2="qePad.left+qePlotW-72" :y2="qePad.top+12" stroke="#3498db" stroke-width="2" />
@@ -229,7 +229,7 @@
           <svg :viewBox="`0 0 ${ebW} ${ebH}`" class="result-svg">
             <template v-for="(bar, idx) in energyBars" :key="'eb'+idx">
               <!-- Channel label -->
-              <text :x="ebPad.left - 8" :y="bar.y + bar.h / 2 + 4" text-anchor="end" class="axis-label" :fill="bar.color">{{ bar.name }}</text>
+              <text :x="ebPad.left - 8" :y="bar.y + bar.h / 2 + 4" text-anchor="end" class="axis-label" :style="{ fill: bar.color }">{{ bar.name }}</text>
               <!-- Reflection segment -->
               <rect :x="ebPad.left" :y="bar.y" :width="Math.max(bar.rW, 0)" :height="bar.h" fill="#95a5a6" rx="1" />
               <!-- Other losses segment -->

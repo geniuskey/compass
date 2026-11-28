@@ -353,7 +353,7 @@
             :x="hoverInfo.tooltipX + 8"
             :y="hoverInfo.tooltipY + 30"
             class="tooltip-text"
-            :fill="hoverInfo.color"
+            :style="{ fill: hoverInfo.color }"
           >{{ hoverInfo.line2 }}</text>
         </template>
       </svg>
