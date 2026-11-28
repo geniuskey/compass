@@ -9,6 +9,7 @@ import time
 import numpy as np
 
 from compass.compute import resolve_compute_device
+from compass.core.config_schema import EnergyCheckConfig
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.materials.database import MaterialDB
@@ -76,6 +77,9 @@ class ConeIlluminationRunner:
 
         # Create solver
         solver = SolverFactory.create(solver_name, solver_config, device)
+        energy_cfg = EnergyCheckConfig.model_validate(
+            solver_config.get("stability", {}).get("energy_check", {})
+        )
         solver.setup_geometry(pixel_stack)
 
         # Get angular sampling points
@@ -111,9 +115,8 @@ class ConeIlluminationRunner:
                 {**failure, "theta_deg": theta_deg, "phi_deg": phi_deg}
                 for failure in result.metadata.get("failed_runs", [])
             )
-            energy_cfg = solver_config.get("stability", {}).get("energy_check", {})
-            if energy_cfg.get("enabled", True):
-                solver.validate_energy_balance(result, tolerance=energy_cfg.get("tolerance", 0.01))
+            if energy_cfg.enabled:
+                solver.validate_energy_balance(result, tolerance=energy_cfg.tolerance)
 
             if wavelengths is None:
                 n_wl = len(result.wavelengths)

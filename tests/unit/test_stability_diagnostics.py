@@ -307,7 +307,7 @@ class TestAdaptivePrecisionRunner:
         assert result["data"] == "cpu_result"
 
     def test_raises_when_all_strategies_fail(self, monkeypatch):
-        """Raises RuntimeError when all four strategies fail."""
+        """Raises RuntimeError when all three strategies fail."""
         self._enable_cuda(monkeypatch)
         runner = AdaptivePrecisionRunner(tolerance=0.02)
         mock_solver = MagicMock()
@@ -316,7 +316,7 @@ class TestAdaptivePrecisionRunner:
         with pytest.raises(RuntimeError, match="All precision strategies failed"):
             runner.run_with_fallback(mock_solver, 0.55, {})
 
-        assert mock_solver.run_single_wavelength.call_count == 4
+        assert mock_solver.run_single_wavelength.call_count == 3
 
     def test_custom_tolerance(self):
         """Custom tolerance affects energy validation."""
@@ -330,7 +330,7 @@ class TestAdaptivePrecisionRunner:
         assert mock_solver.run_single_wavelength.call_count == 1
 
     def test_strategy_order(self, monkeypatch):
-        """Strategies are tried in order: GPU-f32, GPU-f64-cuSOLVER, GPU-f64, CPU-f64."""
+        """Strategies are tried in order: GPU-f32, GPU-f64, CPU-f64 (no duplicates)."""
         self._enable_cuda(monkeypatch)
         runner = AdaptivePrecisionRunner(tolerance=0.02)
         mock_solver = MagicMock()
@@ -350,9 +350,8 @@ class TestAdaptivePrecisionRunner:
         assert call_params[1]["dtype"] == "complex128"
         assert call_params[1]["device"] == "cuda"
         assert call_params[2]["dtype"] == "complex128"
-        assert call_params[2]["device"] == "cuda"
-        assert call_params[3]["dtype"] == "complex128"
-        assert call_params[3]["device"] == "cpu"
+        assert call_params[2]["device"] == "cpu"
+        assert len(call_params) == 3
 
     def test_uses_cpu_strategy_when_cuda_is_unavailable(self, monkeypatch):
         """Mac and other CPU-only systems skip GPU fallback attempts."""

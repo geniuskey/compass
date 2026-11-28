@@ -164,7 +164,8 @@ class TestConeRunner:
         with _Harness() as h:
             ConeIlluminationRunner.run(cfg)
         assert h.solver.validate_energy_balance.call_count == h.solver.run.call_count
-        assert h.solver.validate_energy_balance.call_args.kwargs["tolerance"] == 0.01
+        # Default comes from EnergyCheckConfig, same as validated configs.
+        assert h.solver.validate_energy_balance.call_args.kwargs["tolerance"] == 0.02
 
     def test_energy_check_custom_tolerance(self):
         cfg = _config(n_points=3, energy_check={"enabled": True, "tolerance": 0.05})

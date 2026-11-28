@@ -488,9 +488,10 @@ class EigenvalueStabilizer:
 class AdaptivePrecisionRunner:
     """Adaptive precision fallback for unstable simulations.
 
-    Strategy: GPU-f32 → GPU-f64-cuSOLVER → GPU-f64 → CPU-f64 (4-level fallback).
-    When CuPy is available, cuSOLVER eigendecomposition on GPU is attempted
-    before falling back to CPU, eliminating GPU↔CPU transfer overhead.
+    Strategy: GPU-f32 → GPU-f64 → CPU-f64 (3-level fallback; CPU only when
+    CUDA is unavailable). Within a GPU run, PrecisionManager already tries
+    cuSOLVER eigendecomposition (via CuPy) before its CPU path, so a
+    separate "GPU-f64-cuSOLVER" level would repeat the identical call.
     """
 
     def __init__(self, tolerance: float = 0.02):
@@ -517,7 +518,6 @@ class AdaptivePrecisionRunner:
             strategies.extend(
                 [
                     {"dtype": "complex64", "device": "cuda", "label": "GPU-f32"},
-                    {"dtype": "complex128", "device": "cuda", "label": "GPU-f64-cuSOLVER"},
                     {"dtype": "complex128", "device": "cuda", "label": "GPU-f64"},
                 ]
             )

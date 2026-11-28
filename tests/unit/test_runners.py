@@ -467,3 +467,24 @@ class TestSingleRunnerEnergyCheck:
 
         assert mock_factory.create.call_count == 1
         assert "energy_retry_dtype" not in result.metadata
+
+    @patch("compass.runners.single_run.SolverFactory")
+    @patch("compass.runners.single_run.PixelStack")
+    @patch("compass.runners.single_run.MaterialDB")
+    def test_plain_dict_uses_schema_defaults(self, mock_mat_db, mock_ps, mock_factory):
+        """No stability block: tolerance and auto-retry match EnergyCheckConfig."""
+        from compass.core.config_schema import EnergyCheckConfig
+
+        failing = _make_mock_solver()
+        failing.validate_energy_balance.return_value = False
+        retrying = _make_mock_solver(_make_result())
+        mock_factory.create.side_effect = [failing, retrying]
+        cfg = _base_config()
+        cfg["solver"]["params"] = {"dtype": "complex64"}
+        cfg["solver"].pop("stability", None)
+
+        SingleRunner.run(cfg)
+
+        defaults = EnergyCheckConfig()
+        assert failing.validate_energy_balance.call_args.kwargs["tolerance"] == defaults.tolerance
+        assert mock_factory.create.call_count == (2 if defaults.auto_retry_float64 else 1)

@@ -17,10 +17,11 @@ import platform
 import statistics
 import sys
 import tracemalloc
+from collections.abc import Callable
 from datetime import date
 from pathlib import Path
 from time import perf_counter
-from typing import Any, Callable
+from typing import Any
 
 import matplotlib
 
@@ -353,7 +354,8 @@ def run_solver_benchmarks(solver_repeats: int, env: dict[str, Any]) -> list[dict
         wavelengths = np.linspace(0.40, 0.70, n_wavelengths)
         solver = SolverFactory.create(
             "tmm",
-            {"name": "tmm", "type": "tmm", "params": {"polarization_average": False}},
+            # source_config() is TE, so TMM runs a single polarization.
+            {"name": "tmm", "type": "tmm"},
             "cpu",
         )
         solver.setup_geometry(stack)

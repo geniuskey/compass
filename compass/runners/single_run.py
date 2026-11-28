@@ -6,6 +6,7 @@ import copy
 import logging
 
 from compass.compute import resolve_compute_device
+from compass.core.config_schema import EnergyCheckConfig
 from compass.core.types import SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.materials.database import MaterialDB
@@ -54,17 +55,21 @@ class SingleRunner:
         result = solver.run_timed()
 
         # Energy conservation check (solver.stability.energy_check)
-        energy_cfg = solver_config.get("stability", {}).get("energy_check", {})
-        if not energy_cfg.get("enabled", True):
+        # Defaults come from EnergyCheckConfig so plain-dict and validated
+        # configs behave the same.
+        energy_cfg = EnergyCheckConfig.model_validate(
+            solver_config.get("stability", {}).get("energy_check", {})
+        )
+        if not energy_cfg.enabled:
             return result
-        tolerance = energy_cfg.get("tolerance", 0.01)
+        tolerance = energy_cfg.tolerance
         if solver.validate_energy_balance(result, tolerance=tolerance):
             return result
 
         # Optional retry at higher precision when the check fails
         dtype = solver_config.get("params", {}).get("dtype")
         retry_dtype = _RETRY_DTYPES.get(dtype)
-        if not energy_cfg.get("auto_retry_float64", False) or retry_dtype is None:
+        if not energy_cfg.auto_retry_float64 or retry_dtype is None:
             return result
 
         logger.warning(
