@@ -49,6 +49,7 @@
 | **RETICOLO** | MATLAB | ❌ | Freeware | N/A | **산업계 표준** (Zeiss, Intel, Apple, Samsung). V10(2025.01) 이방성 지원. 25년 역사 |
 | **[rcwa4d](https://github.com/fancompute/rcwa4d)** | Python | ❌ | **MIT** | ~40 | 비정합 주기 (뒤틀린 이중층/moiré 구조). Stanford Fan Group |
 | **[RCWA.jl](https://github.com/emmt/RCWA.jl)** | Julia | CUDA | GPL-3.0 | ~46 | S-matrix + ETM, 고유값-free 알고리즘, CUDA 5× 속도향상 |
+| **[SPECTRA-RCWA](https://github.com/hyoseokp/SPECTRA-RCWA)** | Python/PyTorch | CUDA | **MIT** | ~3 | 고유값 분해 없음 (행렬 함수), 여러 파장·각도를 한 GPU 배치로 계산, 인접법 그래디언트, 비스듬한 격자 |
 | **[EMpy](https://github.com/lbolla/EMpy)** | Python | ❌ | **MIT** | ~219 | TMM + RCWA + 모드 솔버. 가장 많은 GitHub 스타 |
 
 ---
@@ -97,6 +98,7 @@
 | **[fdtd3d](https://github.com/b-fg/fdtd3d)** | C++ | CUDA/MPI | GPL-3.0 | ~150 | MPI+OpenMP+CUDA, **크로스 아키텍처** (x64/ARM/RISC-V/Wasm) |
 | **GSvit** | C/C++ | CUDA | GPL-2.0 | N/A | 나노스케일 광학 (SNOM, 거칠기), GPU 가속 |
 | **[Luminescent.jl](https://github.com/paulxshen/Luminescent.jl)** | Julia | CUDA | **MIT** | ~60 | 미분가능 FDTD (Zygote.jl), 반도체 포토닉스+음향+RF |
+| **[TorchFDTD](https://github.com/hyoseokp/TorchFDTD)** | Python/PyTorch | CUDA | **MIT** | ~30 | 통합 CUDA 커널, PyTorch autograd 이산 인접법, 브라우저 CAD 작업대, Windows·Linux |
 | **Angora** | C++ | ❌ | GPL | Small | 생의학 산란 특화 |
 
 ### 2.4 상용 / 비오픈소스 (참고)
@@ -133,7 +135,7 @@
 ### 3.3 라이선스 분포
 | 라이선스 | 솔버 수 | 상용 활용 |
 |----------|---------|----------|
-| **MIT** | 10 (meent, fmmax, fdtdz, FDTDX, ceviche, rcwa4d, EMpy, flaport, Khronos.jl, Luminescent.jl) | ✅ 자유 |
+| **MIT** | 12 (meent, fmmax, fdtdz, FDTDX, ceviche, rcwa4d, EMpy, flaport, Khronos.jl, Luminescent.jl, SPECTRA-RCWA, TorchFDTD) | ✅ 자유 |
 | **BSD-3** | 2 (rcwa_tf, EMOPT) | ✅ 자유 |
 | **GPL/LGPL** | 12+ (torcwa, grcwa, S4, nannos, RCWA.jl, Meep, openEMS, gprMax, torchrdit 등) | ⚠️ 제한적 |
 | **AGPL** | 1 (inkstone) | ❌ 매우 제한적 |
@@ -180,7 +182,7 @@
 
 ## 5. 전체 솔버 요약표
 
-### RCWA (20개)
+### RCWA (21개)
 
 | # | 솔버 | 언어 | GPU / AD | 라이선스 | ⭐ / 상태 |
 |---|------|------|----------|---------|----------|
@@ -199,11 +201,12 @@
 | 13 | **[EMUstack](https://github.com/EMUstack/EMUstack)** | Fortran/Py | ❌ / ❌ | GPL-3.0 | 28 ⚠️ |
 | 14 | **[nannos](https://gitlab.com/nannos/nannos)** | Py | ✅ / ✅ | GPL-3.0 | 20 ⚠️ |
 | 15 | **[torchrdit](https://github.com/yi-huang-1/torchrdit)** | Py/PyTorch | ✅ / ✅ | GPL-3.0 | 11 ✅ |
-| 16 | **RETICOLO** | MATLAB | ❌ / ❌ | Freeware | N/A ✅ |
-| 17 | **PPML** | MATLAB | ❌ / ❌ | Free | N/A ⚠️ |
-| 18-20 | 교육용 3종 | Py | ❌ / ❌ | Various | <10 ⚠️ |
+| 16 | **[SPECTRA-RCWA](https://github.com/hyoseokp/SPECTRA-RCWA)** | Py/PyTorch | ✅ / ✅ | MIT | 3 ✅ |
+| 17 | **RETICOLO** | MATLAB | ❌ / ❌ | Freeware | N/A ✅ |
+| 18 | **PPML** | MATLAB | ❌ / ❌ | Free | N/A ⚠️ |
+| 19-21 | 교육용 3종 | Py | ❌ / ❌ | Various | <10 ⚠️ |
 
-### FDTD (17개)
+### FDTD (18개)
 
 | # | 솔버 | 언어 | GPU / AD | 라이선스 | ⭐ / 상태 |
 |---|------|------|----------|---------|----------|
@@ -220,10 +223,11 @@
 | 11 | **PhotonTorch** | Py/PyTorch | ✅ / ✅ | MIT | 81 ⚠️ (회로 시뮬) |
 | 12 | **[Khronos.jl](https://github.com/facebookresearch/Khronos.jl)** | Julia | ✅ 멀티벤더 / ✅ | MIT | 66 ✅ |
 | 13 | **[Luminescent.jl](https://github.com/paulxshen/Luminescent.jl)** | Julia | ✅ / ✅ | MIT | 60 ✅ |
-| 14 | **GSvit** | C/C++ | CUDA / ❌ | GPL-2.0 | N/A ✅ |
-| 15 | **Angora** | C++ | ❌ / ❌ | GPL | Small ⚠️ |
-| 16 | **MaxwellFDTD.jl** | Julia | ❌ / ❌ | N/A | Small ⚠️ |
-| 17 | **REMS** | Rust | ❌ / ❌ | N/A | Tiny ❌ (1D PoC) |
+| 14 | **[TorchFDTD](https://github.com/hyoseokp/TorchFDTD)** | Py/PyTorch | ✅ / ✅ | MIT | 30 ✅ |
+| 15 | **GSvit** | C/C++ | CUDA / ❌ | GPL-2.0 | N/A ✅ |
+| 16 | **Angora** | C++ | ❌ / ❌ | GPL | Small ⚠️ |
+| 17 | **MaxwellFDTD.jl** | Julia | ❌ / ❌ | N/A | Small ⚠️ |
+| 18 | **REMS** | Rust | ❌ / ❌ | N/A | Tiny ❌ (1D PoC) |
 
 ---
 
