@@ -15,6 +15,7 @@ import numpy as np
 from compass.core.types import FieldData, SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
+from compass.solvers.rcwa.fields import qe_z_window
 from compass.solvers.tmm.tmm_core import (
     layer_absorption_1d,
     tmm_field_profile,
@@ -73,6 +74,11 @@ class TMMSolver(SolverBase):
         self._substrate: str = config.get("params", {}).get("substrate", "air")
         if self._substrate not in ("air", "silicon"):
             raise ValueError(f"tmm substrate must be 'air' or 'silicon', got {self._substrate!r}")
+        if self._substrate == "silicon" and self.qe_depth == "photodiode":
+            raise ValueError(
+                "tmm: qe_depth='photodiode' needs a finite silicon layer; "
+                "use params.substrate='air'"
+            )
         # Cache for last run (for field extraction)
         self._last_field_data: FieldData | None = None
         self._last_n_layers: np.ndarray | None = None
@@ -164,6 +170,8 @@ class TMMSolver(SolverBase):
         n_film = [complex(np.sqrt(np.mean(sl.eps_grid))) for sl in top_first]
         d_film = [sl.thickness for sl in top_first]
         is_si = [sl.name.startswith("silicon") for sl in top_first]
+        if self.qe_depth == "photodiode":
+            n_film, d_film, is_si = self._split_at_photodiode(top_first, n_film, d_film, is_si)
         if self._substrate == "silicon":
             if not any(is_si):
                 raise ValueError("substrate='silicon' needs a silicon layer")
@@ -178,6 +186,47 @@ class TMMSolver(SolverBase):
         d = np.array([np.inf, *d_film, np.inf])
         si_mask = np.array([False, *is_si, False])
         return n, d, si_mask
+
+    def _split_at_photodiode(
+        self,
+        top_first: list,
+        n_film: list[complex],
+        d_film: list[float],
+        is_si: list[bool],
+    ) -> tuple[list[complex], list[float], list[bool]]:
+        """Split silicon slices at the photodiode depth window.
+
+        The pieces keep the slice's index, so R and T are unchanged; only
+        the piece inside the window stays flagged for the QE sum. TMM is
+        laterally uniform, so one window (the first photodiode's) is used.
+        """
+        if self._pixel_stack is None or not self._pixel_stack.photodiodes:
+            return n_film, d_film, is_si
+        pds = self._pixel_stack.photodiodes
+        z_lo, z_hi = qe_z_window(self._pixel_stack, pds[0], "photodiode")
+        if any(qe_z_window(self._pixel_stack, pd, "photodiode") != (z_lo, z_hi) for pd in pds):
+            logger.warning("tmm: photodiodes differ in depth; using the first one's window")
+        n_out: list[complex] = []
+        d_out: list[float] = []
+        si_out: list[bool] = []
+        for sl, n_i, d_i, si in zip(top_first, n_film, d_film, is_si, strict=True):
+            if not si:
+                n_out.append(n_i)
+                d_out.append(d_i)
+                si_out.append(False)
+                continue
+            # Top to bottom: above the PD, inside it, below it (COMPASS z up).
+            pieces = (
+                (max(z_hi, sl.z_start), sl.z_end, False),
+                (max(z_lo, sl.z_start), min(z_hi, sl.z_end), True),
+                (sl.z_start, min(z_lo, sl.z_end), False),
+            )
+            for z_a, z_b, inside in pieces:
+                if z_b - z_a > 1e-12:
+                    n_out.append(n_i)
+                    d_out.append(z_b - z_a)
+                    si_out.append(inside)
+        return n_out, d_out, si_out
 
     def run(self) -> SimulationResult:
         """Execute TMM simulation over all wavelengths.

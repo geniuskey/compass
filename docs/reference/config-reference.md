@@ -127,6 +127,7 @@ List of `{thickness, material}` pairs, ordered top to bottom.
 solver:
   name: torcwa
   type: rcwa
+  qe_depth: silicon       # or "photodiode"
   params:
     fourier_order: [9, 9]
     dtype: "complex64"
@@ -138,6 +139,7 @@ solver:
 | `name` | str | `"torcwa"` | Solver backend name |
 | `type` | str | `"rcwa"` | `"rcwa"`, `"fdtd"`, or `"tmm"` |
 | `params` | dict | `{"fourier_order": [9,9]}` | Solver-specific parameters (see below) |
+| `qe_depth` | str | `"silicon"` | Depth range of the per-pixel QE integral: `"silicon"` (full silicon thickness under each photodiode footprint) or `"photodiode"` (only the photodiode box depth). See below. |
 
 ### solver.params semantics
 
@@ -155,7 +157,7 @@ Every result records `metadata["qe_method"]` (`field_integration`,
 `eps_imag_weight`, `eps_imag_weight_fallback`, `tmm_1d_analytic`) so
 cross-solver QE differences can be attributed to post-processing methodology
 rather than solver accuracy. All four RCWA solvers (**torcwa**, **grcwa**,
-**meent**, **fmmax**) integrate `k0·ε''·|E|²` over each photodiode volume
+**meent**, **fmmax**) integrate `k0·ε''·|E|²` over each photodiode footprint (depth per `qe_depth`)
 (`field_integration`, shared implementation in
 `compass/solvers/rcwa/fields.py`) and report `eps_imag_weight_fallback` only if
 field reconstruction fails. meent and fmmax factorize the permittivity with
@@ -163,7 +165,25 @@ Li's inverse / normal-vector rules, under which the truncated E series rings
 at metal and DTI interfaces; they therefore reconstruct `E = D/ε(r)` and pin
 each slice's absorbed power to the exact Fourier-space Poynting flux difference,
 so only the in-plane distribution comes from the real-space field.
-fdtd_flaport also reports `field_integration`: it integrates `k0·ε''·|E|²` from steady-state DFT phasors over each photodiode footprint in silicon.
+fdtd_flaport also reports `field_integration`: it integrates `k0·ε''·|E|²` from steady-state DFT phasors over each photodiode footprint in silicon (depth per `qe_depth`).
+
+### solver.qe_depth: QE integration depth
+
+Every solver that reports field-integrated QE (torcwa, grcwa, meent, fmmax,
+fdtd_flaport, meep, and the eps'' fallback) integrates absorption under each
+photodiode's **xy footprint**. `qe_depth` picks the depth range:
+
+| Value | Depth range | Use when |
+|-------|-------------|----------|
+| `silicon` (default) | Full silicon thickness | You want optical absorption in the pixel column — every absorbed photon is assumed to be collected (an upper bound on QE). |
+| `photodiode` | `photodiode.size[2]`, centred `photodiode.position[2]` below the Si top | You want only carriers generated inside the collection volume (a lower bound; ignores diffusion from outside the box). |
+
+All solvers use the same definition, so results stay comparable across
+backends in either mode. TMM supports `photodiode` by splitting the silicon
+layer at the box faces (R and T are unchanged) and requires
+`params.substrate: air`. The chosen mode is recorded in
+`metadata["qe_depth"]`. For the default 1 µm BSI pixel the photodiode mode
+lowers blue QE most, because short wavelengths are absorbed above the box.
 
 ### solver.stability: StabilityConfig
 

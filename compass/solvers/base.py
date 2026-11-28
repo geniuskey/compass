@@ -31,6 +31,10 @@ class SolverBase(ABC):
         """
         self.config = config
         self.device = device
+        # Depth range of the per-pixel QE integral ("silicon" | "photodiode").
+        from compass.solvers.rcwa.fields import resolve_qe_depth
+
+        self.qe_depth: str = resolve_qe_depth(config)
         self._pixel_stack: PixelStack | None = None
         self._source_config: dict | None = None
         self._failed_runs: list[dict] = []
@@ -153,6 +157,7 @@ class SolverBase(ABC):
         result.metadata["solver_name"] = self.name
         result.metadata["solver_type"] = self.solver_type
         result.metadata["device"] = self.device
+        result.metadata["qe_depth"] = self.qe_depth
         logger.info(f"{self.name}: simulation completed in {elapsed:.2f}s")
         return result
 

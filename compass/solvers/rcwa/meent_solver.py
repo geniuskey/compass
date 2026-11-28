@@ -496,9 +496,9 @@ class MeentSolver(SolverBase):
             raise RuntimeError("no layer data recorded")
         lx, ly = self._pixel_stack.domain_size
 
-        def e2_dz(li: int, s) -> np.ndarray:
+        def e2_dz(li: int, s, window: tuple[float, float] | None = None) -> np.ndarray:
             n0, n1 = s.eps_grid.shape  # [y, x]
-            depths, dz = slice_depth_samples(s.thickness, s, wavelength)
+            depths, dz = slice_depth_samples(s.thickness, s, wavelength, window)
             x = (np.arange(n1) + 0.5) * (lx / n1)  # COMPASS cell centres
             y = (np.arange(n0) + 0.5) * (ly / n0)
             return sampler.e2_on_grid(li, depths, x, y) * dz
@@ -517,6 +517,7 @@ class MeentSolver(SolverBase):
             e2_dz,
             total_absorption,
             "meent",
+            qe_depth=self.qe_depth,
             slice_absorption=absorbed,
         )
 
@@ -529,7 +530,7 @@ class MeentSolver(SolverBase):
         """Approximate per-pixel QE by eps'' weighting (fallback only)."""
         if self._pixel_stack is None:
             raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        return eps_imag_weight_qe(self._pixel_stack, layer_slices, total_absorption)
+        return eps_imag_weight_qe(self._pixel_stack, layer_slices, total_absorption, self.qe_depth)
 
     def get_field_distribution(
         self,

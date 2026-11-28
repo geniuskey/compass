@@ -116,6 +116,43 @@ class TestRealBackend:
         xz = solver.get_field_distribution("|E|2", "xz", 0.02)
         assert xz.shape[1] == round(0.6 / 0.01) and np.all(np.isfinite(xz))
 
+    def test_qe_depth_modes_match_tmm(self):
+        """Full-silicon and photodiode-depth QE both follow TMM on a slab."""
+        from compass.solvers.tmm.tmm_solver import TMMSolver
+
+        def stack():
+            st = PixelStack({"pixel": {"pitch": 0.04, "unit_cell": [1, 1]}})
+            st.material_db.register_constant("lossy", n=1.5, k=0.05)
+            st.layers = [
+                Layer("air_b", 0.0, 0.1, 0.1, "air"),
+                Layer("silicon", 0.1, 0.4, 0.3, "lossy"),
+                Layer("air", 0.4, 0.6, 0.2, "air"),
+            ]
+            # PD box at COMPASS z 0.15..0.30 (0.10..0.25 um below the Si top)
+            st.photodiodes = [PhotodiodeSpec((0.0, 0.0, 0.175), (0.04, 0.04, 0.15), (0, 0), "R")]
+            return st
+
+        source = {"wavelength": {"mode": "single", "value": 0.55}, "polarization": "TE"}
+        qe = {}
+        for mode in ("silicon", "photodiode"):
+            fdtd = FlaportFdtdSolver(
+                {"name": "fdtd_flaport", "qe_depth": mode,
+                 "params": {"grid_spacing": 0.01, "runtime": 100, "pml_layers": 10}},
+                device="cpu",
+            )
+            fdtd.setup_geometry(stack())
+            fdtd.setup_source(source)
+            tmm = TMMSolver({"name": "tmm", "qe_depth": mode})
+            tmm.setup_geometry(stack())
+            tmm.setup_source(source)
+            qe[mode] = (
+                fdtd.run().qe_per_pixel["R_0_0"][0],
+                tmm.run().qe_per_pixel["R_0_0"][0],
+            )
+        assert 0.0 < qe["photodiode"][0] < qe["silicon"][0]
+        for got, ref in qe.values():
+            assert got == pytest.approx(ref, abs=0.01)
+
     def test_metal_permittivity_is_rejected(self):
         solver = _solver({"grid_spacing": 0.01, "runtime": 100, "pml_layers": 10})
         solver.setup_geometry(self._slab_stack(("metal", 0.5, 3.0)))

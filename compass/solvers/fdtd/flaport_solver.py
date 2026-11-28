@@ -16,7 +16,8 @@ Grid layout along z (index increasing upward, light travelling -z)::
   incident field subtracted, so they contain no source/reflection
   interference terms.
 * QE integrates the absorbed power density ``k0 eps'' |E|^2`` over each
-  photodiode footprint and the full silicon depth, normalized by the
+  photodiode footprint and the full silicon depth (``qe_depth="silicon"``,
+  default) or the photodiode box depth (``"photodiode"``), normalized by the
   incident flux, i.e. the same definition as the RCWA adapters
   (:func:`compass.solvers.rcwa.fields.integrate_photodiode_qe`).
 
@@ -36,6 +37,7 @@ from compass.solvers.base import SolverBase, SolverFactory
 from compass.solvers.rcwa.fields import (
     approximate_field,
     footprint_index_range,
+    qe_z_window,
     validate_field_request,
 )
 from compass.sources.planewave import PlanewaveSource
@@ -385,7 +387,16 @@ class FlaportFdtdSolver(SolverBase):
                 f"1-R-T = {total_absorption:.3f} at λ={wavelength:.4f}um "
                 "(refine grid_spacing or lengthen runtime)"
             )
-        si_density = density[:, :, si_mask].sum(axis=2)  # [x, y]
+        window_cache: dict[tuple[float, float], np.ndarray] = {}
+
+        def si_density_in(z_lo: float, z_hi: float) -> np.ndarray:
+            """Silicon density summed over cells with centres in [z_lo, z_hi)."""
+            key = (round(z_lo, 9), round(z_hi, 9))
+            if key not in window_cache:
+                z_mask = si_mask & (z_c >= z_lo) & (z_c < z_hi)
+                window_cache[key] = density[:, :, z_mask].sum(axis=2)  # [x, y]
+            return window_cache[key]
+
         n_rows, n_cols = stack.unit_cell
         lx, ly = stack.domain_size
         a_pixel = (lx / n_cols) * (ly / n_rows)
@@ -397,6 +408,7 @@ class FlaportFdtdSolver(SolverBase):
             y_c = (r + 0.5) * pitch + pd.position[1]
             ix0, ix1 = footprint_index_range(x_c, pd.size[0], gs, n_x)
             iy0, iy1 = footprint_index_range(y_c, pd.size[1], gs, n_y)
+            si_density = si_density_in(*qe_z_window(stack, pd, self.qe_depth))
             val = k0 * float(si_density[ix0:ix1, iy0:iy1].sum()) * dv / (p_inc * a_pixel)
             qe[f"{pd.color}_{r}_{c}"] = float(np.clip(val, 0.0, 1.0))
         return qe

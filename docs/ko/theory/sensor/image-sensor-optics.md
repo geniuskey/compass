@@ -77,7 +77,7 @@ $$R = \left(\frac{n_\text{Si} - n_\text{CF}}{n_\text{Si} + n_\text{CF}}\right)^2
 
 이는 청색 빛은 표면 근처에서 흡수되지만, 적색/근적외선 빛은 수 마이크로미터의 실리콘이 필요함을 의미합니다. 일반적인 BSI 픽셀의 실리콘 두께는 2~4 um입니다.
 
-**포토다이오드(Photodiode)**는 실리콘 내의 정해진 영역을 차지합니다. 포토다이오드 체적 내에서 흡수된 광자만이 광전류에 기여합니다. COMPASS는 포토다이오드 경계 박스 내의 흡수 전력을 적분하여 이를 모델링합니다.
+**포토다이오드(Photodiode)**는 실리콘 내의 정해진 영역을 차지합니다. 포토다이오드 체적 내에서 흡수된 광자만이 광전류에 기여합니다. COMPASS는 각 포토다이오드 footprint 아래의 흡수 전력을 실리콘 전체 깊이(기본값, `solver.qe_depth: silicon`) 또는 포토다이오드 박스 깊이(`solver.qe_depth: photodiode`)에 걸쳐 적분합니다. [설정 레퍼런스](/ko/reference/config-reference#solver-qe-depth-qe-적분-깊이)를 참고하세요.
 
 ## 심부 트렌치 격리 (DTI)
 

@@ -21,6 +21,7 @@ import numpy as np
 from compass.core.types import FieldData, SimulationResult
 from compass.geometry.pixel_stack import PixelStack
 from compass.solvers.base import SolverBase, SolverFactory
+from compass.solvers.rcwa.fields import qe_z_window
 from compass.sources.planewave import PlanewaveSource
 
 logger = logging.getLogger(__name__)
@@ -792,7 +793,8 @@ class MeepSolver(SolverBase):
         """Compute per-pixel quantum efficiency from DFT volume fields.
 
         QE is computed by integrating |E|^2 * Im(eps) over each photodiode
-        region and normalizing by incident power.
+        footprint, across the full silicon depth or the photodiode box depth
+        (``solver.qe_depth``), and normalizing by incident power.
 
         Args:
             mp: The meep module.
@@ -886,13 +888,16 @@ class MeepSolver(SolverBase):
                 # Photodiode center in meep coordinates
                 pd_cx = (c_idx + 0.5) * self._pixel_stack.pitch - lx / 2.0 + pd.position[0]
                 pd_cy = (r_idx + 0.5) * self._pixel_stack.pitch - ly / 2.0 + pd.position[1]
-                pd_cz = si_layer.z_end - pd.position[2] - z_center
+                # Depth range per solver.qe_depth (full silicon or PD box),
+                # shared with the RCWA / flaport adapters.
+                z_lo, z_hi = qe_z_window(self._pixel_stack, pd, self.qe_depth)
 
-                # Rectangular photodiode mask
+                # Photodiode footprint x depth-window mask
                 mask = (
                     (np.abs(xx - pd_cx) <= pd.size[0] / 2.0 + 1e-12)
                     & (np.abs(yy - pd_cy) <= pd.size[1] / 2.0 + 1e-12)
-                    & (np.abs(zz - pd_cz) <= pd.size[2] / 2.0 + 1e-12)
+                    & (zz >= z_lo - z_center - 1e-12)
+                    & (zz <= z_hi - z_center + 1e-12)
                 )
 
                 pixel_abs = np.sum(abs_density * mask * weights)

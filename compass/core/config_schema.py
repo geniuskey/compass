@@ -201,6 +201,10 @@ class StabilityConfig(StrictModel):
 class SolverConfig(StrictModel):
     name: str = "torcwa"
     type: Literal["rcwa", "fdtd", "tmm"] = "rcwa"
+    # Depth range of the per-pixel QE integral: the full silicon thickness
+    # under each photodiode footprint, or only the photodiode box depth
+    # (photodiode.size[2] centred photodiode.position[2] below the Si top).
+    qe_depth: Literal["silicon", "photodiode"] = "silicon"
     params: dict = Field(default_factory=lambda: {"fourier_order": [9, 9], "dtype": "complex64"})
     stability: StabilityConfig = Field(default_factory=StabilityConfig)
 

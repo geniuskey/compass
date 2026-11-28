@@ -127,6 +127,7 @@ barl:
 solver:
   name: torcwa
   type: rcwa
+  qe_depth: silicon       # 또는 "photodiode"
   params:
     fourier_order: [9, 9]
     dtype: "complex64"
@@ -138,6 +139,7 @@ solver:
 | `name` | str | `"torcwa"` | 솔버 백엔드 이름 |
 | `type` | str | `"rcwa"` | `"rcwa"`, `"fdtd"`, 또는 `"tmm"` |
 | `params` | dict | `{"fourier_order": [9,9]}` | 솔버 고유 매개변수 (아래 참조) |
+| `qe_depth` | str | `"silicon"` | 픽셀별 QE 적분 깊이: `"silicon"`(각 포토다이오드 footprint 아래 실리콘 전체 두께) 또는 `"photodiode"`(포토다이오드 박스 깊이만). 아래 참조. |
 
 ### solver.params 의미
 
@@ -154,14 +156,31 @@ solver:
 모든 결과에는 `metadata["qe_method"]`(`field_integration`, `eps_imag_weight`,
 `eps_imag_weight_fallback`, `tmm_1d_analytic`)가 기록되므로, 솔버 간 QE 차이가
 솔버 정확도 차이인지 후처리 방법 차이인지 구분할 수 있습니다. 네 RCWA 솔버
-(**torcwa**, **grcwa**, **meent**, **fmmax**) 모두 포토다이오드 체적에서
+(**torcwa**, **grcwa**, **meent**, **fmmax**) 모두 포토다이오드 footprint(깊이는 `qe_depth`)에서
 `k0·ε''·|E|²`를 적분하며(`field_integration`, 공통 구현
 `compass/solvers/rcwa/fields.py`), 필드 재구성이 실패한 경우에만
 `eps_imag_weight_fallback`을 기록합니다. meent와 fmmax는 Li의 inverse /
 normal-vector 규칙으로 유전율을 분해하므로 절단된 E 급수가 금속·DTI 경계에서
 크게 진동합니다. 따라서 `E = D/ε(r)`로 재구성하고, 각 슬라이스의 흡수량은
 정확한 Fourier 공간 Poynting 플럭스 차로 고정하여 면내 분포만 실공간 필드에서
-가져옵니다. fdtd_flaport도 정상 상태 DFT 페이저로 실리콘 내 포토다이오드 영역의 `k0·ε''·|E|²`를 적분하여 `field_integration`을 기록합니다.
+가져옵니다. fdtd_flaport도 정상 상태 DFT 페이저로 실리콘 내 포토다이오드 footprint(깊이는 `qe_depth`)의 `k0·ε''·|E|²`를 적분하여 `field_integration`을 기록합니다.
+
+### solver.qe_depth: QE 적분 깊이
+
+필드 적분 QE를 보고하는 모든 솔버(torcwa, grcwa, meent, fmmax,
+fdtd_flaport, meep, eps'' fallback)는 각 포토다이오드의 **xy footprint** 아래
+흡수를 적분합니다. `qe_depth`는 깊이 범위를 정합니다.
+
+| 값 | 깊이 범위 | 사용 시점 |
+|----|-----------|-----------|
+| `silicon` (기본값) | 실리콘 전체 두께 | 픽셀 컬럼의 광학 흡수를 볼 때 — 흡수된 광자가 모두 수집된다고 가정(QE 상한). |
+| `photodiode` | `photodiode.size[2]`, 실리콘 상면 아래 `photodiode.position[2]` 중심 | 수집 영역 안에서 생성된 캐리어만 셀 때(하한; 박스 밖에서의 확산 수집은 무시). |
+
+모든 솔버가 같은 정의를 쓰므로 어느 모드에서도 백엔드 간 비교가 가능합니다.
+TMM은 실리콘 층을 박스 경계에서 나눠 `photodiode` 모드를 지원하며(R, T는
+그대로), `params.substrate: air`가 필요합니다. 선택한 모드는
+`metadata["qe_depth"]`에 기록됩니다. 기본 1 µm BSI 픽셀에서는 단파장이 박스
+위쪽에서 흡수되므로 photodiode 모드에서 청색 QE가 가장 크게 줄어듭니다.
 
 ### solver.stability: StabilityConfig
 

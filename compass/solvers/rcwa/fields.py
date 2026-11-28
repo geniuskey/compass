@@ -33,6 +33,56 @@ FIELD_PLANES = ("xy", "xz", "yz")
 FIELD_N_XY = 64
 FIELD_N_Z = 128
 
+#: Depth range of the per-pixel QE integral (``solver.qe_depth``):
+#: "silicon" integrates over the full silicon thickness under the photodiode
+#: footprint (default; every absorbed photon in the column is counted),
+#: "photodiode" only over the photodiode box depth (``photodiode.size[2]``
+#: centred ``photodiode.position[2]`` below the silicon top).
+QE_DEPTH_MODES = ("silicon", "photodiode")
+
+
+def resolve_qe_depth(config: dict) -> str:
+    """Return the validated ``qe_depth`` mode from a solver config dict."""
+    mode = config.get("qe_depth", "silicon")
+    if mode not in QE_DEPTH_MODES:
+        raise ValueError(f"qe_depth must be one of {QE_DEPTH_MODES}, got {mode!r}")
+    return str(mode)
+
+
+def silicon_z_window(pixel_stack) -> tuple[float, float]:
+    """(z_lo, z_hi) of the silicon layer in COMPASS z."""
+    si = [layer for layer in pixel_stack.layers if layer.name == "silicon"]
+    if not si:
+        return (0.0, 0.0)
+    return min(layer.z_start for layer in si), max(layer.z_end for layer in si)
+
+
+def qe_z_window(pixel_stack, pd, qe_depth: str = "silicon") -> tuple[float, float]:
+    """(z_lo, z_hi) in COMPASS z over which a photodiode's QE is integrated.
+
+    ``pd.position[2]`` is the photodiode-centre depth below the silicon top.
+    """
+    si_lo, si_hi = silicon_z_window(pixel_stack)
+    if qe_depth == "silicon":
+        return si_lo, si_hi
+    if qe_depth != "photodiode":
+        raise ValueError(f"qe_depth must be one of {QE_DEPTH_MODES}, got {qe_depth!r}")
+    cz = si_hi - pd.position[2]
+    return max(cz - pd.size[2] / 2.0, si_lo), min(cz + pd.size[2] / 2.0, si_hi)
+
+
+def slice_depth_window(s: LayerSlice, z_lo: float, z_hi: float) -> tuple[float, float] | None:
+    """Overlap of COMPASS ``[z_lo, z_hi]`` with a slice, as depths from its top.
+
+    Backend depth ``d`` (0 at the slice top, increasing downward) maps to
+    COMPASS ``z = s.z_end - d``. Returns ``None`` when there is no overlap.
+    """
+    top = min(z_hi, s.z_end)
+    bottom = max(z_lo, s.z_start)
+    if top - bottom <= 1e-12:
+        return None
+    return float(s.z_end - top), float(s.z_end - bottom)
+
 
 def validate_field_request(component: str, plane: str) -> None:
     """Raise ValueError for unsupported component/plane names."""
@@ -116,7 +166,10 @@ def column_heights(layer_info: Sequence[LayerSlice], n_z: int = FIELD_N_Z) -> np
 
 
 def slice_depth_samples(
-    thickness: float, slice_: LayerSlice | None = None, wavelength: float | None = None
+    thickness: float,
+    slice_: LayerSlice | None = None,
+    wavelength: float | None = None,
+    window: tuple[float, float] | None = None,
 ) -> tuple[np.ndarray, float]:
     """Midpoint depths (from the slice top) for integrating over a slice.
 
@@ -124,14 +177,23 @@ def slice_depth_samples(
     the slice's highest-index material (period lambda / 2n) with >= 6
     samples; a fixed 50 nm step under-sampled it in silicon and made
     field-integrated QE of a reflecting thin-Si pixel 26% low at 450 nm.
+
+    Args:
+        thickness: Slice thickness in um.
+        slice_: Slice whose permittivity sets the sampling step.
+        wavelength: Wavelength in um.
+        window: Optional ``(d0, d1)`` depth sub-range from the slice top
+            (see :func:`slice_depth_window`); default is the whole slice.
     """
     step = 0.05
     if slice_ is not None and wavelength is not None:
         n_max = float(np.max(np.real(np.sqrt(np.asarray(slice_.eps_grid, dtype=complex)))))
         step = min(step, wavelength / (12.0 * max(n_max, 1.0)))
-    nz = int(np.clip(round(thickness / step), 8, 512))
-    dz = thickness / nz
-    return (np.arange(nz) + 0.5) * dz, dz
+    d0, d1 = (0.0, thickness) if window is None else window
+    span = d1 - d0
+    nz = int(np.clip(round(span / step), 8, 512))
+    dz = span / nz
+    return d0 + (np.arange(nz) + 0.5) * dz, dz
 
 
 def component_from_field(E: Sequence, H: Sequence, component: str) -> np.ndarray:
@@ -155,10 +217,11 @@ def integrate_photodiode_qe(
     layer_info: Sequence[LayerSlice],
     wavelength: float,
     theta_rad: float,
-    e2_dz: Callable[[int, LayerSlice], np.ndarray],
+    e2_dz: Callable[..., np.ndarray],
     total_absorption: float,
     solver_name: str,
     slice_absorption: Callable[[int, LayerSlice], float] | None = None,
+    qe_depth: str = "silicon",
 ) -> dict[str, float]:
     """Per-pixel QE from the absorbed power density eps'' |E|^2.
 
@@ -170,7 +233,8 @@ def integrate_photodiode_qe(
 
     QE counts absorption in silicon slices only (parasitic absorption in
     color filters / metal grid is excluded), integrated over the photodiode
-    xy footprint and the full silicon depth.
+    xy footprint and, depending on ``qe_depth``, the full silicon depth
+    ("silicon", default) or only the photodiode box depth ("photodiode").
 
     Args:
         pixel_stack: PixelStack providing domain size, pitch, unit cell and
@@ -178,12 +242,15 @@ def integrate_photodiode_qe(
         layer_info: Slices in backend order.
         wavelength: Wavelength in um.
         theta_rad: Polar incidence angle in radians.
-        e2_dz: Callback ``(index, slice) -> array`` returning the
-            depth-integrated ``|E|^2`` (um) on the slice's eps grid,
+        e2_dz: Callback ``(index, slice, window=None) -> array`` returning
+            the depth-integrated ``|E|^2`` (um) on the slice's eps grid,
             indexed [row=y, col=x], with sample (a, b) at the COMPASS
             cell centre ((b + 0.5) * lx / n1, (a + 0.5) * ly / n0)
             (backend position (b * lx / n1, a * ly / n0), see
-            :func:`backend_grid_shift`).
+            :func:`backend_grid_shift`). ``window`` is an optional
+            ``(d0, d1)`` depth sub-range from the slice top, to be passed
+            on to :func:`slice_depth_samples`; it is only used when
+            ``qe_depth="photodiode"``.
         total_absorption: A = 1 - R - T, for an energy cross-check.
         solver_name: Name used in log messages.
         slice_absorption: Optional callback ``(index, slice) -> fraction``
@@ -192,21 +259,28 @@ def integrate_photodiode_qe(
             given, each slice's density is rescaled to that total, so only
             the in-plane distribution comes from the real-space field. Use
             it for backends whose permittivity factorization (Li's inverse
-            rule) makes the truncated real-space ``|E|^2`` inexact.
+            rule) makes the truncated real-space ``|E|^2`` inexact. The same
+            per-slice factor is applied to depth-windowed integrals.
+        qe_depth: "silicon" or "photodiode" (see :data:`QE_DEPTH_MODES`).
 
     Returns:
         Mapping of pixel name (e.g. "R_0_0") to QE.
 
     Raises:
         RuntimeError: If no absorbing silicon slice exists.
+        ValueError: If ``qe_depth`` is not a supported mode.
     """
+    if qe_depth not in QE_DEPTH_MODES:
+        raise ValueError(f"qe_depth must be one of {QE_DEPTH_MODES}, got {qe_depth!r}")
     lx, ly = pixel_stack.domain_size
     pitch = pixel_stack.pitch
     k0 = 2.0 * np.pi / wavelength
     cos_theta = float(np.cos(theta_rad))
     norm_cell = k0 / (cos_theta * lx * ly)
 
-    si_density = None
+    # Full-depth density of each absorbing silicon slice, plus the factor
+    # mapping its raw field integral onto the exact flux (1 without one).
+    si_slices: list[tuple[int, LayerSlice, np.ndarray, float]] = []
     total_field_abs = 0.0
     grid_shape = None
     for li, s in enumerate(layer_info):
@@ -217,18 +291,20 @@ def integrate_photodiode_qe(
         density = np.asarray(e2_dz(li, s)) * eps_imag
         cell_area = (lx / n1) * (ly / n0)
         raw = norm_cell * float(density.sum()) * cell_area
+        scale = 1.0
         if slice_absorption is not None:
             exact = max(float(slice_absorption(li, s)), 0.0)
-            density = density * (exact / raw) if raw > 1e-15 else density * 0.0
+            scale = exact / raw if raw > 1e-15 else 0.0
+            density = density * scale
             logger.debug(f"{solver_name}: slice {s.name}: field {raw:.4f}, flux {exact:.4f}")
             raw = exact
         total_field_abs += raw
         if s.name.startswith("silicon"):
             if grid_shape is None:
                 grid_shape = (n0, n1)
-            si_density = density if si_density is None else si_density + density
+            si_slices.append((li, s, density, scale))
 
-    if si_density is None or grid_shape is None:
+    if not si_slices or grid_shape is None:
         raise RuntimeError("no absorbing silicon slice found for QE integration")
 
     logger.debug(
@@ -241,6 +317,28 @@ def integrate_photodiode_qe(
             f"from 1-R-T = {total_absorption:.3f} at λ={wavelength:.4f}um "
             "(increase Fourier truncation / grid resolution)"
         )
+
+    full_density = np.zeros(grid_shape)
+    for _, _, density, _ in si_slices:
+        full_density = full_density + density
+    window_cache: dict[tuple[float, float], np.ndarray] = {}
+
+    def density_in(z_lo: float, z_hi: float) -> np.ndarray:
+        """Silicon absorption density integrated over COMPASS z in [z_lo, z_hi]."""
+        key = (round(z_lo, 9), round(z_hi, 9))
+        if key not in window_cache:
+            acc = np.zeros(grid_shape)
+            for li, s, density, scale in si_slices:
+                window = slice_depth_window(s, z_lo, z_hi)
+                if window is None:
+                    continue
+                if window[0] <= 1e-12 and window[1] >= s.thickness - 1e-12:
+                    acc = acc + density
+                else:
+                    part = np.asarray(e2_dz(li, s, window)) * np.imag(s.eps_grid)
+                    acc = acc + part * scale
+            window_cache[key] = acc
+        return window_cache[key]
 
     n0, n1 = grid_shape
     cell_area = (lx / n1) * (ly / n0)
@@ -259,6 +357,10 @@ def integrate_photodiode_qe(
         if ix1 <= ix0 or iy1 <= iy0:
             qe_per_pixel[key] = 0.0
             continue
+        if qe_depth == "silicon":
+            si_density = full_density
+        else:
+            si_density = density_in(*qe_z_window(pixel_stack, pd, qe_depth))
         qe = norm_pixel * float(si_density[iy0:iy1, ix0:ix1].sum()) * cell_area
         qe_per_pixel[key] = float(np.clip(qe, 0.0, 1.0))
     return qe_per_pixel
@@ -268,6 +370,7 @@ def eps_imag_weight_qe(
     pixel_stack,
     layer_slices: Sequence[LayerSlice],
     total_absorption: float,
+    qe_depth: str = "silicon",
 ) -> dict[str, float]:
     """Approximate per-pixel QE by distributing ``1 - R - T`` with eps'' weights.
 
@@ -275,12 +378,14 @@ def eps_imag_weight_qe(
     the light actually goes (no color filtering, no lensing), so it is not
     comparable to :func:`integrate_photodiode_qe`. Absorption is split
     between photodiodes in proportion to the integral of eps'' over each
-    photodiode box, and normalized per pixel area.
+    photodiode footprint (over the depth range set by ``qe_depth``), and
+    normalized per pixel area.
 
     Args:
         pixel_stack: PixelStack providing domain size, pitch and photodiodes.
         layer_slices: Slices in any order (COMPASS z coordinates).
         total_absorption: A = 1 - R - T.
+        qe_depth: "silicon" (full silicon depth) or "photodiode" (PD box depth).
 
     Returns:
         Mapping of pixel name (e.g. "R_0_0") to QE.
@@ -291,18 +396,11 @@ def eps_imag_weight_qe(
         return {}
     lx, ly = pixel_stack.domain_size
     pitch = pixel_stack.pitch
-    si_z_end = max(
-        (layer.z_end for layer in pixel_stack.layers if layer.name == "silicon"),
-        default=0.0,
-    )
 
     pixel_weights: dict[str, float] = {}
     for pd in pixel_stack.photodiodes:
         r, c = pd.pixel_index
-        # position[2] is the PD-center depth below the silicon top surface
-        pd_cz = si_z_end - pd.position[2]
-        pd_z_min = pd_cz - pd.size[2] / 2
-        pd_z_max = pd_cz + pd.size[2] / 2
+        pd_z_min, pd_z_max = qe_z_window(pixel_stack, pd, qe_depth)
         # PhotodiodeSpec.position is the offset from the pixel center.
         pd_cx = (c + 0.5) * pitch + pd.position[0]
         pd_cy = (r + 0.5) * pitch + pd.position[1]

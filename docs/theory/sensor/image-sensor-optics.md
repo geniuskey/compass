@@ -77,7 +77,7 @@ Silicon is the absorbing medium where photon-to-electron conversion occurs. The 
 
 This means blue light is absorbed near the surface while red/NIR light requires several micrometers of silicon. Typical BSI pixel silicon thickness is 2-4 um.
 
-The **photodiode** occupies a defined region within the silicon. Only photons absorbed within the photodiode volume contribute to the photocurrent. COMPASS models this by integrating the absorbed power within the photodiode bounding box.
+The **photodiode** occupies a defined region within the silicon. Only photons absorbed within the photodiode volume contribute to the photocurrent. COMPASS integrates the absorbed power under each photodiode's footprint, over either the full silicon depth (default, `solver.qe_depth: silicon`) or only the photodiode box depth (`solver.qe_depth: photodiode`); see the [config reference](/reference/config-reference#solver-qe-depth-qe-integration-depth).
 
 ## Deep Trench Isolation (DTI)
 

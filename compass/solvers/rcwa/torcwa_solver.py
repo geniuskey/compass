@@ -356,12 +356,12 @@ class TorcwaSolver(SolverBase):
 
         lx, ly = self._pixel_stack.domain_size
 
-        def e2_dz(li: int, s) -> np.ndarray:
+        def e2_dz(li: int, s, window: tuple[float, float] | None = None) -> np.ndarray:
             # Sample at the torcwa lattice positions of the eps grid samples.
             n0, n1 = s.eps_grid.shape
             x_axis = torch.arange(n1, device=self.device, dtype=torch.float64) * (lx / n1)
             y_axis = torch.arange(n0, device=self.device, dtype=torch.float64) * (ly / n0)
-            depths, dz = slice_depth_samples(s.thickness, s, wavelength)
+            depths, dz = slice_depth_samples(s.thickness, s, wavelength, window)
             e2_sum = torch.zeros((n0, n1), device=self.device, dtype=torch.float32)
             for z_prop in depths:
                 E, _H = sim.field_xy(li, x_axis, y_axis, z_prop=float(z_prop))
@@ -376,6 +376,7 @@ class TorcwaSolver(SolverBase):
             e2_dz,
             total_absorption,
             "torcwa",
+            qe_depth=self.qe_depth,
         )
 
     def _compute_per_pixel_qe(
@@ -393,7 +394,7 @@ class TorcwaSolver(SolverBase):
         """
         if self._pixel_stack is None:
             raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        return eps_imag_weight_qe(self._pixel_stack, layer_slices, total_absorption)
+        return eps_imag_weight_qe(self._pixel_stack, layer_slices, total_absorption, self.qe_depth)
 
     FIELD_COMPONENTS = FIELD_COMPONENTS
     FIELD_PLANES = FIELD_PLANES

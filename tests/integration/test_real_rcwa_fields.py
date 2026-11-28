@@ -243,3 +243,68 @@ def test_thin_si_qe_equals_silicon_absorption(backend, params):
         rr = ref.run()
         np.testing.assert_allclose(r.reflection, rr.reflection, atol=2e-3)
         np.testing.assert_allclose(r.transmission, rr.transmission, atol=2e-3)
+
+
+# ---------------------------------------------------------------------------
+# solver.qe_depth: full silicon depth (default) vs photodiode box depth
+# ---------------------------------------------------------------------------
+
+SI_T = 1.0  # um
+PD_WINDOW = (0.5, 0.9)  # COMPASS z of the PD box: depth 0.1..0.5 um below the Si top
+
+
+def _si_slab_solver(backend, qe_depth, theta_deg=0.0):
+    """Planar absorbing 'silicon' slab with one photodiode box inside it."""
+    from compass.core.types import PhotodiodeSpec
+
+    if backend != "tmm":
+        _require(backend)
+    stack = PixelStack({"pixel": {"pitch": 1.0, "unit_cell": [1, 1]}})
+    stack.material_db.register_constant("lossy_si", n=4.0, k=0.05)
+    stack.layers = [Layer("silicon", 0.0, SI_T, SI_T, "lossy_si")]
+    depth_c = SI_T - (PD_WINDOW[0] + PD_WINDOW[1]) / 2
+    stack.photodiodes = [
+        PhotodiodeSpec(
+            (0.0, 0.0, depth_c), (1.0, 1.0, PD_WINDOW[1] - PD_WINDOW[0]), (0, 0), "R"
+        )
+    ]
+    params = {} if backend == "tmm" else {"dtype": "complex128", **SLAB_PARAMS[backend]}
+    solver = SolverFactory.create(
+        backend, {"name": backend, "qe_depth": qe_depth, "params": params}
+    )
+    solver.setup_geometry(stack)
+    solver.setup_source({
+        "wavelength": {"mode": "single", "value": WL},
+        "angle": {"theta_deg": theta_deg, "phi_deg": 0.0},
+        "polarization": "TE",
+    })
+    return solver, solver.run()
+
+
+@BACKENDS
+@pytest.mark.parametrize("theta_deg", [0.0, 30.0])
+def test_photodiode_depth_qe_matches_flux_difference(backend, theta_deg):
+    """PD-depth QE equals the Poynting flux absorbed between the PD faces."""
+    solver, result = _si_slab_solver(backend, "photodiode", theta_deg)
+    s_lo = solver.get_field_distribution("Sz", "xy", PD_WINDOW[0]).mean()
+    s_hi = solver.get_field_distribution("Sz", "xy", PD_WINDOW[1]).mean()
+    expected = (s_lo - s_hi) / np.cos(np.deg2rad(theta_deg))  # Sz < 0: flows down
+    assert solver.qe_depth == "photodiode"
+    assert result.qe_per_pixel["R_0_0"][0] == pytest.approx(expected, rel=5e-3)
+
+
+@pytest.mark.parametrize("backend", ["torcwa", "grcwa", "meent", "fmmax", "tmm"])
+def test_qe_depth_modes_bracket_and_agree_with_tmm(backend):
+    """Full-depth QE >= PD-depth QE, and both match TMM for a planar slab."""
+    _, full = _si_slab_solver(backend, "silicon")
+    _, pd = _si_slab_solver(backend, "photodiode")
+    _, tmm_full = _si_slab_solver("tmm", "silicon")
+    _, tmm_pd = _si_slab_solver("tmm", "photodiode")
+    qe_full = full.qe_per_pixel["R_0_0"][0]
+    qe_pd = pd.qe_per_pixel["R_0_0"][0]
+    assert 0.0 < qe_pd < qe_full
+    assert qe_full == pytest.approx(tmm_full.qe_per_pixel["R_0_0"][0], abs=2e-3)
+    assert qe_pd == pytest.approx(tmm_pd.qe_per_pixel["R_0_0"][0], abs=2e-3)
+    # Splitting the silicon for the PD window leaves R and T untouched.
+    assert pd.reflection[0] == pytest.approx(full.reflection[0], abs=1e-10)
+    assert pd.transmission[0] == pytest.approx(full.transmission[0], abs=1e-10)

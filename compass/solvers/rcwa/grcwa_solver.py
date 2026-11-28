@@ -386,9 +386,9 @@ class GrcwaSolver(SolverBase):
         if self._last_layer_info is None:
             raise RuntimeError("no layer data recorded")
 
-        def e2_dz(li: int, s) -> np.ndarray:
+        def e2_dz(li: int, s, window: tuple[float, float] | None = None) -> np.ndarray:
             n0, n1 = s.eps_grid.shape  # [y, x]; grcwa grids are [x, y]
-            depths, dz = slice_depth_samples(s.thickness, s, wavelength)
+            depths, dz = slice_depth_samples(s.thickness, s, wavelength, window)
             acc = np.zeros((n1, n0))
             for depth in depths:
                 acc += sampler.e2_on_grid(li, float(depth), n1, n0)
@@ -402,6 +402,7 @@ class GrcwaSolver(SolverBase):
             e2_dz,
             total_absorption,
             "grcwa",
+            qe_depth=self.qe_depth,
         )
 
     def _compute_per_pixel_qe(
@@ -413,7 +414,7 @@ class GrcwaSolver(SolverBase):
         """Approximate per-pixel QE by eps'' weighting (fallback only)."""
         if self._pixel_stack is None:
             raise RuntimeError("pixel_stack is not set; call setup_geometry() first")
-        return eps_imag_weight_qe(self._pixel_stack, layer_slices, total_absorption)
+        return eps_imag_weight_qe(self._pixel_stack, layer_slices, total_absorption, self.qe_depth)
 
     def get_field_distribution(
         self,
