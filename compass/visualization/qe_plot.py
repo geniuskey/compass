@@ -97,23 +97,29 @@ def plot_qe_spectrum(
                 logger.warning(
                     "Pixel '%s' QE length (%d) does not match wavelength "
                     "array length (%d); skipping.",
-                    pname, len(qe_arr), len(wavelengths_nm),
+                    pname,
+                    len(qe_arr),
+                    len(wavelengths_nm),
                 )
                 continue
             ax.plot(
-                wavelengths_nm, qe_arr,
-                color=color, alpha=0.3, linewidth=0.8,
+                wavelengths_nm,
+                qe_arr,
+                color=color,
+                alpha=0.3,
+                linewidth=0.8,
             )
 
         # Average across all pixels in this channel
-        valid_arrays = [
-            qe for _, qe in pixels if len(qe) == len(wavelengths_nm)
-        ]
+        valid_arrays = [qe for _, qe in pixels if len(qe) == len(wavelengths_nm)]
         if valid_arrays:
             mean_qe = np.mean(valid_arrays, axis=0)
             ax.plot(
-                wavelengths_nm, mean_qe,
-                color=color, linewidth=2.0, label=f"{channel} (mean)",
+                wavelengths_nm,
+                mean_qe,
+                color=color,
+                linewidth=2.0,
+                label=f"{channel} (mean)",
             )
 
     ax.set_xlabel("Wavelength (nm)")
@@ -152,8 +158,7 @@ def plot_qe_comparison(
     """
     if len(results) != len(labels):
         raise ValueError(
-            f"Number of results ({len(results)}) must match number of "
-            f"labels ({len(labels)})."
+            f"Number of results ({len(results)}) must match number of labels ({len(labels)})."
         )
 
     if not results:
@@ -166,11 +171,14 @@ def plot_qe_comparison(
     if show_difference and len(results) >= 2:
         if ax is not None:
             logger.warning(
-                "show_difference=True requires creating new figure; "
-                "ignoring provided ax."
+                "show_difference=True requires creating new figure; ignoring provided ax."
             )
         fig, (ax_main, ax_diff) = plt.subplots(
-            2, 1, figsize=figsize, height_ratios=[3, 1], sharex=True,
+            2,
+            1,
+            figsize=figsize,
+            height_ratios=[3, 1],
+            sharex=True,
         )
     else:
         ax_diff = None
@@ -194,17 +202,17 @@ def plot_qe_comparison(
                 continue
 
             color = _CHANNEL_COLORS.get(channel, "gray")
-            valid_arrays = [
-                qe for _, qe in channels[channel]
-                if len(qe) == len(wavelengths_nm)
-            ]
+            valid_arrays = [qe for _, qe in channels[channel] if len(qe) == len(wavelengths_nm)]
             if not valid_arrays:
                 continue
 
             mean_qe = np.mean(valid_arrays, axis=0)
             ax_main.plot(
-                wavelengths_nm, mean_qe,
-                color=color, linestyle=ls, linewidth=1.8,
+                wavelengths_nm,
+                mean_qe,
+                color=color,
+                linestyle=ls,
+                linewidth=1.8,
                 label=f"{channel} -- {label}",
             )
 
@@ -214,8 +222,7 @@ def plot_qe_comparison(
                 if channel in ref_channels:
                     ref_wl_nm = np.asarray(um_to_nm(results[0].wavelengths))
                     ref_arrays = [
-                        qe for _, qe in ref_channels[channel]
-                        if len(qe) == len(ref_wl_nm)
+                        qe for _, qe in ref_channels[channel] if len(qe) == len(ref_wl_nm)
                     ]
                     if ref_arrays:
                         ref_mean = np.mean(ref_arrays, axis=0)
@@ -230,8 +237,11 @@ def plot_qe_comparison(
                             )
                             diff = mean_qe - diff
                         ax_diff.plot(
-                            wavelengths_nm, diff,
-                            color=color, linestyle=ls, linewidth=1.2,
+                            wavelengths_nm,
+                            diff,
+                            color=color,
+                            linestyle=ls,
+                            linewidth=1.2,
                             label=f"{channel}: {label} - {labels[0]}",
                         )
 
@@ -305,7 +315,8 @@ def plot_crosstalk_heatmap(
     if wavelength_idx is not None and not 0 <= wavelength_idx < len(result.wavelengths):
         logger.warning(
             "wavelength_idx=%d out of range [0, %d); using band average.",
-            wavelength_idx, len(result.wavelengths),
+            wavelength_idx,
+            len(result.wavelengths),
         )
         wavelength_idx = None
     if wavelength_idx is not None:
@@ -345,9 +356,13 @@ def plot_crosstalk_heatmap(
             val = xtalk_matrix[i, j]
             text_color = "white" if val > 0.5 * np.max(xtalk_matrix) else "black"
             ax.text(
-                j, i, f"{val:.2f}",
-                ha="center", va="center",
-                fontsize=7, color=text_color,
+                j,
+                i,
+                f"{val:.2f}",
+                ha="center",
+                va="center",
+                fontsize=7,
+                color=text_color,
             )
 
     return ax
@@ -413,14 +428,9 @@ def plot_angular_response(
                 channel_data[channel] = [np.nan] * (
                     len(angles_arr) - len(results_vs_angle) + len(channel_data.get(channel, []))
                 )
-                channel_data[channel] = [np.nan] * (
-                    results_vs_angle.index(result)
-                )
+                channel_data[channel] = [np.nan] * (results_vs_angle.index(result))
 
-            valid_arrays = [
-                qe for _, qe in pixels
-                if len(qe) == len(result.wavelengths)
-            ]
+            valid_arrays = [qe for _, qe in pixels if len(qe) == len(result.wavelengths)]
             if not valid_arrays:
                 channel_data.setdefault(channel, []).append(np.nan)
                 seen_channels.add(channel)
@@ -449,13 +459,19 @@ def plot_angular_response(
         if len(qe_vs_angle) != len(angles_arr):
             logger.warning(
                 "Channel '%s' has %d entries but %d angles; skipping.",
-                channel, len(qe_vs_angle), len(angles_arr),
+                channel,
+                len(qe_vs_angle),
+                len(angles_arr),
             )
             continue
         color = _CHANNEL_COLORS.get(channel, "gray")
         ax.plot(
-            angles_arr, qe_vs_angle,
-            color=color, linewidth=2.0, marker="o", markersize=4,
+            angles_arr,
+            qe_vs_angle,
+            color=color,
+            linewidth=2.0,
+            marker="o",
+            markersize=4,
             label=channel,
         )
 

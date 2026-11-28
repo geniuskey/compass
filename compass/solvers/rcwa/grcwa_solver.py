@@ -79,8 +79,13 @@ class _GrcwaFieldSampler:
         obj, rc = self.obj, self._rc
         if which_layer not in self._amps:
             self._amps[which_layer] = rc.SolveInterior(
-                which_layer, obj.a0, obj.bN, obj.q_list, obj.phi_list,
-                obj.kp_list, obj.thickness_list,
+                which_layer,
+                obj.a0,
+                obj.bN,
+                obj.q_list,
+                obj.phi_list,
+                obj.kp_list,
+                obj.thickness_list,
             )
         ai, bi = self._amps[which_layer]
         return rc.TranslateAmplitudes(
@@ -130,9 +135,7 @@ class GrcwaSolver(SolverBase):
         # so configs built from schema defaults keep working.
         dtype = config.get("params", {}).get("dtype")
         if dtype not in (None, "complex128"):
-            logger.warning(
-                "grcwa always runs in complex128; ignoring params.dtype=%r", dtype
-            )
+            logger.warning("grcwa always runs in complex128; ignoring params.dtype=%r", dtype)
         self._source: PlanewaveSource | None = None
         self._last_layer_slices: list | None = None
         self._last_layer_info: list | None = None
@@ -492,8 +495,12 @@ class GrcwaSolver(SolverBase):
         if self._pixel_stack is None or self._last_layer_info is None:
             return np.zeros((FIELD_N_XY, FIELD_N_XY))
         return approximate_field(
-            self._pixel_stack, self._last_layer_info, self._last_wavelength,
-            component, plane, position,
+            self._pixel_stack,
+            self._last_layer_info,
+            self._last_wavelength,
+            component,
+            plane,
+            position,
         )
 
 

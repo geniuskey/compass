@@ -171,9 +171,7 @@ class PixelOptimizer:
         # Re-create parameter space on the final config to apply best values
         self.parameter_space.from_vector(best_x)
 
-        logger.info(
-            f"Optimization complete: {self._n_evals} evaluations in {elapsed:.1f}s"
-        )
+        logger.info(f"Optimization complete: {self._n_evals} evaluations in {elapsed:.1f}s")
         logger.info(f"Best objective: {self._best_objective:.6f}")
         logger.info(f"Best params: {best_x.tolist()}")
         logger.info(f"Converged: {converged}")
@@ -244,8 +242,7 @@ class PixelOptimizer:
 
         if self._n_evals % 10 == 0:
             logger.info(
-                f"  eval {self._n_evals}: obj={obj_value:.6f} "
-                f"best={self._best_objective:.6f}"
+                f"  eval {self._n_evals}: obj={obj_value:.6f} best={self._best_objective:.6f}"
             )
 
         return obj_value
@@ -257,8 +254,7 @@ class PixelOptimizer:
             xk: Current parameter vector after an iteration.
         """
         logger.debug(
-            f"Iteration callback: n_evals={self._n_evals}, "
-            f"best={self._best_objective:.6f}"
+            f"Iteration callback: n_evals={self._n_evals}, best={self._best_objective:.6f}"
         )
 
     def _callback_de(self, xk: np.ndarray, convergence: float) -> None:
@@ -268,7 +264,4 @@ class PixelOptimizer:
             xk: Best parameter vector so far.
             convergence: Convergence metric (0 = not converged, 1 = converged).
         """
-        logger.debug(
-            f"DE callback: convergence={convergence:.4f}, "
-            f"best={self._best_objective:.6f}"
-        )
+        logger.debug(f"DE callback: convergence={convergence:.4f}, best={self._best_objective:.6f}")

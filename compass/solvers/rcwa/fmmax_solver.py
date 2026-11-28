@@ -64,8 +64,9 @@ class _FmmaxFieldSampler:
       permittivity matrices.
     """
 
-    def __init__(self, layer_solve_results, layer_thicknesses, forward, power,
-                 cos_theta, eps_grids, lx, ly):
+    def __init__(
+        self, layer_solve_results, layer_thicknesses, forward, power, cos_theta, eps_grids, lx, ly
+    ):
         import jax
         import jax.numpy as jnp
         from fmmax import basis, fields, scattering
@@ -86,11 +87,13 @@ class _FmmaxFieldSampler:
         )
         self.amps = fields.stack_amplitudes_interior(interior, fwd, jnp.zeros_like(fwd))
         lsr0 = layer_solve_results[0]
-        self.k = np.asarray(basis.transverse_wavevectors(
-            in_plane_wavevector=lsr0.in_plane_wavevector,
-            primitive_lattice_vectors=lsr0.primitive_lattice_vectors,
-            expansion=lsr0.expansion,
-        ))  # (n_terms, 2)
+        self.k = np.asarray(
+            basis.transverse_wavevectors(
+                in_plane_wavevector=lsr0.in_plane_wavevector,
+                primitive_lattice_vectors=lsr0.primitive_lattice_vectors,
+                expansion=lsr0.expansion,
+            )
+        )  # (n_terms, 2)
 
     def fourier(self, slice_index: int, depth_um):
         """Fourier coefficients ([ex, ey, ez], [hx, hy, hz], [dx, dy, dz]), each (n_depth, N)."""
@@ -106,7 +109,10 @@ class _FmmaxFieldSampler:
         z = jnp.asarray(np.atleast_1d(np.asarray(depth_um, dtype=float)))
         fwd_start, bwd_end = self.amps[L]
         fwd, bwd = self._fields.colocate_amplitudes(
-            fwd_start, bwd_end, z_offset=z, layer_solve_result=lsr,
+            fwd_start,
+            bwd_end,
+            z_offset=z,
+            layer_solve_result=lsr,
             layer_thickness=jnp.asarray(self.thick[L]),
         )
         (ex, ey, ez), (hx, hy, hz) = self._fields.fields_from_wave_amplitudes(fwd, bwd, lsr)
@@ -153,9 +159,7 @@ class _FmmaxFieldSampler:
         inv_eps2 = 1.0 / np.abs(self._eps_at(slice_index, X, Y)) ** 2
         return np.asarray(total.reshape(X.shape) * inv_eps2)
 
-    def at_points(
-        self, slice_index: int, depth_um: float, x_um, y_um, displacement: bool = True
-    ):
+    def at_points(self, slice_index: int, depth_um: float, x_um, y_um, displacement: bool = True):
         """Fields ([Ex, Ey, Ez], [Hx, Hy, Hz]) at points (x, y) in um.
 
         With ``displacement`` (default) E is ``D / eps(r)``; otherwise the
@@ -305,12 +309,13 @@ class FmmaxSolver(SolverBase):
         # Match the per-axis order convention of torcwa and meent exactly.
         # generate_expansion's approximate_num_terms is a TOTAL count.
         mx, my = fourier_order
-        coefficients = np.array([
-            (i, j) for i in range(-mx, mx + 1) for j in range(-my, my + 1)
-        ])
-        coefficients = coefficients[np.argsort(
-            np.sum(coefficients ** 2, axis=1), kind="stable",
-        )]
+        coefficients = np.array([(i, j) for i in range(-mx, mx + 1) for j in range(-my, my + 1)])
+        coefficients = coefficients[
+            np.argsort(
+                np.sum(coefficients**2, axis=1),
+                kind="stable",
+            )
+        ]
         expansion = basis.Expansion(basis_coefficients=coefficients)
 
         pol_runs = self._source.get_polarization_runs()
@@ -323,7 +328,10 @@ class FmmaxSolver(SolverBase):
 
         for _wl_idx, wavelength in enumerate(self._source.wavelengths):
             layer_slices = self._pixel_stack.get_layer_slices(
-                wavelength, nx, ny, n_lens_slices=params.get("n_lens_slices", 30),
+                wavelength,
+                nx,
+                ny,
+                n_lens_slices=params.get("n_lens_slices", 30),
             )
 
             R_pol: list[float] = []
@@ -463,7 +471,8 @@ class FmmaxSolver(SolverBase):
                 in_plane_wavevector = jnp.array([kx, ky])
 
         lattice = basis.LatticeVectors(
-            u=jnp.array([lx, 0.0]), v=jnp.array([0.0, ly]),
+            u=jnp.array([lx, 0.0]),
+            v=jnp.array([0.0, ly]),
         )
 
         # Build layer permittivities and thicknesses
@@ -496,15 +505,16 @@ class FmmaxSolver(SolverBase):
             layer_solve_results.append(solve_result)
 
         s_matrix = scattering.stack_s_matrix(
-            layer_solve_results, [jnp.array(d) for d in layer_thicknesses],
+            layer_solve_results,
+            [jnp.array(d) for d in layer_thicknesses],
         )
 
         # The homogeneous air eigenvectors span Hx and Hy for each order.
         # Excite only the zero diffraction order, rotated into the s/p basis.
         n_terms = expansion.num_terms
-        zero_order = int(np.flatnonzero(
-            np.all(np.asarray(expansion.basis_coefficients) == 0, axis=1)
-        )[0])
+        zero_order = int(
+            np.flatnonzero(np.all(np.asarray(expansion.basis_coefficients) == 0, axis=1))[0]
+        )
         phi = self._source.phi_rad if self._source is not None else 0.0
         incident = np.zeros((2 * n_terms, 1), dtype=complex)
         hx, hy = (np.cos(phi), np.sin(phi)) if pol == "TE" else (-np.sin(phi), np.cos(phi))
@@ -515,10 +525,14 @@ class FmmaxSolver(SolverBase):
         reflected = s_matrix.s21 @ forward
         transmitted = s_matrix.s11 @ forward
         incident_flux, reflected_flux = fields.amplitude_poynting_flux(
-            forward, reflected, layer_solve_results[0],
+            forward,
+            reflected,
+            layer_solve_results[0],
         )
         transmitted_flux, _ = fields.amplitude_poynting_flux(
-            transmitted, zero, layer_solve_results[-1],
+            transmitted,
+            zero,
+            layer_solve_results[-1],
         )
         power = float(jnp.sum(incident_flux))
         if not np.isfinite(power) or power <= 0:
@@ -530,8 +544,14 @@ class FmmaxSolver(SolverBase):
         try:
             cos_theta = float(np.cos(self._source.theta_rad)) if self._source else 1.0
             sampler: _FmmaxFieldSampler | None = _FmmaxFieldSampler(
-                layer_solve_results, layer_thicknesses, forward, power, cos_theta,
-                [s.eps_grid for s in reversed(layer_slices)], lx, ly,
+                layer_solve_results,
+                layer_thicknesses,
+                forward,
+                power,
+                cos_theta,
+                [s.eps_grid for s in reversed(layer_slices)],
+                lx,
+                ly,
             )
         except Exception as e:  # field data unavailable -> QE fallback
             logger.warning(f"fmmax: field reconstruction setup failed ({e})")
@@ -656,8 +676,12 @@ class FmmaxSolver(SolverBase):
                 "permittivity-based approximation, not a solved field"
             )
         return approximate_field(
-            self._pixel_stack, self._last_layer_info, self._last_wavelength,
-            component, plane, position,
+            self._pixel_stack,
+            self._last_layer_info,
+            self._last_wavelength,
+            component,
+            plane,
+            position,
         )
 
     def _solved_field(

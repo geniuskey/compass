@@ -1,4 +1,5 @@
 """Export simulation results to CSV, JSON."""
+
 from __future__ import annotations
 
 import json
@@ -16,6 +17,7 @@ def _jsonable(obj):
     from compass.io.hdf5_handler import _jsonable as conv
 
     return conv(obj)
+
 
 class ResultExporter:
     """Export results to various formats."""

@@ -50,7 +50,10 @@ class IRCutFilter:
         self.stopband_t = stopband_t
         logger.debug(
             "IRCutFilter: cutoff=%.3f um, width=%.3f um, Tpass=%.3f, Tstop=%.3f",
-            cutoff_wl, transition_width, passband_t, stopband_t,
+            cutoff_wl,
+            transition_width,
+            passband_t,
+            stopband_t,
         )
 
     def transmittance(self, wavelengths: np.ndarray) -> np.ndarray:
@@ -93,7 +96,9 @@ class LensTransmittance:
         self.num_elements = num_elements
         self.ar_coating = ar_coating
         logger.debug(
-            "LensTransmittance: %d elements, AR=%s", num_elements, ar_coating,
+            "LensTransmittance: %d elements, AR=%s",
+            num_elements,
+            ar_coating,
         )
 
     def transmittance(self, wavelengths: np.ndarray) -> np.ndarray:
@@ -116,7 +121,7 @@ class LensTransmittance:
         # Glass absorption: slight increase at UV/blue end
         # T_glass per element ~0.998 at 550nm, drops at shorter wavelengths
         wl_nm = wl * 1000.0
-        t_glass_per_element = 0.998 - 0.001 * np.exp(-((wl_nm - 400.0) / 50.0) ** 2)
+        t_glass_per_element = 0.998 - 0.001 * np.exp(-(((wl_nm - 400.0) / 50.0) ** 2))
         t_glass = t_glass_per_element**n
 
         # Surface reflection loss: 2 surfaces per element
@@ -161,7 +166,8 @@ class ModuleOptics:
         self.ir_filter = ir_filter if ir_filter is not None else IRCutFilter()
         self.additional_filters = additional_filters if additional_filters is not None else []
         logger.debug(
-            "ModuleOptics: %d additional filters.", len(self.additional_filters),
+            "ModuleOptics: %d additional filters.",
+            len(self.additional_filters),
         )
 
     def total_transmittance(self, wavelengths: np.ndarray) -> np.ndarray:
@@ -180,7 +186,8 @@ class ModuleOptics:
 
         for name, filt_wl, filt_t in self.additional_filters:
             f = interp1d(
-                filt_wl, filt_t,
+                filt_wl,
+                filt_t,
                 kind="linear",
                 bounds_error=False,
                 fill_value=0.0,

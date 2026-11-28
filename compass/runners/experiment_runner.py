@@ -67,7 +67,9 @@ def build_objective(spec: dict):
     wl_range = spec.get("wavelength_range")
     wl_range = tuple(wl_range) if wl_range is not None else None
     if kind == "maximize_qe":
-        return obj_mod.MaximizeQE(target_pixels=spec.get("target_pixels"), wavelength_range=wl_range)
+        return obj_mod.MaximizeQE(
+            target_pixels=spec.get("target_pixels"), wavelength_range=wl_range
+        )
     if kind == "minimize_crosstalk":
         return obj_mod.MinimizeCrosstalk(target_wavelength_range=wl_range)
     if kind == "maximize_peak_qe":

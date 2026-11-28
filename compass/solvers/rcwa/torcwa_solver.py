@@ -198,9 +198,7 @@ class TorcwaSolver(SolverBase):
                 # differences between field integration and the eps''-weight
                 # approximation are methodology, not solver accuracy.
                 "qe_method": (
-                    "eps_imag_weight_fallback"
-                    if self._qe_fallback_used
-                    else "field_integration"
+                    "eps_imag_weight_fallback" if self._qe_fallback_used else "field_integration"
                 ),
                 "device": self.device,
                 **self._failure_metadata(),

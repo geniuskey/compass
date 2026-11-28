@@ -122,7 +122,9 @@ class MaterialData:
             lam2 = wavelength**2
             n2 = 1.0
             if self.sellmeier_B is None or self.sellmeier_C is None:
-                raise ValueError(f"Material '{self.name}': Sellmeier B and C coefficients are required")
+                raise ValueError(
+                    f"Material '{self.name}': Sellmeier B and C coefficients are required"
+                )
             for B, C in zip(self.sellmeier_B, self.sellmeier_C, strict=True):
                 if B == 0.0:
                     continue
@@ -516,31 +518,40 @@ class MaterialDB:
 
     def register_constant(self, name: str, n: float, k: float = 0.0) -> None:
         """Register a material with constant n, k."""
-        self._set_material(name, MaterialData(
-            name=name,
-            mat_type="constant",
-            n_const=n,
-            k_const=k,
-        ))
+        self._set_material(
+            name,
+            MaterialData(
+                name=name,
+                mat_type="constant",
+                n_const=n,
+                k_const=k,
+            ),
+        )
 
     def register_cauchy(self, name: str, A: float, B: float = 0.0, C: float = 0.0) -> None:
         """Register a material with Cauchy dispersion model: n(λ) = A + B/λ² + C/λ⁴."""
-        self._set_material(name, MaterialData(
-            name=name,
-            mat_type="cauchy",
-            cauchy_A=A,
-            cauchy_B=B,
-            cauchy_C=C,
-        ))
+        self._set_material(
+            name,
+            MaterialData(
+                name=name,
+                mat_type="cauchy",
+                cauchy_A=A,
+                cauchy_B=B,
+                cauchy_C=C,
+            ),
+        )
 
     def register_sellmeier(self, name: str, B: list[float], C: list[float]) -> None:
         """Register a material with Sellmeier dispersion model."""
-        self._set_material(name, MaterialData(
-            name=name,
-            mat_type="sellmeier",
-            sellmeier_B=B,
-            sellmeier_C=C,
-        ))
+        self._set_material(
+            name,
+            MaterialData(
+                name=name,
+                mat_type="sellmeier",
+                sellmeier_B=B,
+                sellmeier_C=C,
+            ),
+        )
 
     def load_csv(self, name: str, filepath: str, interpolation: str = "cubic_spline") -> None:
         """Load tabulated material from CSV file.

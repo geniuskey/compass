@@ -1,4 +1,5 @@
 """Automated comparison report generator for COMPASS."""
+
 from __future__ import annotations
 
 import logging
@@ -42,8 +43,7 @@ class ReportGenerator:
     ) -> None:
         if len(results) != len(labels):
             raise ValueError(
-                f"Number of results ({len(results)}) must match number of "
-                f"labels ({len(labels)})."
+                f"Number of results ({len(results)}) must match number of labels ({len(labels)})."
             )
         self.results = results
         self.labels = labels
@@ -91,7 +91,10 @@ class ReportGenerator:
         return path
 
     def _make_crosstalk_figure(
-        self, result: SimulationResult, label: str, idx: int,
+        self,
+        result: SimulationResult,
+        label: str,
+        idx: int,
     ) -> str:
         """Create and save a crosstalk heatmap for a single result."""
         fig, ax = plt.subplots(1, 1, figsize=(7, 6))
@@ -118,9 +121,15 @@ class ReportGenerator:
 
         r_vals, t_vals, a_vals = [], [], []
         for result in self.results:
-            r_vals.append(float(np.mean(result.reflection)) if result.reflection is not None else 0.0)
-            t_vals.append(float(np.mean(result.transmission)) if result.transmission is not None else 0.0)
-            a_vals.append(float(np.mean(result.absorption)) if result.absorption is not None else 0.0)
+            r_vals.append(
+                float(np.mean(result.reflection)) if result.reflection is not None else 0.0
+            )
+            t_vals.append(
+                float(np.mean(result.transmission)) if result.transmission is not None else 0.0
+            )
+            a_vals.append(
+                float(np.mean(result.absorption)) if result.absorption is not None else 0.0
+            )
 
         ax.bar(x - width, r_vals, width, label="Reflection", color="steelblue")
         ax.bar(x, t_vals, width, label="Transmission", color="darkorange")
@@ -207,7 +216,9 @@ class ReportGenerator:
             lines.append("<table>")
             lines.append("<tr><th>Metric</th><th>Value</th></tr>")
             lines.append(f"<tr><td>Peak crosstalk</td><td>{ct_s['peak_crosstalk']:.6f}</td></tr>")
-            lines.append(f"<tr><td>Peak wavelength (um)</td><td>{ct_s['peak_wavelength_um']:.4f}</td></tr>")
+            lines.append(
+                f"<tr><td>Peak wavelength (um)</td><td>{ct_s['peak_wavelength_um']:.4f}</td></tr>"
+            )
             lines.append(f"<tr><td>Mean crosstalk</td><td>{ct_s['mean_crosstalk']:.6f}</td></tr>")
             lines.append("</table>")
 

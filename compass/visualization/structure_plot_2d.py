@@ -154,8 +154,7 @@ def _plot_vertical_cross_section(
 
         if layer.name == "color_filter" and pixel_stack.bayer_map:
             # Draw per-pixel color filter regions
-            n_pixels = (pixel_stack.unit_cell[1] if plane == "xz"
-                        else pixel_stack.unit_cell[0])
+            n_pixels = pixel_stack.unit_cell[1] if plane == "xz" else pixel_stack.unit_cell[0]
             pitch = pixel_stack.pitch
             cf_cfg = pixel_stack._layer_configs.get("color_filter", {})
             grid_cfg = cf_cfg.get("grid", {}) or {}
@@ -180,9 +179,7 @@ def _plot_vertical_cross_section(
                     col_idx = max(col_idx, 0)
                     row_idx = idx
 
-                color_char = pixel_stack.bayer_map[
-                    row_idx % len(pixel_stack.bayer_map)
-                ][
+                color_char = pixel_stack.bayer_map[row_idx % len(pixel_stack.bayer_map)][
                     col_idx % len(pixel_stack.bayer_map[0])
                 ]
                 spec = pixel_stack._color_filter_spec(cf_cfg, color_char)
@@ -200,7 +197,9 @@ def _plot_vertical_cross_section(
 
                 if z_grid_top > z_start:
                     rect = mpatches.Rectangle(
-                        (x0, z_start), x1 - x0, z_grid_top - z_start,
+                        (x0, z_start),
+                        x1 - x0,
+                        z_grid_top - z_start,
                     )
                     rect_patches.append(rect)
                     rect_colors.append(face_color)
@@ -211,18 +210,22 @@ def _plot_vertical_cross_section(
                     )
                     x0_top = min(x0 + inset, (x0 + x1) / 2.0)
                     x1_top = max(x1 - inset, (x0 + x1) / 2.0)
-                    poly = mpatches.Polygon([
-                        (x0, z_grid_top),
-                        (x1, z_grid_top),
-                        (x1_top, z_top),
-                        (x0_top, z_top),
-                    ])
+                    poly = mpatches.Polygon(
+                        [
+                            (x0, z_grid_top),
+                            (x1, z_grid_top),
+                            (x1_top, z_top),
+                            (x0_top, z_top),
+                        ]
+                    )
                     rect_patches.append(poly)
                     rect_colors.append(face_color)
         else:
             face_color = _resolve_color(layer.base_material, layer.name)
             rect = mpatches.Rectangle(
-                (0.0, z_start), lateral_extent, thickness,
+                (0.0, z_start),
+                lateral_extent,
+                thickness,
             )
             rect_patches.append(rect)
             rect_colors.append(face_color)
@@ -263,7 +266,9 @@ def _plot_vertical_cross_section(
     z_max = layers[-1].z_end
     pitch_text = f"pitch = {pixel_stack.pitch:.3f} um"
     ax.text(
-        0.02, 0.98, pitch_text,
+        0.02,
+        0.98,
+        pitch_text,
         transform=ax.transAxes,
         fontsize=7,
         va="top",
@@ -332,9 +337,11 @@ def _plot_xy_cross_section(
         distances = [abs((s.z_start + s.z_end) / 2.0 - z_position) for s in slices]
         target_slice = slices[int(np.argmin(distances))]
         logger.warning(
-            "z = %.3f um is outside stack; using nearest slice '%s' "
-            "(z = %.3f - %.3f um).",
-            z_position, target_slice.name, target_slice.z_start, target_slice.z_end,
+            "z = %.3f um is outside stack; using nearest slice '%s' (z = %.3f - %.3f um).",
+            z_position,
+            target_slice.name,
+            target_slice.z_start,
+            target_slice.z_end,
         )
 
     eps_real = np.real(target_slice.eps_grid)
@@ -343,7 +350,9 @@ def _plot_xy_cross_section(
     y = np.linspace(0, ly, ny, endpoint=False)
 
     im = ax.pcolormesh(
-        x, y, eps_real,
+        x,
+        y,
+        eps_real,
         shading="auto",
         cmap="viridis",
     )

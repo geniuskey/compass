@@ -43,8 +43,7 @@ def _extract_field_component(
     """
     if component not in _VALID_COMPONENTS:
         raise ValueError(
-            f"Unknown field component '{component}'. "
-            f"Valid choices: {_VALID_COMPONENTS}"
+            f"Unknown field component '{component}'. Valid choices: {_VALID_COMPONENTS}"
         )
 
     if component == "Ex":
@@ -65,10 +64,7 @@ def _extract_field_component(
         if poynting is not None:
             return poynting
         # Approximate Sz from E fields if Poynting not available directly
-        logger.warning(
-            "Poynting vector Sz not directly available; "
-            "falling back to |E|^2 as proxy."
-        )
+        logger.warning("Poynting vector Sz not directly available; falling back to |E|^2 as proxy.")
         return field_data.E_intensity
 
     return None
@@ -169,9 +165,7 @@ def plot_field_2d(
 
     if wavelength_key not in result.fields:
         available = list(result.fields.keys())
-        logger.warning(
-            "Wavelength key '%s' not found. Available: %s", wavelength_key, available
-        )
+        logger.warning("Wavelength key '%s' not found. Available: %s", wavelength_key, available)
         ax.set_title(f"Wavelength key '{wavelength_key}' not found")
         return ax
 
@@ -218,7 +212,9 @@ def plot_field_2d(
         norm = Normalize(vmin=vmin, vmax=vmax)
 
     im = ax.pcolormesh(
-        ax1, ax2, slice_2d_plot,
+        ax1,
+        ax2,
+        slice_2d_plot,
         shading="auto",
         cmap=cmap,
         norm=norm,
@@ -234,9 +230,7 @@ def plot_field_2d(
 
     # Structure overlay
     if overlay_structure:
-        _overlay_structure_outline(
-            result, wavelength_key, plane, position, ax, coords
-        )
+        _overlay_structure_outline(result, wavelength_key, plane, position, ax, coords)
 
     # Axis labels
     if plane == "xz":
@@ -292,11 +286,11 @@ def _overlay_structure_outline(
     eps_3d = result.metadata.get("eps_3d")
     if eps_3d is not None:
         try:
-            eps_slice, ax1, ax2 = _take_slice(
-                np.real(eps_3d), coords, plane, position
-            )
+            eps_slice, ax1, ax2 = _take_slice(np.real(eps_3d), coords, plane, position)
             ax.contour(
-                ax1, ax2, eps_slice,
+                ax1,
+                ax2,
+                eps_slice,
                 levels=6,
                 colors="white",
                 linewidths=0.6,
@@ -306,8 +300,7 @@ def _overlay_structure_outline(
             logger.debug("Structure overlay failed: %s", exc)
     else:
         logger.debug(
-            "No permittivity data in result.metadata['eps_3d']; "
-            "skipping structure overlay."
+            "No permittivity data in result.metadata['eps_3d']; skipping structure overlay."
         )
 
 
@@ -353,9 +346,9 @@ def plot_field_multi_wavelength(
     valid_wls = [wl for wl in wavelengths if wl in available_keys]
     if not valid_wls:
         logger.warning(
-            "None of the requested wavelength keys %s found in result. "
-            "Available: %s",
-            wavelengths, list(available_keys),
+            "None of the requested wavelength keys %s found in result. Available: %s",
+            wavelengths,
+            list(available_keys),
         )
         fig, ax = plt.subplots(1, 1, figsize=(6, 4))
         ax.set_title("No matching wavelength keys")

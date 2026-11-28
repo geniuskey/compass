@@ -1,4 +1,5 @@
 """Zemax ray file reader."""
+
 from __future__ import annotations
 
 import json
@@ -8,6 +9,7 @@ from pathlib import Path
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
 
 class RayFileReader:
     """Read CRA/MRA data from Zemax JSON or CSV files."""

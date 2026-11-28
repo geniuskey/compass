@@ -4,6 +4,7 @@ Defines the canonical HDF5 layout that :class:`compass.io.hdf5_handler.HDF5Handl
 reads and writes, and provides validation helpers to verify existing files
 against the schema.
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,6 +21,7 @@ SCHEMA_VERSION: str = "2.0"  # tracks hdf5_handler.FORMAT_VERSION
 @dataclass
 class _DatasetDef:
     """Specification for a single HDF5 dataset within a group."""
+
     name: str
     dtype: str = "float64"
     required: bool = True
@@ -29,6 +31,7 @@ class _DatasetDef:
 @dataclass
 class _GroupDef:
     """Specification for a single HDF5 group."""
+
     name: str
     required: bool = True
     attrs: dict[str, str] = field(default_factory=dict)
@@ -87,12 +90,24 @@ class ResultSchema:
             name="energy_balance",
             required=True,
             datasets=[
-                _DatasetDef(name="reflection", dtype="float64", required=False,
-                            description="Reflection spectrum R(lambda)."),
-                _DatasetDef(name="transmission", dtype="float64", required=False,
-                            description="Transmission spectrum T(lambda)."),
-                _DatasetDef(name="absorption", dtype="float64", required=False,
-                            description="Absorption spectrum A(lambda)."),
+                _DatasetDef(
+                    name="reflection",
+                    dtype="float64",
+                    required=False,
+                    description="Reflection spectrum R(lambda).",
+                ),
+                _DatasetDef(
+                    name="transmission",
+                    dtype="float64",
+                    required=False,
+                    description="Transmission spectrum T(lambda).",
+                ),
+                _DatasetDef(
+                    name="absorption",
+                    dtype="float64",
+                    required=False,
+                    description="Absorption spectrum A(lambda).",
+                ),
             ],
             description="Energy balance arrays.",
         ),
@@ -143,9 +158,7 @@ class ResultSchema:
             for group_def in cls.GROUPS:
                 if group_def.name not in f:
                     if group_def.required:
-                        errors.append(
-                            f"Missing required group '/{group_def.name}'."
-                        )
+                        errors.append(f"Missing required group '/{group_def.name}'.")
                     continue
 
                 grp = f[group_def.name]
@@ -154,8 +167,7 @@ class ResultSchema:
                 for attr_name in group_def.attrs:
                     if attr_name not in grp.attrs:
                         errors.append(
-                            f"Missing attribute '{attr_name}' in "
-                            f"group '/{group_def.name}'."
+                            f"Missing attribute '{attr_name}' in group '/{group_def.name}'."
                         )
 
                 # Check datasets
@@ -163,8 +175,7 @@ class ResultSchema:
                     if ds_def.name not in grp:
                         if ds_def.required:
                             errors.append(
-                                f"Missing required dataset "
-                                f"'/{group_def.name}/{ds_def.name}'."
+                                f"Missing required dataset '/{group_def.name}/{ds_def.name}'."
                             )
                         continue
 
@@ -181,10 +192,7 @@ class ResultSchema:
             if "qe" in f:
                 pixel_keys = [k for k in f["qe"] if k.startswith("pixel_")]
                 if not pixel_keys:
-                    errors.append(
-                        "Group '/qe' contains no pixel datasets "
-                        "(expected 'pixel_*')."
-                    )
+                    errors.append("Group '/qe' contains no pixel datasets (expected 'pixel_*').")
                 # All pixel datasets should match wavelength length
                 if "wavelengths" in f["qe"]:
                     n_wl = f["qe"]["wavelengths"].shape[0]
@@ -201,7 +209,8 @@ class ResultSchema:
         if errors:
             logger.warning(
                 "Schema validation found %d issue(s) in '%s'.",
-                len(errors), filepath,
+                len(errors),
+                filepath,
             )
         else:
             logger.info("Schema validation passed for '%s'.", filepath)
@@ -232,10 +241,7 @@ class ResultSchema:
                 lines.append(f"  attr  {attr_name}: {attr_desc}")
             for ds_def in gdef.datasets:
                 ds_req = "required" if ds_def.required else "optional"
-                lines.append(
-                    f"  dataset  {ds_def.name}  "
-                    f"[{ds_def.dtype}, {ds_req}]"
-                )
+                lines.append(f"  dataset  {ds_def.name}  [{ds_def.dtype}, {ds_req}]")
                 if ds_def.description:
                     lines.append(f"           {ds_def.description}")
         return "\n".join(lines)

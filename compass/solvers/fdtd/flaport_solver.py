@@ -151,9 +151,17 @@ class FlaportFdtdSolver(SolverBase):
             for pol in pol_runs:
                 try:
                     common = dict(
-                        fdtd=fdtd, gs=gs, n_x=n_x, n_y=n_y, n_z=n_z, pml=pml,
-                        wavelength=float(wavelength), pol=pol, runtime_fs=runtime_fs,
-                        courant=courant, dft_periods=dft_periods,
+                        fdtd=fdtd,
+                        gs=gs,
+                        n_x=n_x,
+                        n_y=n_y,
+                        n_z=n_z,
+                        pml=pml,
+                        wavelength=float(wavelength),
+                        pol=pol,
+                        runtime_fs=runtime_fs,
+                        courant=courant,
+                        dft_periods=dft_periods,
                     )
                     ref = self._simulate(eps_3d=None, **common)
                     tot = self._simulate(eps_3d=eps_3d, **common)
@@ -317,7 +325,10 @@ class FlaportFdtdSolver(SolverBase):
             return None if name not in acc else (acc[name] * scale).cpu().numpy()
 
         return {
-            "E_R": out("E_R"), "H_R": out("H_R"), "E_T": out("E_T"), "H_T": out("H_T"),
+            "E_R": out("E_R"),
+            "H_R": out("H_R"),
+            "E_T": out("E_T"),
+            "H_T": out("H_T"),
             "E_stack": out("E_stack"),
         }
 
@@ -427,7 +438,10 @@ class FlaportFdtdSolver(SolverBase):
             return approximate_field(
                 self._pixel_stack,
                 self._pixel_stack.get_layer_slices(wl, 64, 64),
-                wl, component, plane, position,
+                wl,
+                component,
+                plane,
+                position,
             )
 
         E = self._last_E

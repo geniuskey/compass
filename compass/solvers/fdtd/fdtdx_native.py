@@ -102,14 +102,28 @@ def solve(
     target = jax.devices("gpu" if device.startswith("cuda") else "cpu")[cuda_device_index(device)]
     with jax.enable_x64(precision != "float32"), jax.default_device(target):
         return _solve_scoped(
-            epsilon_yxz, wavelength, spacing, duration, pml_cells, device, polarization,
-            courant_factor, precision,
+            epsilon_yxz,
+            wavelength,
+            spacing,
+            duration,
+            pml_cells,
+            device,
+            polarization,
+            courant_factor,
+            precision,
         )
 
 
 def _solve_scoped(
-    epsilon_yxz, wavelength, spacing, duration, pml_cells, device, polarization,
-    courant_factor, precision,
+    epsilon_yxz,
+    wavelength,
+    spacing,
+    duration,
+    pml_cells,
+    device,
+    polarization,
+    courant_factor,
+    precision,
 ):
     import jax
     import jax.numpy as jnp

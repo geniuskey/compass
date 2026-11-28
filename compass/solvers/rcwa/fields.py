@@ -53,9 +53,7 @@ def check_xy_position(layer_info: Sequence[LayerSlice], position: float) -> None
     """Raise ValueError if an xy-plane height lies outside the stack."""
     z_lo, z_hi = stack_z_range(layer_info)
     if not z_lo <= position <= z_hi:
-        raise ValueError(
-            f"xy-plane position z={position} um is outside the stack [{z_lo}, {z_hi}]"
-        )
+        raise ValueError(f"xy-plane position z={position} um is outside the stack [{z_lo}, {z_hi}]")
 
 
 def backend_grid_shift(pixel_stack, layer_info: Sequence[LayerSlice]) -> tuple[float, float]:
@@ -334,9 +332,7 @@ def eps_imag_weight_qe(
     # Uniform stack: every pixel sees the cell-average absorption
     bayer = pixel_stack.bayer_map
     return {
-        f"{bayer[r][c]}_{r}_{c}": total_absorption
-        for r in range(n_rows)
-        for c in range(n_cols)
+        f"{bayer[r][c]}_{r}_{c}": total_absorption for r in range(n_rows) for c in range(n_cols)
     }
 
 

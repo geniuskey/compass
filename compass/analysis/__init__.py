@@ -1,4 +1,5 @@
 """Post-simulation analysis."""
+
 from compass.analysis.crosstalk import CrosstalkAnalyzer
 
 __all__ = [

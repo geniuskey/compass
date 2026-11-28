@@ -173,9 +173,7 @@ class MaximizePeakQE(ObjectiveFunction):
         if not matching:
             # Fallback: try to find any pixel with channel in name
             matching = [
-                np.asarray(qe)
-                for pname, qe in result.qe_per_pixel.items()
-                if self.channel in pname
+                np.asarray(qe) for pname, qe in result.qe_per_pixel.items() if self.channel in pname
             ]
         if not matching:
             return 0.0
@@ -227,7 +225,7 @@ class EnergyBalanceRegularizer(ObjectiveFunction):
 
         # Quadratic penalty on excess
         excess = max_err - self.tolerance
-        return self.penalty_weight * excess ** 2
+        return self.penalty_weight * excess**2
 
     def name(self) -> str:
         return "EnergyBalanceRegularizer"
@@ -256,7 +254,5 @@ class CompositeObjective(ObjectiveFunction):
         return total
 
     def name(self) -> str:
-        parts = [
-            f"{w:.2f}*{obj.name()}" for w, obj in self.objectives
-        ]
+        parts = [f"{w:.2f}*{obj.name()}" for w, obj in self.objectives]
         return "Composite(" + " + ".join(parts) + ")"

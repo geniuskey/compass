@@ -48,7 +48,6 @@ for _module_name in ("fdtdz", "fdtdz_jax"):
 _FDTDZ_AVAILABLE = _native_fdtdz is not None
 
 
-
 class FdtdzSolver(SolverBase):
     """fdtdz JAX-based 3D FDTD solver adapter.
 
@@ -157,7 +156,9 @@ class FdtdzSolver(SolverBase):
         fz = _native_fdtdz
 
         if not hasattr(fz, "simulate"):
-            raise NotImplementedError("Installed fdtdz native API requires an adapter port; simulate() is unavailable")
+            raise NotImplementedError(
+                "Installed fdtdz native API requires an adapter port; simulate() is unavailable"
+            )
         import jax.numpy as jnp
 
         params = self.config.get("params", {})
@@ -189,9 +190,7 @@ class FdtdzSolver(SolverBase):
         source_z = pml_layers + source_offset  # source injection plane
 
         # Photodiode masks for QE computation
-        _, pd_masks = self._pixel_stack.get_photodiode_mask(
-            nx, ny, nz_interior, full_stack=True
-        )
+        _, pd_masks = self._pixel_stack.get_photodiode_mask(nx, ny, nz_interior, full_stack=True)
 
         pol_runs = self._source.get_polarization_runs()
         self._failed_runs = []
@@ -356,7 +355,9 @@ class FdtdzSolver(SolverBase):
         # Imaginary part (loss) is handled separately.
         eps_real = np.real(eps_full).astype(np.float32)
         if np.any(np.abs(np.imag(eps_full)) > 1e-12):
-            raise NotImplementedError("fdtdz adapter cannot propagate material absorption; refusing to drop Im(epsilon)")
+            raise NotImplementedError(
+                "fdtdz adapter cannot propagate material absorption; refusing to drop Im(epsilon)"
+            )
 
         # Convert permittivity to JAX arrays.
         # fdtdz expects permittivity as (xx, yy, zz) diagonal tensor components.

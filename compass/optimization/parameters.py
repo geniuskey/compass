@@ -336,9 +336,7 @@ class ParameterSpace:
             x: Flat array of length ``total_size``.
         """
         if len(x) != self.total_size:
-            raise ValueError(
-                f"Vector length {len(x)} != total parameter size {self.total_size}"
-            )
+            raise ValueError(f"Vector length {len(x)} != total parameter size {self.total_size}")
         offset = 0
         for p in self.params:
             p.set_value(x[offset : offset + p.size])
@@ -359,11 +357,13 @@ class ParameterSpace:
         descriptions = []
         for p in self.params:
             lo, hi = p.get_bounds()
-            descriptions.append({
-                "name": p.name,
-                "size": p.size,
-                "current_value": p.get_value().tolist(),
-                "lower_bound": lo.tolist(),
-                "upper_bound": hi.tolist(),
-            })
+            descriptions.append(
+                {
+                    "name": p.name,
+                    "size": p.size,
+                    "current_value": p.get_value().tolist(),
+                    "lower_bound": lo.tolist(),
+                    "upper_bound": hi.tolist(),
+                }
+            )
         return descriptions

@@ -66,9 +66,12 @@ def _resolve_color_3d(
 
 
 def _make_box_mesh(
-    x0: float, x1: float,
-    y0: float, y1: float,
-    z0: float, z1: float,
+    x0: float,
+    x1: float,
+    y0: float,
+    y1: float,
+    z0: float,
+    z1: float,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Generate vertex arrays for a rectangular box as a triangulated mesh.
 
@@ -97,9 +100,12 @@ def _make_box_mesh(
 
 
 def _make_frustum_mesh(
-    x0: float, x1: float,
-    y0: float, y1: float,
-    z0: float, z1: float,
+    x0: float,
+    x1: float,
+    y0: float,
+    y1: float,
+    z0: float,
+    z1: float,
     top_inset: float,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Generate a truncated-pyramid mesh for protruding color filters."""
@@ -108,14 +114,30 @@ def _make_frustum_mesh(
     if inset <= 0.0:
         return _make_box_mesh(x0, x1, y0, y1, z0, z1)
 
-    vx = np.array([
-        x0, x1, x1, x0,
-        x0 + inset, x1 - inset, x1 - inset, x0 + inset,
-    ])
-    vy = np.array([
-        y0, y0, y1, y1,
-        y0 + inset, y0 + inset, y1 - inset, y1 - inset,
-    ])
+    vx = np.array(
+        [
+            x0,
+            x1,
+            x1,
+            x0,
+            x0 + inset,
+            x1 - inset,
+            x1 - inset,
+            x0 + inset,
+        ]
+    )
+    vy = np.array(
+        [
+            y0,
+            y0,
+            y1,
+            y1,
+            y0 + inset,
+            y0 + inset,
+            y1 - inset,
+            y1 - inset,
+        ]
+    )
     vz = np.array([z0, z0, z0, z0, z1, z1, z1, z1])
     ti = np.array([0, 0, 4, 4, 0, 0, 1, 1, 0, 0, 2, 2])
     tj = np.array([1, 2, 5, 6, 1, 4, 2, 6, 3, 4, 3, 3])
@@ -164,9 +186,7 @@ def _make_lens_surface(
     rx_safe = max(rx, 1e-10)
     ry_safe = max(ry, 1e-10)
 
-    r = (np.abs(dx / rx_safe) ** n_param + np.abs(dy / ry_safe) ** n_param) ** (
-        1.0 / n_param
-    )
+    r = (np.abs(dx / rx_safe) ** n_param + np.abs(dy / ry_safe) ** n_param) ** (1.0 / n_param)
     r = np.clip(r, 0, 1.0 + 1e-10)
 
     zz = np.full_like(r, z_base)
@@ -206,8 +226,7 @@ def view_pixel_3d(
     backend = backend.lower()
     if backend != "plotly":
         raise ValueError(
-            f"Unsupported 3D backend '{backend}'. Currently only 'plotly' "
-            f"is supported."
+            f"Unsupported 3D backend '{backend}'. Currently only 'plotly' is supported."
         )
 
     try:
@@ -257,16 +276,18 @@ def view_pixel_3d(
         if layer.name == "air":
             opacity = 0.05
 
-        vx, vy, vz, ti, tj, tk = _make_box_mesh(
-            0, lx, 0, ly, layer.z_start, layer.z_end
-        )
+        vx, vy, vz, ti, tj, tk = _make_box_mesh(0, lx, 0, ly, layer.z_start, layer.z_end)
 
         color_str = f"rgb({rgb[0]},{rgb[1]},{rgb[2]})"
 
         traces.append(
             go.Mesh3d(
-                x=vx, y=vy, z=vz,
-                i=ti, j=tj, k=tk,
+                x=vx,
+                y=vy,
+                z=vz,
+                i=ti,
+                j=tj,
+                k=tk,
                 color=color_str,
                 opacity=opacity,
                 name=layer.name,
@@ -350,17 +371,16 @@ def _add_microlens_traces(
         y_lo = r * pixel_stack.pitch
         y_hi = (r + 1) * pixel_stack.pitch
 
-        mask = (
-            (xx >= x_lo) & (xx <= x_hi) &
-            (yy >= y_lo) & (yy <= y_hi)
-        )
+        mask = (xx >= x_lo) & (xx <= x_hi) & (yy >= y_lo) & (yy <= y_hi)
         zz_clipped = np.where(mask, zz, layer.z_start)
 
         colorscale = [[0, color_str], [1, color_str]]
 
         traces.append(
             go.Surface(
-                x=xx, y=yy, z=zz_clipped,
+                x=xx,
+                y=yy,
+                z=zz_clipped,
                 colorscale=colorscale,
                 showscale=False,
                 opacity=0.5,
@@ -372,14 +392,21 @@ def _add_microlens_traces(
 
     # Add a flat base for the microlens layer
     vx, vy, vz, ti, tj, tk = _make_box_mesh(
-        0, pixel_stack.domain_size[0],
-        0, pixel_stack.domain_size[1],
-        layer.z_start, layer.z_start + 0.01,
+        0,
+        pixel_stack.domain_size[0],
+        0,
+        pixel_stack.domain_size[1],
+        layer.z_start,
+        layer.z_start + 0.01,
     )
     traces.append(
         go.Mesh3d(
-            x=vx, y=vy, z=vz,
-            i=ti, j=tj, k=tk,
+            x=vx,
+            y=vy,
+            z=vz,
+            i=ti,
+            j=tj,
+            k=tk,
             color=color_str,
             opacity=0.2,
             name="microlens_base",
@@ -438,25 +465,33 @@ def _add_color_filter_traces(
 
             segments = []
             if z_grid_top > z_bottom:
-                segments.append((
-                    _make_box_mesh(x0, x1, y0, y1, z_bottom, z_grid_top),
-                    show_legend,
-                ))
+                segments.append(
+                    (
+                        _make_box_mesh(x0, x1, y0, y1, z_bottom, z_grid_top),
+                        show_legend,
+                    )
+                )
                 show_legend = False
             if z_top > z_grid_top:
                 inset = pixel_stack._cf_lateral_inset(
                     cf_thickness, grid_t, float(spec["contact_angle"])
                 )
-                segments.append((
-                    _make_frustum_mesh(x0, x1, y0, y1, z_grid_top, z_top, inset),
-                    show_legend,
-                ))
+                segments.append(
+                    (
+                        _make_frustum_mesh(x0, x1, y0, y1, z_grid_top, z_top, inset),
+                        show_legend,
+                    )
+                )
 
             for (vx, vy, vz, ti, tj, tk), segment_legend in segments:
                 traces.append(
                     go.Mesh3d(
-                        x=vx, y=vy, z=vz,
-                        i=ti, j=tj, k=tk,
+                        x=vx,
+                        y=vy,
+                        z=vz,
+                        i=ti,
+                        j=tj,
+                        k=tk,
                         color=color_str,
                         opacity=0.7,
                         name=f"CF_{color_char}",
@@ -530,8 +565,12 @@ def _add_photodiode_traces(
 
         traces.append(
             go.Mesh3d(
-                x=vx, y=vy, z=vz,
-                i=ti, j=tj, k=tk,
+                x=vx,
+                y=vy,
+                z=vz,
+                i=ti,
+                j=tj,
+                k=tk,
                 color=color_str,
                 opacity=0.4,
                 name=label,
@@ -590,13 +629,15 @@ def _add_dti_traces(
         if x1 <= x0:
             continue
 
-        vx, vy, vz, ti, tj, tk = _make_box_mesh(
-            x0, x1, 0, ly, si_layer.z_start, si_layer.z_end
-        )
+        vx, vy, vz, ti, tj, tk = _make_box_mesh(x0, x1, 0, ly, si_layer.z_start, si_layer.z_end)
         traces.append(
             go.Mesh3d(
-                x=vx, y=vy, z=vz,
-                i=ti, j=tj, k=tk,
+                x=vx,
+                y=vy,
+                z=vz,
+                i=ti,
+                j=tj,
+                k=tk,
                 color=color_str,
                 opacity=0.5,
                 name="DTI",
@@ -614,13 +655,15 @@ def _add_dti_traces(
         if y1 <= y0:
             continue
 
-        vx, vy, vz, ti, tj, tk = _make_box_mesh(
-            0, lx, y0, y1, si_layer.z_start, si_layer.z_end
-        )
+        vx, vy, vz, ti, tj, tk = _make_box_mesh(0, lx, y0, y1, si_layer.z_start, si_layer.z_end)
         traces.append(
             go.Mesh3d(
-                x=vx, y=vy, z=vz,
-                i=ti, j=tj, k=tk,
+                x=vx,
+                y=vy,
+                z=vz,
+                i=ti,
+                j=tj,
+                k=tk,
                 color=color_str,
                 opacity=0.5,
                 name="DTI",

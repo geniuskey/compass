@@ -192,8 +192,7 @@ class CrosstalkAnalyzer:
         pixel_names = sorted(pos_map)
         if len(pixel_names) != ct_matrix.shape[0]:
             raise ValueError(
-                f"bayer_map defines {len(pixel_names)} pixels but matrix has "
-                f"{ct_matrix.shape[0]}"
+                f"bayer_map defines {len(pixel_names)} pixels but matrix has {ct_matrix.shape[0]}"
             )
         name_to_idx = {name: idx for idx, name in enumerate(pixel_names)}
 
@@ -247,13 +246,19 @@ class CrosstalkAnalyzer:
 
         pixels = sorted(result.qe_per_pixel.keys())
         ct_matrix = CrosstalkAnalyzer.compute_matrix(
-            result.qe_per_pixel, None, result.wavelengths,
+            result.qe_per_pixel,
+            None,
+            result.wavelengths,
         )
         spectral_ct = CrosstalkAnalyzer.spectral_crosstalk(
-            ct_matrix, result.wavelengths, pixels,
+            ct_matrix,
+            result.wavelengths,
+            pixels,
         )
         peak_val, peak_wl = CrosstalkAnalyzer.peak_crosstalk(
-            ct_matrix, result.wavelengths, pixels,
+            ct_matrix,
+            result.wavelengths,
+            pixels,
         )
         defined = spectral_ct[~np.isnan(spectral_ct)]
 

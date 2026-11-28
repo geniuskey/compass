@@ -652,9 +652,7 @@ class MeepSolver(SolverBase):
                 ml_meep_mat = self._get_meep_material(
                     mp, layer.base_material, wavelength, use_dispersive
                 )
-                geometry.extend(
-                    self._microlens_geometry(mp, layer, ml_meep_mat, lx, ly, z_center)
-                )
+                geometry.extend(self._microlens_geometry(mp, layer, ml_meep_mat, lx, ly, z_center))
 
             elif layer.name == "air":
                 # Air is the default medium, no geometry needed
@@ -765,17 +763,21 @@ class MeepSolver(SolverBase):
         fcen = 1.0 / wavelength
         if eps.real > 0:
             # Single-frequency match, including arbitrarily weak absorption.
-            return mp.Medium(epsilon=eps.real,
-                             D_conductivity=2 * np.pi * fcen * eps.imag / eps.real)
+            return mp.Medium(
+                epsilon=eps.real, D_conductivity=2 * np.pi * fcen * eps.imag / eps.real
+            )
         if not use_dispersive:
             raise ValueError("Negative permittivity requires a dispersive material")
         # Stable passive Drude medium matching this frequency, without clamping eps'.
         eps_inf = 1.0
         gamma = fcen * eps.imag / (eps_inf - eps.real)
         sigma = (eps_inf - eps.real) * (fcen**2 + gamma**2) / fcen**2
-        return mp.Medium(epsilon=eps_inf, E_susceptibilities=[
-            mp.DrudeSusceptibility(frequency=fcen, gamma=gamma, sigma=sigma),
-        ])
+        return mp.Medium(
+            epsilon=eps_inf,
+            E_susceptibilities=[
+                mp.DrudeSusceptibility(frequency=fcen, gamma=gamma, sigma=sigma),
+            ],
+        )
 
     def _compute_pixel_qe(
         self,

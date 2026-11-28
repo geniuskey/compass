@@ -260,7 +260,11 @@ class SignalCalculator:
         """
         grey = SceneReflectance.flat(0.18, self.wavelengths)
         channel_signals = self.compute_channel_signal(
-            illuminant, grey, module, qe_per_pixel, bayer_map,
+            illuminant,
+            grey,
+            module,
+            qe_per_pixel,
+            bayer_map,
         )
 
         # Find green channel signal for normalisation

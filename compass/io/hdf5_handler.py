@@ -133,9 +133,7 @@ class HDF5Handler:
                 metadata = {k: _attr_value(meta_attrs[k]) for k in meta_attrs}
             else:  # format version 1
                 config = _load_legacy_yaml(meta_attrs.get("config_yaml", "{}"))
-                metadata = {
-                    k: _attr_value(meta_attrs[k]) for k in meta_attrs if k != "config_yaml"
-                }
+                metadata = {k: _attr_value(meta_attrs[k]) for k in meta_attrs if k != "config_yaml"}
             if "metadata_json" in f:
                 for k, ds in f["metadata_json"].items():
                     raw = ds[()]
@@ -145,9 +143,7 @@ class HDF5Handler:
 
             wavelengths = f["qe"]["wavelengths"][:]
             qe_per_pixel = {
-                _unescape(key)[6:]: f["qe"][key][:]
-                for key in f["qe"]
-                if key.startswith("pixel_")
+                _unescape(key)[6:]: f["qe"][key][:] for key in f["qe"] if key.startswith("pixel_")
             }
             eb = f["energy_balance"]
 
@@ -157,9 +153,7 @@ class HDF5Handler:
             fields = None
             if "fields" in f:
                 fields = {
-                    _unescape(wl_key): FieldData(
-                        **{c: grp[c][()] for c in _FIELD_KEYS if c in grp}
-                    )
+                    _unescape(wl_key): FieldData(**{c: grp[c][()] for c in _FIELD_KEYS if c in grp})
                     for wl_key, grp in f["fields"].items()
                 }
             poynting = None

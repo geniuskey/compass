@@ -127,12 +127,18 @@ class _MeentFieldSampler:
             cell = np.sqrt(self.eps[li : li + 1])
             if self.fourier_type == 0:
                 epx, epy, _ = cm.to_conv_mat_raster_discrete(
-                    cell, *self.fto, type_complex=np.complex128,
-                    enhanced_dfs=self.enhanced_dfs, use_pinv=self.use_pinv,
+                    cell,
+                    *self.fto,
+                    type_complex=np.complex128,
+                    enhanced_dfs=self.enhanced_dfs,
+                    use_pinv=self.use_pinv,
                 )
             else:
                 epx, epy, _ = cm.to_conv_mat_raster_continuous(
-                    cell, *self.fto, type_complex=np.complex128, use_pinv=self.use_pinv,
+                    cell,
+                    *self.fto,
+                    type_complex=np.complex128,
+                    use_pinv=self.use_pinv,
                 )
             self._conv[li] = (np.asarray(epx[0]), np.asarray(epy[0]))
         return self._conv[li]
@@ -192,9 +198,7 @@ class _MeentFieldSampler:
             out += np.sum(np.abs(np.einsum("zij,ai,bj->zab", C, py, px)) ** 2, axis=0)
         return np.asarray(out * inv_eps2)
 
-    def at_points(
-        self, slice_index: int, depth_um: float, x_um, y_um, displacement: bool = True
-    ):
+    def at_points(self, slice_index: int, depth_um: float, x_um, y_um, displacement: bool = True):
         """Fields ([Ex, Ey, Ez], [Hx, Hy, Hz]) at COMPASS points (x, y) in um.
 
         With ``displacement`` (default) E is ``D / eps(r)``; otherwise the
@@ -231,9 +235,7 @@ class MeentSolver(SolverBase):
         # so configs built from schema defaults keep working.
         dtype = config.get("params", {}).get("dtype")
         if dtype not in (None, "complex128"):
-            logger.warning(
-                "meent always runs in complex128; ignoring params.dtype=%r", dtype
-            )
+            logger.warning("meent always runs in complex128; ignoring params.dtype=%r", dtype)
         self._source: PlanewaveSource | None = None
         self._backend = config.get("params", {}).get("backend", "numpy")
         self._last_layer_slices: list | None = None
@@ -310,7 +312,10 @@ class MeentSolver(SolverBase):
 
         for _wl_idx, wavelength in enumerate(self._source.wavelengths):
             layer_slices = self._pixel_stack.get_layer_slices(
-                wavelength, nx, ny, n_lens_slices=params.get("n_lens_slices", 30),
+                wavelength,
+                nx,
+                ny,
+                n_lens_slices=params.get("n_lens_slices", 30),
             )
 
             R_pol, T_pol, A_pol = [], [], []
@@ -439,7 +444,8 @@ class MeentSolver(SolverBase):
                 "enhanced_dfs": enhanced_dfs,
                 "fourier_work_grid_shape_yx": (
                     _dfs_work_grid_shape([ny, nx], fourier_order, enhanced_dfs)
-                    if fourier_type == 0 else None
+                    if fourier_type == 0
+                    else None
                 ),
                 "fourier_work_grid_shape_source": (
                     "derived from meent raster DFS repeat rule; CFS has no FFT work grid"
@@ -571,8 +577,12 @@ class MeentSolver(SolverBase):
                 "permittivity-based approximation, not a solved field"
             )
         return approximate_field(
-            self._pixel_stack, self._last_layer_info, self._last_wavelength,
-            component, plane, position,
+            self._pixel_stack,
+            self._last_layer_info,
+            self._last_wavelength,
+            component,
+            plane,
+            position,
         )
 
     def _solved_field(

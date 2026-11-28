@@ -151,12 +151,30 @@ class SceneReflectance:
         spectrum = np.clip(spectrum, 0.0, 1.0)
 
         _names = [
-            "dark_skin", "light_skin", "blue_sky", "foliage",
-            "blue_flower", "bluish_green", "orange", "purplish_blue",
-            "moderate_red", "purple", "yellow_green", "orange_yellow",
-            "blue_12", "blue_13", "green", "red",
-            "magenta", "cyan", "white", "neutral8",
-            "neutral6.5", "neutral5", "neutral3.5", "black",
+            "dark_skin",
+            "light_skin",
+            "blue_sky",
+            "foliage",
+            "blue_flower",
+            "bluish_green",
+            "orange",
+            "purplish_blue",
+            "moderate_red",
+            "purple",
+            "yellow_green",
+            "orange_yellow",
+            "blue_12",
+            "blue_13",
+            "green",
+            "red",
+            "magenta",
+            "cyan",
+            "white",
+            "neutral8",
+            "neutral6.5",
+            "neutral5",
+            "neutral3.5",
+            "black",
         ]
         name = f"macbeth_{patch_id}_{_names[patch_id]}"
         logger.debug("Created Macbeth patch %d (%s).", patch_id, _names[patch_id])
@@ -199,8 +217,7 @@ class SceneReflectance:
         color_lower = color.lower()
         if color_lower not in _targets:
             raise ValueError(
-                f"Unknown colour target '{color}'. "
-                f"Available: {sorted(_targets.keys())}"
+                f"Unknown colour target '{color}'. Available: {sorted(_targets.keys())}"
             )
 
         baseline, gaussians = _targets[color_lower]

@@ -1,4 +1,5 @@
 """Energy balance verification: R + T + A = 1."""
+
 from __future__ import annotations
 
 import logging
@@ -8,6 +9,7 @@ import numpy as np
 from compass.core.types import SimulationResult
 
 logger = logging.getLogger(__name__)
+
 
 class EnergyBalance:
     """Verify energy conservation in simulation results."""
@@ -45,5 +47,7 @@ class EnergyBalance:
             "max_error": max_err,
             "mean_error": mean_err,
             "per_wavelength": error,
-            "R": R, "T": T, "A": A,
+            "R": R,
+            "T": T,
+            "A": A,
         }

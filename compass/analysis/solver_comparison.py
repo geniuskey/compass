@@ -1,4 +1,5 @@
 """Solver comparison analysis module."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -61,14 +62,18 @@ class SolverComparison:
                     peak = float(np.nanmax(ref_abs)) if ref_abs.size else 0.0
                     floor = max(1e-10, self.RELATIVE_FLOOR * peak)
                     errors[key] = (
-                        100.0 * np.abs(result.qe_per_pixel[pixel] - ref_qe)
+                        100.0
+                        * np.abs(result.qe_per_pixel[pixel] - ref_qe)
                         / np.maximum(ref_abs, floor)
                     )
         return errors
 
     def runtime_comparison(self) -> dict[str, float]:
         """Compare runtime across solvers."""
-        return {label: result.metadata.get("runtime_seconds", 0.0) for label, result in zip(self.labels, self.results)}
+        return {
+            label: result.metadata.get("runtime_seconds", 0.0)
+            for label, result in zip(self.labels, self.results)
+        }
 
     def summary(self) -> dict:
         """Generate comparison summary."""
